@@ -1,125 +1,137 @@
-import React from "react";
+import { useState } from 'react';
 
-type Tier = "legend" | "icon" | "diamond" | "gold" | "silver" | "bronze";
+export default function DegenCard() {
+  const [walletAddress, setWalletAddress] = useState('');
+  const [cardImage, setCardImage] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-interface Stat {
-  label: string;
-  value: number;
-}
+  const generateCard = async () => {
+    if (!walletAddress.trim()) {
+      setError('Please enter a wallet address');
+      return;
+    }
 
-interface Props {
-  rank?: number;
-  username: string;
-  avatarUrl?: string;
-  overall: number;
-  tier: Tier;
-  stats: Stat[];
-  smallText?: string;
-  width?: number;
-}
+    setLoading(true);
+    setError(null);
+    setCardImage(null);
 
-export default function DegenCard({
-  rank = 1,
-  username,
-  avatarUrl,
-  overall,
-  tier,
-  stats,
-  smallText,
-  width = 320
-}: Props) {
-  const tierLabel = {
-    legend: "Legend",
-    icon: "Icon",
-    diamond: "Diamond",
-    gold: "Gold",
-    silver: "Silver",
-    bronze: "Bronze"
-  }[tier];
+    try {
+      const response = await fetch('/api/generate-card', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ walletAddress: walletAddress.trim() }),
+      });
 
-  // color per tier for small accents
-  const accent = {
-    legend: "from-pink-500 to-yellow-400",
-    icon: "from-purple-600 to-pink-500",
-    diamond: "from-cyan-400 to-indigo-500",
-    gold: "from-yellow-400 to-orange-400",
-    silver: "from-slate-300 to-gray-400",
-    bronze: "from-amber-600 to-rose-500"
-  }[tier];
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to generate card');
+      }
+
+      // Convertir la respuesta a blob y crear URL
+      const blob = await response.blob();
+      const imageUrl = URL.createObjectURL(blob);
+      setCardImage(imageUrl);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
+      console.error('Error generating card:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const downloadCard = () => {
+    if (!cardImage) return;
+
+    const link = document.createElement('a');
+    link.href = cardImage;
+    link.download = `degen-card-${walletAddress.slice(0, 8)}.png`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   return (
-    <div className="card-stack" style={{ width }}>
-      {/* layered stack effect */}
-      <div className="relative" aria-hidden>
-        <div className="absolute -left-3 -top-3 w-full" style={{ transform: "scale(0.98)", zIndex: 0 }}>
-          <div className="card-gradient-border" style={{ borderRadius: 20, padding: 6 }}>
-            <div className="card-inner" style={{ opacity: 0.06 }} />
-          </div>
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 flex items-center justify-center p-4">
+      <div className="max-w-4xl w-full">
+        <div className="text-center mb-8">
+          <h1 className="text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-400 mb-2">
+            DegenScore Card Generator
+          </h1>
+          <p className="text-gray-300 text-lg">
+            Generate your Solana trader card with real on-chain metrics
+          </p>
         </div>
-        <div className="absolute -left-6 -top-6 w-full" style={{ transform: "scale(0.96)", zIndex: 0 }}>
-          <div className="card-gradient-border" style={{ borderRadius: 20, padding: 6 }}>
-            <div className="card-inner" style={{ opacity: 0.03 }} />
+
+        <div className="bg-gray-800/50 backdrop-blur-lg rounded-2xl p-8 shadow-2xl border border-gray-700">
+          <div className="mb-6">
+            <label htmlFor="wallet" className="block text-sm font-medium text-gray-300 mb-2">
+              Solana Wallet Address
+            </label>
+            <input
+              id="wallet"
+              type="text"
+              value={walletAddress}
+              onChange={(e) => setWalletAddress(e.target.value)}
+              placeholder="Enter wallet address (e.g., B7nB9QX1KC4QXp5GMxR8xzh3yzoqp6NjxSwfNBXtgPc1)"
+              className="w-full px-4 py-3 bg-gray-900 border border-gray-600 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+              disabled={loading}
+            />
           </div>
+
+          {error && (
+            <div className="mb-6 p-4 bg-red-500/10 border border-red-500 rounded-lg">
+              <p className="text-red-400 text-sm">{error}</p>
+            </div>
+          )}
+
+          <button
+            onClick={generateCard}
+            disabled={loading}
+            className="w-full py-4 px-6 bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-600 hover:to-purple-600 disabled:from-gray-600 disabled:to-gray-700 text-white font-bold rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl disabled:cursor-not-allowed"
+          >
+            {loading ? (
+              <span className="flex items-center justify-center">
+                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Generating Card...
+              </span>
+            ) : (
+              '🎴 Generate Card'
+            )}
+          </button>
+
+          {cardImage && (
+            <div className="mt-8 space-y-4">
+              <div className="flex justify-center">
+                <img
+                  src={cardImage}
+                  alt="Degen Card"
+                  className="rounded-xl shadow-2xl border-2 border-cyan-500 max-w-full h-auto"
+                />
+              </div>
+              
+              <button
+                onClick={downloadCard}
+                className="w-full py-3 px-6 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white font-semibold rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl"
+              >
+                ⬇️ Download Card
+              </button>
+
+              <div className="text-center text-gray-400 text-sm">
+                <p>Card generated from real on-chain data via Helius API</p>
+              </div>
+            </div>
+          )}
         </div>
-      </div>
 
-      {/* main card */}
-      <div className="card-gradient-border card-frame" style={{ borderRadius: 20 }}>
-        <div className="card-inner">
-          {/* top row */}
-          <div className="flex justify-between items-start mb-4">
-            <div>
-              <div className="flex items-center gap-2">
-                <div className="text-xl font-bold">{overall}</div>
-                <div className={`text-xs px-2 py-0.5 rounded-full bg-white/6`}>{tierLabel}</div>
-              </div>
-              <div className="small-muted text-xs">Overall Rating</div>
-            </div>
-
-            <div className="text-right">
-              <div className="w-20 h-20 rounded-full bg-white/6 overflow-hidden border border-white/10">
-                {avatarUrl ? (
-                  <img src={avatarUrl} alt={username} className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-white/50">
-                    <svg width="36" height="36" viewBox="0 0 24 24" fill="none">
-                      <circle cx="12" cy="8" r="3" stroke="currentColor" strokeWidth="1.5" />
-                      <path d="M4 20c0-4 4-6 8-6s8 2 8 6" stroke="currentColor" strokeWidth="1.5" />
-                    </svg>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* handle */}
-          <div className="mb-4">
-            <div className="font-semibold">{username}</div>
-            <div className="small-muted text-xs">0x...{String(Math.random()).slice(2,8)}</div>
-          </div>
-
-          {/* stats */}
-          <div className="space-y-4 mb-6">
-            {stats.map((s) => (
-              <div key={s.label}>
-                <div className="flex justify-between items-center mb-1">
-                  <div className="text-xs small-muted">{s.label}</div>
-                  <div className="text-xs font-semibold">{s.value}</div>
-                </div>
-                <div className="stat-bar">
-                  <div className="stat-fill" style={{ width: `${Math.max(6, s.value)}%` }} />
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* footer */}
-          <div className="flex items-center justify-between mt-auto">
-            <div className="small-muted text-xs">{smallText}</div>
-            <div className="flex items-center gap-2">
-              <div className={`rank-badge bg-gradient-to-br ${accent} text-black`}>#{rank}</div>
-            </div>
-          </div>
+        <div className="mt-8 text-center text-gray-400 text-sm">
+          <p>Powered by Helius RPC × Solana</p>
+          <p className="mt-2">Try with: B7nB9QX1KC4QXp5GMxR8xzh3yzoqp6NjxSwfNBXtgPc1</p>
         </div>
       </div>
     </div>
