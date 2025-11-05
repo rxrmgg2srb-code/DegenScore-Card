@@ -17,7 +17,8 @@ export default function DegenCard() {
     setCardImage(null);
 
     try {
-      const response = await fetch('/api/generate-card', {
+      // Primero guardar/actualizar en la base de datos
+      const saveResponse = await fetch('/api/save-card', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -25,13 +26,30 @@ export default function DegenCard() {
         body: JSON.stringify({ walletAddress: walletAddress.trim() }),
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
+      if (!saveResponse.ok) {
+        const errorData = await saveResponse.json();
+        throw new Error(errorData.error || 'Failed to save card data');
+      }
+
+      const saveData = await saveResponse.json();
+      console.log('Card saved:', saveData);
+
+      // Luego generar la imagen
+      const imageResponse = await fetch('/api/generate-card', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ walletAddress: walletAddress.trim() }),
+      });
+
+      if (!imageResponse.ok) {
+        const errorData = await imageResponse.json();
         throw new Error(errorData.error || 'Failed to generate card');
       }
 
       // Convertir la respuesta a blob y crear URL
-      const blob = await response.blob();
+      const blob = await imageResponse.blob();
       const imageUrl = URL.createObjectURL(blob);
       setCardImage(imageUrl);
     } catch (err) {
@@ -115,15 +133,32 @@ export default function DegenCard() {
                 />
               </div>
               
-              <button
-                onClick={downloadCard}
-                className="w-full py-3 px-6 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white font-semibold rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl"
-              >
-                ⬇️ Download Card
-              </button>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <button
+                  onClick={downloadCard}
+                  className="py-3 px-6 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white font-semibold rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl"
+                >
+                  ⬇️ Download Card
+                </button>
+
+                <button
+                  onClick={() => window.location.href = `/profile/${walletAddress}`}
+                  className="py-3 px-6 bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white font-semibold rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl"
+                >
+                  👤 View Profile
+                </button>
+
+                <button
+                  onClick={() => window.location.href = '/leaderboard'}
+                  className="py-3 px-6 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-semibold rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl"
+                >
+                  🏆 Leaderboard
+                </button>
+              </div>
 
               <div className="text-center text-gray-400 text-sm">
                 <p>Card generated from real on-chain data via Helius API</p>
+                <p className="mt-1">Your progress has been saved and you're on the leaderboard!</p>
               </div>
             </div>
           )}
