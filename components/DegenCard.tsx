@@ -4,127 +4,122 @@ type Tier = "legend" | "icon" | "diamond" | "gold" | "silver" | "bronze";
 
 interface Stat {
   label: string;
-  value: number; // 0-100
+  value: number;
 }
 
-interface DegenCardProps {
+interface Props {
   rank?: number;
   username: string;
-  handle?: string;
   avatarUrl?: string;
-  overall: number; // 0-99
+  overall: number;
   tier: Tier;
-  stats: Stat[]; // e.g. Trading, Diamond Hands, Risk, Strategy, Luck, Safety
+  stats: Stat[];
   smallText?: string;
-  width?: number; // px
-  height?: number; // px
+  width?: number;
 }
-
-const TIER_GRADIENTS: Record<Tier, string> = {
-  legend: "bg-gradient-to-br from-pink-500 via-yellow-400 to-green-400",
-  icon: "bg-gradient-to-br from-purple-700 via-indigo-500 to-pink-500",
-  diamond: "bg-gradient-to-br from-cyan-400 via-sky-600 to-indigo-700",
-  gold: "bg-gradient-to-br from-yellow-400 via-orange-500 to-amber-600",
-  silver: "bg-gradient-to-br from-gray-300 via-slate-400 to-gray-500",
-  bronze: "bg-gradient-to-br from-amber-700 via-orange-600 to-rose-600",
-};
 
 export default function DegenCard({
   rank = 1,
   username,
-  handle,
   avatarUrl,
   overall,
   tier,
   stats,
   smallText,
-  width = 360,
-  height = 520,
-}: DegenCardProps) {
+  width = 320
+}: Props) {
   const tierLabel = {
     legend: "Legend",
     icon: "Icon",
     diamond: "Diamond",
     gold: "Gold",
     silver: "Silver",
-    bronze: "Bronze",
+    bronze: "Bronze"
+  }[tier];
+
+  // color per tier for small accents
+  const accent = {
+    legend: "from-pink-500 to-yellow-400",
+    icon: "from-purple-600 to-pink-500",
+    diamond: "from-cyan-400 to-indigo-500",
+    gold: "from-yellow-400 to-orange-400",
+    silver: "from-slate-300 to-gray-400",
+    bronze: "from-amber-600 to-rose-500"
   }[tier];
 
   return (
-    <div
-      className={`relative rounded-2xl shadow-2xl text-white p-5`}
-      style={{ width, height }}
-    >
-      <div
-        className={`absolute inset-0 rounded-2xl blur-sm opacity-50 ${TIER_GRADIENTS[tier]}`}
-        style={{ transform: "scale(1.03)" }}
-        aria-hidden
-      />
-      <div className="absolute inset-0 rounded-2xl bg-black/30 border border-white/10 backdrop-blur-sm" />
-
-      <div className="absolute -top-5 left-4">
-        <div className="flex items-center gap-2">
-          <div className="w-10 h-10 rounded-full bg-yellow-400 text-black flex items-center justify-center font-bold">
-            #{rank}
+    <div className="card-stack" style={{ width }}>
+      {/* layered stack effect */}
+      <div className="relative" aria-hidden>
+        <div className="absolute -left-3 -top-3 w-full" style={{ transform: "scale(0.98)", zIndex: 0 }}>
+          <div className="card-gradient-border" style={{ borderRadius: 20, padding: 6 }}>
+            <div className="card-inner" style={{ opacity: 0.06 }} />
+          </div>
+        </div>
+        <div className="absolute -left-6 -top-6 w-full" style={{ transform: "scale(0.96)", zIndex: 0 }}>
+          <div className="card-gradient-border" style={{ borderRadius: 20, padding: 6 }}>
+            <div className="card-inner" style={{ opacity: 0.03 }} />
           </div>
         </div>
       </div>
 
-      <div className="flex items-center justify-between mb-3">
-        <div>
-          <div className="flex items-center gap-2">
-            <div className="text-2xl font-extrabold">{overall}</div>
-            <div className="text-sm px-2 py-0.5 rounded-full bg-white/10">{tierLabel}</div>
-          </div>
-          <div className="text-xs text-white/70">Overall Rating</div>
-        </div>
-
-        <div className="flex flex-col items-end">
-          <div
-            className="w-20 h-20 rounded-full bg-white/10 overflow-hidden border border-white/20"
-            title={username}
-          >
-            {avatarUrl ? (
-              <img src={avatarUrl} alt={username} className="w-full h-full object-cover" />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center text-white/60">
-                <svg width="36" height="36" viewBox="0 0 24 24" fill="none">
-                  <circle cx="12" cy="8" r="3" stroke="currentColor" strokeWidth="1.5" />
-                  <path d="M4 20c0-4 4-6 8-6s8 2 8 6" stroke="currentColor" strokeWidth="1.5" />
-                </svg>
+      {/* main card */}
+      <div className="card-gradient-border card-frame" style={{ borderRadius: 20 }}>
+        <div className="card-inner">
+          {/* top row */}
+          <div className="flex justify-between items-start mb-4">
+            <div>
+              <div className="flex items-center gap-2">
+                <div className="text-xl font-bold">{overall}</div>
+                <div className={`text-xs px-2 py-0.5 rounded-full bg-white/6`}>{tierLabel}</div>
               </div>
-            )}
-          </div>
-          <div className="mt-2 text-right">
-            <div className="font-semibold">{username}</div>
-            {handle && <div className="text-xs text-white/60">{handle}</div>}
-          </div>
-        </div>
-      </div>
-
-      <div className="mt-3 space-y-3">
-        {stats.map((s) => (
-          <div key={s.label} className="flex items-center gap-3">
-            <div className="w-28 text-xs text-white/70">{s.label}</div>
-            <div className="flex-1 bg-white/5 rounded-full h-3 overflow-hidden">
-              <div
-                className="h-3 rounded-full"
-                style={{
-                  width: `${Math.max(2, s.value)}%`,
-                  background: "linear-gradient(90deg,#34d399,#60a5fa)",
-                }}
-              />
+              <div className="small-muted text-xs">Overall Rating</div>
             </div>
-            <div className="w-8 text-right text-xs">{s.value}</div>
-          </div>
-        ))}
-      </div>
 
-      <div className="absolute bottom-5 left-5 right-5 flex items-center justify-between">
-        <div className="text-xs text-white/60">{smallText}</div>
-        <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-full bg-white/5 flex items-center justify-center text-xs">🏆</div>
-          <div className="w-7 h-7 rounded-full bg-white/5 flex items-center justify-center text-xs">💎</div>
+            <div className="text-right">
+              <div className="w-20 h-20 rounded-full bg-white/6 overflow-hidden border border-white/10">
+                {avatarUrl ? (
+                  <img src={avatarUrl} alt={username} className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-white/50">
+                    <svg width="36" height="36" viewBox="0 0 24 24" fill="none">
+                      <circle cx="12" cy="8" r="3" stroke="currentColor" strokeWidth="1.5" />
+                      <path d="M4 20c0-4 4-6 8-6s8 2 8 6" stroke="currentColor" strokeWidth="1.5" />
+                    </svg>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* handle */}
+          <div className="mb-4">
+            <div className="font-semibold">{username}</div>
+            <div className="small-muted text-xs">0x...{String(Math.random()).slice(2,8)}</div>
+          </div>
+
+          {/* stats */}
+          <div className="space-y-4 mb-6">
+            {stats.map((s) => (
+              <div key={s.label}>
+                <div className="flex justify-between items-center mb-1">
+                  <div className="text-xs small-muted">{s.label}</div>
+                  <div className="text-xs font-semibold">{s.value}</div>
+                </div>
+                <div className="stat-bar">
+                  <div className="stat-fill" style={{ width: `${Math.max(6, s.value)}%` }} />
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* footer */}
+          <div className="flex items-center justify-between mt-auto">
+            <div className="small-muted text-xs">{smallText}</div>
+            <div className="flex items-center gap-2">
+              <div className={`rank-badge bg-gradient-to-br ${accent} text-black`}>#{rank}</div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

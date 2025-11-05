@@ -9,15 +9,16 @@
     "generate-card": "node scripts/generateCardCanvas.js"
   },
   "dependencies": {
-    "next": "14.0.0",
-    "react": "18.2.0",
-    "react-dom": "18.2.0",
-    "@napi-rs/canvas": "^0.1.23"
+    "@napi-rs/canvas": "latest",
+    "next": "latest",
+    "react": "latest",
+    "react-dom": "latest"
   },
   "devDependencies": {
-    "tailwindcss": "^3.5.0",
-    "postcss": "^8.4.0",
-    "autoprefixer": "^10.4.0",
-    "typescript": "^5.1.6"
+    "@types/react": "19.2.2",
+    "autoprefixer": "latest",
+    "postcss": "latest",
+    "tailwindcss": "latest",
+    "typescript": "latest"
   }
 }
