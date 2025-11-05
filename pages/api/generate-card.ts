@@ -1,107 +1,198 @@
-import { NextApiRequest, NextApiResponse } from "next";
-import { createCanvas } from "@napi-rs/canvas";
+import type { NextApiRequest, NextApiResponse } from 'next';
+import { createCanvas, loadImage, registerFont } from '@napi-rs/canvas';
+import { getWalletTransactions, isValidSolanaAddress } from '../../lib/helius';
+import { calculateMetrics, formatSOL, formatNumber } from '../../lib/metrics';
 
-export default function handler(req: NextApiRequest, res: NextApiResponse) {
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+
   try {
-    const query = req.query;
-    const username = String(query.username || "DegenUser");
-    const overall = Math.max(0, Math.min(99, Number(query.overall ?? 78)));
-    const tier = String(query.tier || "diamond");
-    const smallText = String(query.smallText || "Rugs Survived: +$0");
+    const { walletAddress } = req.body;
 
-    const WIDTH = 1024;
-    const HEIGHT = 1536;
-    const canvas = createCanvas(WIDTH, HEIGHT);
-    const ctx = canvas.getContext("2d");
-
-    // Background
-    const bg = ctx.createLinearGradient(0, 0, WIDTH, HEIGHT);
-    bg.addColorStop(0, "#060612");
-    bg.addColorStop(1, "#071226");
-    ctx.fillStyle = bg;
-    ctx.fillRect(0, 0, WIDTH, HEIGHT);
-
-    // Card
-    const cardW = 760;
-    const cardH = 1100;
-    const cardX = (WIDTH - cardW) / 2;
-    const cardY = (HEIGHT - cardH) / 2;
-
-    function roundRect(x: number, y: number, w: number, h: number, r: number) {
-      ctx.beginPath();
-      ctx.moveTo(x + r, y);
-      ctx.arcTo(x + w, y, x + w, y + h, r);
-      ctx.arcTo(x + w, y + h, x, y + h, r);
-      ctx.arcTo(x, y + h, x, y, r);
-      ctx.arcTo(x, y, x + w, y, r);
-      ctx.closePath();
-      ctx.fill();
+    // Validación
+    if (!walletAddress) {
+      return res.status(400).json({ error: 'Wallet address is required' });
     }
 
-    // Glow by tier
-    let g0 = "#34d399";
-    if (tier === "legend") g0 = "#ff5fd6";
-    if (tier === "icon") g0 = "#8b5cf6";
-    if (tier === "gold") g0 = "#f59e0b";
+    if (!isValidSolanaAddress(walletAddress)) {
+      return res.status(400).json({ error: 'Invalid Solana wallet address' });
+    }
 
-    ctx.save();
-    ctx.shadowColor = g0;
-    ctx.shadowBlur = 80;
-    ctx.fillStyle = g0;
-    roundRect(cardX - 6, cardY - 6, cardW + 12, cardH + 12, 36);
-    ctx.restore();
+    // Obtener transacciones y calcular métricas
+    console.log(`Fetching transactions for wallet: ${walletAddress}`);
+    const transactions = await getWalletTransactions(walletAddress, 100);
+    
+    console.log(`Found ${transactions.length} transactions`);
+    const metrics = calculateMetrics(transactions);
 
-    ctx.fillStyle = "rgba(0,0,0,0.45)";
-    roundRect(cardX, cardY, cardW, cardH, 28);
+    // Generar imagen de la card
+    const imageBuffer = await generateCardImage(walletAddress, metrics);
 
-    // Rank box
-    ctx.fillStyle = "#ffd166";
-    roundRect(cardX + 24, cardY - 30, 96, 60, 20);
-    ctx.fillStyle = "#000";
-    ctx.font = "bold 38px Sans";
-    ctx.fillText("#1", cardX + 48, cardY + 10);
+    // Retornar como PNG
+    res.setHeader('Content-Type', 'image/png');
+    res.setHeader('Cache-Control', 'public, max-age=3600'); // Cache por 1 hora
+    res.status(200).send(imageBuffer);
 
-    // Overall & tier
-    ctx.fillStyle = "#fff";
-    ctx.font = "bold 72px Sans";
-    ctx.fillText(String(overall), cardX + 40, cardY + 120);
-    ctx.font = "20px Sans";
-    ctx.fillText(String(tier).toUpperCase(), cardX + 40, cardY + 150);
-
-    // Avatar circle
-    const avatarX = cardX + cardW - 160;
-    const avatarY = cardY + 40;
-    const avatarSize = 120;
-    ctx.beginPath();
-    ctx.arc(avatarX + avatarSize / 2, avatarY + avatarSize / 2, avatarSize / 2, 0, Math.PI * 2);
-    ctx.closePath();
-    ctx.fillStyle = "#222";
-    ctx.fill();
-
-    // Sample stats
-    const statStartY = cardY + 260;
-    const statLabels = ["Trading", "Diamond H", "Total P&L", "Risk"];
-    ctx.font = "18px Sans";
-    statLabels.forEach((label, i) => {
-      const y = statStartY + i * 60;
-      ctx.fillStyle = "#ffffffcc";
-      ctx.fillText(label, cardX + 40, y);
-      ctx.fillStyle = "#ffffff22";
-      ctx.fillRect(cardX + 200, y - 18, 420, 18);
-      ctx.fillStyle = "#34d399";
-      ctx.fillRect(cardX + 200, y - 18, Math.round(420 * (0.6 + i * 0.05)), 18);
+  } catch (error) {
+    console.error('Error generating card:', error);
+    res.status(500).json({ 
+      error: 'Failed to generate card',
+      details: error instanceof Error ? error.message : 'Unknown error'
     });
-
-    ctx.fillStyle = "#ffffff88";
-    ctx.font = "16px Sans";
-    ctx.fillText(smallText, cardX + 40, cardY + cardH - 60);
-
-    const buffer = canvas.toBuffer("image/png");
-    res.setHeader("Content-Type", "image/png");
-    res.setHeader("Cache-Control", "s-maxage=86400, stale-while-revalidate");
-    res.status(200).send(buffer);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "failed to generate" });
   }
+}
+
+/**
+ * Genera la imagen de la card con los datos reales
+ */
+async function generateCardImage(
+  walletAddress: string,
+  metrics: any
+): Promise<Buffer> {
+  const width = 600;
+  const height = 800;
+  const canvas = createCanvas(width, height);
+  const ctx = canvas.getContext('2d');
+
+  // Fondo degradado
+  const gradient = ctx.createLinearGradient(0, 0, 0, height);
+  gradient.addColorStop(0, '#1a1a2e');
+  gradient.addColorStop(0.5, '#16213e');
+  gradient.addColorStop(1, '#0f3460');
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, width, height);
+
+  // Border
+  ctx.strokeStyle = '#00d4ff';
+  ctx.lineWidth = 4;
+  ctx.strokeRect(10, 10, width - 20, height - 20);
+
+  // Título
+  ctx.fillStyle = '#00d4ff';
+  ctx.font = 'bold 40px Arial';
+  ctx.textAlign = 'center';
+  ctx.fillText('DEGEN CARD', width / 2, 60);
+
+  // Wallet address (truncada)
+  ctx.fillStyle = '#ffffff';
+  ctx.font = '16px monospace';
+  const shortAddress = `${walletAddress.slice(0, 6)}...${walletAddress.slice(-6)}`;
+  ctx.fillText(shortAddress, width / 2, 100);
+
+  // Degen Score - Grande y destacado
+  const scoreColor = getScoreColor(metrics.degenScore);
+  ctx.fillStyle = scoreColor;
+  ctx.font = 'bold 80px Arial';
+  ctx.fillText(metrics.degenScore.toString(), width / 2, 190);
+  
+  ctx.fillStyle = '#aaaaaa';
+  ctx.font = '20px Arial';
+  ctx.fillText('DEGEN SCORE', width / 2, 220);
+
+  // Línea divisoria
+  ctx.strokeStyle = '#00d4ff';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(50, 250);
+  ctx.lineTo(width - 50, 250);
+  ctx.stroke();
+
+  // Métricas - Grid layout
+  const startY = 290;
+  const rowHeight = 70;
+  const leftX = 120;
+  const rightX = width - 120;
+
+  ctx.textAlign = 'left';
+
+  // Row 1: Total Trades | Win Rate
+  drawMetric(ctx, 'TOTAL TRADES', metrics.totalTrades.toString(), leftX, startY, true);
+  drawMetric(ctx, 'WIN RATE', `${metrics.winRate.toFixed(1)}%`, rightX, startY, false);
+
+  // Row 2: Total Volume | P&L
+  drawMetric(ctx, 'VOLUME', formatSOL(metrics.totalVolume, 1), leftX, startY + rowHeight, true);
+  const pnlColor = metrics.profitLoss >= 0 ? '#00ff88' : '#ff4444';
+  drawMetric(ctx, 'P&L', formatSOL(metrics.profitLoss, 2), rightX, startY + rowHeight, false, pnlColor);
+
+  // Row 3: Best Trade | Worst Trade
+  drawMetric(ctx, 'BEST TRADE', formatSOL(metrics.bestTrade, 2), leftX, startY + rowHeight * 2, true);
+  drawMetric(ctx, 'WORST TRADE', formatSOL(metrics.worstTrade, 2), rightX, startY + rowHeight * 2, false);
+
+  // Row 4: Avg Trade | Trading Days
+  drawMetric(ctx, 'AVG TRADE', formatSOL(metrics.avgTradeSize, 2), leftX, startY + rowHeight * 3, true);
+  drawMetric(ctx, 'ACTIVE DAYS', metrics.tradingDays.toString(), rightX, startY + rowHeight * 3, false);
+
+  // Línea divisoria
+  ctx.strokeStyle = '#00d4ff';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(50, startY + rowHeight * 4 + 20);
+  ctx.lineTo(width - 50, startY + rowHeight * 4 + 20);
+  ctx.stroke();
+
+  // Footer - Rating
+  const rating = getRating(metrics.degenScore);
+  ctx.fillStyle = '#ffffff';
+  ctx.font = 'bold 24px Arial';
+  ctx.textAlign = 'center';
+  ctx.fillText(rating, width / 2, height - 80);
+
+  ctx.fillStyle = '#888888';
+  ctx.font = '14px Arial';
+  ctx.fillText('Powered by Helius × Solana', width / 2, height - 40);
+
+  return canvas.toBuffer('image/png');
+}
+
+/**
+ * Dibuja una métrica individual
+ */
+function drawMetric(
+  ctx: any,
+  label: string,
+  value: string,
+  x: number,
+  y: number,
+  alignLeft: boolean = true,
+  valueColor: string = '#ffffff'
+) {
+  const alignment = alignLeft ? 'left' : 'right';
+  
+  ctx.textAlign = alignment;
+  ctx.fillStyle = '#888888';
+  ctx.font = '14px Arial';
+  ctx.fillText(label, x, y);
+
+  ctx.fillStyle = valueColor;
+  ctx.font = 'bold 24px Arial';
+  ctx.fillText(value, x, y + 28);
+}
+
+/**
+ * Obtiene color según el score
+ */
+function getScoreColor(score: number): string {
+  if (score >= 80) return '#00ff88'; // Verde brillante
+  if (score >= 60) return '#00d4ff'; // Cyan
+  if (score >= 40) return '#ffaa00'; // Naranja
+  if (score >= 20) return '#ff6600'; // Naranja oscuro
+  return '#ff4444'; // Rojo
+}
+
+/**
+ * Obtiene rating basado en score
+ */
+function getRating(score: number): string {
+  if (score >= 90) return '🔥 LEGENDARY DEGEN 🔥';
+  if (score >= 75) return '⭐ MASTER DEGEN ⭐';
+  if (score >= 60) return '💎 DIAMOND HANDS 💎';
+  if (score >= 45) return '📈 DEGEN IN TRAINING 📈';
+  if (score >= 30) return '🎲 CASUAL GAMBLER 🎲';
+  if (score >= 15) return '🐟 SMALL FRY 🐟';
+  return '😅 NGMI 😅';
 }
