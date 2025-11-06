@@ -1,0 +1,106 @@
+// Prisma schema para DegenScore Card - VERSION AVANZADA
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model DegenCard {
+  id            String   @id @default(cuid())
+  walletAddress String   @unique
+  
+  // Métricas básicas
+  degenScore    Int
+  totalTrades   Int
+  totalVolume   Float
+  profitLoss    Float
+  winRate       Float
+  bestTrade     Float
+  worstTrade    Float
+  avgTradeSize  Float
+  totalFees     Float
+  tradingDays   Int
+  
+  // Métricas avanzadas (NUEVO)
+  rugsSurvived      Int      @default(0)
+  rugsCaught        Int      @default(0)
+  totalRugValue     Float    @default(0)
+  moonshots         Int      @default(0)
+  quickFlips        Int      @default(0)
+  diamondHands      Int      @default(0)
+  avgHoldTime       Float    @default(0)
+  longestWinStreak  Int      @default(0)
+  longestLossStreak Int      @default(0)
+  volatilityScore   Float    @default(0)
+  realizedPnL       Float    @default(0)
+  unrealizedPnL     Float    @default(0)
+  firstTradeDate    DateTime?
+  
+  // Estado de mint
+  isMinted      Boolean  @default(false)
+  mintSignature String?
+  nftAddress    String?
+  
+  // Gamificación
+  badges        Badge[]
+  level         Int      @default(1)
+  xp            Int      @default(0)
+  
+  // Timestamps
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  lastSeen      DateTime @default(now())
+  
+  // Índices
+  @@index([degenScore(sort: Desc)])
+  @@index([totalVolume(sort: Desc)])
+  @@index([winRate(sort: Desc)])
+  @@index([profitLoss(sort: Desc)])
+  @@index([isMinted])
+  @@index([level(sort: Desc)])
+  @@index([createdAt(sort: Desc)])
+  @@index([lastSeen(sort: Desc)])
+  @@index([isMinted, degenScore(sort: Desc)])
+  @@index([rugsSurvived(sort: Desc)])
+  @@index([moonshots(sort: Desc)])
+  @@index([longestWinStreak(sort: Desc)])
+}
+
+model Badge {
+  id          String     @id @default(cuid())
+  name        String
+  description String
+  icon        String
+  rarity      BadgeRarity
+  unlockedAt  DateTime   @default(now())
+  
+  card        DegenCard  @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  cardId      String
+  
+  @@unique([cardId, name])
+  @@index([rarity])
+}
+
+enum BadgeRarity {
+  COMMON
+  RARE
+  EPIC
+  LEGENDARY
+}
+
+model GlobalStats {
+  id              String   @id @default("singleton")
+  totalCards      Int      @default(0)
+  totalMinted     Int      @default(0)
+  totalVolume     Float    @default(0)
+  avgDegenScore   Float    @default(0)
+  topScore        Int      @default(0)
+  totalRugsSurvived Int    @default(0)
+  totalMoonshots    Int    @default(0)
+  avgWinRate        Float  @default(0)
+  lastUpdated     DateTime @updatedAt
+}
