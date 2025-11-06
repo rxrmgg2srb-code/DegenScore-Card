@@ -59,13 +59,22 @@ export interface HeliusTransaction {
 
 /**
  * Obtiene las transacciones parseadas de una wallet usando Helius
+ * @param walletAddress - Dirección de la wallet
+ * @param limit - Número máximo de transacciones a obtener (default 100)
+ * @param before - Signature de la última transacción para paginación (opcional)
  */
 export async function getWalletTransactions(
   walletAddress: string,
-  limit: number = 100
+  limit: number = 100,
+  before?: string
 ): Promise<ParsedTransaction[]> {
   try {
-    const url = `https://api.helius.xyz/v0/addresses/${walletAddress}/transactions?api-key=${HELIUS_API_KEY}&limit=${limit}`;
+    let url = `https://api.helius.xyz/v0/addresses/${walletAddress}/transactions?api-key=${HELIUS_API_KEY}&limit=${limit}`;
+    
+    // Agregar parámetro de paginación si existe
+    if (before) {
+      url += `&before=${before}`;
+    }
     
     const response = await fetch(url);
     
