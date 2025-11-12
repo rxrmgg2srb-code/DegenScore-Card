@@ -1,7 +1,17 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { createCanvas, loadImage, registerFont } from '@napi-rs/canvas';
-import { getWalletTransactions, isValidSolanaAddress } from '../../lib/helius';
-import { calculateMetrics, formatSOL, formatNumber } from '../../lib/metrics';
+import { createCanvas } from '@napi-rs/canvas';
+import { isValidSolanaAddress } from '../../lib/helius';
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
+
+// Función auxiliar para formatear SOL
+function formatSOL(amount: number, decimals: number = 2): string {
+  if (amount >= 1e9) return `${(amount / 1e9).toFixed(decimals)}B SOL`;
+  if (amount >= 1e6) return `${(amount / 1e6).toFixed(decimals)}M SOL`;
+  if (amount >= 1e3) return `${(amount / 1e3).toFixed(decimals)}K SOL`;
+  return `${amount.toFixed(decimals)} SOL`;
+}
 
 export default async function handler(
   req: NextApiRequest,
@@ -23,23 +33,41 @@ export default async function handler(
       return res.status(400).json({ error: 'Invalid Solana wallet address' });
     }
 
-    // Obtener transacciones y calcular métricas
-    console.log(`Fetching transactions for wallet: ${walletAddress}`);
-    const transactions = await getWalletTransactions(walletAddress, 100);
-    
-    console.log(`Found ${transactions.length} transactions`);
-    const metrics = calculateMetrics(transactions);
+    console.log(`🎨 Generating card image for: ${walletAddress}`);
 
-    // Generar imagen de la card
-    const imageBuffer = await generateCardImage(walletAddress, metrics);
+    // Obtener métricas de la base de datos (ya calculadas)
+    const card = await prisma.degenCard.findUnique({
+      where: { walletAddress },
+    });
+
+    if (!card) {
+      return res.status(404).json({ 
+        error: 'Card not found. Please generate metrics first via /api/save-card' 
+      });
+    }
+
+    console.log(`✅ Found card in database with score: ${card.degenScore}`);
+
+    // Generar imagen de la card con los datos de la BD
+    const imageBuffer = await generateCardImage(walletAddress, {
+      degenScore: card.degenScore,
+      totalTrades: card.totalTrades,
+      totalVolume: card.totalVolume,
+      profitLoss: card.profitLoss,
+      winRate: card.winRate,
+      bestTrade: card.bestTrade,
+      worstTrade: card.worstTrade,
+      avgTradeSize: card.avgTradeSize,
+      tradingDays: card.tradingDays,
+    });
 
     // Retornar como PNG
     res.setHeader('Content-Type', 'image/png');
-    res.setHeader('Cache-Control', 'public, max-age=3600'); // Cache por 1 hora
+    res.setHeader('Cache-Control', 'public, max-age=3600');
     res.status(200).send(imageBuffer);
 
   } catch (error) {
-    console.error('Error generating card:', error);
+    console.error('❌ Error generating card:', error);
     res.status(500).json({ 
       error: 'Failed to generate card',
       details: error instanceof Error ? error.message : 'Unknown error'
@@ -177,11 +205,11 @@ function drawMetric(
  * Obtiene color según el score
  */
 function getScoreColor(score: number): string {
-  if (score >= 80) return '#00ff88'; // Verde brillante
-  if (score >= 60) return '#00d4ff'; // Cyan
-  if (score >= 40) return '#ffaa00'; // Naranja
-  if (score >= 20) return '#ff6600'; // Naranja oscuro
-  return '#ff4444'; // Rojo
+  if (score >= 80) return '#00ff88';
+  if (score >= 60) return '#00d4ff';
+  if (score >= 40) return '#ffaa00';
+  if (score >= 20) return '#ff6600';
+  return '#ff4444';
 }
 
 /**

@@ -1,5 +1,4 @@
-// Prisma schema para DegenScore Card - VERSION AVANZADA
-
+// Prisma schema para DegenScore Card - VERSION AVANZADA CON PAGOS
 generator client {
   provider = "prisma-client-js"
 }
@@ -40,8 +39,9 @@ model DegenCard {
   unrealizedPnL     Float    @default(0)
   firstTradeDate    DateTime?
   
-  // Estado de mint
+  // Estado de mint/pago (NUEVO - SISTEMA DE PAGOS)
   isMinted      Boolean  @default(false)
+  mintedAt      DateTime?
   mintSignature String?
   nftAddress    String?
   
@@ -90,6 +90,20 @@ enum BadgeRarity {
   RARE
   EPIC
   LEGENDARY
+}
+
+// NUEVO - Modelo para rastrear pagos
+model Payment {
+  id            String   @id @default(cuid())
+  signature     String   @unique  // Transaction signature de Solana
+  walletAddress String   // Wallet que pagó
+  amount        Float    // Cantidad en SOL
+  status        String   @default("confirmed") // confirmed, pending, failed
+  createdAt     DateTime @default(now())
+  
+  @@index([walletAddress])
+  @@index([signature])
+  @@index([createdAt(sort: Desc)])
 }
 
 model GlobalStats {
