@@ -41,8 +41,8 @@ export default async function handler(
     });
 
     if (!card) {
-      return res.status(404).json({ 
-        error: 'Card not found. Please generate metrics first via /api/save-card' 
+      return res.status(404).json({
+        error: 'Card not found. Please generate metrics first via /api/save-card'
       });
     }
 
@@ -59,6 +59,7 @@ export default async function handler(
       worstTrade: card.worstTrade,
       avgTradeSize: card.avgTradeSize,
       tradingDays: card.tradingDays,
+      isMinted: card.isMinted, // NUEVO: para controlar la marca de agua
     });
 
     // Retornar como PNG
@@ -68,7 +69,7 @@ export default async function handler(
 
   } catch (error) {
     console.error('❌ Error generating card:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Failed to generate card',
       details: error instanceof Error ? error.message : 'Unknown error'
     });
@@ -117,7 +118,7 @@ async function generateCardImage(
   ctx.fillStyle = scoreColor;
   ctx.font = 'bold 80px Arial';
   ctx.fillText(metrics.degenScore.toString(), width / 2, 190);
-  
+
   ctx.fillStyle = '#aaaaaa';
   ctx.font = '20px Arial';
   ctx.fillText('DEGEN SCORE', width / 2, 220);
@@ -174,6 +175,61 @@ async function generateCardImage(
   ctx.font = '14px Arial';
   ctx.fillText('Powered by Helius × Solana', width / 2, height - 40);
 
+  // ============================================
+  // MARCA DE AGUA (solo si NO está minteada)
+  // ============================================
+  if (!metrics.isMinted) {
+    // Overlay semi-transparente
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+    ctx.fillRect(0, 0, width, height);
+
+    // Marca de agua diagonal
+    ctx.save();
+    ctx.translate(width / 2, height / 2);
+    ctx.rotate(-Math.PI / 6); // -30 grados
+
+    // Sombra para el texto
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
+    ctx.shadowBlur = 20;
+    ctx.shadowOffsetX = 4;
+    ctx.shadowOffsetY = 4;
+
+    // Texto de marca de agua principal
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
+    ctx.font = 'bold 60px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('PREVIEW', 0, -20);
+
+    ctx.font = 'bold 40px Arial';
+    ctx.fillText('NOT MINTED', 0, 40);
+
+    ctx.restore();
+
+    // Badge "PREVIEW" en esquina superior derecha
+    ctx.fillStyle = 'rgba(255, 100, 100, 0.9)';
+    ctx.fillRect(width - 150, 30, 120, 40);
+    
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 18px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('PREVIEW', width - 90, 56);
+
+    // Mensaje "Mint to remove watermark"
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+    ctx.font = 'bold 16px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('🔒 Mint to remove watermark', width / 2, height - 15);
+  } else {
+    // Badge "MINTED" en esquina superior derecha (opcional)
+    ctx.fillStyle = 'rgba(0, 212, 255, 0.9)';
+    ctx.fillRect(width - 150, 30, 120, 40);
+    
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 18px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('✓ MINTED', width - 90, 56);
+  }
+
   return canvas.toBuffer('image/png');
 }
 
@@ -190,7 +246,7 @@ function drawMetric(
   valueColor: string = '#ffffff'
 ) {
   const alignment = alignLeft ? 'left' : 'right';
-  
+
   ctx.textAlign = alignment;
   ctx.fillStyle = '#888888';
   ctx.font = '14px Arial';
