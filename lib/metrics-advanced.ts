@@ -31,54 +31,39 @@ export interface WalletMetrics {
   volatilityScore: number;
 }
 
-interface TokenPrice {
-  mint: string;
-  priceUSD: number;
-  priceSOL: number;
+interface SimpleSwap {
   timestamp: number;
-  source: 'jupiter' | 'birdeye' | 'estimated';
-}
-
-interface PreciseSwap {
-  timestamp: number;
-  signature: string;
-  type: 'buy' | 'sell';
   tokenMint: string;
-  tokenAmount: number;
+  type: 'buy' | 'sell';
   solAmount: number;
-  pricePerToken: number;  // Precio real en SOL por token
-  totalValueSOL: number;   // Valor total en SOL
-  realizedPnL: number;
+  tokenAmount: number;
 }
 
 const SOL_MINT = 'So11111111111111111111111111111111111111112';
-const JUPITER_PRICE_API = 'https://price.jup.ag/v4/price';
 
 // ============================================================================
-// FUNCIÓN PRINCIPAL - 100% PRECISA
+// FUNCIÓN PRINCIPAL - CONSERVADORA Y REALISTA
 // ============================================================================
 
 export async function calculateAdvancedMetrics(
   walletAddress: string
 ): Promise<WalletMetrics> {
   try {
-    console.log('📊 Fetching all transactions...');
+    console.log('📊 Fetching transactions...');
     const allTransactions = await fetchAllTransactions(walletAddress);
     
     if (!allTransactions || allTransactions.length === 0) {
       return getDefaultMetrics();
     }
 
-    console.log(`✅ Found ${allTransactions.length} total transactions`);
+    console.log(`✅ Found ${allTransactions.length} transactions`);
 
-    // Parsear swaps con precios REALES
-    console.log('💱 Parsing swaps with REAL prices...');
-    const preciseSwaps = await parseSwapsWithRealPrices(allTransactions, walletAddress);
+    console.log('💱 Parsing SIMPLE swaps only...');
+    const simpleSwaps = extractSimpleSwaps(allTransactions, walletAddress);
     
-    console.log(`✅ Parsed ${preciseSwaps.length} swaps with real prices`);
+    console.log(`✅ Found ${simpleSwaps.length} simple swaps`);
 
-    // Calcular métricas desde swaps precisos
-    const metrics = calculateMetricsFromPreciseSwaps(preciseSwaps, allTransactions);
+    const metrics = calculateConservativeMetrics(simpleSwaps, allTransactions);
     
     return metrics;
   } catch (error) {
@@ -88,7 +73,7 @@ export async function calculateAdvancedMetrics(
 }
 
 // ============================================================================
-// OBTENER TRANSACCIONES
+// OBTENER TRANSACCIONES - FORZAR 100 BATCHES SIEMPRE
 // ============================================================================
 
 async function fetchAllTransactions(
@@ -97,202 +82,126 @@ async function fetchAllTransactions(
   const allTransactions: ParsedTransaction[] = [];
   let before: string | undefined;
   let fetchCount = 0;
-  const maxFetches = 100;
+  const FIXED_FETCH_LIMIT = 100;
 
-  console.log(`📊 Starting fetch for ${walletAddress.slice(0, 8)}...`);
+  console.log(`📊 Fetching EXACTLY ${FIXED_FETCH_LIMIT} batches (no early exit)`);
 
-  while (fetchCount < maxFetches) {
+  // FORZAR 100 batches - NO PARAR ANTES
+  while (fetchCount < FIXED_FETCH_LIMIT) {
     try {
       const batch = await getWalletTransactions(walletAddress, 100, before);
       
-      if (batch.length === 0) {
-        console.log(`  ✓ No more transactions`);
-        break;
+      console.log(`  Batch ${fetchCount + 1}/${FIXED_FETCH_LIMIT}: got ${batch.length} transactions`);
+
+      if (batch.length > 0) {
+        allTransactions.push(...batch);
+        before = batch[batch.length - 1].signature;
       }
-
-      allTransactions.push(...batch);
-      console.log(`  Fetched ${allTransactions.length} transactions...`);
       
-      before = batch[batch.length - 1].signature;
       fetchCount++;
-      
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise(resolve => setTimeout(resolve, 500));
 
-      if (allTransactions.length >= 10000) break;
     } catch (error) {
-      console.error(`  ❌ Error:`, error);
-      break;
+      console.error(`  ❌ Error on batch ${fetchCount + 1}:`, error);
+      fetchCount++;
+      continue;
     }
   }
 
-  return allTransactions.sort((a, b) => a.timestamp - b.timestamp);
+  console.log(`✅ Completed ALL ${FIXED_FETCH_LIMIT} batches`);
+  console.log(`✅ Total transactions collected: ${allTransactions.length}`);
+
+  // ORDENAMIENTO DETERMINISTA
+  return allTransactions.sort((a, b) => {
+    if (a.timestamp !== b.timestamp) {
+      return a.timestamp - b.timestamp;
+    }
+    return a.signature.localeCompare(b.signature);
+  });
 }
 
 // ============================================================================
-// PARSEAR SWAPS CON PRECIOS REALES
+// EXTRAER SOLO SWAPS SIMPLES Y VERIFICABLES
 // ============================================================================
 
-async function parseSwapsWithRealPrices(
+function extractSimpleSwaps(
   transactions: ParsedTransaction[],
   walletAddress: string
-): Promise<PreciseSwap[]> {
-  const swaps: PreciseSwap[] = [];
+): SimpleSwap[] {
+  const swaps: SimpleSwap[] = [];
 
-  // Extraer todos los tokens únicos primero
-  const uniqueTokens = new Set<string>();
-  
-  for (const tx of transactions) {
-    if (tx.type !== 'SWAP' && !tx.description?.toLowerCase().includes('swap')) {
-      continue;
-    }
-    
-    if (tx.tokenTransfers) {
-      tx.tokenTransfers.forEach(t => uniqueTokens.add(t.mint));
-    }
-  }
-
-  console.log(`🔍 Found ${uniqueTokens.size} unique tokens, fetching prices...`);
-
-  // Obtener precios actuales de todos los tokens
-  const tokenPrices = await fetchTokenPrices(Array.from(uniqueTokens));
-
-  // Procesar cada swap
   for (const tx of transactions) {
     if (tx.type !== 'SWAP' && !tx.description?.toLowerCase().includes('swap')) {
       continue;
     }
 
-    if (!tx.tokenTransfers || tx.tokenTransfers.length < 2) continue;
+    if (!tx.tokenTransfers || tx.tokenTransfers.length === 0) continue;
+    if (!tx.nativeTransfers || tx.nativeTransfers.length === 0) continue;
 
-    const sent = tx.tokenTransfers.filter(t => t.fromUserAccount === walletAddress);
-    const received = tx.tokenTransfers.filter(t => t.toUserAccount === walletAddress);
-
-    if (sent.length === 0 || received.length === 0) continue;
-
-    // Calcular SOL neto
     let solNet = 0;
-    if (tx.nativeTransfers) {
-      for (const nt of tx.nativeTransfers) {
-        if (nt.fromUserAccount === walletAddress) {
-          solNet -= nt.amount / 1e9;
-        }
-        if (nt.toUserAccount === walletAddress) {
-          solNet += nt.amount / 1e9;
-        }
+    for (const nt of tx.nativeTransfers) {
+      if (nt.fromUserAccount === walletAddress) {
+        solNet += nt.amount / 1e9;
+      }
+      if (nt.toUserAccount === walletAddress) {
+        solNet -= nt.amount / 1e9;
       }
     }
 
-    // Determinar el token principal (no SOL)
-    const tokenTransfer = received.find(t => t.mint !== SOL_MINT) || 
-                         sent.find(t => t.mint !== SOL_MINT);
-    
-    if (!tokenTransfer) continue;
+    if (Math.abs(solNet) < 0.001) continue;
 
-    const isBuy = received.some(t => t.mint === tokenTransfer.mint);
-    const tokenAmount = isBuy 
-      ? received.find(t => t.mint === tokenTransfer.mint)!.tokenAmount
-      : sent.find(t => t.mint === tokenTransfer.mint)!.tokenAmount;
+    const tokenTransfers = tx.tokenTransfers.filter(t => 
+      t.mint !== SOL_MINT &&
+      (t.fromUserAccount === walletAddress || t.toUserAccount === walletAddress)
+    );
 
-    // Obtener precio del token
-    const tokenPrice = tokenPrices.get(tokenTransfer.mint);
+    if (tokenTransfers.length === 0) continue;
+
+    const tokenTransfer = tokenTransfers[0];
     
-    // Calcular precio por token basado en el swap real
-    const pricePerToken = Math.abs(solNet / tokenAmount);
+    const isBuy = solNet > 0;
+    const tokenAmount = isBuy
+      ? tokenTransfers.find(t => t.toUserAccount === walletAddress)?.tokenAmount || 0
+      : tokenTransfers.find(t => t.fromUserAccount === walletAddress)?.tokenAmount || 0;
+
+    if (tokenAmount === 0) continue;
+
+    const pricePerToken = Math.abs(solNet) / tokenAmount;
     
-    // Usar precio de mercado si está disponible, sino usar el del swap
-    const marketPriceSOL = tokenPrice?.priceSOL || pricePerToken;
+    if (pricePerToken > 1 || pricePerToken < 0.0000001) {
+      console.warn(`⚠️  Ignoring suspicious swap: ${pricePerToken.toFixed(10)} SOL per token`);
+      continue;
+    }
+
+    if (Math.abs(solNet) > 50) {
+      console.warn(`⚠️  Ignoring large swap: ${Math.abs(solNet).toFixed(2)} SOL`);
+      continue;
+    }
 
     swaps.push({
       timestamp: tx.timestamp,
-      signature: tx.signature,
-      type: isBuy ? 'buy' : 'sell',
       tokenMint: tokenTransfer.mint,
-      tokenAmount,
+      type: isBuy ? 'buy' : 'sell',
       solAmount: Math.abs(solNet),
-      pricePerToken: marketPriceSOL,
-      totalValueSOL: tokenAmount * marketPriceSOL,
-      realizedPnL: 0, // Calculamos después
+      tokenAmount,
     });
   }
-
-  // Calcular P&L real por token
-  calculateRealPnL(swaps);
 
   return swaps;
 }
 
 // ============================================================================
-// OBTENER PRECIOS REALES DE JUPITER
+// CALCULAR MÉTRICAS CONSERVADORAS
 // ============================================================================
 
-async function fetchTokenPrices(mints: string[]): Promise<Map<string, TokenPrice>> {
-  const prices = new Map<string, TokenPrice>();
-  
-  try {
-    // Jupiter acepta múltiples tokens a la vez
-    const mintsList = mints.filter(m => m !== SOL_MINT).join(',');
-    
-    if (!mintsList) return prices;
+function calculateConservativeMetrics(
+  swaps: SimpleSwap[],
+  transactions: ParsedTransaction[]
+): WalletMetrics {
+  const totalTrades = swaps.length;
+  const totalVolume = swaps.reduce((sum, s) => sum + s.solAmount, 0);
 
-    // Dividir en chunks de 100 tokens (límite de Jupiter)
-    const chunks: string[][] = [];
-    const mintsArray = mintsList.split(',');
-    
-    for (let i = 0; i < mintsArray.length; i += 100) {
-      chunks.push(mintsArray.slice(i, i + 100));
-    }
-
-    for (const chunk of chunks) {
-      try {
-        const response = await fetch(
-          `${JUPITER_PRICE_API}?ids=${chunk.join(',')}`
-        );
-
-        if (!response.ok) {
-          console.warn(`⚠️  Jupiter API error: ${response.status}`);
-          continue;
-        }
-
-        const data = await response.json();
-        
-        // Jupiter devuelve precios en USD
-        // Necesitamos convertir a SOL (asumimos 1 SOL = $150 aprox)
-        const SOL_PRICE_USD = 150; // Obtener precio real si es posible
-
-        for (const [mint, priceData] of Object.entries(data.data || {})) {
-          const priceInfo = priceData as any;
-          prices.set(mint, {
-            mint,
-            priceUSD: priceInfo.price,
-            priceSOL: priceInfo.price / SOL_PRICE_USD,
-            timestamp: Date.now() / 1000,
-            source: 'jupiter',
-          });
-        }
-
-        console.log(`  ✓ Fetched prices for ${Object.keys(data.data || {}).length} tokens from Jupiter`);
-        
-        // Rate limiting
-        await new Promise(resolve => setTimeout(resolve, 200));
-      } catch (error) {
-        console.warn(`⚠️  Error fetching chunk:`, error);
-      }
-    }
-  } catch (error) {
-    console.error('❌ Error fetching token prices:', error);
-  }
-
-  return prices;
-}
-
-// ============================================================================
-// CALCULAR P&L REAL
-// ============================================================================
-
-function calculateRealPnL(swaps: PreciseSwap[]): void {
-  // Agrupar por token
-  const tokenSwaps = new Map<string, PreciseSwap[]>();
-
+  const tokenSwaps = new Map<string, SimpleSwap[]>();
   for (const swap of swaps) {
     if (!tokenSwaps.has(swap.tokenMint)) {
       tokenSwaps.set(swap.tokenMint, []);
@@ -300,79 +209,51 @@ function calculateRealPnL(swaps: PreciseSwap[]): void {
     tokenSwaps.get(swap.tokenMint)!.push(swap);
   }
 
-  // Calcular P&L por token usando FIFO (First In First Out)
-  for (const [mint, swapsList] of tokenSwaps) {
-    swapsList.sort((a, b) => a.timestamp - b.timestamp);
+  let totalPnL = 0;
+  const completedTrades: { pnl: number; timestamp: number }[] = [];
 
-    const inventory: Array<{ amount: number; costBasis: number; timestamp: number }> = [];
+  for (const [mint, swapList] of tokenSwaps) {
+    swapList.sort((a, b) => a.timestamp - b.timestamp);
 
-    for (const swap of swapsList) {
+    let totalBought = 0;
+    let totalSpent = 0;
+
+    for (const swap of swapList) {
       if (swap.type === 'buy') {
-        // Agregar a inventario
-        inventory.push({
-          amount: swap.tokenAmount,
-          costBasis: swap.solAmount,
-          timestamp: swap.timestamp,
-        });
-        swap.realizedPnL = 0;
+        totalBought += swap.tokenAmount;
+        totalSpent += swap.solAmount;
       } else {
-        // Vender: usar FIFO
-        let remainingToSell = swap.tokenAmount;
-        let totalCost = 0;
+        if (totalBought > 0) {
+          const proportion = Math.min(swap.tokenAmount / totalBought, 1);
+          const costBasis = totalSpent * proportion;
+          const pnl = swap.solAmount - costBasis;
 
-        while (remainingToSell > 0 && inventory.length > 0) {
-          const batch = inventory[0];
-
-          if (batch.amount <= remainingToSell) {
-            // Vender todo el batch
-            totalCost += batch.costBasis;
-            remainingToSell -= batch.amount;
-            inventory.shift();
+          if (Math.abs(pnl) <= 20) {
+            totalPnL += pnl;
+            completedTrades.push({ pnl, timestamp: swap.timestamp });
           } else {
-            // Vender parte del batch
-            const proportion = remainingToSell / batch.amount;
-            totalCost += batch.costBasis * proportion;
-            batch.amount -= remainingToSell;
-            batch.costBasis *= (1 - proportion);
-            remainingToSell = 0;
+            console.warn(`⚠️  Ignoring unrealistic P&L: ${pnl.toFixed(2)} SOL`);
           }
-        }
 
-        // P&L = lo que recibiste - lo que costó
-        swap.realizedPnL = swap.solAmount - totalCost;
+          totalBought -= swap.tokenAmount;
+          totalSpent *= (1 - proportion);
+        }
       }
     }
   }
-}
 
-// ============================================================================
-// CALCULAR MÉTRICAS
-// ============================================================================
+  const wins = completedTrades.filter(t => t.pnl > 0).length;
+  const losses = completedTrades.filter(t => t.pnl < 0).length;
+  const winRate = completedTrades.length > 0 
+    ? (wins / completedTrades.length) * 100 
+    : 0;
 
-function calculateMetricsFromPreciseSwaps(
-  swaps: PreciseSwap[],
-  transactions: ParsedTransaction[]
-): WalletMetrics {
-  const totalTrades = swaps.length;
-  const totalVolume = swaps.reduce((sum, s) => sum + s.solAmount, 0);
-  const profitLoss = swaps.reduce((sum, s) => sum + s.realizedPnL, 0);
-
-  const sales = swaps.filter(s => s.type === 'sell');
-  const wins = sales.filter(s => s.realizedPnL > 0).length;
-  const losses = sales.filter(s => s.realizedPnL < 0).length;
-  const winRate = sales.length > 0 ? (wins / sales.length) * 100 : 0;
-
-  // Best/Worst con validación
-  const realisticSales = sales.filter(s => {
-    return Math.abs(s.realizedPnL) < 100; // Max 100 SOL ganancia/pérdida
-  });
-
-  const bestTrade = realisticSales.length > 0
-    ? Math.max(...realisticSales.map(s => s.realizedPnL))
+  const bestTrade = completedTrades.length > 0
+    ? Math.max(...completedTrades.map(t => t.pnl))
     : 0;
   
-  const worstTrade = realisticSales.length > 0
-    ? Math.min(...realisticSales.map(s => s.realizedPnL))
+  const worstTrade = completedTrades.length > 0
+    ? Math.min(...completedTrades.map(t => t.pnl))
     : 0;
 
   const avgTradeSize = totalTrades > 0 ? totalVolume / totalTrades : 0;
@@ -394,53 +275,53 @@ function calculateMetricsFromPreciseSwaps(
 
   const firstTradeDate = swaps.length > 0 ? swaps[0].timestamp : Date.now() / 1000;
 
-  // Win streaks
   let currentWinStreak = 0;
   let longestWinStreak = 0;
   let longestLossStreak = 0;
   let currentLossStreak = 0;
 
-  for (const sale of sales) {
-    if (sale.realizedPnL > 0) {
+  completedTrades.sort((a, b) => a.timestamp - b.timestamp);
+
+  for (const trade of completedTrades) {
+    if (trade.pnl > 0) {
       currentWinStreak++;
       currentLossStreak = 0;
       longestWinStreak = Math.max(longestWinStreak, currentWinStreak);
-    } else if (sale.realizedPnL < 0) {
+    } else if (trade.pnl < 0) {
       currentLossStreak++;
       currentWinStreak = 0;
       longestLossStreak = Math.max(longestLossStreak, currentLossStreak);
     }
   }
 
-  // Moonshots (>10x)
-  const moonshots = sales.filter(s => {
-    // Buscar la compra correspondiente
-    const buy = swaps.find(
-      b => b.type === 'buy' && 
-      b.tokenMint === s.tokenMint && 
-      b.timestamp < s.timestamp
-    );
-    return buy && (s.solAmount / buy.solAmount) > 10;
-  }).length;
+  const moonshots = completedTrades.filter(t => t.pnl > 0 && t.pnl > 5).length;
 
   const degenScore = calculateDegenScore({
     totalTrades,
     totalVolume,
-    profitLoss,
+    profitLoss: totalPnL,
     winRate,
     tradingDays: uniqueDays,
     moonshots,
   });
 
-  console.log(`💰 FINAL P&L: ${profitLoss.toFixed(2)} SOL`);
-  console.log(`🎯 Win Rate: ${winRate.toFixed(1)}%`);
-  console.log(`📊 Best: ${bestTrade.toFixed(2)} / Worst: ${worstTrade.toFixed(2)}`);
-  console.log(`🚀 Moonshots: ${moonshots}`);
+  console.log('\n' + '='.repeat(60));
+  console.log('📊 CONSERVATIVE METRICS SUMMARY');
+  console.log('='.repeat(60));
+  console.log(`Total Swaps Analyzed: ${totalTrades}`);
+  console.log(`Completed Trades: ${completedTrades.length}`);
+  console.log(`Total Volume: ${totalVolume.toFixed(2)} SOL`);
+  console.log(`Estimated P&L: ${totalPnL.toFixed(2)} SOL`);
+  console.log(`Win Rate: ${winRate.toFixed(1)}%`);
+  console.log(`Best Trade: ${bestTrade.toFixed(2)} SOL`);
+  console.log(`Worst Trade: ${worstTrade.toFixed(2)} SOL`);
+  console.log(`Moonshots: ${moonshots}`);
+  console.log('='.repeat(60) + '\n');
 
   return {
     totalTrades,
     totalVolume,
-    profitLoss,
+    profitLoss: totalPnL,
     winRate,
     bestTrade,
     worstTrade,
@@ -456,7 +337,7 @@ function calculateMetricsFromPreciseSwaps(
     avgHoldTime: 0,
     quickFlips: 0,
     diamondHands: 0,
-    realizedPnL: profitLoss,
+    realizedPnL: totalPnL,
     unrealizedPnL: 0,
     firstTradeDate,
     longestWinStreak,
@@ -480,15 +361,16 @@ function calculateDegenScore(metrics: any): number {
 
   score += Math.min(metrics.winRate / 5, 20);
 
-  if (metrics.profitLoss > 100) score += 20;
-  else if (metrics.profitLoss > 50) score += 15;
-  else if (metrics.profitLoss > 10) score += 10;
+  if (metrics.profitLoss > 50) score += 20;
+  else if (metrics.profitLoss > 20) score += 15;
+  else if (metrics.profitLoss > 5) score += 10;
   else if (metrics.profitLoss > 0) score += 5;
-  else score += Math.max(-5, metrics.profitLoss / 10);
+  else score += Math.max(-5, metrics.profitLoss / 5);
 
-  score += Math.min(metrics.moonshots * 3, 15);
-  score += Math.min(metrics.totalTrades / 20, 5);
+  score += Math.min(metrics.totalTrades / 20, 10);
   score += Math.min(metrics.tradingDays / 4, 5);
+
+  score += Math.min(metrics.moonshots * 2, 10);
 
   return Math.round(Math.min(Math.max(score, 0), 100));
 }
