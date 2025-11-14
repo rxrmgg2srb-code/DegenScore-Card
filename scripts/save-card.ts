@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { PrismaClient } from '@prisma/client';
-import { getWalletTransactions, isValidSolanaAddress } from '../../lib/helius';
+import { getWalletTransactions, isValidSolanaAddress } from '../../lib/services/helius';
 import { calculateMetrics } from '../../lib/metrics';
 import { calculateUnlockedBadges, calculateLevel, calculateXP } from '../../lib/badges';
 
