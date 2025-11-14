@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { createCanvas, loadImage } from '@napi-rs/canvas';
-import { isValidSolanaAddress } from '../../lib/helius';
+// LÍNEA CORREGIDA (10/10)
+import { isValidSolanaAddress } from '../../lib/services/helius';
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();

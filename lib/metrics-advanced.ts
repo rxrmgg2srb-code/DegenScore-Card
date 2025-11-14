@@ -1,4 +1,5 @@
-import { ParsedTransaction, getWalletTransactions } from './helius';
+// DESPUÉS (Ruta correcta)
+import { getWalletTransactions } from './services/helius';
 
 // ============================================================================
 // INTERFACES

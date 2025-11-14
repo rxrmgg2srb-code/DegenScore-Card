@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { calculateAdvancedMetrics } from '../../lib/metrics-advanced';
+import { generateBadges } from '../../lib/badges-generator'; // <--- NUEVA IMPORTACIÓN
 
 export default async function handler(
   req: NextApiRequest,
@@ -18,96 +19,44 @@ export default async function handler(
 
     console.log('🔍 Analyzing wallet:', walletAddress);
 
-    // Usar la función real de análisis
+    // 1. Usar la función real de análisis
     const metrics = await calculateAdvancedMetrics(walletAddress);
 
     console.log('✅ Analysis complete');
 
-    // Generar badges basados en métricas reales
-    const badges = [];
+    // 2. Generar badges usando la función encapsulada (MÁS LIMPIO)
+    const badges = generateBadges(metrics); // <--- LÓGICA EXTRAÍDA AQUÍ
     
-    if (metrics.totalTrades > 100) {
-      badges.push({ 
-        name: String('Active Trader'), 
-        description: String(`${metrics.totalTrades} trades executed`), 
-        icon: String('📈'), 
-        rarity: String('COMMON')
-      });
-    }
-    
-    if (metrics.totalTrades > 500) {
-      badges.push({ 
-        name: String('Volume King'), 
-        description: String(`${metrics.totalTrades} trades`), 
-        icon: String('👑'), 
-        rarity: String('RARE')
-      });
-    }
-    
-    if (metrics.winRate > 60) {
-      badges.push({ 
-        name: String('Winning Streak'), 
-        description: String(`${metrics.winRate.toFixed(1)}% win rate`), 
-        icon: String('🔥'), 
-        rarity: String('EPIC')
-      });
-    }
-
-    if (metrics.totalVolume > 1000) {
-      badges.push({ 
-        name: String('Whale'), 
-        description: String(`${metrics.totalVolume.toFixed(0)} SOL volume`), 
-        icon: String('🐋'), 
-        rarity: String('LEGENDARY')
-      });
-    }
-
-    if (metrics.tradingDays > 30) {
-      badges.push({ 
-        name: String('Consistent Trader'), 
-        description: String(`Active for ${metrics.tradingDays} days`), 
-        icon: String('📅'), 
-        rarity: String('RARE')
-      });
-    }
-
-    if (metrics.moonshots > 5) {
-      badges.push({ 
-        name: String('Moonshot Hunter'), 
-        description: String(`${metrics.moonshots} big wins`), 
-        icon: String('🚀'), 
-        rarity: String('EPIC')
-      });
-    }
-
     // Preparar respuesta con los datos reales
     const analysisData = {
-      degenScore: Number(metrics.degenScore),
-      totalTrades: Number(metrics.totalTrades),
-      totalVolume: Number(metrics.totalVolume),
-      profitLoss: Number(metrics.profitLoss),
-      winRate: Number(metrics.winRate),
-      bestTrade: Number(metrics.bestTrade),
-      worstTrade: Number(metrics.worstTrade),
-      avgTradeSize: Number(metrics.avgTradeSize),
-      totalFees: Number(metrics.totalFees),
-      tradingDays: Number(metrics.tradingDays),
+      // Uso de Number() es redundante si TypeScript está configurado correctamente
+      // pero se mantiene si es necesario asegurar el tipo en la respuesta JSON.
+      degenScore: metrics.degenScore,
+      totalTrades: metrics.totalTrades,
+      totalVolume: metrics.totalVolume,
+      profitLoss: metrics.profitLoss,
+      winRate: metrics.winRate,
+      bestTrade: metrics.bestTrade,
+      worstTrade: metrics.worstTrade,
+      avgTradeSize: metrics.avgTradeSize,
+      totalFees: metrics.totalFees,
+      tradingDays: metrics.tradingDays,
       level: Math.floor(metrics.degenScore / 10) + 1,
       xp: metrics.degenScore * 10,
-      rugsSurvived: Number(metrics.rugsSurvived),
-      rugsCaught: Number(metrics.rugsCaught),
-      totalRugValue: Number(metrics.totalRugValue),
-      moonshots: Number(metrics.moonshots),
-      avgHoldTime: Number(metrics.avgHoldTime),
-      quickFlips: Number(metrics.quickFlips),
-      diamondHands: Number(metrics.diamondHands),
-      realizedPnL: Number(metrics.realizedPnL),
-      unrealizedPnL: Number(metrics.unrealizedPnL),
+      rugsSurvived: metrics.rugsSurvived,
+      rugsCaught: metrics.rugsCaught,
+      totalRugValue: metrics.totalRugValue,
+      moonshots: metrics.moonshots,
+      avgHoldTime: metrics.avgHoldTime,
+      quickFlips: metrics.quickFlips,
+      diamondHands: metrics.diamondHands,
+      realizedPnL: metrics.realizedPnL,
+      unrealizedPnL: metrics.unrealizedPnL,
       firstTradeDate: new Date(metrics.firstTradeDate * 1000).toISOString(),
-      longestWinStreak: Number(metrics.longestWinStreak),
-      longestLossStreak: Number(metrics.longestLossStreak),
-      volatilityScore: Number(metrics.volatilityScore),
-      badges,
+      longestWinStreak: metrics.longestWinStreak,
+      longestLossStreak: metrics.longestLossStreak,
+      volatilityScore: metrics.volatilityScore,
+      badges, // <--- LISTA DE BADGES GENERADA
     };
 
     res.status(200).json(analysisData);
