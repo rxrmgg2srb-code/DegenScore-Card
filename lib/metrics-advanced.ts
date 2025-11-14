@@ -120,28 +120,20 @@ async function fetchAllTransactionsOptimized(
   const allTransactions: ParsedTransaction[] = [];
   let before: string | undefined;
   let fetchCount = 0;
-  const MAX_BATCHES = 50; // Reducido de 100
-  const BATCH_SIZE = 1000; // Aumentado de 100 (Helius soporta hasta 1000)
-  const DELAY_MS = 100; // Reducido de 500ms
-  let consecutiveEmpty = 0;
+  const MAX_BATCHES = 100; // Mismo que original pero con batches más grandes
+  const BATCH_SIZE = 1000; // 10x más grande (Helius soporta hasta 1000)
+  const DELAY_MS = 200; // Delay conservador para no saturar API
 
-  console.log(`📊 Fetching with optimized settings (1000/batch, 100ms delay)`);
+  console.log(`📊 Fetching ALL batches (1000/batch, 200ms delay, ${MAX_BATCHES} batches)`);
 
+  // SIEMPRE hacer todos los batches - NO early exit
   while (fetchCount < MAX_BATCHES) {
     try {
       const batch = await getWalletTransactions(walletAddress, BATCH_SIZE, before);
 
-      console.log(`  Batch ${fetchCount + 1}: got ${batch.length} transactions`);
+      console.log(`  Batch ${fetchCount + 1}/${MAX_BATCHES}: got ${batch.length} transactions`);
 
-      if (batch.length === 0) {
-        consecutiveEmpty++;
-        // Early exit si no hay más transacciones
-        if (consecutiveEmpty >= 2) {
-          console.log('✅ No more transactions, stopping early');
-          break;
-        }
-      } else {
-        consecutiveEmpty = 0;
+      if (batch.length > 0) {
         allTransactions.push(...batch);
         before = batch[batch.length - 1].signature;
       }
@@ -157,14 +149,13 @@ async function fetchAllTransactionsOptimized(
         );
       }
 
-      // Delay más corto
-      if (batch.length > 0) {
-        await new Promise(resolve => setTimeout(resolve, DELAY_MS));
-      }
+      // Delay para no saturar API
+      await new Promise(resolve => setTimeout(resolve, DELAY_MS));
 
     } catch (error) {
       console.error(`  ❌ Error on batch ${fetchCount + 1}:`, error);
       fetchCount++;
+      await new Promise(resolve => setTimeout(resolve, 500)); // Delay más largo en error
       continue;
     }
   }
