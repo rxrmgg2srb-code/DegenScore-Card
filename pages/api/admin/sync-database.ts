@@ -1,3 +1,4 @@
+// Admin endpoint to sync database schema without migration files
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { exec } from 'child_process';
 import { promisify } from 'util';
