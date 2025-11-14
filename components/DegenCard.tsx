@@ -19,6 +19,7 @@ export default function DegenCard() {
   const [showShareModal, setShowShareModal] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [hasPaid, setHasPaid] = useState(false);
+  const [pendingProfileData, setPendingProfileData] = useState<ProfileData | null>(null);
 
   const [analyzing, setAnalyzing] = useState(false);
   const [analysisProgress, setAnalysisProgress] = useState(0);
@@ -139,9 +140,9 @@ export default function DegenCard() {
           setCurrentAchievement(achievements.firstCard);
         }, 2000);
 
-        // Show upgrade modal
+        // Show profile modal FIRST (before payment)
         setTimeout(() => {
-          setShowUpgradeModal(true);
+          setShowProfileModal(true);
         }, 1000);
       }, 500);
       
@@ -154,41 +155,80 @@ export default function DegenCard() {
     }
   };
 
-  const handleUpgrade = () => {
+  const handleUpgrade = async () => {
     setShowUpgradeModal(false);
-    setHasPaid(true);
 
     // Trigger premium unlock celebration
     setCelebrationType('premium-unlock');
     setShowCelebration(true);
     setCurrentAchievement(achievements.premiumUnlock);
 
-    // Show share modal FIRST (viralidad forzada!)
-    setTimeout(() => {
-      setShowShareModal(true);
-    }, 1500);
+    try {
+      // Guardar los datos del perfil en la base de datos DESPUÉS del pago
+      if (pendingProfileData) {
+        console.log('📝 Saving profile to database after payment:', walletAddress);
+        const response = await fetch('/api/update-profile', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            walletAddress: walletAddress,
+            ...pendingProfileData,
+          }),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to save profile');
+        }
+
+        console.log('✅ Profile saved to database');
+
+        // Esperar un momento antes de regenerar
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
+        // Regenerar la tarjeta premium con los datos del perfil
+        console.log('🎨 Regenerating premium card with profile data...');
+        const imageResponse = await fetch('/api/generate-card', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ walletAddress: walletAddress }),
+        });
+
+        if (imageResponse.ok) {
+          const blob = await imageResponse.blob();
+          const imageUrl = URL.createObjectURL(blob);
+          setCardImage(imageUrl);
+          console.log('✅ Premium card generated!');
+        }
+      }
+
+      setHasPaid(true);
+
+      // Show share modal (viralidad forzada!)
+      setTimeout(() => {
+        setShowShareModal(true);
+      }, 1500);
+
+    } catch (error) {
+      console.error('Error updating profile after payment:', error);
+      alert(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
   };
 
   const handleShared = () => {
     setShowShareModal(false);
-
-    // After sharing, show profile modal
-    setTimeout(() => {
-      setShowProfileModal(true);
-    }, 500);
+    // Ya no necesitamos mostrar ProfileFormModal porque ya se llenó antes del pago
   };
 
   const handleSkipShare = () => {
     setShowShareModal(false);
-
-    // If they skip sharing, still let them continue
-    setTimeout(() => {
-      setShowProfileModal(true);
-    }, 500);
+    // Ya no necesitamos mostrar ProfileFormModal porque ya se llenó antes del pago
   };
 
   const handleSkip = () => {
     setShowUpgradeModal(false);
+    // Limpiar los datos del perfil pendientes si el usuario decide no pagar
+    setPendingProfileData(null);
     downloadBasicCard();
   };
 
@@ -204,48 +244,17 @@ export default function DegenCard() {
   };
 
   const handleProfileSubmit = async (profileData: ProfileData) => {
-    try {
-      console.log('📝 Saving profile for:', walletAddress);
-      const response = await fetch('/api/update-profile', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          walletAddress: walletAddress,
-          ...profileData,
-        }),
-      });
+    // Guardar los datos del perfil temporalmente (NO a la base de datos todavía)
+    console.log('📝 Profile data saved temporarily:', profileData);
+    setPendingProfileData(profileData);
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to save profile');
-      }
+    // Cerrar el modal de perfil
+    setShowProfileModal(false);
 
-      console.log('✅ Profile saved');
-
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      console.log('🎨 Regenerating premium card...');
-      const imageResponse = await fetch('/api/generate-card', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ walletAddress: walletAddress }),
-      });
-
-      if (imageResponse.ok) {
-        const blob = await imageResponse.blob();
-        const imageUrl = URL.createObjectURL(blob);
-        setCardImage(imageUrl);
-        console.log('✅ Premium card generated!');
-      }
-
-      setShowProfileModal(false);
-      setHasPaid(true); // ✅ Marcar como pagado para mostrar el botón
-      // ❌ ELIMINADO: downloadPremiumCard(); 
-      
-    } catch (error) {
-      console.error('Error:', error);
-      alert(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
+    // Mostrar el modal de pago/upgrade
+    setTimeout(() => {
+      setShowUpgradeModal(true);
+    }, 500);
   };
 
   const downloadPremiumCard = () => {
@@ -453,7 +462,11 @@ export default function DegenCard() {
 
       <ProfileFormModal
         isOpen={showProfileModal}
-        onClose={() => setShowProfileModal(false)}
+        onClose={() => {
+          setShowProfileModal(false);
+          // Si el usuario cierra el modal sin llenar el perfil, descargar tarjeta básica
+          downloadBasicCard();
+        }}
         onSubmit={handleProfileSubmit}
         walletAddress={walletAddress}
       />
