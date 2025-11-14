@@ -5,6 +5,7 @@ import { GlobalStats } from '../components/GlobalStats';
 import { LiveActivityFeed } from '../components/LiveActivityFeed';
 import OnboardingTour from '../components/OnboardingTour';
 import WeeklyChallengeBanner from '../components/WeeklyChallengeBanner';
+import LanguageSelector from '../components/LanguageSelector';
 
 export default function Home() {
   return (
@@ -20,6 +21,11 @@ export default function Home() {
 
       {/* Header */}
       <div className="container mx-auto px-4 py-6">
+        {/* Language Selector - Top Right */}
+        <div className="flex justify-end mb-4">
+          <LanguageSelector />
+        </div>
+
         <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-6">
           {/* Logo/Title */}
           <div className="text-center sm:text-left">
@@ -29,12 +35,24 @@ export default function Home() {
             <p className="text-gray-400 text-sm mt-1">Track your trading mastery</p>
           </div>
 
-          {/* Leaderboard Button */}
-          <Link href="/leaderboard">
-            <button className="btn-premium px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg font-bold hover:scale-105 transition shadow-lg hover:shadow-purple-500/50">
-              🏆 View Leaderboard
-            </button>
-          </Link>
+          {/* Navigation Buttons */}
+          <div className="flex flex-wrap gap-3 justify-center sm:justify-end">
+            <Link href="/compare">
+              <button className="px-4 py-2 bg-blue-700 hover:bg-blue-600 text-white rounded-lg font-medium transition">
+                ⚔️ Compare
+              </button>
+            </Link>
+            <Link href="/documentation">
+              <button className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg font-medium transition">
+                📚 Docs
+              </button>
+            </Link>
+            <Link href="/leaderboard">
+              <button className="btn-premium px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg font-bold hover:scale-105 transition shadow-lg hover:shadow-purple-500/50">
+                🏆 Leaderboard
+              </button>
+            </Link>
+          </div>
         </div>
 
         {/* Global Stats */}
