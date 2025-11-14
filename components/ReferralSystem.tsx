@@ -27,10 +27,19 @@ export default function ReferralSystem({ walletAddress }: ReferralSystemProps) {
 
   const fetchReferralStats = async () => {
     try {
-      const response = await fetch(`/api/referrals/stats?wallet=${walletAddress}`);
+      const response = await fetch(`/api/referral/stats?walletAddress=${walletAddress}`);
       if (response.ok) {
         const data = await response.json();
-        setStats(data.stats);
+        // Map the API response to component structure
+        if (data.referralCode) {
+          setStats({
+            referralCode: data.referralCode,
+            totalReferrals: data.totalReferrals || 0,
+            activeReferrals: data.paidReferrals || 0, // Use paid referrals as "active"
+            rewardsEarned: Math.floor((data.paidReferrals || 0) / 5), // 1 reward per 5 paid referrals
+            nextReward: 5,
+          });
+        }
       }
     } catch (error) {
       console.error('Error fetching referral stats:', error);
