@@ -18,6 +18,12 @@ export default function UpgradeModal({ isOpen, onClose, onUpgrade, onSkip }: Upg
   const [paymentError, setPaymentError] = useState<string | null>(null);
   const [upgradesCount, setUpgradesCount] = useState(0);
 
+  // Promo code state
+  const [promoCode, setPromoCode] = useState('');
+  const [isApplyingPromo, setIsApplyingPromo] = useState(false);
+  const [promoError, setPromoError] = useState<string | null>(null);
+  const [promoSuccess, setPromoSuccess] = useState<string | null>(null);
+
   useEffect(() => {
     // Simulated real-time upgrades count (in production, fetch from API)
     const baseCount = 47 + Math.floor(Math.random() * 20);
@@ -31,6 +37,53 @@ export default function UpgradeModal({ isOpen, onClose, onUpgrade, onSkip }: Upg
   }, []);
 
   if (!isOpen) return null;
+
+  const handlePromoCode = async () => {
+    if (!publicKey) {
+      setPromoError('Please connect your wallet first');
+      return;
+    }
+
+    if (!promoCode.trim()) {
+      setPromoError('Please enter a promo code');
+      return;
+    }
+
+    setIsApplyingPromo(true);
+    setPromoError(null);
+    setPromoSuccess(null);
+
+    try {
+      const response = await fetch('/api/apply-promo-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          walletAddress: publicKey.toString(),
+          promoCode: promoCode.trim()
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to apply promo code');
+      }
+
+      console.log('✅ Promo code applied successfully!');
+      setPromoSuccess(data.message);
+
+      // Wait a bit to show success message, then trigger upgrade
+      setTimeout(() => {
+        onUpgrade();
+      }, 1500);
+
+    } catch (error: any) {
+      console.error('Promo code error:', error);
+      setPromoError(error.message || 'Invalid promo code');
+    } finally {
+      setIsApplyingPromo(false);
+    }
+  };
 
   const handlePayment = async () => {
     if (!publicKey) {
@@ -197,6 +250,59 @@ export default function UpgradeModal({ isOpen, onClose, onUpgrade, onSkip }: Upg
               <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"/>
             </svg>
             <span>Instant access • No recurring fees • Lifetime features</span>
+          </div>
+        </div>
+
+        {/* Promo Code Section */}
+        <div className="mb-6 p-4 bg-gradient-to-r from-yellow-500/10 to-orange-500/10 border border-yellow-500/30 rounded-xl">
+          <div className="flex items-center gap-2 mb-3">
+            <span className="text-2xl">🎟️</span>
+            <h3 className="text-yellow-400 font-bold text-lg">Have a Promo Code?</h3>
+          </div>
+
+          <div className="flex gap-2 mb-2">
+            <input
+              type="text"
+              value={promoCode}
+              onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+              placeholder="Enter code (e.g. DEGENLAUNCH2024)"
+              className="flex-1 px-4 py-3 bg-gray-900/50 border border-gray-600 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-yellow-500/50 focus:border-yellow-500"
+              disabled={isApplyingPromo || !!promoSuccess}
+            />
+            <button
+              onClick={handlePromoCode}
+              disabled={isApplyingPromo || !promoCode.trim() || !!promoSuccess}
+              className="px-6 py-3 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 disabled:from-gray-600 disabled:to-gray-700 text-white font-bold rounded-lg transition-all disabled:cursor-not-allowed whitespace-nowrap"
+            >
+              {isApplyingPromo ? 'Applying...' : 'Apply'}
+            </button>
+          </div>
+
+          {promoError && (
+            <div className="mt-2 p-2 bg-red-500/10 border border-red-500/50 rounded text-red-400 text-sm">
+              {promoError}
+            </div>
+          )}
+
+          {promoSuccess && (
+            <div className="mt-2 p-2 bg-green-500/10 border border-green-500/50 rounded text-green-400 text-sm flex items-center gap-2">
+              <span>✅</span>
+              <span>{promoSuccess}</span>
+            </div>
+          )}
+
+          <p className="text-gray-500 text-xs mt-2">
+            Get 100% free upgrade with valid promo code
+          </p>
+        </div>
+
+        {/* Divider */}
+        <div className="relative mb-6">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-gray-700"></div>
+          </div>
+          <div className="relative flex justify-center text-sm">
+            <span className="px-4 bg-gray-900 text-gray-500">or pay with SOL</span>
           </div>
         </div>
 

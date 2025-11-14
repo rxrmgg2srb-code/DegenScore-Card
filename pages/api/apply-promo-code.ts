@@ -1,0 +1,132 @@
+import type { NextApiRequest, NextApiResponse } from 'next';
+import { prisma } from '../../lib/prisma';
+import { rateLimit } from '../../lib/rateLimit';
+
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  // Apply rate limiting
+  if (!rateLimit(req, res)) {
+    return;
+  }
+
+  try {
+    const { walletAddress, promoCode } = req.body;
+
+    if (!walletAddress || !promoCode) {
+      return res.status(400).json({
+        error: 'Missing walletAddress or promoCode'
+      });
+    }
+
+    console.log(`🎟️ Applying promo code for: ${walletAddress}`);
+    console.log(`📝 Promo code: ${promoCode}`);
+
+    // Usar transacción para garantizar atomicidad
+    const result = await prisma.$transaction(async (tx) => {
+      // 1. Buscar el código promocional
+      const promo = await tx.promoCode.findUnique({
+        where: { code: promoCode.toUpperCase().trim() },
+        include: {
+          redemptions: {
+            where: { walletAddress }
+          }
+        }
+      });
+
+      if (!promo) {
+        throw new Error('Invalid promo code');
+      }
+
+      if (!promo.isActive) {
+        throw new Error('This promo code is no longer active');
+      }
+
+      // Verificar expiración
+      if (promo.expiresAt && promo.expiresAt < new Date()) {
+        throw new Error('This promo code has expired');
+      }
+
+      // Verificar límite de usos
+      if (promo.maxUses > 0 && promo.usedCount >= promo.maxUses) {
+        throw new Error('This promo code has reached its usage limit');
+      }
+
+      // Verificar si el usuario ya usó este código
+      if (promo.redemptions.length > 0) {
+        throw new Error('You have already used this promo code');
+      }
+
+      // 2. Verificar que la card exista
+      const card = await tx.degenCard.findUnique({
+        where: { walletAddress }
+      });
+
+      if (!card) {
+        throw new Error('Card not found. Please generate your metrics first.');
+      }
+
+      if (card.isPaid) {
+        throw new Error('This card is already premium');
+      }
+
+      // 3. Crear el registro de redención
+      await tx.promoRedemption.create({
+        data: {
+          promoCodeId: promo.id,
+          walletAddress
+        }
+      });
+
+      // 4. Incrementar el contador de usos
+      await tx.promoCode.update({
+        where: { id: promo.id },
+        data: {
+          usedCount: { increment: 1 }
+        }
+      });
+
+      // 5. Marcar la card como pagada
+      const updatedCard = await tx.degenCard.update({
+        where: { walletAddress },
+        data: {
+          isPaid: true,
+          isMinted: true,
+          mintedAt: new Date()
+        }
+      });
+
+      return { card: updatedCard, promo };
+    }, {
+      maxWait: 5000,
+      timeout: 10000
+    });
+
+    console.log(`✅ Promo code applied successfully for wallet: ${walletAddress}`);
+
+    res.status(200).json({
+      success: true,
+      message: `Promo code "${result.promo.description || promoCode}" applied successfully! 🎉`,
+      card: result.card
+    });
+
+  } catch (error) {
+    console.error('❌ Error applying promo code:', error);
+
+    // Handle specific error messages
+    if (error instanceof Error) {
+      return res.status(400).json({
+        error: error.message
+      });
+    }
+
+    res.status(500).json({
+      error: 'Failed to apply promo code'
+    });
+  }
+}

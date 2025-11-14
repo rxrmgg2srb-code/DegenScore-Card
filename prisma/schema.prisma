@@ -139,10 +139,42 @@ model Subscription {
   tier            String   @default("FREE") // "FREE" | "BASIC" | "PRO"
   expiresAt       DateTime?
   paymentSignature String?
-  
+
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
-  
+
   @@index([walletAddress])
   @@index([tier])
+}
+
+model PromoCode {
+  id              String   @id @default(cuid())
+  code            String   @unique
+  description     String?
+  maxUses         Int      @default(0) // 0 = unlimited
+  usedCount       Int      @default(0)
+  isActive        Boolean  @default(true)
+  expiresAt       DateTime?
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relación con usos
+  redemptions     PromoRedemption[]
+
+  @@index([code])
+  @@index([isActive])
+}
+
+model PromoRedemption {
+  id              String   @id @default(cuid())
+  promoCodeId     String
+  promoCode       PromoCode @relation(fields: [promoCodeId], references: [id], onDelete: Cascade)
+  walletAddress   String
+
+  createdAt       DateTime @default(now())
+
+  @@index([promoCodeId])
+  @@index([walletAddress])
+  @@unique([promoCodeId, walletAddress]) // Un usuario solo puede usar un código una vez
 }
