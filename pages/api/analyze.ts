@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { calculateAdvancedMetrics } from '../../lib/metrics-advanced';
+import { calculateAdvancedMetrics } from '../../lib/metrics-debug'; // USANDO VERSION DEBUG
 import { generateBadges } from '../../lib/badges-generator';
 import { isValidSolanaAddress } from '../../lib/validation';
 import { strictRateLimit } from '../../lib/rateLimit';
