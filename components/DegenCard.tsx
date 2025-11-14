@@ -1,10 +1,22 @@
 import { useState } from 'react';
+import ProfileFormModal, { ProfileData } from './ProfileFormModal';
+import UpgradeModal from './UpgradeModal';
 
 export default function DegenCard() {
   const [walletAddress, setWalletAddress] = useState('');
   const [cardImage, setCardImage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
+  // Estados para los modales
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [hasPaid, setHasPaid] = useState(false);
+
+  // Estados para indicador de progreso
+  const [analyzing, setAnalyzing] = useState(false);
+  const [analysisProgress, setAnalysisProgress] = useState(0);
+  const [analysisMessage, setAnalysisMessage] = useState('');
 
   const generateCard = async () => {
     if (!walletAddress.trim()) {
@@ -13,17 +25,44 @@ export default function DegenCard() {
     }
 
     setLoading(true);
+    setAnalyzing(true);
     setError(null);
     setCardImage(null);
+    setAnalysisProgress(0);
 
     try {
-      // Primero guardar/actualizar en la base de datos
+      // PASO 1: Analizar la wallet
+      setAnalysisMessage('🔍 Analyzing wallet...');
+      setAnalysisProgress(10);
+
+      const analyzeResponse = await fetch('/api/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ walletAddress: walletAddress.trim() }),
+      });
+
+      if (!analyzeResponse.ok) {
+        const errorData = await analyzeResponse.json();
+        throw new Error(errorData.error || 'Failed to analyze wallet');
+      }
+
+      const analysisData = await analyzeResponse.json();
+      console.log('✅ Analysis complete:', analysisData);
+      
+      setAnalysisMessage('📊 Analysis complete!');
+      setAnalysisProgress(50);
+
+      // PASO 2: Guardar en la base de datos
+      setAnalysisMessage('💾 Saving to database...');
+      setAnalysisProgress(60);
+
       const saveResponse = await fetch('/api/save-card', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ walletAddress: walletAddress.trim() }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          walletAddress: walletAddress.trim(),
+          analysisData: analysisData
+        }),
       });
 
       if (!saveResponse.ok) {
@@ -32,14 +71,18 @@ export default function DegenCard() {
       }
 
       const saveData = await saveResponse.json();
-      console.log('Card saved:', saveData);
+      console.log('✅ Card saved:', saveData);
+      
+      setAnalysisMessage('✅ Saved!');
+      setAnalysisProgress(80);
 
-      // Luego generar la imagen
+      // PASO 3: Generar la imagen
+      setAnalysisMessage('🎨 Generating card image...');
+      setAnalysisProgress(90);
+
       const imageResponse = await fetch('/api/generate-card', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ walletAddress: walletAddress.trim() }),
       });
 
@@ -48,24 +91,96 @@ export default function DegenCard() {
         throw new Error(errorData.error || 'Failed to generate card');
       }
 
-      // Convertir la respuesta a blob y crear URL
       const blob = await imageResponse.blob();
       const imageUrl = URL.createObjectURL(blob);
       setCardImage(imageUrl);
+
+      setAnalysisMessage('🎉 Complete!');
+      setAnalysisProgress(100);
+
+      // Mostrar modal de upgrade después de generar
+      setTimeout(() => {
+        setAnalyzing(false);
+        setShowUpgradeModal(true);
+      }, 500);
+      
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
       console.error('Error generating card:', err);
+      setAnalyzing(false);
     } finally {
       setLoading(false);
     }
   };
 
-  const downloadCard = () => {
+  const handleUpgrade = () => {
+    setShowUpgradeModal(false);
+    setHasPaid(true);
+    setShowProfileModal(true);
+  };
+
+  const handleSkip = () => {
+    setShowUpgradeModal(false);
+    downloadBasicCard();
+  };
+
+  const downloadBasicCard = () => {
     if (!cardImage) return;
 
     const link = document.createElement('a');
     link.href = cardImage;
-    link.download = `degen-card-${walletAddress.slice(0, 8)}.png`;
+    link.download = `degen-card-basic-${walletAddress.slice(0, 8)}.png`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleProfileSubmit = async (profileData: ProfileData) => {
+    try {
+      const response = await fetch('/api/update-profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          walletAddress: walletAddress.trim(),
+          ...profileData,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to save profile');
+      }
+
+      const imageResponse = await fetch('/api/generate-card', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          walletAddress: walletAddress.trim(),
+          profile: profileData,
+        }),
+      });
+
+      if (imageResponse.ok) {
+        const blob = await imageResponse.blob();
+        const imageUrl = URL.createObjectURL(blob);
+        setCardImage(imageUrl);
+      }
+
+      setShowProfileModal(false);
+      downloadPremiumCard();
+      alert('✅ Premium card downloaded! You now appear on the leaderboard 🏆');
+      
+    } catch (error) {
+      console.error('Error:', error);
+      alert('Error saving profile');
+    }
+  };
+
+  const downloadPremiumCard = () => {
+    if (!cardImage) return;
+
+    const link = document.createElement('a');
+    link.href = cardImage;
+    link.download = `degen-card-premium-${walletAddress.slice(0, 8)}.png`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -105,6 +220,30 @@ export default function DegenCard() {
             </div>
           )}
 
+          {/* INDICADOR DE PROGRESO */}
+          {analyzing && (
+            <div className="mb-6 space-y-4">
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-sm text-gray-300 font-semibold">{analysisMessage}</span>
+                <span className="text-sm text-cyan-400 font-bold">{analysisProgress}%</span>
+              </div>
+              <div className="w-full bg-gray-700 rounded-full h-3 overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-cyan-500 via-blue-500 to-purple-500 transition-all duration-500 rounded-full"
+                  style={{ width: `${analysisProgress}%` }}
+                >
+                  <div className="h-full w-full bg-gradient-to-r from-transparent via-white/30 to-transparent animate-pulse"></div>
+                </div>
+              </div>
+              
+              <div className="flex justify-center items-center gap-2 mt-4">
+                <div className="w-3 h-3 bg-cyan-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                <div className="w-3 h-3 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                <div className="w-3 h-3 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+              </div>
+            </div>
+          )}
+
           <button
             onClick={generateCard}
             disabled={loading}
@@ -124,42 +263,31 @@ export default function DegenCard() {
           </button>
 
           {cardImage && (
-            <div className="mt-8 space-y-4">
-              <div className="flex justify-center">
+            <div className="mt-8">
+              <div className="flex justify-center mb-6">
                 <img
                   src={cardImage}
                   alt="Degen Card"
                   className="rounded-xl shadow-2xl border-2 border-cyan-500 max-w-full h-auto"
                 />
               </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                <button
-                  onClick={downloadCard}
-                  className="py-3 px-6 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white font-semibold rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl"
-                >
-                  ⬇️ Download Card
-                </button>
 
-                <button
-                  onClick={() => window.location.href = `/profile/${walletAddress}`}
-                  className="py-3 px-6 bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white font-semibold rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl"
-                >
-                  👤 View Profile
-                </button>
-
-                <button
-                  onClick={() => window.location.href = '/leaderboard'}
-                  className="py-3 px-6 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-semibold rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl"
-                >
-                  🏆 Leaderboard
-                </button>
-              </div>
-
-              <div className="text-center text-gray-400 text-sm">
-                <p>Card generated from real on-chain data via Helius API</p>
-                <p className="mt-1">Your progress has been saved and you're on the leaderboard!</p>
-              </div>
+              {hasPaid && (
+                <div className="text-center">
+                  <div className="bg-green-500/10 border border-green-500 rounded-lg p-4 mb-4">
+                    <p className="text-green-400 font-semibold">
+                      ✅ Premium card activated! You're now on the leaderboard 🏆
+                    </p>
+                  </div>
+                  
+                  <button
+                    onClick={() => window.location.href = '/leaderboard'}
+                    className="w-full py-3 px-6 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-bold rounded-lg transition-all shadow-lg hover:shadow-xl"
+                  >
+                    🏆 View Leaderboard
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -169,6 +297,21 @@ export default function DegenCard() {
           <p className="mt-2">Try with: B7nB9QX1KC4QXp5GMxR8xzh3yzoqp6NjxSwfNBXtgPc1</p>
         </div>
       </div>
+
+      {/* Modales */}
+      <UpgradeModal
+        isOpen={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
+        onUpgrade={handleUpgrade}
+        onSkip={handleSkip}
+      />
+
+      <ProfileFormModal
+        isOpen={showProfileModal}
+        onClose={() => setShowProfileModal(false)}
+        onSubmit={handleProfileSubmit}
+        walletAddress={walletAddress}
+      />
     </div>
   );
 }

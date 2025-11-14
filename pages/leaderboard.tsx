@@ -1,0 +1,733 @@
+import { useState, useEffect } from 'react';
+import Head from 'next/head';
+import Link from 'next/link';
+
+interface LeaderboardEntry {
+  id: string;
+  walletAddress: string;
+  degenScore: number;
+  totalTrades: number;
+  totalVolume: number;
+  profitLoss: number;
+  winRate: number;
+  level: number;
+  xp: number;
+  bestTrade: number;
+  worstTrade: number;
+  badges: any[];
+  mintedAt: string;
+  displayName?: string | null;
+  twitter?: string | null;
+  telegram?: string | null;
+  profileImage?: string | null;
+  isPaid?: boolean;
+  likes: number;
+}
+
+interface Stats {
+  totalCards: number;
+  avgScore: number;
+  topScore: number;
+  totalVolume: number;
+}
+
+type ViewMode = 'table' | 'cards';
+type SortBy = 'degenScore' | 'totalVolume' | 'winRate' | 'likes';
+
+const getTierConfig = (score: number) => {
+  if (score >= 90) {
+    return {
+      name: 'LEGENDARY',
+      emoji: '👑',
+      gradient: 'from-yellow-600 via-yellow-400 to-yellow-200',
+      border: 'border-yellow-400/80',
+      glow: 'shadow-2xl shadow-yellow-500/50',
+      bgPattern: 'bg-gradient-to-br from-yellow-900/20 via-orange-900/10 to-yellow-800/20',
+      textColor: 'text-yellow-400',
+      badgeGradient: 'from-yellow-500 via-yellow-400 to-orange-500',
+      shine: true,
+    };
+  }
+  if (score >= 80) {
+    return {
+      name: 'MASTER',
+      emoji: '💎',
+      gradient: 'from-pink-600 via-purple-500 to-pink-400',
+      border: 'border-pink-500/80',
+      glow: 'shadow-2xl shadow-pink-500/50',
+      bgPattern: 'bg-gradient-to-br from-pink-900/20 via-purple-900/10 to-pink-800/20',
+      textColor: 'text-pink-400',
+      badgeGradient: 'from-pink-500 via-purple-500 to-pink-400',
+      shine: true,
+    };
+  }
+  if (score >= 70) {
+    return {
+      name: 'DIAMOND',
+      emoji: '💠',
+      gradient: 'from-blue-600 via-cyan-500 to-blue-400',
+      border: 'border-cyan-500/80',
+      glow: 'shadow-xl shadow-cyan-500/40',
+      bgPattern: 'bg-gradient-to-br from-blue-900/20 via-cyan-900/10 to-blue-800/20',
+      textColor: 'text-cyan-400',
+      badgeGradient: 'from-blue-500 via-cyan-400 to-blue-400',
+      shine: false,
+    };
+  }
+  if (score >= 60) {
+    return {
+      name: 'PLATINUM',
+      emoji: '⚡',
+      gradient: 'from-gray-400 via-gray-300 to-gray-200',
+      border: 'border-gray-400/80',
+      glow: 'shadow-xl shadow-gray-400/40',
+      bgPattern: 'bg-gradient-to-br from-gray-800/20 via-gray-700/10 to-gray-800/20',
+      textColor: 'text-gray-300',
+      badgeGradient: 'from-gray-400 via-gray-300 to-gray-400',
+      shine: false,
+    };
+  }
+  if (score >= 50) {
+    return {
+      name: 'GOLD',
+      emoji: '🌟',
+      gradient: 'from-yellow-600 via-yellow-500 to-yellow-400',
+      border: 'border-yellow-500/60',
+      glow: 'shadow-lg shadow-yellow-500/30',
+      bgPattern: 'bg-gradient-to-br from-yellow-900/10 via-yellow-800/5 to-yellow-900/10',
+      textColor: 'text-yellow-500',
+      badgeGradient: 'from-yellow-500 via-yellow-400 to-yellow-500',
+      shine: false,
+    };
+  }
+  return {
+    name: 'DEGEN',
+    emoji: '🎮',
+    gradient: 'from-green-600 via-emerald-500 to-green-500',
+    border: 'border-emerald-500/60',
+    glow: 'shadow-lg shadow-emerald-500/20',
+    bgPattern: 'bg-gradient-to-br from-green-900/10 via-emerald-900/5 to-green-900/10',
+    textColor: 'text-emerald-400',
+    badgeGradient: 'from-green-500 via-emerald-500 to-green-500',
+    shine: false,
+  };
+};
+
+const getLevelPhrase = (level: number): string => {
+  if (level >= 50) return "🔥 Absolute Gigachad";
+  if (level >= 40) return "💪 Degen Overlord";
+  if (level >= 30) return "🚀 Moon Mission Commander";
+  if (level >= 20) return "💎 Diamond Handed Legend";
+  if (level >= 15) return "⚡ Certified Degen";
+  if (level >= 10) return "🎯 Getting There";
+  if (level >= 5) return "🐣 Baby Degen";
+  return "😅 Just Started";
+};
+
+const formatNumber = (num: number, decimals: number = 2): string => {
+  if (num === undefined || num === null) return 'N/A';
+  if (num >= 1e9) return `${(num / 1e9).toFixed(decimals)}B`;
+  if (num >= 1e6) return `${(num / 1e6).toFixed(decimals)}M`;
+  if (num >= 1e3) return `${(num / 1e3).toFixed(decimals)}K`;
+  return num.toFixed(decimals);
+};
+
+interface LeaderboardCardProps {
+  entry: LeaderboardEntry;
+  index: number;
+  handleLike: (cardId: string) => Promise<void>;
+  userLikes: { [key: string]: boolean };
+}
+
+const LeaderboardCard = ({ entry, index, handleLike, userLikes }: LeaderboardCardProps) => {
+  const tier = getTierConfig(entry.degenScore);
+  const isTop3 = index < 3;
+  const levelPhrase = getLevelPhrase(entry.level);
+  
+  // 🔥 AGREGAR FRASE FOMO
+  const getFOMOPhrase = (score: number): string => {
+  if (score >= 95) return "🔥 GOD MODE - They Bow to You";
+  if (score >= 90) return "👑 APEX PREDATOR - Pure Domination";
+  if (score >= 85) return "💎 GENERATIONAL WEALTH - GG EZ";
+  if (score >= 80) return "⚡ MAIN CHARACTER - Eating Good";
+  if (score >= 75) return "🚀 MOON MISSION - Keep Stacking";
+  if (score >= 70) return "🔥 KILLING IT - Above Average Chad";
+  if (score >= 65) return "💪 SOLID - You'll Make It Anon";
+  if (score >= 60) return "📈 MID CURVE - Touch Grass King";
+  if (score >= 55) return "🎯 SLIGHTLY MID - Do Better";
+  if (score >= 50) return "😬 NGMI VIBES - Yikes";
+  if (score >= 40) return "📉 EXIT LIQUIDITY - That's You";
+  if (score >= 30) return "💀 ABSOLUTELY COOKED - RIP";
+  if (score >= 20) return "🤡 CIRCUS CLOWN - Everyone's Laughing";
+  if (score >= 10) return "⚰️ DELETE APP - Uninstall Now";
+  return "🪦 QUIT FOREVER - It's Over Bro";
+  };
+
+  const fomoPhrase = getFOMOPhrase(entry.degenScore);
+
+  return (
+    <div className="flex flex-col">
+      <div
+        className={`relative rounded-2xl border-4 ${tier.border} ${tier.glow} hover:scale-105 transition-all duration-300 overflow-hidden`}
+        style={{ aspectRatio: '2/3' }}
+      >
+        <div className={`absolute inset-0 ${tier.bgPattern}`}></div>
+
+        {tier.shine && (
+          <div className="absolute inset-0 shine-effect opacity-30"></div>
+        )}
+
+        <div className={`absolute inset-0 bg-gradient-to-br ${tier.gradient} opacity-10`}></div>
+
+        <div className="relative h-full flex flex-col p-5 bg-gray-900/85 backdrop-blur-sm justify-between">
+          {/* RANK */}
+          <div className="flex justify-between items-start mb-2">
+            <div className={`text-3xl font-black ${tier.textColor} drop-shadow-lg`}>
+              #{index + 1}
+            </div>
+            {isTop3 && (
+              <div className="text-3xl drop-shadow-lg">
+                {index === 0 && '🥇'}
+                {index === 1 && '🥈'}
+                {index === 2 && '🥉'}
+              </div>
+            )}
+          </div>
+
+          {/* PERFIL */}
+          <div className="flex flex-col items-center gap-2 mb-3">
+            {entry.profileImage ? (
+              <div className="w-20 h-20 rounded-full border-4 border-cyan-500/60 overflow-hidden bg-gray-800 shadow-xl">
+                <img
+                  src={entry.profileImage}
+                  alt={entry.displayName || 'Profile'}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            ) : (
+              <div className="w-20 h-20 rounded-full border-4 border-cyan-500/60 bg-gray-800 flex items-center justify-center shadow-xl">
+                <span className="text-3xl">👤</span>
+              </div>
+            )}
+
+            {entry.displayName && (
+              <div className="text-white font-bold text-base text-center leading-tight">
+                {entry.displayName}
+              </div>
+            )}
+
+            <div className="text-xs text-gray-300 font-mono bg-black/40 px-3 py-1 rounded-full">
+              {entry.walletAddress.slice(0, 6)}...{entry.walletAddress.slice(-6)}
+            </div>
+
+            {(entry.twitter || entry.telegram) && (
+              <div className="flex gap-2 text-xs flex-wrap justify-center">
+                {entry.twitter && (
+                  <a // <-- CORREGIDO: Faltaba la etiqueta <a> de apertura.
+                    href={`https://twitter.com/${entry.twitter}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-cyan-400 hover:text-cyan-300 transition bg-black/30 px-2 py-1 rounded"
+                  >
+                    🐦 @{entry.twitter.slice(0, 10)}
+                  </a> // <-- CORREGIDO: Faltaba la etiqueta </a> de cierre.
+                )}
+                {entry.telegram && (
+                  <a // <-- CORREGIDO: Faltaba la etiqueta <a> de apertura.
+                    href={`https://t.me/${entry.telegram}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-cyan-400 hover:text-cyan-300 transition bg-black/30 px-2 py-1 rounded"
+                  >
+                    ✈️ @{entry.telegram.slice(0, 10)}
+                  </a> // <-- CORREGIDO: Faltaba la etiqueta </a> de cierre.
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* SCORE */}
+          <div className="flex flex-col items-center mb-3">
+            <div className={`text-7xl font-black bg-gradient-to-br ${tier.gradient} bg-clip-text text-transparent drop-shadow-2xl mb-1`}>
+              {entry.degenScore}
+            </div>
+            <div className="text-gray-300 text-xs uppercase tracking-wider font-bold mb-2">
+              DEGEN SCORE
+            </div>
+            
+            {/* 🔥 FRASE FOMO - DESTACADA */}
+            <div className="bg-gradient-to-r from-yellow-500/20 via-yellow-400/20 to-yellow-500/20 px-3 py-1.5 rounded-lg border border-yellow-500/30 backdrop-blur-sm">
+              <div className="text-yellow-300 font-bold text-[11px] text-center leading-tight">
+                {fomoPhrase}
+              </div>
+            </div>
+          </div>
+
+          {/* TIER BADGE */}
+          <div className="flex justify-center mb-3">
+            <div className={`px-5 py-2 rounded-full bg-gradient-to-r ${tier.badgeGradient} shadow-xl`}>
+              <span className="text-white font-black text-xs flex items-center gap-2">
+                {tier.emoji} {tier.name}
+              </span>
+            </div>
+          </div>
+
+          {/* STATS */}
+          <div className="grid grid-cols-2 gap-2 mb-3">
+            <div className="bg-black/50 rounded-xl p-2.5 border border-gray-600/50 shadow-lg backdrop-blur-sm">
+              <div className="text-[9px] text-gray-400 uppercase mb-1 font-semibold">Trades</div>
+              <div className="text-white font-bold text-sm">{formatNumber(entry.totalTrades, 0)}</div>
+            </div>
+            <div className="bg-black/50 rounded-xl p-2.5 border border-gray-600/50 shadow-lg backdrop-blur-sm">
+              <div className="text-[9px] text-gray-400 uppercase mb-1 font-semibold">Win Rate</div>
+              <div className="text-white font-bold text-sm">{entry.winRate.toFixed(0)}%</div>
+            </div>
+            <div className="bg-black/50 rounded-xl p-2.5 border border-gray-600/50 shadow-lg backdrop-blur-sm">
+              <div className="text-[9px] text-gray-400 uppercase mb-1 font-semibold">Volume</div>
+              <div className="text-white font-bold text-sm">{formatNumber(entry.totalVolume)} SOL</div>
+            </div>
+            <div className="bg-black/50 rounded-xl p-2.5 border border-gray-600/50 shadow-lg backdrop-blur-sm">
+              <div className="text-[9px] text-gray-400 uppercase mb-1 font-semibold">P&L</div>
+              <div className={`font-bold text-sm ${entry.profitLoss >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                {entry.profitLoss >= 0 ? '+' : ''}{formatNumber(entry.profitLoss)}
+              </div>
+            </div>
+          </div>
+
+          {/* LEVEL */}
+          <div className="text-center space-y-1">
+            <div className={`inline-block px-4 py-1.5 rounded-full bg-gradient-to-r ${tier.gradient} opacity-90 shadow-lg`}>
+              <span className="text-white font-bold text-xs">LVL {entry.level}</span>
+            </div>
+            <div className="text-[10px] text-gray-200 italic font-medium">
+              {levelPhrase}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* BOTÓN DE LIKE */}
+      <button
+        onClick={() => handleLike(entry.id)}
+        className={`mt-4 px-6 py-3 rounded-xl transition-all flex items-center justify-center gap-3 font-bold text-base shadow-lg ${
+          userLikes[entry.id]
+            ? 'bg-gradient-to-r from-red-600 to-red-500 hover:from-red-700 hover:to-red-600 text-white scale-105'
+            : 'bg-gray-800 hover:bg-gray-700 text-gray-300 border border-gray-600'
+        }`}
+      >
+        <span className="text-2xl">{userLikes[entry.id] ? '❤️' : '🤍'}</span>
+        <span>{entry.likes || 0}</span>
+      </button>
+    </div>
+  );
+};
+
+interface LeaderboardTableProps {
+  filteredLeaderboard: LeaderboardEntry[];
+  handleLike: (cardId: string) => Promise<void>;
+  userLikes: { [key: string]: boolean };
+}
+
+const LeaderboardTable = ({ filteredLeaderboard, handleLike, userLikes }: LeaderboardTableProps) => {
+  return (
+    <div className="bg-gray-800/30 backdrop-blur-sm rounded-xl border border-gray-700 overflow-hidden">
+      <div className="overflow-x-auto">
+        <table className="w-full">
+          <thead className="bg-gray-900/50">
+            <tr>
+              <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase">Rank</th>
+              <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase">User</th>
+              <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase">Tier</th>
+              <th className="px-6 py-4 text-right text-xs font-medium text-gray-400 uppercase">Score</th>
+              <th className="px-6 py-4 text-right text-xs font-medium text-gray-400 uppercase">Trades</th>
+              <th className="px-6 py-4 text-right text-xs font-medium text-gray-400 uppercase">Volume</th>
+              <th className="px-6 py-4 text-right text-xs font-medium text-gray-400 uppercase">P&L</th>
+              <th className="px-6 py-4 text-right text-xs font-medium text-gray-400 uppercase">Win Rate</th>
+              <th className="px-6 py-4 text-center text-xs font-medium text-gray-400 uppercase">Level</th>
+              <th className="px-6 py-4 text-center text-xs font-medium text-gray-400 uppercase">Likes</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-700/50">
+            {filteredLeaderboard.map((entry, index) => {
+              const tier = getTierConfig(entry.degenScore);
+              const isTop3 = index < 3;
+              const levelPhrase = getLevelPhrase(entry.level);
+
+              return (
+                <tr
+                  key={entry.id}
+                  className={`hover:bg-gray-700/30 transition ${
+                    isTop3 ? 'bg-gradient-to-r from-yellow-900/10 to-transparent' : ''
+                  }`}
+                >
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center">
+                      {index === 0 && <span className="text-2xl mr-2">🥇</span>}
+                      {index === 1 && <span className="text-2xl mr-2">🥈</span>}
+                      {index === 2 && <span className="text-2xl mr-2">🥉</span>}
+                      <span className={`font-bold ${isTop3 ? 'text-yellow-400' : 'text-gray-400'}`}>
+                        #{index + 1}
+                      </span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center gap-3">
+                      {entry.profileImage ? (
+                        <img
+                          src={entry.profileImage}
+                          alt={entry.displayName || 'Profile'}
+                          className="w-10 h-10 rounded-full border-2 border-cyan-500/50 object-cover"
+                        />
+                      ) : (
+                        <div className="w-10 h-10 rounded-full border-2 border-cyan-500/50 bg-gray-800 flex items-center justify-center">
+                          <span className="text-lg">👤</span>
+                        </div>
+                      )}
+                      <div>
+                        {entry.displayName && (
+                          <div className="text-white font-semibold text-sm">
+                            {entry.displayName}
+                          </div>
+                        )}
+                        <div className="text-xs font-mono text-gray-400">
+                          {entry.walletAddress.slice(0, 4)}...{entry.walletAddress.slice(-4)}
+                        </div>
+                        {(entry.twitter || entry.telegram) && (
+                          <div className="flex gap-2 mt-0.5 text-[10px]">
+                            {entry.twitter && (
+                              <a // <-- CORREGIDO: Faltaba la etiqueta <a> de apertura.
+                                href={`https://twitter.com/${entry.twitter}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-cyan-400 hover:text-cyan-300"
+                              >
+                                🐦 @{entry.twitter.slice(0, 8)}
+                              </a>
+                            )}
+                            {entry.telegram && (
+                              <a // <-- CORREGIDO: Faltaba la etiqueta <a> de apertura.
+                                href={`https://t.me/${entry.telegram}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-cyan-400 hover:text-cyan-300"
+                              >
+                                ✈️ @{entry.telegram.slice(0, 8)}
+                              </a>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span
+                      className={`px-3 py-1 rounded-full text-xs font-bold bg-gradient-to-r ${tier.badgeGradient} text-white inline-flex items-center gap-1`}
+                    >
+                      {tier.emoji} {tier.name}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-right">
+                    <div className={`text-xl font-bold ${tier.textColor}`}>{entry.degenScore}</div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-right">
+                    <div className="text-white">{entry.totalTrades.toLocaleString()}</div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-right">
+                    <div className="text-white">{formatNumber(entry.totalVolume)} SOL</div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-right">
+                    <div className={entry.profitLoss >= 0 ? 'text-green-400' : 'text-red-400'}>
+                      {entry.profitLoss >= 0 ? '+' : ''}
+                      {formatNumber(entry.profitLoss)} SOL
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-right">
+                    <div className="text-white">{entry.winRate.toFixed(1)}%</div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-center">
+                    <div className="text-purple-400 font-bold">Lv.{entry.level}</div>
+                    <div className="text-[10px] text-gray-400 italic">{levelPhrase}</div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-center">
+                    <button
+                      onClick={() => handleLike(entry.id)}
+                      className={`px-3 py-1 rounded-lg transition-all inline-flex items-center gap-1 ${
+                        userLikes[entry.id]
+                          ? 'bg-red-500/20 text-red-400'
+                          : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                      }`}
+                    >
+                      <span>{userLikes[entry.id] ? '❤️' : '🤍'}</span>
+                      <span className="font-bold text-sm">{entry.likes || 0}</span>
+                    </button>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+};
+
+export default function Leaderboard() {
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [stats, setStats] = useState<Stats | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [sortBy, setSortBy] = useState<SortBy>('degenScore');
+  const [searchWallet, setSearchWallet] = useState('');
+  const [viewMode, setViewMode] = useState<ViewMode>('cards');
+  const [userLikes, setUserLikes] = useState<{ [key: string]: boolean }>({});
+
+  useEffect(() => {
+    fetchLeaderboard();
+  }, [sortBy]);
+
+  const fetchLeaderboard = async () => {
+    try {
+      setLoading(true);
+      // Asume que la función de formato se maneja en el backend,
+      // pero se usa `sortBy` para la consulta.
+      const response = await fetch(`/api/leaderboard?sortBy=${sortBy}&limit=100`);
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      if (data.success) {
+        setLeaderboard(data.leaderboard);
+        setStats(data.stats);
+      }
+    } catch (error) {
+      console.error('Error fetching leaderboard:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleLike = async (cardId: string) => {
+    const hasLiked = userLikes[cardId];
+    
+    // Optimistic UI update
+    setUserLikes(prev => ({ ...prev, [cardId]: !hasLiked }));
+    setLeaderboard(prev => 
+      prev.map(entry => {
+        if (entry.id === cardId) {
+          const newLikes = (entry.likes || 0) + (hasLiked ? -1 : 1);
+          return { ...entry, likes: newLikes };
+        }
+        return entry;
+      })
+    );
+
+    try {
+      const response = await fetch('/api/like', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cardId, increment: !hasLiked }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update like');
+      }
+
+      const data = await response.json();
+      
+      // Update with the final count from the server
+      setLeaderboard(prev => 
+        prev.map(entry => 
+          entry.id === cardId 
+            ? { ...entry, likes: data.likes }
+            : entry
+        )
+      );
+    } catch (error) {
+      console.error('Error updating like:', error);
+      // Revert local changes if the API call fails
+      setUserLikes(prev => ({ ...prev, [cardId]: hasLiked }));
+      setLeaderboard(prev => 
+        prev.map(entry => 
+          entry.id === cardId 
+            ? { ...entry, likes: (entry.likes || 0) + (hasLiked ? 1 : -1) }
+            : entry
+        )
+      );
+    }
+  };
+
+  const filteredLeaderboard = searchWallet
+    ? leaderboard.filter(entry =>
+        entry.walletAddress.toLowerCase().includes(searchWallet.toLowerCase()) ||
+        (entry.displayName && entry.displayName.toLowerCase().includes(searchWallet.toLowerCase()))
+      )
+    : leaderboard;
+
+  return (
+    <>
+      <Head>
+        <title>Leaderboard | DegenScore</title>
+        <meta name="description" content="Top Solana traders ranked by DegenScore" />
+      </Head>
+
+      <style jsx global>{`
+        @keyframes shine {
+          0% { background-position: -200% center; }
+          100% { background-position: 200% center; }
+        }
+        .shine-effect {
+          background: linear-gradient(
+            90deg,
+            transparent 0%,
+            rgba(255, 255, 255, 0.3) 50%,
+            transparent 100%
+          );
+          background-size: 200% 100%;
+          animation: shine 3s infinite;
+        }
+      `}</style>
+
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900">
+        <div className="container mx-auto px-4 py-8">
+          <div className="flex justify-between items-center mb-8">
+            <Link href="/" legacyBehavior>
+              <button className="px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg transition">
+                ← Back Home
+              </button>
+            </Link>
+            <h1 className="text-4xl font-bold text-white">🏆 Leaderboard</h1>
+            <div className="w-24"></div>
+          </div>
+
+          {stats && (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+              <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-cyan-500/20">
+                <div className="text-gray-400 text-sm mb-1">Total Degens</div>
+                <div className="text-3xl font-bold text-white">{stats.totalCards.toLocaleString()}</div>
+              </div>
+              <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-purple-500/20">
+                <div className="text-gray-400 text-sm mb-1">Average Score</div>
+                <div className="text-3xl font-bold text-purple-400">{stats.avgScore.toFixed(0)}</div>
+              </div>
+              <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-yellow-500/20">
+                <div className="text-gray-400 text-sm mb-1">Top Score</div>
+                <div className="text-3xl font-bold text-yellow-400">{stats.topScore}</div>
+              </div>
+              <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-green-500/20">
+                <div className="text-gray-400 text-sm mb-1">Total Volume</div>
+                <div className="text-3xl font-bold text-green-400">{formatNumber(stats.totalVolume)} SOL</div>
+              </div>
+            </div>
+          )}
+
+          <div className="flex flex-col md:flex-row gap-4 mb-6">
+            <div className="flex gap-2">
+              <button
+                onClick={() => setSortBy('degenScore')}
+                className={`px-4 py-2 rounded-lg transition ${
+                  sortBy === 'degenScore' ? 'bg-cyan-500 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                }`}
+              >
+                🏆 Score
+              </button>
+              <button
+                onClick={() => setSortBy('totalVolume')}
+                className={`px-4 py-2 rounded-lg transition ${
+                  sortBy === 'totalVolume' ? 'bg-cyan-500 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                }`}
+              >
+                💰 Volume
+              </button>
+              <button
+                onClick={() => setSortBy('winRate')}
+                className={`px-4 py-2 rounded-lg transition ${
+                  sortBy === 'winRate' ? 'bg-cyan-500 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                }`}
+              >
+                🎯 Win Rate
+              </button>
+              <button
+                onClick={() => setSortBy('likes')}
+                className={`px-4 py-2 rounded-lg transition ${
+                  sortBy === 'likes' ? 'bg-cyan-500 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                }`}
+              >
+                ❤️ Likes
+              </button>
+            </div>
+
+            <div className="flex gap-2 md:border-l md:border-gray-700 md:pl-4">
+              <button
+                onClick={() => setViewMode('cards')}
+                className={`px-4 py-2 rounded-lg transition ${
+                  viewMode === 'cards' ? 'bg-purple-500 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                }`}
+              >
+                🎴 Cards
+              </button>
+              <button
+                onClick={() => setViewMode('table')}
+                className={`px-4 py-2 rounded-lg transition ${
+                  viewMode === 'table' ? 'bg-purple-500 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                }`}
+              >
+                📊 Table
+              </button>
+            </div>
+
+            <input
+              type="text"
+              placeholder="Search wallet/name..."
+              value={searchWallet}
+              onChange={(e) => setSearchWallet(e.target.value)}
+              className="flex-1 px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500"
+            />
+          </div>
+
+          {loading ? (
+            <div className="text-center py-20">
+              <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-cyan-500"></div>
+              <p className="text-gray-400 mt-4">Loading leaderboard...</p>
+            </div>
+          ) : (
+            <>
+              {filteredLeaderboard.length > 0 ? (
+                <>
+                  {viewMode === 'cards' && (
+                    <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                      {filteredLeaderboard.map((entry, index) => (
+                        <LeaderboardCard
+                          key={entry.id}
+                          entry={entry}
+                          index={index}
+                          handleLike={handleLike}
+                          userLikes={userLikes}
+                        />
+                      ))}
+                    </div>
+                  )}
+
+                  {viewMode === 'table' && (
+                    <LeaderboardTable
+                      filteredLeaderboard={filteredLeaderboard}
+                      handleLike={handleLike}
+                      userLikes={userLikes}
+                    />
+                  )}
+                </>
+              ) : (
+                <div className="text-center py-12 text-gray-400">No results found</div>
+              )}
+            </>
+          )}
+
+          <div className="mt-8 text-center text-gray-500 text-sm">
+            Showing top {filteredLeaderboard.length} degens • Updated in real-time
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}

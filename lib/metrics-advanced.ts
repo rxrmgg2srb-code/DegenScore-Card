@@ -42,15 +42,19 @@ interface SimpleSwap {
 const SOL_MINT = 'So11111111111111111111111111111111111111112';
 
 // ============================================================================
-// FUNCIÓN PRINCIPAL - CONSERVADORA Y REALISTA
+// FUNCIÓN PRINCIPAL - CON CALLBACK DE PROGRESO
 // ============================================================================
 
 export async function calculateAdvancedMetrics(
-  walletAddress: string
+  walletAddress: string,
+  onProgress?: (progress: number, message: string) => void
 ): Promise<WalletMetrics> {
   try {
     console.log('📊 Fetching transactions...');
-    const allTransactions = await fetchAllTransactions(walletAddress);
+    
+    if (onProgress) onProgress(5, '🔍 Starting analysis...');
+    
+    const allTransactions = await fetchAllTransactions(walletAddress, onProgress);
     
     if (!allTransactions || allTransactions.length === 0) {
       return getDefaultMetrics();
@@ -58,12 +62,18 @@ export async function calculateAdvancedMetrics(
 
     console.log(`✅ Found ${allTransactions.length} transactions`);
 
+    if (onProgress) onProgress(88, '💱 Parsing swaps...');
+    
     console.log('💱 Parsing SIMPLE swaps only...');
     const simpleSwaps = extractSimpleSwaps(allTransactions, walletAddress);
     
     console.log(`✅ Found ${simpleSwaps.length} simple swaps`);
 
+    if (onProgress) onProgress(93, '📊 Calculating metrics...');
+    
     const metrics = calculateConservativeMetrics(simpleSwaps, allTransactions);
+    
+    if (onProgress) onProgress(100, '🎉 Analysis complete!');
     
     return metrics;
   } catch (error) {
@@ -73,11 +83,12 @@ export async function calculateAdvancedMetrics(
 }
 
 // ============================================================================
-// OBTENER TRANSACCIONES - FORZAR 100 BATCHES SIEMPRE
+// OBTENER TRANSACCIONES CON PROGRESO DINÁMICO
 // ============================================================================
 
 async function fetchAllTransactions(
-  walletAddress: string
+  walletAddress: string,
+  onProgress?: (progress: number, message: string) => void
 ): Promise<ParsedTransaction[]> {
   const allTransactions: ParsedTransaction[] = [];
   let before: string | undefined;
@@ -99,6 +110,16 @@ async function fetchAllTransactions(
       }
       
       fetchCount++;
+      
+      // 📊 ACTUALIZAR PROGRESO (5% - 85% = 80% del progreso total)
+      const fetchProgress = 5 + Math.floor((fetchCount / FIXED_FETCH_LIMIT) * 80);
+      if (onProgress) {
+        onProgress(
+          fetchProgress, 
+          `📡 Processing batch ${fetchCount}/${FIXED_FETCH_LIMIT}... (${allTransactions.length} txs found)`
+        );
+      }
+      
       await new Promise(resolve => setTimeout(resolve, 500));
 
     } catch (error) {
