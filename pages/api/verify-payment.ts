@@ -5,7 +5,7 @@ import { paymentRateLimit } from '../../lib/rateLimit';
 import { retry } from '../../lib/retryLogic';
 
 const TREASURY_WALLET = process.env.TREASURY_WALLET!;
-const MINT_PRICE_SOL = 0.2; // Premium tier price
+const MINT_PRICE_SOL = 1; // Premium tier price
 
 export default async function handler(
   req: NextApiRequest,
