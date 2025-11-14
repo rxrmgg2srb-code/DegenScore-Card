@@ -2,14 +2,12 @@ import { useState } from 'react';
 import { useConnection, useWallet } from '@solana/wallet-adapter-react';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import { PublicKey, Transaction, SystemProgram, LAMPORTS_PER_SOL } from '@solana/web3.js';
+import { PAYMENT_CONFIG } from '../lib/config';
 
 interface PaymentButtonProps {
   walletAddress: string;
   onPaymentSuccess: () => void;
 }
-
-const TREASURY_WALLET = process.env.NEXT_PUBLIC_TREASURY_WALLET || '3d7w4r4irLaKVYd4dLjpoiehJVawbbXWFWb1bCk9nGCo';
-const MINT_PRICE = 0.1; // SOL
 
 export default function PaymentButton({ walletAddress, onPaymentSuccess }: PaymentButtonProps) {
   const { connection } = useConnection();
@@ -33,8 +31,8 @@ export default function PaymentButton({ walletAddress, onPaymentSuccess }: Payme
       const transaction = new Transaction().add(
         SystemProgram.transfer({
           fromPubkey: publicKey,
-          toPubkey: new PublicKey(TREASURY_WALLET),
-          lamports: MINT_PRICE * LAMPORTS_PER_SOL,
+          toPubkey: new PublicKey(PAYMENT_CONFIG.TREASURY_WALLET),
+          lamports: PAYMENT_CONFIG.MINT_PRICE_SOL * LAMPORTS_PER_SOL,
         })
       );
 
@@ -109,12 +107,12 @@ export default function PaymentButton({ walletAddress, onPaymentSuccess }: Payme
                 Processing Payment...
               </span>
             ) : (
-              `🎴 Mint Card for ${MINT_PRICE} SOL`
+              `🎴 Mint Card for ${PAYMENT_CONFIG.MINT_PRICE_SOL} SOL`
             )}
           </button>
 
           <p className="text-center text-sm text-gray-400 mt-2">
-            Price: {MINT_PRICE} SOL (~${(MINT_PRICE * 150).toFixed(2)} USD)
+            Price: {PAYMENT_CONFIG.MINT_PRICE_SOL} SOL (~${(PAYMENT_CONFIG.MINT_PRICE_SOL * 150).toFixed(2)} USD)
           </p>
 
           {error && (

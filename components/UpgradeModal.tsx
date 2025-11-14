@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import { Connection, PublicKey, Transaction, SystemProgram, LAMPORTS_PER_SOL } from '@solana/web3.js';
+import { PAYMENT_CONFIG } from '../lib/config';
 
 interface UpgradeModalProps {
   isOpen: boolean;
@@ -9,9 +10,6 @@ interface UpgradeModalProps {
   onUpgrade: () => void;
   onSkip: () => void;
 }
-
-const PAYMENT_AMOUNT = 0.1;
-const TREASURY_WALLET = process.env.NEXT_PUBLIC_TREASURY_WALLET || 'Pf9yHR1qmkY9geMLfMJs7JD4yXZURkiaxm5h7K61J7N';
 
 export default function UpgradeModal({ isOpen, onClose, onUpgrade, onSkip }: UpgradeModalProps) {
   const { publicKey, sendTransaction } = useWallet();
@@ -31,7 +29,7 @@ export default function UpgradeModal({ isOpen, onClose, onUpgrade, onSkip }: Upg
 
     try {
       const connection = new Connection(
-        'https://api.devnet.solana.com',
+        PAYMENT_CONFIG.SOLANA_NETWORK,
         'confirmed'
       );
 
@@ -39,8 +37,8 @@ export default function UpgradeModal({ isOpen, onClose, onUpgrade, onSkip }: Upg
       const transaction = new Transaction().add(
         SystemProgram.transfer({
           fromPubkey: publicKey,
-          toPubkey: new PublicKey(TREASURY_WALLET),
-          lamports: PAYMENT_AMOUNT * LAMPORTS_PER_SOL,
+          toPubkey: new PublicKey(PAYMENT_CONFIG.TREASURY_WALLET),
+          lamports: PAYMENT_CONFIG.MINT_PRICE_SOL * LAMPORTS_PER_SOL,
         })
       );
 
@@ -56,21 +54,14 @@ export default function UpgradeModal({ isOpen, onClose, onUpgrade, onSkip }: Upg
 
       console.log('Payment confirmed!');
 
-      // 🔥 LOGS AGREGADOS AQUÍ
-      console.log('💰 Sending payment to API:', {
-        walletAddress: publicKey.toString(),
-        signature,
-        amount: PAYMENT_AMOUNT,
-      });
-
-      // Guardar el pago en la base de datos
+      // Save payment to database
       const paymentResponse = await fetch('/api/record-payment', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           walletAddress: publicKey.toString(),
           signature,
-          amount: PAYMENT_AMOUNT,
+          amount: PAYMENT_CONFIG.MINT_PRICE_SOL,
         }),
       });
 
@@ -152,9 +143,9 @@ export default function UpgradeModal({ isOpen, onClose, onUpgrade, onSkip }: Upg
         <div className="bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-xl p-4 mb-6 text-center border border-purple-500/30">
           <div className="text-gray-400 text-sm mb-1">One-time payment</div>
           <div className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">
-            {PAYMENT_AMOUNT} SOL
+            {PAYMENT_CONFIG.MINT_PRICE_SOL} SOL
           </div>
-          <div className="text-gray-400 text-xs mt-1">≈ ${(PAYMENT_AMOUNT * 150).toFixed(2)} USD</div>
+          <div className="text-gray-400 text-xs mt-1">≈ ${(PAYMENT_CONFIG.MINT_PRICE_SOL * 150).toFixed(2)} USD</div>
         </div>
 
         {paymentError && (
