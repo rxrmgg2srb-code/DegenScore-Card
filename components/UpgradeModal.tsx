@@ -212,7 +212,7 @@ export default function UpgradeModal({ isOpen, onClose, onUpgrade, onSkip }: Upg
           <div className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">
             {PAYMENT_CONFIG.MINT_PRICE_SOL} SOL
           </div>
-          <div className="text-gray-400 text-xs mt-1">≈ ${(PAYMENT_CONFIG.MINT_PRICE_SOL * 150).toFixed(2)} USD</div>
+          <div className="text-gray-400 text-xs mt-1">≈ ${(PAYMENT_CONFIG.MINT_PRICE_SOL * 200).toFixed(2)} USD</div>
         </div>
 
         {/* FOMO Triggers */}
@@ -336,7 +336,7 @@ export default function UpgradeModal({ isOpen, onClose, onUpgrade, onSkip }: Upg
                 Processing Payment...
               </span>
             ) : (
-              '💳 Pay 0.1 SOL & Customize'
+              `💳 Pay ${PAYMENT_CONFIG.MINT_PRICE_SOL} SOL & Customize`
             )}
           </button>
         )}

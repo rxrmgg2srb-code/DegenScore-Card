@@ -3,6 +3,7 @@ import { useWallet } from '@solana/wallet-adapter-react';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import ProfileFormModal, { ProfileData } from './ProfileFormModal';
 import UpgradeModal from './UpgradeModal';
+import ShareModal from './ShareModal';
 import { Celebration } from './Celebration';
 import { AchievementPopup, achievements, Achievement } from './AchievementPopup';
 
@@ -15,6 +16,7 @@ export default function DegenCard() {
   const [mounted, setMounted] = useState(false);
 
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [hasPaid, setHasPaid] = useState(false);
 
@@ -161,9 +163,28 @@ export default function DegenCard() {
     setShowCelebration(true);
     setCurrentAchievement(achievements.premiumUnlock);
 
+    // Show share modal FIRST (viralidad forzada!)
+    setTimeout(() => {
+      setShowShareModal(true);
+    }, 1500);
+  };
+
+  const handleShared = () => {
+    setShowShareModal(false);
+
+    // After sharing, show profile modal
     setTimeout(() => {
       setShowProfileModal(true);
-    }, 1500);
+    }, 500);
+  };
+
+  const handleSkipShare = () => {
+    setShowShareModal(false);
+
+    // If they skip sharing, still let them continue
+    setTimeout(() => {
+      setShowProfileModal(true);
+    }, 500);
   };
 
   const handleSkip = () => {
@@ -420,6 +441,14 @@ export default function DegenCard() {
         onClose={() => setShowUpgradeModal(false)}
         onUpgrade={handleUpgrade}
         onSkip={handleSkip}
+      />
+
+      <ShareModal
+        isOpen={showShareModal}
+        walletAddress={walletAddress}
+        degenScore={analysisData?.degenScore || 0}
+        onShared={handleShared}
+        onSkip={handleSkipShare}
       />
 
       <ProfileFormModal

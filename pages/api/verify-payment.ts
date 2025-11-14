@@ -5,7 +5,7 @@ import { paymentRateLimit } from '../../lib/rateLimit';
 import { retry } from '../../lib/retryLogic';
 
 const TREASURY_WALLET = process.env.TREASURY_WALLET!;
-const MINT_PRICE_SOL = 0.1;
+const MINT_PRICE_SOL = 0.2; // Premium tier price
 
 export default async function handler(
   req: NextApiRequest,
@@ -123,6 +123,27 @@ export default async function handler(
       });
 
       console.log(`✅ Card marked as paid for wallet: ${walletAddress}`);
+
+      // Create or update subscription with 30-day PRO trial
+      const trialEndDate = new Date();
+      trialEndDate.setDate(trialEndDate.getDate() + 30); // 30 days trial
+
+      await tx.subscription.upsert({
+        where: { walletAddress },
+        create: {
+          walletAddress,
+          tier: 'PRO', // Start with PRO tier (30-day trial)
+          expiresAt: trialEndDate,
+          paymentSignature: paymentSignature
+        },
+        update: {
+          tier: 'PRO',
+          expiresAt: trialEndDate,
+          paymentSignature: paymentSignature
+        }
+      });
+
+      console.log(`✅ PRO subscription created with 30-day trial (expires: ${trialEndDate.toISOString()})`);
 
       return updatedCard;
     }, {

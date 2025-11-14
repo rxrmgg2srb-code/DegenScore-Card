@@ -101,6 +101,25 @@ export default async function handler(
         }
       });
 
+      // 6. Create PRO subscription with 30-day trial
+      const trialEndDate = new Date();
+      trialEndDate.setDate(trialEndDate.getDate() + 30); // 30 days trial
+
+      await tx.subscription.upsert({
+        where: { walletAddress },
+        create: {
+          walletAddress,
+          tier: 'PRO', // Start with PRO tier (30-day trial)
+          expiresAt: trialEndDate
+        },
+        update: {
+          tier: 'PRO',
+          expiresAt: trialEndDate
+        }
+      });
+
+      console.log(`✅ PRO subscription created with 30-day trial (expires: ${trialEndDate.toISOString()})`);
+
       return { card: updatedCard, promo };
     }, {
       maxWait: 5000,

@@ -5,7 +5,7 @@
 
 // Payment configuration
 export const PAYMENT_CONFIG = {
-  MINT_PRICE_SOL: parseFloat(process.env.NEXT_PUBLIC_MINT_PRICE_SOL || '0.1'),
+  MINT_PRICE_SOL: parseFloat(process.env.NEXT_PUBLIC_MINT_PRICE_SOL || '0.2'), // Premium tier price
   TREASURY_WALLET: process.env.NEXT_PUBLIC_TREASURY_WALLET || 'Pf9yHR1qmkY9geMLfMJs7JD4yXZURkiaxm5h7K61J7N',
   SOLANA_NETWORK: process.env.NEXT_PUBLIC_SOLANA_NETWORK || 'https://api.devnet.solana.com',
 } as const;

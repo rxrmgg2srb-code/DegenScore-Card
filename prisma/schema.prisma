@@ -178,3 +178,41 @@ model PromoRedemption {
   @@index([walletAddress])
   @@unique([promoCodeId, walletAddress]) // Un usuario solo puede usar un código una vez
 }
+
+model WeeklyChallenge {
+  id              String   @id @default(cuid())
+  week            Int      @unique // Week number of the year
+  year            Int
+  title           String
+  description     String
+  metric          String   // "likes", "profit", "winRate", "volume", "bestTrade"
+  prizeSOL        Float    @default(3.0)
+  startDate       DateTime
+  endDate         DateTime
+  winnerAddress   String?
+  winnerScore     Float?
+  isActive        Boolean  @default(true)
+
+  createdAt       DateTime @default(now())
+
+  @@index([week, year])
+  @@index([isActive])
+  @@index([endDate])
+}
+
+model Referral {
+  id                String   @id @default(cuid())
+  referrerAddress   String   // Quien refiere
+  referredAddress   String   // Quien fue referido
+  hasPaid           Boolean  @default(false) // Si el referido pagó
+  paidAt            DateTime? // Cuándo pagó
+  rewardPaid        Boolean  @default(false) // Si se pagó reward (para futuro)
+  rewardAmount      Float?   // Cuánto se pagó (para futuro)
+
+  createdAt         DateTime @default(now())
+
+  @@index([referrerAddress])
+  @@index([referredAddress])
+  @@index([hasPaid])
+  @@unique([referrerAddress, referredAddress]) // No duplicar referidos
+}

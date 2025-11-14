@@ -4,6 +4,7 @@ import HotFeedWidget from '../components/HotFeedWidget';
 import { GlobalStats } from '../components/GlobalStats';
 import { LiveActivityFeed } from '../components/LiveActivityFeed';
 import OnboardingTour from '../components/OnboardingTour';
+import WeeklyChallengeBanner from '../components/WeeklyChallengeBanner';
 
 export default function Home() {
   return (
@@ -38,6 +39,9 @@ export default function Home() {
 
         {/* Global Stats */}
         <GlobalStats className="mb-8 animate-slide-up global-stats" />
+
+        {/* Weekly Challenge Banner */}
+        <WeeklyChallengeBanner />
       </div>
 
       {/* Layout con Card Generator y Hot Feed */}
