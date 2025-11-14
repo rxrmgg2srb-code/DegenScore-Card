@@ -1,8 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../../lib/prisma';
 import { getWalletTransactions } from '../../lib/services/helius'; // <--- RUTA CORREGIDA
-
-const prisma = new PrismaClient();
 
 export default async function handler(
   req: NextApiRequest,

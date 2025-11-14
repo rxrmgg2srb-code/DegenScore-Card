@@ -2,6 +2,11 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { IncomingForm, File } from 'formidable';
 import fs from 'fs';
 import path from 'path';
+import crypto from 'crypto';
+import { isValidSolanaAddress, VALID_IMAGE_TYPES, isValidImageType } from '../../lib/validation';
+import { rateLimit } from '../../lib/rateLimit';
+import { logger } from '../../lib/logger';
+import { UPLOAD_CONFIG } from '../../lib/config';
 
 export const config = {
   api: {
@@ -17,10 +22,15 @@ export default async function handler(
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  // Apply rate limiting
+  if (!rateLimit(req, res)) {
+    return;
+  }
+
   try {
     // Parse form data
     const form = new IncomingForm({
-      maxFileSize: 2 * 1024 * 1024, // 2MB max
+      maxFileSize: UPLOAD_CONFIG.MAX_FILE_SIZE,
       keepExtensions: true,
     });
 
@@ -32,50 +42,78 @@ export default async function handler(
     });
 
     const file = Array.isArray(files.file) ? files.file[0] : files.file;
-    const walletAddress = Array.isArray(fields.walletAddress) 
-      ? fields.walletAddress[0] 
+    const walletAddress = Array.isArray(fields.walletAddress)
+      ? fields.walletAddress[0]
       : fields.walletAddress;
+
+    // Validate wallet address
+    if (!walletAddress || !isValidSolanaAddress(walletAddress)) {
+      return res.status(400).json({ error: 'Invalid wallet address' });
+    }
 
     if (!file) {
       return res.status(400).json({ error: 'No file uploaded' });
     }
 
-    // Validar tipo de archivo
-    const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-    if (!validTypes.includes(file.mimetype || '')) {
+    // Validate file type by MIME
+    if (!UPLOAD_CONFIG.ALLOWED_MIME_TYPES.includes(file.mimetype || '')) {
       return res.status(400).json({ error: 'Invalid file type' });
     }
 
-    // Crear directorio de uploads si no existe
-    const uploadsDir = path.join(process.cwd(), 'public', 'uploads', 'profiles');
+    // Validate file type by magic numbers (prevents spoofing)
+    const fileBuffer = fs.readFileSync(file.filepath);
+    if (!isValidImageType(fileBuffer, file.mimetype || '')) {
+      fs.unlinkSync(file.filepath); // Clean up
+      return res.status(400).json({ error: 'File content does not match declared type' });
+    }
+
+    // Additional file size check (server-side)
+    if (file.size > UPLOAD_CONFIG.MAX_FILE_SIZE) {
+      fs.unlinkSync(file.filepath);
+      return res.status(400).json({ error: 'File too large' });
+    }
+
+    // Create uploads directory if it doesn't exist
+    const uploadsDir = path.join(process.cwd(), UPLOAD_CONFIG.UPLOAD_DIR);
     if (!fs.existsSync(uploadsDir)) {
       fs.mkdirSync(uploadsDir, { recursive: true });
     }
 
-    // Generar nombre único
-    const timestamp = Date.now();
+    // Generate cryptographically secure random filename
     const ext = path.extname(file.originalFilename || '.jpg');
-    const filename = `${walletAddress.slice(0, 8)}_${timestamp}${ext}`;
+    const randomName = crypto.randomBytes(16).toString('hex');
+    const filename = `${randomName}${ext}`;
     const filepath = path.join(uploadsDir, filename);
 
-    // Mover archivo
+    // Prevent path traversal attacks
+    const normalizedPath = path.normalize(filepath);
+    if (!normalizedPath.startsWith(uploadsDir)) {
+      fs.unlinkSync(file.filepath);
+      return res.status(400).json({ error: 'Invalid file path' });
+    }
+
+    // Move file
     fs.copyFileSync(file.filepath, filepath);
 
-    // Eliminar archivo temporal
+    // Delete temporary file
     fs.unlinkSync(file.filepath);
 
-    // URL pública
+    // Public URL
     const imageUrl = `/uploads/profiles/${filename}`;
+
+    logger.info('Image uploaded successfully for wallet:', walletAddress);
 
     res.status(200).json({
       success: true,
       imageUrl,
     });
-  } catch (error) {
-    console.error('Error uploading image:', error);
-    res.status(500).json({
-      error: 'Failed to upload image',
-      details: error instanceof Error ? error.message : 'Unknown error',
-    });
+  } catch (error: any) {
+    logger.error('Error uploading image:', error);
+
+    const errorMessage = process.env.NODE_ENV === 'development'
+      ? error.message
+      : 'Failed to upload image';
+
+    res.status(500).json({ error: errorMessage });
   }
 }

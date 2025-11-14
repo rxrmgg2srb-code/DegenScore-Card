@@ -1,7 +1,11 @@
 import { Connection, PublicKey } from '@solana/web3.js';
+import { retry, CircuitBreaker } from '../retryLogic';
 
 const HELIUS_API_KEY = process.env.HELIUS_API_KEY || '';
 const HELIUS_RPC_URL = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_API_KEY}`;
+
+// Circuit breaker for Helius API (prevents cascading failures in high concurrency)
+const heliusCircuitBreaker = new CircuitBreaker(5, 60000);
 
 export interface ParsedTransaction {
   signature: string;
@@ -68,98 +72,125 @@ export async function getWalletTransactions(
   limit: number = 100,
   before?: string
 ): Promise<ParsedTransaction[]> {
-  try {
-    let url = `https://api.helius.xyz/v0/addresses/${walletAddress}/transactions?api-key=${HELIUS_API_KEY}&limit=${limit}`;
-    
-    // Agregar parámetro de paginación si existe
-    if (before) {
-      url += `&before=${before}`;
-    }
-    
-    const response = await fetch(url);
-    
-    if (!response.ok) {
-      throw new Error(`Helius API error: ${response.status} ${response.statusText}`);
-    }
+  return heliusCircuitBreaker.execute(() =>
+    retry(async () => {
+      let url = `https://api.helius.xyz/v0/addresses/${walletAddress}/transactions?api-key=${HELIUS_API_KEY}&limit=${limit}`;
 
-    const transactions: HeliusTransaction[] = await response.json();
-    
-    return transactions.map(tx => ({
-      signature: tx.signature,
-      timestamp: tx.timestamp,
-      type: tx.type,
-      nativeTransfers: tx.nativeTransfers,
-      tokenTransfers: tx.tokenTransfers,
-      description: tx.description,
-      fee: tx.fee,
-      feePayer: tx.feePayer,
-    }));
-  } catch (error) {
-    console.error('Error fetching transactions from Helius:', error);
-    throw error;
-  }
+      // Agregar parámetro de paginación si existe
+      if (before) {
+        url += `&before=${before}`;
+      }
+
+      const response = await fetch(url);
+
+      if (!response.ok) {
+        const error: any = new Error(`Helius API error: ${response.status} ${response.statusText}`);
+        error.status = response.status;
+        throw error;
+      }
+
+      const transactions: HeliusTransaction[] = await response.json();
+
+      return transactions.map(tx => ({
+        signature: tx.signature,
+        timestamp: tx.timestamp,
+        type: tx.type,
+        nativeTransfers: tx.nativeTransfers,
+        tokenTransfers: tx.tokenTransfers,
+        description: tx.description,
+        fee: tx.fee,
+        feePayer: tx.feePayer,
+      }));
+    }, {
+      maxRetries: 3,
+      retryableStatusCodes: [408, 429, 500, 502, 503, 504],
+      onRetry: (attempt, error) => {
+        console.warn(`[Helius] Retrying getWalletTransactions (attempt ${attempt}):`, error.message);
+      }
+    })
+  );
 }
 
 /**
  * Obtiene información detallada de tokens usando Helius DAS API
  */
 export async function getTokenMetadata(mintAddresses: string[]): Promise<Map<string, any>> {
-  try {
-    const url = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_API_KEY}`;
-    
-    const requests = mintAddresses.map(mint => ({
-      jsonrpc: '2.0',
-      id: mint,
-      method: 'getAsset',
-      params: { id: mint },
-    }));
+  if (mintAddresses.length === 0) return new Map();
 
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(requests),
-    });
+  return heliusCircuitBreaker.execute(() =>
+    retry(async () => {
+      const url = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_API_KEY}`;
 
-    if (!response.ok) {
-      throw new Error(`Helius DAS API error: ${response.status}`);
-    }
+      const requests = mintAddresses.map(mint => ({
+        jsonrpc: '2.0',
+        id: mint,
+        method: 'getAsset',
+        params: { id: mint },
+      }));
 
-    const results = await response.json();
-    const metadataMap = new Map();
-
-    if (Array.isArray(results)) {
-      results.forEach((result: any) => {
-        if (result.result) {
-          metadataMap.set(result.id, {
-            symbol: result.result.content?.metadata?.symbol || 'UNKNOWN',
-            name: result.result.content?.metadata?.name || 'Unknown Token',
-            image: result.result.content?.links?.image,
-          });
-        }
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requests),
       });
-    }
 
-    return metadataMap;
-  } catch (error) {
-    console.error('Error fetching token metadata:', error);
-    return new Map();
-  }
+      if (!response.ok) {
+        const error: any = new Error(`Helius DAS API error: ${response.status}`);
+        error.status = response.status;
+        throw error;
+      }
+
+      const results = await response.json();
+      const metadataMap = new Map();
+
+      if (Array.isArray(results)) {
+        results.forEach((result: any) => {
+          if (result.result) {
+            metadataMap.set(result.id, {
+              symbol: result.result.content?.metadata?.symbol || 'UNKNOWN',
+              name: result.result.content?.metadata?.name || 'Unknown Token',
+              image: result.result.content?.links?.image,
+            });
+          }
+        });
+      }
+
+      return metadataMap;
+    }, {
+      maxRetries: 3,
+      retryableStatusCodes: [408, 429, 500, 502, 503, 504],
+      onRetry: (attempt, error) => {
+        console.warn(`[Helius] Retrying getTokenMetadata (attempt ${attempt}):`, error.message);
+      }
+    })
+  ).catch((error) => {
+    console.error('Error fetching token metadata after retries:', error);
+    return new Map(); // Fallback to empty map on failure
+  });
 }
 
 /**
  * Obtiene el balance actual de SOL de una wallet
  */
 export async function getWalletBalance(walletAddress: string): Promise<number> {
-  try {
-    const connection = new Connection(HELIUS_RPC_URL, 'confirmed');
-    const publicKey = new PublicKey(walletAddress);
-    const balance = await connection.getBalance(publicKey);
-    
-    return balance / 1e9; // Convert lamports to SOL
-  } catch (error) {
-    console.error('Error fetching wallet balance:', error);
-    return 0;
-  }
+  return heliusCircuitBreaker.execute(() =>
+    retry(async () => {
+      const connection = new Connection(HELIUS_RPC_URL, 'confirmed');
+      const publicKey = new PublicKey(walletAddress);
+      const balance = await connection.getBalance(publicKey);
+
+      return balance / 1e9; // Convert lamports to SOL
+    }, {
+      maxRetries: 3,
+      retryableStatusCodes: [408, 429, 500, 502, 503, 504],
+      onRetry: (attempt, error) => {
+        console.warn(`[Helius] Retrying getWalletBalance (attempt ${attempt}):`, error.message);
+      }
+    })
+  ).catch((error) => {
+    console.error('Error fetching wallet balance after retries:', error);
+    return 0; // Fallback to 0 on failure
+  });
 }
 
 /**

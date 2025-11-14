@@ -1,7 +1,8 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { prisma } from '../../lib/prisma';
+import { isValidSolanaAddress } from '../../lib/validation';
+import { rateLimit } from '../../lib/rateLimit';
+import { logger } from '../../lib/logger';
 
 export default async function handler(
   req: NextApiRequest,
@@ -11,31 +12,32 @@ export default async function handler(
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  // Apply rate limiting
+  if (!rateLimit(req, res)) {
+    return;
+  }
+
   try {
     const { walletAddress, analysisData } = req.body;
 
-    console.log('📥 Saving card for:', walletAddress);
-
+    // Validate inputs
     if (!walletAddress || !analysisData) {
-      return res.status(400).json({ 
-        error: 'Missing required fields',
-        received: { walletAddress: !!walletAddress, analysisData: !!analysisData }
-      });
+      return res.status(400).json({ error: 'Missing required fields' });
     }
 
-    // CONVERTIR BADGES A FORMATO CORRECTO
-    const badgesData = (analysisData.badges || []).map((badge: any) => {
-      console.log('🏅 Badge raw:', badge);
-      
-      return {
-        name: String(badge.name || ''),
-        description: String(badge.description || ''),
-        icon: String(badge.icon || ''),
-        rarity: String(badge.rarity || 'COMMON').toUpperCase(), // ← CONVERTIR EXPLÍCITAMENTE
-      };
-    });
+    if (!isValidSolanaAddress(walletAddress)) {
+      return res.status(400).json({ error: 'Invalid wallet address' });
+    }
 
-    console.log('🏅 Badges formatted:', badgesData);
+    logger.debug('Saving card for wallet:', walletAddress);
+
+    // Convert badges to correct format
+    const badgesData = (analysisData.badges || []).map((badge: any) => ({
+      name: String(badge.name || ''),
+      description: String(badge.description || ''),
+      icon: String(badge.icon || ''),
+      rarity: String(badge.rarity || 'COMMON').toUpperCase(),
+    }));
 
     // Preparar datos para Prisma
     const cardData = {
@@ -89,17 +91,16 @@ export default async function handler(
       },
     });
 
-    console.log('✅ Card saved:', card.id);
+    logger.info('Card saved successfully:', card.id);
 
     res.status(200).json({ success: true, card });
   } catch (error: any) {
-    console.error('❌ Error saving card:', error);
-    res.status(500).json({ 
-      error: 'Failed to save card',
-      details: error.message,
-      meta: error.meta 
-    });
-  } finally {
-    await prisma.$disconnect();
+    logger.error('Error saving card:', error);
+
+    const errorMessage = process.env.NODE_ENV === 'development'
+      ? error.message
+      : 'Failed to save card';
+
+    res.status(500).json({ error: errorMessage });
   }
 }

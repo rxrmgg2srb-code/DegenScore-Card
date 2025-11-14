@@ -1,6 +1,9 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { calculateAdvancedMetrics } from '../../lib/metrics-advanced';
-import { generateBadges } from '../../lib/badges-generator'; // <--- NUEVA IMPORTACIÓN
+import { calculateAdvancedMetrics } from '../../lib/metrics-debug'; // USANDO VERSION DEBUG
+import { generateBadges } from '../../lib/badges-generator';
+import { isValidSolanaAddress } from '../../lib/validation';
+import { strictRateLimit } from '../../lib/rateLimit';
+import { logger } from '../../lib/logger';
 
 export default async function handler(
   req: NextApiRequest,
@@ -10,19 +13,29 @@ export default async function handler(
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  // Apply strict rate limiting (expensive operation)
+  if (!strictRateLimit(req, res)) {
+    return;
+  }
+
   try {
     const { walletAddress } = req.body;
 
-    if (!walletAddress) {
+    // Validate wallet address
+    if (!walletAddress || typeof walletAddress !== 'string') {
       return res.status(400).json({ error: 'Wallet address is required' });
     }
 
-    console.log('🔍 Analyzing wallet:', walletAddress);
+    if (!isValidSolanaAddress(walletAddress)) {
+      return res.status(400).json({ error: 'Invalid Solana wallet address' });
+    }
+
+    logger.info('Analyzing wallet:', walletAddress);
 
     // 1. Usar la función real de análisis
     const metrics = await calculateAdvancedMetrics(walletAddress);
 
-    console.log('✅ Analysis complete');
+    logger.info('Analysis complete for wallet:', walletAddress);
 
     // 2. Generar badges usando la función encapsulada (MÁS LIMPIO)
     const badges = generateBadges(metrics); // <--- LÓGICA EXTRAÍDA AQUÍ
@@ -62,10 +75,15 @@ export default async function handler(
     res.status(200).json(analysisData);
 
   } catch (error: any) {
-    console.error('❌ Error analyzing wallet:', error);
-    res.status(500).json({ 
-      error: 'Failed to analyze wallet', 
-      details: error.message 
+    logger.error('Error analyzing wallet:', error);
+
+    // Don't expose internal error details in production
+    const errorMessage = process.env.NODE_ENV === 'development'
+      ? error.message
+      : 'Failed to analyze wallet';
+
+    res.status(500).json({
+      error: errorMessage
     });
   }
 }

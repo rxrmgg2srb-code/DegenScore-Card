@@ -1,7 +1,8 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { prisma } from '../../lib/prisma';
+import { isValidSortField, validatePagination } from '../../lib/validation';
+import { rateLimit } from '../../lib/rateLimit';
+import { logger } from '../../lib/logger';
 
 export default async function handler(
   req: NextApiRequest,
@@ -11,18 +12,32 @@ export default async function handler(
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  // Apply rate limiting
+  if (!rateLimit(req, res)) {
+    return;
+  }
+
   try {
-    const { sortBy = 'degenScore', limit = 100 } = req.query;
+    const { sortBy = 'degenScore', limit: limitParam } = req.query;
+
+    // Validate and sanitize sort field
+    const sortField = isValidSortField(sortBy as string) ? sortBy as string : 'degenScore';
+
+    // Validate limit
+    const { limit } = validatePagination(undefined, limitParam);
+    const safeLimit = Math.min(limit, 100); // Max 100 entries
+
+    logger.debug('Leaderboard request - sortBy:', sortField, 'limit:', safeLimit);
 
     // SOLO mostrar cards de quienes pagaron/descargaron (isPaid = true)
     const cards = await prisma.degenCard.findMany({
       where: {
-        isPaid: true, // 🔥 FILTRO CLAVE: Solo mostrar quien pagó
+        isPaid: true,
       },
       orderBy: {
-        [sortBy as string]: 'desc',
+        [sortField]: 'desc',
       },
-      take: parseInt(limit as string),
+      take: safeLimit,
       include: {
         badges: true,
       },
@@ -58,11 +73,13 @@ export default async function handler(
         totalVolume: totalVolume._sum.totalVolume || 0,
       },
     });
-  } catch (error) {
-    console.error('Error fetching leaderboard:', error);
-    res.status(500).json({
-      error: 'Failed to fetch leaderboard',
-      details: error instanceof Error ? error.message : 'Unknown error',
-    });
+  } catch (error: any) {
+    logger.error('Error fetching leaderboard:', error);
+
+    const errorMessage = process.env.NODE_ENV === 'development'
+      ? error.message
+      : 'Failed to fetch leaderboard';
+
+    res.status(500).json({ error: errorMessage });
   }
 }

@@ -40,12 +40,12 @@ const getTierConfig = (score: number) => {
     return {
       name: 'LEGENDARY',
       emoji: '👑',
-      gradient: 'from-yellow-600 via-yellow-400 to-yellow-200',
-      border: 'border-yellow-400/80',
-      glow: 'shadow-2xl shadow-yellow-500/50',
-      bgPattern: 'bg-gradient-to-br from-yellow-900/20 via-orange-900/10 to-yellow-800/20',
-      textColor: 'text-yellow-400',
-      badgeGradient: 'from-yellow-500 via-yellow-400 to-orange-500',
+      gradient: 'from-yellow-500 via-orange-400 to-yellow-300',
+      border: 'border-yellow-400',
+      glow: 'shadow-[0_0_40px_rgba(251,191,36,0.8)] shadow-yellow-500/80',
+      bgPattern: 'bg-gradient-to-br from-yellow-900/30 via-orange-900/20 to-yellow-800/30',
+      textColor: 'text-yellow-300',
+      badgeGradient: 'from-yellow-500 via-orange-400 to-yellow-500',
       shine: true,
     };
   }
@@ -53,12 +53,12 @@ const getTierConfig = (score: number) => {
     return {
       name: 'MASTER',
       emoji: '💎',
-      gradient: 'from-pink-600 via-purple-500 to-pink-400',
-      border: 'border-pink-500/80',
-      glow: 'shadow-2xl shadow-pink-500/50',
-      bgPattern: 'bg-gradient-to-br from-pink-900/20 via-purple-900/10 to-pink-800/20',
-      textColor: 'text-pink-400',
-      badgeGradient: 'from-pink-500 via-purple-500 to-pink-400',
+      gradient: 'from-fuchsia-500 via-purple-500 to-pink-500',
+      border: 'border-fuchsia-400',
+      glow: 'shadow-[0_0_35px_rgba(217,70,239,0.7)] shadow-fuchsia-500/70',
+      bgPattern: 'bg-gradient-to-br from-fuchsia-900/30 via-purple-900/20 to-pink-900/30',
+      textColor: 'text-fuchsia-300',
+      badgeGradient: 'from-fuchsia-500 via-purple-500 to-pink-500',
       shine: true,
     };
   }
@@ -66,25 +66,25 @@ const getTierConfig = (score: number) => {
     return {
       name: 'DIAMOND',
       emoji: '💠',
-      gradient: 'from-blue-600 via-cyan-500 to-blue-400',
-      border: 'border-cyan-500/80',
-      glow: 'shadow-xl shadow-cyan-500/40',
-      bgPattern: 'bg-gradient-to-br from-blue-900/20 via-cyan-900/10 to-blue-800/20',
-      textColor: 'text-cyan-400',
-      badgeGradient: 'from-blue-500 via-cyan-400 to-blue-400',
-      shine: false,
+      gradient: 'from-cyan-500 via-blue-500 to-cyan-400',
+      border: 'border-cyan-400',
+      glow: 'shadow-[0_0_30px_rgba(34,211,238,0.6)] shadow-cyan-500/60',
+      bgPattern: 'bg-gradient-to-br from-cyan-900/30 via-blue-900/20 to-cyan-800/30',
+      textColor: 'text-cyan-300',
+      badgeGradient: 'from-cyan-500 via-blue-400 to-cyan-500',
+      shine: true,
     };
   }
   if (score >= 60) {
     return {
       name: 'PLATINUM',
       emoji: '⚡',
-      gradient: 'from-gray-400 via-gray-300 to-gray-200',
-      border: 'border-gray-400/80',
-      glow: 'shadow-xl shadow-gray-400/40',
-      bgPattern: 'bg-gradient-to-br from-gray-800/20 via-gray-700/10 to-gray-800/20',
-      textColor: 'text-gray-300',
-      badgeGradient: 'from-gray-400 via-gray-300 to-gray-400',
+      gradient: 'from-slate-400 via-gray-300 to-slate-400',
+      border: 'border-slate-400',
+      glow: 'shadow-[0_0_25px_rgba(148,163,184,0.5)] shadow-slate-400/50',
+      bgPattern: 'bg-gradient-to-br from-slate-800/30 via-gray-800/20 to-slate-800/30',
+      textColor: 'text-slate-300',
+      badgeGradient: 'from-slate-400 via-gray-300 to-slate-400',
       shine: false,
     };
   }
@@ -92,24 +92,24 @@ const getTierConfig = (score: number) => {
     return {
       name: 'GOLD',
       emoji: '🌟',
-      gradient: 'from-yellow-600 via-yellow-500 to-yellow-400',
-      border: 'border-yellow-500/60',
-      glow: 'shadow-lg shadow-yellow-500/30',
-      bgPattern: 'bg-gradient-to-br from-yellow-900/10 via-yellow-800/5 to-yellow-900/10',
-      textColor: 'text-yellow-500',
-      badgeGradient: 'from-yellow-500 via-yellow-400 to-yellow-500',
+      gradient: 'from-amber-500 via-yellow-500 to-amber-400',
+      border: 'border-amber-400',
+      glow: 'shadow-[0_0_20px_rgba(245,158,11,0.4)] shadow-amber-500/40',
+      bgPattern: 'bg-gradient-to-br from-amber-900/25 via-yellow-900/15 to-amber-900/25',
+      textColor: 'text-amber-400',
+      badgeGradient: 'from-amber-500 via-yellow-400 to-amber-500',
       shine: false,
     };
   }
   return {
     name: 'DEGEN',
     emoji: '🎮',
-    gradient: 'from-green-600 via-emerald-500 to-green-500',
-    border: 'border-emerald-500/60',
-    glow: 'shadow-lg shadow-emerald-500/20',
-    bgPattern: 'bg-gradient-to-br from-green-900/10 via-emerald-900/5 to-green-900/10',
+    gradient: 'from-emerald-500 via-green-500 to-emerald-400',
+    border: 'border-emerald-400',
+    glow: 'shadow-[0_0_15px_rgba(16,185,129,0.3)] shadow-emerald-500/30',
+    bgPattern: 'bg-gradient-to-br from-emerald-900/20 via-green-900/15 to-emerald-900/20',
     textColor: 'text-emerald-400',
-    badgeGradient: 'from-green-500 via-emerald-500 to-green-500',
+    badgeGradient: 'from-emerald-500 via-green-500 to-emerald-500',
     shine: false,
   };
 };
@@ -168,18 +168,18 @@ const LeaderboardCard = ({ entry, index, handleLike, userLikes }: LeaderboardCar
   return (
     <div className="flex flex-col">
       <div
-        className={`relative rounded-2xl border-4 ${tier.border} ${tier.glow} hover:scale-105 transition-all duration-300 overflow-hidden`}
+        className={`relative rounded-3xl border-[6px] ${tier.border} ${tier.glow} hover:scale-[1.03] transition-all duration-500 overflow-hidden group`}
         style={{ aspectRatio: '2/3' }}
       >
         <div className={`absolute inset-0 ${tier.bgPattern}`}></div>
 
         {tier.shine && (
-          <div className="absolute inset-0 shine-effect opacity-30"></div>
+          <div className="absolute inset-0 shine-effect opacity-40 group-hover:opacity-60 transition-opacity"></div>
         )}
 
-        <div className={`absolute inset-0 bg-gradient-to-br ${tier.gradient} opacity-10`}></div>
+        <div className={`absolute inset-0 bg-gradient-to-br ${tier.gradient} opacity-15 group-hover:opacity-20 transition-opacity`}></div>
 
-        <div className="relative h-full flex flex-col p-5 bg-gray-900/85 backdrop-blur-sm justify-between">
+        <div className="relative h-full flex flex-col p-6 bg-gray-900/90 backdrop-blur-md justify-between">
           <div className="flex justify-between items-start mb-2">
             <div className={`text-3xl font-black ${tier.textColor} drop-shadow-lg`}>
               #{index + 1}
@@ -687,7 +687,7 @@ export default function Leaderboard() {
                   {filteredLeaderboard.length > 0 ? (
                     <>
                       {viewMode === 'cards' && (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                           {filteredLeaderboard.map((entry, index) => (
                             <LeaderboardCard
                               key={entry.id}

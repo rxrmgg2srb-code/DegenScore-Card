@@ -6,6 +6,8 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  // Optimización para alta concurrencia
+  // Configurar en DATABASE_URL: ?connection_limit=20&pool_timeout=20
 }
 
 model DegenCard {
@@ -63,11 +65,20 @@ model DegenCard {
   // Relaciones
   badges          Badge[]
   
+  // Índices simples para consultas individuales
   @@index([degenScore])
   @@index([totalVolume])
   @@index([winRate])
   @@index([isPaid])
   @@index([likes])
+  @@index([mintedAt])
+  @@index([createdAt])
+
+  // Índices compuestos para leaderboard (ordenamiento)
+  @@index([degenScore(sort: Desc), mintedAt(sort: Desc)])
+  @@index([totalVolume(sort: Desc), mintedAt(sort: Desc)])
+  @@index([winRate(sort: Desc), mintedAt(sort: Desc)])
+  @@index([likes(sort: Desc), mintedAt(sort: Desc)])
 }
 
 model Badge {
@@ -128,10 +139,80 @@ model Subscription {
   tier            String   @default("FREE") // "FREE" | "BASIC" | "PRO"
   expiresAt       DateTime?
   paymentSignature String?
-  
+
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
-  
+
   @@index([walletAddress])
   @@index([tier])
+}
+
+model PromoCode {
+  id              String   @id @default(cuid())
+  code            String   @unique
+  description     String?
+  maxUses         Int      @default(0) // 0 = unlimited
+  usedCount       Int      @default(0)
+  isActive        Boolean  @default(true)
+  expiresAt       DateTime?
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relación con usos
+  redemptions     PromoRedemption[]
+
+  @@index([code])
+  @@index([isActive])
+}
+
+model PromoRedemption {
+  id              String   @id @default(cuid())
+  promoCodeId     String
+  promoCode       PromoCode @relation(fields: [promoCodeId], references: [id], onDelete: Cascade)
+  walletAddress   String
+
+  createdAt       DateTime @default(now())
+
+  @@index([promoCodeId])
+  @@index([walletAddress])
+  @@unique([promoCodeId, walletAddress]) // Un usuario solo puede usar un código una vez
+}
+
+model WeeklyChallenge {
+  id              String   @id @default(cuid())
+  week            Int      @unique // Week number of the year
+  year            Int
+  title           String
+  description     String
+  metric          String   // "likes", "profit", "winRate", "volume", "bestTrade"
+  prizeSOL        Float    @default(3.0)
+  startDate       DateTime
+  endDate         DateTime
+  winnerAddress   String?
+  winnerScore     Float?
+  isActive        Boolean  @default(true)
+
+  createdAt       DateTime @default(now())
+
+  @@index([week, year])
+  @@index([isActive])
+  @@index([endDate])
+}
+
+model Referral {
+  id                String   @id @default(cuid())
+  referrerAddress   String   // Quien refiere
+  referredAddress   String   // Quien fue referido
+  hasPaid           Boolean  @default(false) // Si el referido pagó
+  paidAt            DateTime? // Cuándo pagó
+  rewardPaid        Boolean  @default(false) // Si se pagó reward (para futuro)
+  rewardAmount      Float?   // Cuánto se pagó (para futuro)
+
+  createdAt         DateTime @default(now())
+
+  @@index([referrerAddress])
+  @@index([referredAddress])
+  @@index([hasPaid])
+  @@unique([referrerAddress, referredAddress]) // No duplicar referidos
 }
