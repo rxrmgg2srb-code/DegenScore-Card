@@ -463,44 +463,52 @@ export default function Documentation() {
                 {/* Weekly Challenges */}
                 <Section id="challenges" title="Weekly Challenges" icon="⚔️">
                   <p className="text-gray-300 mb-6">
-                    Compite semanalmente por <strong className="text-yellow-400">3 SOL</strong> en premios.
+                    Compite semanalmente por <strong className="text-yellow-400">1 SOL</strong>. El challenge se activa cuando haya <strong>100 cards generadas</strong>.
                   </p>
 
                   <div className="bg-gradient-to-r from-yellow-900/30 to-orange-900/30 border-2 border-yellow-500 rounded-xl p-6 mb-6">
-                    <h4 className="text-2xl font-bold text-yellow-400 mb-3">🏆 Challenge de la Semana</h4>
+                    <h4 className="text-2xl font-bold text-yellow-400 mb-3">❤️ Most Loved Card Challenge</h4>
                     <p className="text-gray-200 mb-4">
-                      Cada semana hay un nuevo challenge. El ganador se lleva <strong>3 SOL</strong>.
+                      Consigue el mayor número de likes en tu card y gana <strong>1 SOL</strong>.
                     </p>
                     <div className="bg-black/30 rounded-lg p-4">
-                      <p className="text-sm text-gray-300">Ejemplo de challenge actual:</p>
-                      <p className="text-lg font-bold text-white mt-2">"Mayor Win Rate Semanal"</p>
-                      <p className="text-sm text-gray-400 mt-1">Gana quien tenga el win rate más alto esta semana (min. 10 trades)</p>
+                      <p className="text-sm text-gray-300">Challenge permanente:</p>
+                      <p className="text-lg font-bold text-white mt-2">"❤️ Más Likes en tu Card"</p>
+                      <p className="text-sm text-gray-400 mt-1">Gana quien tenga más likes al final de cada semana. Se activa cuando haya 100 cards generadas.</p>
                     </div>
                   </div>
 
                   <div className="space-y-4">
-                    <h5 className="font-bold text-lg">Tipos de Challenges:</h5>
-                    <div className="grid gap-3">
-                      <ChallengeType
-                        title="📈 Highest Win Rate"
-                        description="Mejor porcentaje de trades ganadores (mínimo 10 trades)"
-                      />
-                      <ChallengeType
-                        title="💰 Most Profit"
-                        description="Mayor ganancia total en USD durante la semana"
-                      />
-                      <ChallengeType
-                        title="📊 Highest Volume"
-                        description="Mayor volumen de trading acumulado"
-                      />
-                      <ChallengeType
-                        title="🎯 Best Single Trade"
-                        description="El trade individual más rentable (% de ganancia)"
-                      />
-                      <ChallengeType
-                        title="❤️ Most Liked Card"
-                        description="La card con más likes de la comunidad"
-                      />
+                    <h5 className="font-bold text-lg">Cómo Participar:</h5>
+                    <div className="bg-black/30 border border-gray-700 rounded-lg p-4 space-y-3">
+                      <div className="flex items-start gap-3">
+                        <span className="text-2xl">1️⃣</span>
+                        <div>
+                          <p className="font-bold text-white">Genera tu Card</p>
+                          <p className="text-sm text-gray-400">Conecta tu wallet y genera tu DegenScore Card</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <span className="text-2xl">2️⃣</span>
+                        <div>
+                          <p className="font-bold text-white">Upgrade a PREMIUM o PRO</p>
+                          <p className="text-sm text-gray-400">Solo usuarios pagos pueden participar</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <span className="text-2xl">3️⃣</span>
+                        <div>
+                          <p className="font-bold text-white">Comparte tu Card</p>
+                          <p className="text-sm text-gray-400">Promociona tu card en Twitter, Discord, Telegram</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <span className="text-2xl">4️⃣</span>
+                        <div>
+                          <p className="font-bold text-white">Consigue Likes ❤️</p>
+                          <p className="text-sm text-gray-400">El que tenga más likes al domingo gana 1 SOL</p>
+                        </div>
+                      </div>
                     </div>
                   </div>
 

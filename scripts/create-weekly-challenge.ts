@@ -7,34 +7,13 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-// Challenge templates (rotar semanalmente)
-const challengeTemplates = [
-  {
-    title: '❤️ Most Loved Card',
-    description: 'Get the most likes on your premium card this week!',
-    metric: 'likes'
-  },
-  {
-    title: '💰 Profit King',
-    description: 'Achieve the highest profit this week!',
-    metric: 'profit'
-  },
-  {
-    title: '🎯 Win Rate Champion',
-    description: 'Maintain the highest win rate this week!',
-    metric: 'winRate'
-  },
-  {
-    title: '📊 Volume Leader',
-    description: 'Trade the highest volume this week!',
-    metric: 'volume'
-  },
-  {
-    title: '🚀 Best Single Trade',
-    description: 'Make the most profitable single trade this week!',
-    metric: 'bestTrade'
-  }
-];
+// Challenge único: Most Loved Card
+const challengeTemplate = {
+  title: '❤️ Most Loved Card',
+  description: 'Get the most likes on your card this week! Challenge activates when we reach 100 cards.',
+  metric: 'likes',
+  minCardsRequired: 100
+};
 
 async function main() {
   try {
@@ -47,6 +26,17 @@ async function main() {
 
     console.log(`📅 Creating challenge for Week ${weekNumber} of ${now.getFullYear()}`);
 
+    // Check total cards count
+    const totalCards = await prisma.degenCard.count();
+    console.log(`📊 Total cards generated: ${totalCards}`);
+
+    if (totalCards < challengeTemplate.minCardsRequired) {
+      console.log(`⏳ Waiting for ${challengeTemplate.minCardsRequired} cards to activate challenge`);
+      console.log(`   Current: ${totalCards} cards`);
+      console.log(`   Needed: ${challengeTemplate.minCardsRequired - totalCards} more cards`);
+      return;
+    }
+
     // Check if challenge already exists
     const existing = await prisma.weeklyChallenge.findUnique({
       where: { week: weekNumber }
@@ -58,10 +48,6 @@ async function main() {
       console.log(`   Prize: ${existing.prizeSOL} SOL`);
       return;
     }
-
-    // Select challenge template (cycle through them)
-    const templateIndex = weekNumber % challengeTemplates.length;
-    const template = challengeTemplates[templateIndex];
 
     // Calculate start and end dates (Monday to Sunday)
     const startDate = new Date(now);
@@ -77,10 +63,11 @@ async function main() {
       data: {
         week: weekNumber,
         year: now.getFullYear(),
-        title: template.title,
-        description: template.description,
-        metric: template.metric,
-        prizeSOL: 3.0,
+        title: challengeTemplate.title,
+        description: challengeTemplate.description,
+        metric: challengeTemplate.metric,
+        prizeSOL: 1.0,
+        minCardsRequired: challengeTemplate.minCardsRequired,
         startDate,
         endDate,
         isActive: true

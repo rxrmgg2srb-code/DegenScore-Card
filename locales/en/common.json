@@ -81,11 +81,13 @@
   },
   "challenges": {
     "title": "Weekly Challenge",
-    "prize": "Prize",
+    "prize": "Prize: 1 SOL",
     "ends_in": "Ends in",
-    "current": "Current Challenge",
+    "current": "Current Challenge: Most Likes",
     "participate": "Participate",
-    "premium_only": "PREMIUM and PRO users only"
+    "premium_only": "PREMIUM and PRO users only",
+    "description": "Get the most likes on your card and win 1 SOL",
+    "min_cards": "Activates when we reach {{count}} cards"
   },
   "leaderboard": {
     "title": "Global Leaderboard",

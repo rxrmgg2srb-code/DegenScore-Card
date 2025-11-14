@@ -81,11 +81,13 @@
   },
   "challenges": {
     "title": "Weekly Challenge",
-    "prize": "Premio",
+    "prize": "Premio: 1 SOL",
     "ends_in": "Termina en",
-    "current": "Challenge Actual",
+    "current": "Challenge Actual: Más Likes",
     "participate": "Participar",
-    "premium_only": "Solo usuarios PREMIUM y PRO"
+    "premium_only": "Solo usuarios PREMIUM y PRO",
+    "description": "Consigue más likes en tu card y gana 1 SOL",
+    "min_cards": "Se activa cuando haya {{count}} cards generadas"
   },
   "leaderboard": {
     "title": "Clasificación Global",

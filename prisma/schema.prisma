@@ -192,7 +192,8 @@ model WeeklyChallenge {
   title           String
   description     String
   metric          String   // "likes", "profit", "winRate", "volume", "bestTrade"
-  prizeSOL        Float    @default(3.0)
+  prizeSOL        Float    @default(1.0)
+  minCardsRequired Int     @default(100) // Mínimo de cards para activar challenge
   startDate       DateTime
   endDate         DateTime
   winnerAddress   String?

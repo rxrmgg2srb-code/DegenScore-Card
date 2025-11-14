@@ -81,11 +81,13 @@
   },
   "challenges": {
     "title": "每周挑战",
-    "prize": "奖品",
+    "prize": "奖品: 1 SOL",
     "ends_in": "结束时间",
-    "current": "当前挑战",
+    "current": "当前挑战: 最多点赞",
     "participate": "参与",
-    "premium_only": "仅限高级和专业用户"
+    "premium_only": "仅限高级和专业用户",
+    "description": "获得最多点赞并赢得 1 SOL",
+    "min_cards": "当达到 {{count}} 张卡片时激活"
   },
   "leaderboard": {
     "title": "全球排行榜",

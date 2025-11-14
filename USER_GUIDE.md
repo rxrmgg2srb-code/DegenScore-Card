@@ -67,8 +67,9 @@ Invita amigos, gana rewards:
 
 ### 9. [Weekly Challenges](#challenges)
 - Compite semanalmente
-- Premio: 3 SOL al ganador
-- Tipos: Win Rate, Profit, Volume, Best Trade, Most Liked
+- Premio: 1 SOL al ganador
+- Criterio: Más Likes en tu card
+- Se activa cuando haya 100 cards generadas
 - Solo PREMIUM/PRO pueden participar
 
 ### 10. [Alpha Feed](#alpha-feed)
@@ -214,38 +215,35 @@ Tu DegenScore se calcula con estos factores:
 ## 📊 Cómo Funcionan los Weekly Challenges
 
 ### Mecánica
-1. Cada lunes comienza un nuevo challenge
+1. El challenge se activa cuando haya **100 cards generadas**
 2. Solo usuarios PREMIUM/PRO pueden participar
-3. Tienes 7 días para competir
-4. El ganador se anuncia el domingo
-5. Premio: **3 SOL**
+3. Cada semana compites por más likes
+4. El ganador se anuncia cada domingo
+5. Premio: **1 SOL**
 
-### Tipos de Challenges
+### Challenge: Most Loved Card ❤️
 
-#### 📈 Highest Win Rate
-- Mejor % de trades ganadores
-- Mínimo: 10 trades durante la semana
-- Ganador: Mayor win rate con mínimo alcanzado
+**Criterio único:** Más Likes en tu DegenScore Card
 
-#### 💰 Most Profit
-- Mayor ganancia total en USD
-- Se cuenta P&L realizado
-- Ganador: Mayor profit absoluto
+**Cómo funciona:**
+- El challenge se activa automáticamente cuando la plataforma alcanza **100 cards generadas**
+- Cada semana (Lunes a Domingo) se cuenta el número de likes nuevos
+- Solo usuarios **PREMIUM** o **PRO** pueden competir
+- El ganador se anuncia cada domingo
 
-#### 📊 Highest Volume
-- Mayor volumen de trading
-- Se suma todo (compras + ventas)
-- Ganador: Volumen más alto
+**Cómo ganar:**
+1. ✅ Genera tu DegenScore Card
+2. ✅ Upgrade a PREMIUM o PRO
+3. ✅ Comparte tu card en redes sociales
+4. ✅ Consigue que la gente le de like (❤️) a tu card
+5. ✅ El que tenga más likes al final de la semana gana **1 SOL**
 
-#### 🎯 Best Single Trade
-- El trade individual más rentable
-- Se mide en % de ganancia
-- Ganador: Mayor % en un solo trade
-
-#### ❤️ Most Liked Card
-- La card más popular
-- Se cuentan likes durante la semana
-- Ganador: Más likes nuevos
+**Consejos para conseguir likes:**
+- 📱 Comparte en Twitter con hashtags virales
+- 💬 Postea en Discord/Telegram communities
+- 🎯 Mientras mejor tu DegenScore, más likes conseguirás
+- 🏆 Usa badges raros para destacar
+- 🔥 Mantén una racha de check-in para mostrar consistencia
 
 ---
 
