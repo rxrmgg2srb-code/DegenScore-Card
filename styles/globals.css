@@ -299,3 +299,73 @@ body {
   background-size: 200% 100%;
   animation: skeleton-loading 1.5s ease-in-out infinite;
 }
+
+/* Enhanced Premium Glow Effects */
+@keyframes premium-glow {
+  0%, 100% {
+    box-shadow: 0 0 20px currentColor, 0 0 40px currentColor, 0 0 60px currentColor;
+  }
+  50% {
+    box-shadow: 0 0 30px currentColor, 0 0 60px currentColor, 0 0 90px currentColor;
+  }
+}
+
+.premium-glow {
+  animation: premium-glow 3s ease-in-out infinite;
+}
+
+/* Ultra Premium Gradient Background */
+.premium-bg-gradient {
+  background:
+    radial-gradient(ellipse at top right, rgba(139, 92, 246, 0.15), transparent 50%),
+    radial-gradient(ellipse at bottom left, rgba(236, 72, 153, 0.15), transparent 50%),
+    radial-gradient(ellipse at center, rgba(6, 182, 212, 0.1), transparent 50%),
+    linear-gradient(180deg, #040414 0%, #061226 100%);
+}
+
+/* Enhanced Card Shadows */
+.card-shadow-premium {
+  box-shadow:
+    0 0 40px rgba(139, 92, 246, 0.4),
+    0 20px 60px rgba(0, 0, 0, 0.6),
+    0 0 80px rgba(139, 92, 246, 0.2);
+}
+
+.card-shadow-legendary {
+  box-shadow:
+    0 0 50px rgba(251, 191, 36, 0.6),
+    0 20px 70px rgba(0, 0, 0, 0.7),
+    0 0 100px rgba(251, 191, 36, 0.3);
+}
+
+/* Pulsing border effect */
+@keyframes border-pulse {
+  0%, 100% {
+    border-color: currentColor;
+    opacity: 1;
+  }
+  50% {
+    border-color: currentColor;
+    opacity: 0.6;
+  }
+}
+
+.border-pulse {
+  animation: border-pulse 2s ease-in-out infinite;
+}
+
+/* Enhanced text glow */
+.text-glow-premium {
+  text-shadow:
+    0 0 10px currentColor,
+    0 0 20px currentColor,
+    0 0 30px currentColor;
+}
+
+.text-glow-intense {
+  text-shadow:
+    0 0 15px currentColor,
+    0 0 30px currentColor,
+    0 0 45px currentColor,
+    0 0 60px currentColor;
+}

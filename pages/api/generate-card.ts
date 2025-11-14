@@ -32,59 +32,59 @@ function getFOMOPhrase(score: number): string {
   return "🪦 QUIT FOREVER - It's Over Bro";
 }
 
-// Configuración de tier basada en el score
+// Configuración de tier basada en el score - ENHANCED PREMIUM VERSION
 function getTierConfig(score: number) {
   if (score >= 90) {
     return {
       name: 'LEGENDARY',
       emoji: '👑',
-      colors: ['#ca8a04', '#fbbf24', '#fef08a'],
+      colors: ['#f59e0b', '#fbbf24', '#fde047'],
       borderColor: '#fbbf24',
-      glowColor: 'rgba(251, 191, 36, 0.6)',
+      glowColor: 'rgba(251, 191, 36, 0.8)',
     };
   }
   if (score >= 80) {
     return {
       name: 'MASTER',
       emoji: '💎',
-      colors: ['#db2777', '#a855f7', '#ec4899'],
-      borderColor: '#ec4899',
-      glowColor: 'rgba(236, 72, 153, 0.6)',
+      colors: ['#d946ef', '#a855f7', '#ec4899'],
+      borderColor: '#d946ef',
+      glowColor: 'rgba(217, 70, 239, 0.8)',
     };
   }
   if (score >= 70) {
     return {
       name: 'DIAMOND',
       emoji: '💠',
-      colors: ['#2563eb', '#06b6d4', '#3b82f6'],
+      colors: ['#06b6d4', '#3b82f6', '#22d3ee'],
       borderColor: '#06b6d4',
-      glowColor: 'rgba(6, 182, 212, 0.6)',
+      glowColor: 'rgba(6, 182, 212, 0.8)',
     };
   }
   if (score >= 60) {
     return {
       name: 'PLATINUM',
       emoji: '⚡',
-      colors: ['#9ca3af', '#d1d5db', '#e5e7eb'],
-      borderColor: '#9ca3af',
-      glowColor: 'rgba(156, 163, 175, 0.6)',
+      colors: ['#94a3b8', '#cbd5e1', '#e2e8f0'],
+      borderColor: '#94a3b8',
+      glowColor: 'rgba(148, 163, 184, 0.7)',
     };
   }
   if (score >= 50) {
     return {
       name: 'GOLD',
       emoji: '🌟',
-      colors: ['#ca8a04', '#eab308', '#facc15'],
+      colors: ['#f59e0b', '#eab308', '#facc15'],
       borderColor: '#eab308',
-      glowColor: 'rgba(234, 179, 8, 0.4)',
+      glowColor: 'rgba(234, 179, 8, 0.6)',
     };
   }
   return {
     name: 'DEGEN',
     emoji: '🎮',
-    colors: ['#059669', '#10b981', '#34d399'],
+    colors: ['#10b981', '#34d399', '#6ee7b7'],
     borderColor: '#10b981',
-    glowColor: 'rgba(16, 185, 129, 0.4)',
+    glowColor: 'rgba(16, 185, 129, 0.6)',
   };
 }
 
@@ -178,36 +178,47 @@ async function generateCardImage(
   return generateBasicCardImage(walletAddress, metrics);
 }
 
-// 🔥 NUEVO: PREMIUM CARD ESTILO LEADERBOARD
+// 🔥 PREMIUM CARD ULTRA ENHANCED
 async function generatePremiumCardImage(
   walletAddress: string,
   metrics: any
 ): Promise<Buffer> {
-  const width = 600;
-  const height = 1000; // ✅ Aumentado para más espacio
+  const width = 700;
+  const height = 1100;
   const canvas = createCanvas(width, height);
   const ctx = canvas.getContext('2d');
 
   const tier = getTierConfig(metrics.degenScore);
 
-  // FONDO OSCURO
-  ctx.fillStyle = '#111827';
+  // FONDO OSCURO CON GRADIENTE RADIAL
+  const bgRadialGradient = ctx.createRadialGradient(width / 2, height / 2, 0, width / 2, height / 2, width);
+  bgRadialGradient.addColorStop(0, '#1f2937');
+  bgRadialGradient.addColorStop(0.5, '#111827');
+  bgRadialGradient.addColorStop(1, '#0a0e1a');
+  ctx.fillStyle = bgRadialGradient;
   ctx.fillRect(0, 0, width, height);
 
-  // PATRÓN DE FONDO CON GRADIENTE DEL TIER
+  // PATRÓN DE FONDO CON GRADIENTE DEL TIER MÁS INTENSO
   const bgGradient = ctx.createLinearGradient(0, 0, width, height);
-  bgGradient.addColorStop(0, tier.colors[0] + '20');
-  bgGradient.addColorStop(0.5, tier.colors[1] + '10');
-  bgGradient.addColorStop(1, tier.colors[2] + '20');
+  bgGradient.addColorStop(0, tier.colors[0] + '35');
+  bgGradient.addColorStop(0.5, tier.colors[1] + '20');
+  bgGradient.addColorStop(1, tier.colors[2] + '35');
   ctx.fillStyle = bgGradient;
   ctx.fillRect(0, 0, width, height);
 
-  // BORDER CON GLOW
+  // DOBLE BORDER CON GLOW INTENSO
+  // Border exterior
   ctx.shadowColor = tier.glowColor;
-  ctx.shadowBlur = 30;
+  ctx.shadowBlur = 50;
   ctx.strokeStyle = tier.borderColor;
-  ctx.lineWidth = 8;
-  ctx.strokeRect(20, 20, width - 40, height - 40);
+  ctx.lineWidth = 12;
+  ctx.strokeRect(25, 25, width - 50, height - 50);
+
+  // Border interior
+  ctx.shadowBlur = 30;
+  ctx.lineWidth = 6;
+  ctx.strokeRect(35, 35, width - 70, height - 70);
+
   ctx.shadowColor = 'transparent';
   ctx.shadowBlur = 0;
 
@@ -331,75 +342,102 @@ async function generatePremiumCardImage(
     currentY += 20;
   }
 
-  // DEGEN SCORE - GRANDE CON GRADIENTE
+  // DEGEN SCORE - EXTRA GRANDE CON GRADIENTE Y GLOW
   const scoreGradient = ctx.createLinearGradient(
-    width / 2 - 150,
+    width / 2 - 200,
     currentY,
-    width / 2 + 150,
+    width / 2 + 200,
     currentY
   );
   scoreGradient.addColorStop(0, tier.colors[0]);
   scoreGradient.addColorStop(0.5, tier.colors[1]);
   scoreGradient.addColorStop(1, tier.colors[2]);
-  
+
   ctx.fillStyle = scoreGradient;
-  ctx.font = 'bold 100px Arial';
+  ctx.font = 'bold 130px Arial';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  
+
   ctx.shadowColor = tier.glowColor;
+  ctx.shadowBlur = 60;
+  ctx.fillText(metrics.degenScore.toString(), width / 2, currentY);
+
+  // Segundo layer para más glow
   ctx.shadowBlur = 40;
   ctx.fillText(metrics.degenScore.toString(), width / 2, currentY);
+
   ctx.shadowColor = 'transparent';
   ctx.shadowBlur = 0;
-  
-  currentY += 65;
 
-  ctx.fillStyle = '#9ca3af';
-  ctx.font = 'bold 16px Arial';
-  ctx.letterSpacing = '3px';
+  currentY += 80;
+
+  ctx.fillStyle = '#d1d5db';
+  ctx.font = 'bold 18px Arial';
+  ctx.letterSpacing = '4px';
   ctx.fillText('DEGEN SCORE', width / 2, currentY);
-  currentY += 35;
-
-  // 🔥 FRASE FOMO
-  const fomoPhrase = getFOMOPhrase(metrics.degenScore);
-  
-  const fomoBgGradient = ctx.createLinearGradient(0, currentY - 20, width, currentY + 20);
-  fomoBgGradient.addColorStop(0, 'rgba(234, 179, 8, 0.1)');
-  fomoBgGradient.addColorStop(0.5, 'rgba(234, 179, 8, 0.2)');
-  fomoBgGradient.addColorStop(1, 'rgba(234, 179, 8, 0.1)');
-  ctx.fillStyle = fomoBgGradient;
-  
-  ctx.font = 'bold 13px Arial';
-  const fomoTextWidth = ctx.measureText(fomoPhrase).width;
-  ctx.fillRect(width / 2 - fomoTextWidth / 2 - 20, currentY - 18, fomoTextWidth + 40, 36);
-  
-  ctx.strokeStyle = 'rgba(234, 179, 8, 0.3)';
-  ctx.lineWidth = 2;
-  ctx.strokeRect(width / 2 - fomoTextWidth / 2 - 20, currentY - 18, fomoTextWidth + 40, 36);
-  
-  ctx.fillStyle = '#fbbf24';
-  ctx.fillText(fomoPhrase, width / 2, currentY);
   currentY += 40;
 
-  // TIER BADGE
+  // 🔥 FRASE FOMO MEJORADA
+  const fomoPhrase = getFOMOPhrase(metrics.degenScore);
+
+  const fomoBgGradient = ctx.createLinearGradient(0, currentY - 25, width, currentY + 25);
+  fomoBgGradient.addColorStop(0, 'rgba(234, 179, 8, 0.15)');
+  fomoBgGradient.addColorStop(0.5, 'rgba(234, 179, 8, 0.3)');
+  fomoBgGradient.addColorStop(1, 'rgba(234, 179, 8, 0.15)');
+  ctx.fillStyle = fomoBgGradient;
+
+  ctx.font = 'bold 16px Arial';
+  const fomoTextWidth = ctx.measureText(fomoPhrase).width;
+  const fomoBoxWidth = fomoTextWidth + 50;
+  const fomoBoxHeight = 48;
+  const fomoX = width / 2 - fomoBoxWidth / 2;
+  const fomoY = currentY - fomoBoxHeight / 2;
+
+  // Rounded rectangle para FOMO
+  const fomoRadius = 12;
+  ctx.beginPath();
+  ctx.moveTo(fomoX + fomoRadius, fomoY);
+  ctx.lineTo(fomoX + fomoBoxWidth - fomoRadius, fomoY);
+  ctx.quadraticCurveTo(fomoX + fomoBoxWidth, fomoY, fomoX + fomoBoxWidth, fomoY + fomoRadius);
+  ctx.lineTo(fomoX + fomoBoxWidth, fomoY + fomoBoxHeight - fomoRadius);
+  ctx.quadraticCurveTo(fomoX + fomoBoxWidth, fomoY + fomoBoxHeight, fomoX + fomoBoxWidth - fomoRadius, fomoY + fomoBoxHeight);
+  ctx.lineTo(fomoX + fomoRadius, fomoY + fomoBoxHeight);
+  ctx.quadraticCurveTo(fomoX, fomoY + fomoBoxHeight, fomoX, fomoY + fomoBoxHeight - fomoRadius);
+  ctx.lineTo(fomoX, fomoY + fomoRadius);
+  ctx.quadraticCurveTo(fomoX, fomoY, fomoX + fomoRadius, fomoY);
+  ctx.fill();
+
+  ctx.strokeStyle = 'rgba(234, 179, 8, 0.5)';
+  ctx.lineWidth = 3;
+  ctx.stroke();
+
+  ctx.fillStyle = '#fde047';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(fomoPhrase, width / 2, currentY);
+  currentY += 50;
+
+  // TIER BADGE PREMIUM
   const badgeGradient = ctx.createLinearGradient(
-    width / 2 - 100,
+    width / 2 - 130,
     currentY,
-    width / 2 + 100,
+    width / 2 + 130,
     currentY
   );
   badgeGradient.addColorStop(0, tier.colors[0]);
   badgeGradient.addColorStop(0.5, tier.colors[1]);
   badgeGradient.addColorStop(1, tier.colors[2]);
-  
+
+  ctx.shadowColor = tier.glowColor;
+  ctx.shadowBlur = 30;
+
   ctx.fillStyle = badgeGradient;
-  const badgeWidth = 200;
-  const badgeHeight = 40;
+  const badgeWidth = 260;
+  const badgeHeight = 55;
   const badgeX = width / 2 - badgeWidth / 2;
   const badgeY = currentY - badgeHeight / 2;
-  const radius = 20;
-  
+  const radius = 28;
+
   ctx.beginPath();
   ctx.moveTo(badgeX + radius, badgeY);
   ctx.lineTo(badgeX + badgeWidth - radius, badgeY);
@@ -411,12 +449,16 @@ async function generatePremiumCardImage(
   ctx.lineTo(badgeX, badgeY + radius);
   ctx.quadraticCurveTo(badgeX, badgeY, badgeX + radius, badgeY);
   ctx.fill();
-  
+
+  ctx.shadowColor = 'transparent';
+  ctx.shadowBlur = 0;
+
   ctx.fillStyle = '#ffffff';
-  ctx.font = 'bold 18px Arial';
+  ctx.font = 'bold 24px Arial';
   ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
   ctx.fillText(`${tier.emoji} ${tier.name}`, width / 2, currentY);
-  currentY += 50;
+  currentY += 55;
 
   // LÍNEA DIVISORIA
   const lineGradient = ctx.createLinearGradient(60, currentY, width - 60, currentY);
@@ -462,7 +504,7 @@ async function generatePremiumCardImage(
   return canvas.toBuffer('image/png');
 }
 
-// Función para dibujar métricas premium
+// Función para dibujar métricas premium MEJORADAS
 function drawPremiumMetric(
   ctx: any,
   label: string,
@@ -475,14 +517,14 @@ function drawPremiumMetric(
   const alignment = alignLeft ? 'left' : 'right';
 
   ctx.textAlign = alignment;
-  ctx.fillStyle = '#6b7280';
-  ctx.font = 'bold 10px Arial';
-  ctx.letterSpacing = '1.5px';
+  ctx.fillStyle = '#9ca3af';
+  ctx.font = 'bold 13px Arial';
+  ctx.letterSpacing = '2px';
   ctx.fillText(label, x, y);
 
   ctx.fillStyle = valueColor;
-  ctx.font = 'bold 24px Arial';
-  ctx.fillText(value, x, y + 30);
+  ctx.font = 'bold 30px Arial';
+  ctx.fillText(value, x, y + 38);
 }
 
 // ✅ ORIGINAL: BASIC CARD (SIN PAGAR)
