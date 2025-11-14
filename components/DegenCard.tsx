@@ -361,7 +361,6 @@ export default function DegenCard() {
         onClose={() => setShowUpgradeModal(false)}
         onUpgrade={handleUpgrade}
         onSkip={handleSkip}
-        walletAddress={walletAddress}
       />
 
       <ProfileFormModal
