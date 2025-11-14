@@ -6,6 +6,8 @@ import UpgradeModal from './UpgradeModal';
 import ShareModal from './ShareModal';
 import { Celebration } from './Celebration';
 import { AchievementPopup, achievements, Achievement } from './AchievementPopup';
+import toast from 'react-hot-toast';
+import { triggerConfetti } from '../lib/confetti';
 
 export default function DegenCard() {
   const { publicKey, connected } = useWallet();
@@ -19,6 +21,7 @@ export default function DegenCard() {
   const [showShareModal, setShowShareModal] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [hasPaid, setHasPaid] = useState(false);
+  const [pendingProfileData, setPendingProfileData] = useState<ProfileData | null>(null);
 
   const [analyzing, setAnalyzing] = useState(false);
   const [analysisProgress, setAnalysisProgress] = useState(0);
@@ -125,11 +128,14 @@ export default function DegenCard() {
         if (score >= 90) {
           setCelebrationType('legendary');
           setCurrentAchievement(achievements.legendary);
+          triggerConfetti('legendary'); // Epic confetti for 90+ scores
         } else if (score >= 80) {
           setCelebrationType('card-generated');
           setCurrentAchievement(achievements.highScore);
+          triggerConfetti('premium'); // Premium confetti for 80+ scores
         } else {
           setCelebrationType('card-generated');
+          triggerConfetti('default'); // Standard confetti for all cards
         }
 
         setShowCelebration(true);
@@ -139,9 +145,9 @@ export default function DegenCard() {
           setCurrentAchievement(achievements.firstCard);
         }, 2000);
 
-        // Show upgrade modal
+        // Show profile modal FIRST (before payment)
         setTimeout(() => {
-          setShowUpgradeModal(true);
+          setShowProfileModal(true);
         }, 1000);
       }, 500);
       
@@ -154,41 +160,80 @@ export default function DegenCard() {
     }
   };
 
-  const handleUpgrade = () => {
+  const handleUpgrade = async () => {
     setShowUpgradeModal(false);
-    setHasPaid(true);
 
     // Trigger premium unlock celebration
     setCelebrationType('premium-unlock');
     setShowCelebration(true);
     setCurrentAchievement(achievements.premiumUnlock);
 
-    // Show share modal FIRST (viralidad forzada!)
-    setTimeout(() => {
-      setShowShareModal(true);
-    }, 1500);
+    try {
+      // Guardar los datos del perfil en la base de datos DESPUÉS del pago
+      if (pendingProfileData) {
+        console.log('📝 Saving profile to database after payment:', walletAddress);
+        const response = await fetch('/api/update-profile', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            walletAddress: walletAddress,
+            ...pendingProfileData,
+          }),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to save profile');
+        }
+
+        console.log('✅ Profile saved to database');
+
+        // Esperar un momento antes de regenerar
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
+        // Regenerar la tarjeta premium con los datos del perfil
+        console.log('🎨 Regenerating premium card with profile data...');
+        const imageResponse = await fetch('/api/generate-card', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ walletAddress: walletAddress }),
+        });
+
+        if (imageResponse.ok) {
+          const blob = await imageResponse.blob();
+          const imageUrl = URL.createObjectURL(blob);
+          setCardImage(imageUrl);
+          console.log('✅ Premium card generated!');
+        }
+      }
+
+      setHasPaid(true);
+
+      // Show share modal (viralidad forzada!)
+      setTimeout(() => {
+        setShowShareModal(true);
+      }, 1500);
+
+    } catch (error) {
+      console.error('Error updating profile after payment:', error);
+      toast.error(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
   };
 
   const handleShared = () => {
     setShowShareModal(false);
-
-    // After sharing, show profile modal
-    setTimeout(() => {
-      setShowProfileModal(true);
-    }, 500);
+    // Ya no necesitamos mostrar ProfileFormModal porque ya se llenó antes del pago
   };
 
   const handleSkipShare = () => {
     setShowShareModal(false);
-
-    // If they skip sharing, still let them continue
-    setTimeout(() => {
-      setShowProfileModal(true);
-    }, 500);
+    // Ya no necesitamos mostrar ProfileFormModal porque ya se llenó antes del pago
   };
 
   const handleSkip = () => {
     setShowUpgradeModal(false);
+    // Limpiar los datos del perfil pendientes si el usuario decide no pagar
+    setPendingProfileData(null);
     downloadBasicCard();
   };
 
@@ -204,48 +249,17 @@ export default function DegenCard() {
   };
 
   const handleProfileSubmit = async (profileData: ProfileData) => {
-    try {
-      console.log('📝 Saving profile for:', walletAddress);
-      const response = await fetch('/api/update-profile', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          walletAddress: walletAddress,
-          ...profileData,
-        }),
-      });
+    // Guardar los datos del perfil temporalmente (NO a la base de datos todavía)
+    console.log('📝 Profile data saved temporarily:', profileData);
+    setPendingProfileData(profileData);
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to save profile');
-      }
+    // Cerrar el modal de perfil
+    setShowProfileModal(false);
 
-      console.log('✅ Profile saved');
-
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      console.log('🎨 Regenerating premium card...');
-      const imageResponse = await fetch('/api/generate-card', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ walletAddress: walletAddress }),
-      });
-
-      if (imageResponse.ok) {
-        const blob = await imageResponse.blob();
-        const imageUrl = URL.createObjectURL(blob);
-        setCardImage(imageUrl);
-        console.log('✅ Premium card generated!');
-      }
-
-      setShowProfileModal(false);
-      setHasPaid(true); // ✅ Marcar como pagado para mostrar el botón
-      // ❌ ELIMINADO: downloadPremiumCard(); 
-      
-    } catch (error) {
-      console.error('Error:', error);
-      alert(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
+    // Mostrar el modal de pago/upgrade
+    setTimeout(() => {
+      setShowUpgradeModal(true);
+    }, 500);
   };
 
   const downloadPremiumCard = () => {
@@ -286,22 +300,22 @@ export default function DegenCard() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 flex items-center justify-center p-4">
       <div className="max-w-5xl w-full">
-        <div className="text-center mb-10">
-          <h1 className="text-6xl md:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 mb-4 animate-float drop-shadow-[0_0_30px_rgba(34,211,238,0.5)]">
+        <div className="text-center mb-6 sm:mb-8 md:mb-10">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 mb-3 sm:mb-4 animate-float drop-shadow-[0_0_30px_rgba(34,211,238,0.5)]">
             DegenScore Card Generator
           </h1>
-          <p className="text-gray-300 text-xl md:text-2xl font-medium">
+          <p className="text-gray-300 text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl font-medium px-4">
             Generate your Solana trader card with real on-chain metrics
           </p>
         </div>
 
-        <div className="bg-gray-800/60 backdrop-blur-xl rounded-3xl p-10 shadow-[0_0_60px_rgba(139,92,246,0.4)] border-2 border-purple-500/30 hover:border-purple-500/50 transition-all duration-500">
+        <div className="bg-gray-800/60 backdrop-blur-xl rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-8 lg:p-10 shadow-[0_0_60px_rgba(139,92,246,0.4)] border-2 border-purple-500/30 hover:border-purple-500/50 transition-all duration-500">
           <div className="mb-8">
             {!connected ? (
-              <div className="text-center space-y-6">
-                <div className="text-8xl mb-6 animate-float">🔐</div>
-                <h2 className="text-3xl font-black text-white mb-3 drop-shadow-lg">Connect Your Wallet</h2>
-                <p className="text-gray-300 text-lg mb-8 max-w-md mx-auto">
+              <div className="text-center space-y-4 sm:space-y-6">
+                <div className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl mb-4 sm:mb-6 animate-float">🔐</div>
+                <h2 className="text-xl sm:text-2xl md:text-3xl font-black text-white mb-2 sm:mb-3 drop-shadow-lg px-4">Connect Your Wallet</h2>
+                <p className="text-gray-300 text-sm sm:text-base md:text-lg mb-6 sm:mb-8 max-w-md mx-auto px-4">
                   Connect your Solana wallet to generate your DegenScore card with real on-chain metrics
                 </p>
                 <div className="flex justify-center">
@@ -311,14 +325,14 @@ export default function DegenCard() {
                 </div>
               </div>
             ) : (
-              <div className="space-y-6">
-                <div className="p-6 bg-gradient-to-r from-green-500/30 to-emerald-500/30 border-2 border-green-400 rounded-2xl shadow-[0_0_30px_rgba(34,197,94,0.3)]">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-green-300 text-base font-bold mb-2 flex items-center gap-2">
-                        <span className="text-2xl">✅</span> Wallet Connected
+              <div className="space-y-4 sm:space-y-6">
+                <div className="p-4 sm:p-5 md:p-6 bg-gradient-to-r from-green-500/30 to-emerald-500/30 border-2 border-green-400 rounded-xl sm:rounded-2xl shadow-[0_0_30px_rgba(34,197,94,0.3)]">
+                  <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+                    <div className="text-center sm:text-left">
+                      <p className="text-green-300 text-sm sm:text-base font-bold mb-2 flex items-center justify-center sm:justify-start gap-2">
+                        <span className="text-xl sm:text-2xl">✅</span> Wallet Connected
                       </p>
-                      <p className="text-white font-mono text-lg font-semibold">
+                      <p className="text-white font-mono text-sm sm:text-base md:text-lg font-semibold break-all">
                         {publicKey!.toBase58().slice(0, 8)}...{publicKey!.toBase58().slice(-8)}
                       </p>
                     </div>
@@ -335,12 +349,12 @@ export default function DegenCard() {
                 )}
 
                 {analyzing && (
-                  <div className="space-y-6 bg-gray-900/50 p-8 rounded-2xl border border-cyan-500/30">
-                    <div className="flex justify-between items-center mb-3">
-                      <span className="text-lg text-gray-200 font-bold">{analysisMessage}</span>
-                      <span className="text-xl text-cyan-300 font-black">{analysisProgress}%</span>
+                  <div className="space-y-4 sm:space-y-6 bg-gray-900/50 p-4 sm:p-6 md:p-8 rounded-xl sm:rounded-2xl border border-cyan-500/30">
+                    <div className="flex justify-between items-center mb-2 sm:mb-3 gap-2">
+                      <span className="text-sm sm:text-base md:text-lg text-gray-200 font-bold">{analysisMessage}</span>
+                      <span className="text-base sm:text-lg md:text-xl text-cyan-300 font-black">{analysisProgress}%</span>
                     </div>
-                    <div className="w-full bg-gray-700 rounded-full h-4 overflow-hidden shadow-inner">
+                    <div className="w-full bg-gray-700 rounded-full h-3 sm:h-4 overflow-hidden shadow-inner">
                       <div
                         className="h-full bg-gradient-to-r from-cyan-500 via-blue-500 to-purple-500 transition-all duration-500 rounded-full shadow-[0_0_20px_rgba(34,211,238,0.8)]"
                         style={{ width: `${analysisProgress}%` }}
@@ -360,20 +374,20 @@ export default function DegenCard() {
                 <button
                   onClick={generateCard}
                   disabled={loading}
-                  className="w-full py-6 px-8 bg-gradient-to-r from-cyan-500 via-blue-500 to-purple-500 hover:from-cyan-600 hover:via-blue-600 hover:to-purple-600 disabled:from-gray-600 disabled:to-gray-700 text-white font-black text-xl rounded-2xl transition-all duration-300 shadow-[0_0_40px_rgba(139,92,246,0.6)] hover:shadow-[0_0_60px_rgba(139,92,246,0.8)] hover:scale-[1.02] disabled:cursor-not-allowed disabled:hover:scale-100 group relative overflow-hidden"
+                  className="w-full py-4 sm:py-5 md:py-6 px-4 sm:px-6 md:px-8 bg-gradient-to-r from-cyan-500 via-blue-500 to-purple-500 hover:from-cyan-600 hover:via-blue-600 hover:to-purple-600 disabled:from-gray-600 disabled:to-gray-700 text-white font-black text-base sm:text-lg md:text-xl rounded-xl sm:rounded-2xl transition-all duration-300 shadow-[0_0_40px_rgba(139,92,246,0.6)] hover:shadow-[0_0_60px_rgba(139,92,246,0.8)] hover:scale-[1.02] disabled:cursor-not-allowed disabled:hover:scale-100 group relative overflow-hidden"
                 >
                   <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000"></div>
                   {loading ? (
                     <span className="flex items-center justify-center relative z-10">
-                      <svg className="animate-spin -ml-1 mr-4 h-6 w-6 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <svg className="animate-spin -ml-1 mr-3 sm:mr-4 h-5 w-5 sm:h-6 sm:w-6 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                       </svg>
                       Generating Card...
                     </span>
                   ) : (
-                    <span className="relative z-10 flex items-center justify-center gap-3">
-                      <span className="text-3xl">🎴</span>
+                    <span className="relative z-10 flex items-center justify-center gap-2 sm:gap-3">
+                      <span className="text-2xl sm:text-3xl">🎴</span>
                       Generate My Card
                     </span>
                   )}
@@ -383,45 +397,45 @@ export default function DegenCard() {
           </div>
 
           {cardImage && (
-            <div className="mt-10">
-              <div className="flex justify-center mb-8">
-                <div className="relative group">
-                  <div className="absolute -inset-4 bg-gradient-to-r from-cyan-500 via-purple-500 to-pink-500 rounded-3xl opacity-30 group-hover:opacity-50 blur-xl transition-opacity"></div>
+            <div className="mt-6 sm:mt-8 md:mt-10">
+              <div className="flex justify-center mb-6 sm:mb-8">
+                <div className="relative group w-full max-w-md">
+                  <div className="absolute -inset-2 sm:-inset-4 bg-gradient-to-r from-cyan-500 via-purple-500 to-pink-500 rounded-2xl sm:rounded-3xl opacity-30 group-hover:opacity-50 blur-xl transition-opacity"></div>
                   <img
                     src={cardImage}
                     alt="Degen Card"
-                    className="relative rounded-2xl shadow-[0_0_60px_rgba(139,92,246,0.8)] border-4 border-cyan-400 max-w-full h-auto animate-flip holographic transform group-hover:scale-[1.02] transition-transform duration-300"
+                    className="relative rounded-xl sm:rounded-2xl shadow-[0_0_60px_rgba(139,92,246,0.8)] border-2 sm:border-4 border-cyan-400 max-w-full h-auto animate-flip holographic transform group-hover:scale-[1.02] transition-transform duration-300"
                   />
                 </div>
               </div>
 
               {hasPaid && (
-                <div className="text-center space-y-6">
-                  <div className="bg-gradient-to-r from-green-500/30 to-emerald-500/30 border-4 border-green-400 rounded-2xl p-8 shadow-[0_0_40px_rgba(34,197,94,0.4)]">
-                    <div className="text-7xl mb-4 animate-float">✅</div>
-                    <p className="text-green-300 font-black text-2xl mb-3">
+                <div className="text-center space-y-4 sm:space-y-6">
+                  <div className="bg-gradient-to-r from-green-500/30 to-emerald-500/30 border-2 sm:border-4 border-green-400 rounded-xl sm:rounded-2xl p-4 sm:p-6 md:p-8 shadow-[0_0_40px_rgba(34,197,94,0.4)]">
+                    <div className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl mb-3 sm:mb-4 animate-float">✅</div>
+                    <p className="text-green-300 font-black text-lg sm:text-xl md:text-2xl mb-2 sm:mb-3">
                       Premium Card Ready!
                     </p>
-                    <p className="text-gray-200 text-base font-medium">
+                    <p className="text-gray-200 text-sm sm:text-base font-medium px-4">
                       Your premium card has been generated with all your customizations
                     </p>
                   </div>
 
                   <button
                     onClick={downloadPremiumCard}
-                    className="w-full py-6 px-8 bg-gradient-to-r from-green-500 via-emerald-500 to-green-600 hover:from-green-600 hover:via-emerald-600 hover:to-green-700 text-white font-black rounded-2xl transition-all shadow-[0_0_40px_rgba(34,197,94,0.6)] hover:shadow-[0_0_60px_rgba(34,197,94,0.8)] hover:scale-[1.02] flex items-center justify-center gap-4 text-xl group relative overflow-hidden"
+                    className="w-full py-4 sm:py-5 md:py-6 px-4 sm:px-6 md:px-8 bg-gradient-to-r from-green-500 via-emerald-500 to-green-600 hover:from-green-600 hover:via-emerald-600 hover:to-green-700 text-white font-black rounded-xl sm:rounded-2xl transition-all shadow-[0_0_40px_rgba(34,197,94,0.6)] hover:shadow-[0_0_60px_rgba(34,197,94,0.8)] hover:scale-[1.02] flex items-center justify-center gap-3 sm:gap-4 text-base sm:text-lg md:text-xl group relative overflow-hidden"
                   >
                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000"></div>
-                    <span className="text-3xl relative z-10">💎</span>
+                    <span className="text-2xl sm:text-3xl relative z-10">💎</span>
                     <span className="relative z-10">Download Premium Card</span>
                   </button>
 
                   <button
                     onClick={() => window.location.href = '/leaderboard'}
-                    className="w-full py-5 px-8 bg-gradient-to-r from-purple-500 via-pink-500 to-purple-600 hover:from-purple-600 hover:via-pink-600 hover:to-purple-700 text-white font-black rounded-2xl transition-all shadow-[0_0_30px_rgba(168,85,247,0.5)] hover:shadow-[0_0_50px_rgba(168,85,247,0.7)] hover:scale-[1.02] flex items-center justify-center gap-3 text-lg group relative overflow-hidden"
+                    className="w-full py-3 sm:py-4 md:py-5 px-4 sm:px-6 md:px-8 bg-gradient-to-r from-purple-500 via-pink-500 to-purple-600 hover:from-purple-600 hover:via-pink-600 hover:to-purple-700 text-white font-black rounded-xl sm:rounded-2xl transition-all shadow-[0_0_30px_rgba(168,85,247,0.5)] hover:shadow-[0_0_50px_rgba(168,85,247,0.7)] hover:scale-[1.02] flex items-center justify-center gap-2 sm:gap-3 text-sm sm:text-base md:text-lg group relative overflow-hidden"
                   >
                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000"></div>
-                    <span className="text-2xl relative z-10">🏆</span>
+                    <span className="text-xl sm:text-2xl relative z-10">🏆</span>
                     <span className="relative z-10">View Leaderboard</span>
                   </button>
                 </div>
@@ -453,7 +467,11 @@ export default function DegenCard() {
 
       <ProfileFormModal
         isOpen={showProfileModal}
-        onClose={() => setShowProfileModal(false)}
+        onClose={() => {
+          setShowProfileModal(false);
+          // Si el usuario cierra el modal sin llenar el perfil, descargar tarjeta básica
+          downloadBasicCard();
+        }}
         onSubmit={handleProfileSubmit}
         walletAddress={walletAddress}
       />

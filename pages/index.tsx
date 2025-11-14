@@ -29,12 +29,24 @@ export default function Home() {
             <p className="text-gray-400 text-sm mt-1">Track your trading mastery</p>
           </div>
 
-          {/* Leaderboard Button */}
-          <Link href="/leaderboard">
-            <button className="btn-premium px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg font-bold hover:scale-105 transition shadow-lg hover:shadow-purple-500/50">
-              🏆 View Leaderboard
-            </button>
-          </Link>
+          {/* Navigation Buttons */}
+          <div className="flex flex-wrap gap-3 justify-center sm:justify-end">
+            <Link href="/compare">
+              <button className="px-6 py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-lg font-bold hover:scale-105 transition shadow-lg hover:shadow-orange-500/50">
+                ⚔️ Compare
+              </button>
+            </Link>
+            <Link href="/referrals">
+              <button className="px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-lg font-bold hover:scale-105 transition shadow-lg hover:shadow-green-500/50">
+                🎁 Referrals
+              </button>
+            </Link>
+            <Link href="/leaderboard">
+              <button className="btn-premium px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg font-bold hover:scale-105 transition shadow-lg hover:shadow-purple-500/50">
+                🏆 Leaderboard
+              </button>
+            </Link>
+          </div>
         </div>
 
         {/* Global Stats */}

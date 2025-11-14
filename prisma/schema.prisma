@@ -48,7 +48,13 @@ model DegenCard {
   twitter         String?
   telegram        String?
   profileImage    String?
-  
+
+  // Sistema de referidos
+  referralCode    String?   @unique // Código único para compartir
+  referredBy      String?   // Wallet address de quien lo refirió
+  totalReferrals  Int       @default(0) // Total de personas que refirió
+  paidReferrals   Int       @default(0) // Cuántos de sus referidos pagaron
+
   // Estado
   isMinted        Boolean   @default(false)
   isPaid          Boolean   @default(false)

@@ -3,6 +3,8 @@ import { useConnection, useWallet } from '@solana/wallet-adapter-react';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import { PublicKey, Transaction, SystemProgram, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { PAYMENT_CONFIG } from '../lib/config';
+import toast from 'react-hot-toast';
+import { triggerConfetti } from '../lib/confetti';
 
 interface PaymentButtonProps {
   walletAddress: string;
@@ -17,12 +19,16 @@ export default function PaymentButton({ walletAddress, onPaymentSuccess }: Payme
 
   const handlePayment = async () => {
     if (!publicKey) {
-      setError('Please connect your wallet first');
+      const errorMsg = 'Please connect your wallet first';
+      setError(errorMsg);
+      toast.error(errorMsg);
       return;
     }
 
     setIsPaying(true);
     setError(null);
+
+    const loadingToast = toast.loading('Processing payment...');
 
     try {
       console.log('💰 Creating payment transaction...');
@@ -42,11 +48,13 @@ export default function PaymentButton({ walletAddress, onPaymentSuccess }: Payme
       transaction.feePayer = publicKey;
 
       console.log('📤 Sending transaction...');
+      toast.loading('Sending transaction...', { id: loadingToast });
 
       // Enviar transacción
       const signature = await sendTransaction(transaction, connection);
 
       console.log('⏳ Waiting for confirmation...', signature);
+      toast.loading('Confirming transaction...', { id: loadingToast });
 
       // Esperar confirmación
       const confirmation = await connection.confirmTransaction(signature, 'confirmed');
@@ -56,6 +64,7 @@ export default function PaymentButton({ walletAddress, onPaymentSuccess }: Payme
       }
 
       console.log('✅ Transaction confirmed!');
+      toast.loading('Verifying payment...', { id: loadingToast });
 
       // Verificar pago en el backend
       console.log('🔍 Verifying payment...');
@@ -74,11 +83,15 @@ export default function PaymentButton({ walletAddress, onPaymentSuccess }: Payme
       }
 
       console.log('🎉 Payment verified! Card minted!');
+      toast.success('Payment successful! Card minted! 🎉', { id: loadingToast, duration: 5000 });
+      triggerConfetti('premium'); // Trigger premium confetti animation
       onPaymentSuccess();
 
     } catch (err) {
       console.error('❌ Payment error:', err);
-      setError(err instanceof Error ? err.message : 'Payment failed');
+      const errorMsg = err instanceof Error ? err.message : 'Payment failed';
+      setError(errorMsg);
+      toast.error(errorMsg, { id: loadingToast, duration: 6000 });
     } finally {
       setIsPaying(false);
     }
