@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import { Connection, PublicKey, Transaction, SystemProgram, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { PAYMENT_CONFIG } from '../lib/config';
+import CountUp from 'react-countup';
 
 interface UpgradeModalProps {
   isOpen: boolean;
@@ -15,6 +16,19 @@ export default function UpgradeModal({ isOpen, onClose, onUpgrade, onSkip }: Upg
   const { publicKey, sendTransaction } = useWallet();
   const [isPaying, setIsPaying] = useState(false);
   const [paymentError, setPaymentError] = useState<string | null>(null);
+  const [upgradesCount, setUpgradesCount] = useState(0);
+
+  useEffect(() => {
+    // Simulated real-time upgrades count (in production, fetch from API)
+    const baseCount = 47 + Math.floor(Math.random() * 20);
+    setUpgradesCount(baseCount);
+
+    const interval = setInterval(() => {
+      setUpgradesCount((prev) => prev + (Math.random() > 0.7 ? 1 : 0));
+    }, 8000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   if (!isOpen) return null;
 
@@ -140,12 +154,50 @@ export default function UpgradeModal({ isOpen, onClose, onUpgrade, onSkip }: Upg
           </div>
         </div>
 
-        <div className="bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-xl p-4 mb-6 text-center border border-purple-500/30">
+        <div className="bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-xl p-4 mb-4 text-center border border-purple-500/30">
           <div className="text-gray-400 text-sm mb-1">One-time payment</div>
           <div className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">
             {PAYMENT_CONFIG.MINT_PRICE_SOL} SOL
           </div>
           <div className="text-gray-400 text-xs mt-1">≈ ${(PAYMENT_CONFIG.MINT_PRICE_SOL * 150).toFixed(2)} USD</div>
+        </div>
+
+        {/* FOMO Triggers */}
+        <div className="mb-4 space-y-3">
+          {/* Social Proof - Recent Upgrades */}
+          <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                </span>
+                <span className="text-green-400 text-sm font-semibold">
+                  <CountUp end={upgradesCount} duration={1} /> users upgraded today
+                </span>
+              </div>
+              <span className="text-green-400 text-xs">🔥 TRENDING</span>
+            </div>
+          </div>
+
+          {/* Scarcity Indicator */}
+          <div className="bg-orange-500/10 border border-orange-500/30 rounded-lg p-3">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-orange-400 text-sm font-semibold">Limited Founder Slots</span>
+              <span className="text-orange-400 text-xs font-bold">87% CLAIMED</span>
+            </div>
+            <div className="w-full bg-gray-700 rounded-full h-2 overflow-hidden">
+              <div className="bg-gradient-to-r from-orange-500 to-red-500 h-full rounded-full transition-all duration-1000" style={{ width: '87%' }}></div>
+            </div>
+          </div>
+
+          {/* Value Props */}
+          <div className="flex items-center gap-2 text-xs text-gray-400">
+            <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"/>
+            </svg>
+            <span>Instant access • No recurring fees • Lifetime features</span>
+          </div>
         </div>
 
         {paymentError && (

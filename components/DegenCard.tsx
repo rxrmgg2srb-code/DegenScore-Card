@@ -3,6 +3,8 @@ import { useWallet } from '@solana/wallet-adapter-react';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import ProfileFormModal, { ProfileData } from './ProfileFormModal';
 import UpgradeModal from './UpgradeModal';
+import { Celebration } from './Celebration';
+import { AchievementPopup, achievements, Achievement } from './AchievementPopup';
 
 export default function DegenCard() {
   const { publicKey, connected } = useWallet();
@@ -11,13 +13,20 @@ export default function DegenCard() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
-  
+
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [hasPaid, setHasPaid] = useState(false);
 
   const [analyzing, setAnalyzing] = useState(false);
   const [analysisProgress, setAnalysisProgress] = useState(0);
+
+  // Premium features
+  const [showCelebration, setShowCelebration] = useState(false);
+  const [celebrationType, setCelebrationType] = useState<'card-generated' | 'premium-unlock' | 'achievement' | 'rank-up' | 'legendary'>('card-generated');
+  const [celebrationScore, setCelebrationScore] = useState<number | undefined>(undefined);
+  const [currentAchievement, setCurrentAchievement] = useState<Achievement | null>(null);
+  const [analysisData, setAnalysisData] = useState<any>(null);
   const [analysisMessage, setAnalysisMessage] = useState('');
 
   useEffect(() => {
@@ -53,9 +62,10 @@ export default function DegenCard() {
         throw new Error(errorData.error || 'Failed to analyze wallet');
       }
 
-      const analysisData = await analyzeResponse.json();
-      console.log('✅ Analysis complete:', analysisData);
-      
+      const data = await analyzeResponse.json();
+      console.log('✅ Analysis complete:', data);
+      setAnalysisData(data);
+
       setAnalysisMessage('📊 Analysis complete!');
       setAnalysisProgress(50);
 
@@ -65,9 +75,9 @@ export default function DegenCard() {
       const saveResponse = await fetch('/api/save-card', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           walletAddress: addressToUse,
-          analysisData: analysisData
+          analysisData: data
         }),
       });
 
@@ -105,7 +115,32 @@ export default function DegenCard() {
 
       setTimeout(() => {
         setAnalyzing(false);
-        setShowUpgradeModal(true);
+
+        // Trigger celebration based on score
+        const score = data.degenScore || 0;
+        setCelebrationScore(score);
+
+        if (score >= 90) {
+          setCelebrationType('legendary');
+          setCurrentAchievement(achievements.legendary);
+        } else if (score >= 80) {
+          setCelebrationType('card-generated');
+          setCurrentAchievement(achievements.highScore);
+        } else {
+          setCelebrationType('card-generated');
+        }
+
+        setShowCelebration(true);
+
+        // Show first card achievement
+        setTimeout(() => {
+          setCurrentAchievement(achievements.firstCard);
+        }, 2000);
+
+        // Show upgrade modal
+        setTimeout(() => {
+          setShowUpgradeModal(true);
+        }, 1000);
       }, 500);
       
     } catch (err) {
@@ -120,7 +155,15 @@ export default function DegenCard() {
   const handleUpgrade = () => {
     setShowUpgradeModal(false);
     setHasPaid(true);
-    setShowProfileModal(true);
+
+    // Trigger premium unlock celebration
+    setCelebrationType('premium-unlock');
+    setShowCelebration(true);
+    setCurrentAchievement(achievements.premiumUnlock);
+
+    setTimeout(() => {
+      setShowProfileModal(true);
+    }, 1500);
   };
 
   const handleSkip = () => {
@@ -314,7 +357,7 @@ export default function DegenCard() {
                 <img
                   src={cardImage}
                   alt="Degen Card"
-                  className="rounded-xl shadow-2xl border-2 border-cyan-500 max-w-full h-auto"
+                  className="rounded-xl shadow-2xl border-2 border-cyan-500 max-w-full h-auto animate-flip holographic"
                 />
               </div>
 
@@ -368,6 +411,19 @@ export default function DegenCard() {
         onClose={() => setShowProfileModal(false)}
         onSubmit={handleProfileSubmit}
         walletAddress={walletAddress}
+      />
+
+      {/* Premium Features */}
+      {showCelebration && (
+        <Celebration
+          type={celebrationType}
+          score={celebrationScore}
+        />
+      )}
+
+      <AchievementPopup
+        achievement={currentAchievement}
+        onClose={() => setCurrentAchievement(null)}
       />
     </div>
   );
