@@ -23,12 +23,19 @@ export const UPLOAD_CONFIG = {
   UPLOAD_DIR: 'public/uploads/profiles',
 } as const;
 
-// Rate limiting configuration
+// Rate limiting configuration - Optimized for 100+ concurrent users
 export const RATE_LIMIT_CONFIG = {
-  WINDOW_MS: 15 * 60 * 1000, // 15 minutes
-  MAX_REQUESTS: 100,
-  STRICT_WINDOW_MS: 60 * 1000, // 1 minute
-  STRICT_MAX_REQUESTS: 5,
+  // Normal operations: 200 requests per 15 minutes
+  WINDOW_MS: 15 * 60 * 1000,
+  MAX_REQUESTS: 200,
+
+  // Expensive operations (analyze, generate-card): 10 per minute per user
+  STRICT_WINDOW_MS: 60 * 1000,
+  STRICT_MAX_REQUESTS: 10,
+
+  // Payment operations: 20 per 5 minutes
+  PAYMENT_WINDOW_MS: 5 * 60 * 1000,
+  PAYMENT_MAX_REQUESTS: 20,
 } as const;
 
 // Tier configuration

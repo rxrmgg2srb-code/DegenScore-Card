@@ -10,15 +10,25 @@ interface RateLimitStore {
 
 const store: RateLimitStore = {};
 
-// Clean up old entries every 10 minutes
+// Optimized cleanup for high concurrency: every 5 minutes
 setInterval(() => {
   const now = Date.now();
-  Object.keys(store).forEach((key) => {
-    if (store[key].resetTime < now) {
-      delete store[key];
+  const keys = Object.keys(store);
+
+  // Only clean if we have many entries (memory optimization)
+  if (keys.length > 500) {
+    let cleaned = 0;
+    keys.forEach((key) => {
+      if (store[key].resetTime < now) {
+        delete store[key];
+        cleaned++;
+      }
+    });
+    if (cleaned > 0) {
+      console.log(`[RateLimit] Cleaned ${cleaned}/${keys.length} expired entries`);
     }
-  });
-}, 10 * 60 * 1000);
+  }
+}, 5 * 60 * 1000);
 
 function getClientIdentifier(req: NextApiRequest): string {
   // Try to get the real IP from various headers (for proxies/load balancers)
@@ -84,11 +94,21 @@ export function rateLimit(
 }
 
 /**
- * Strict rate limiter for expensive operations
+ * Strict rate limiter for expensive operations (analyze, generate-card)
  */
 export function strictRateLimit(req: NextApiRequest, res: NextApiResponse): boolean {
   return rateLimit(req, res, {
     windowMs: RATE_LIMIT_CONFIG.STRICT_WINDOW_MS,
     maxRequests: RATE_LIMIT_CONFIG.STRICT_MAX_REQUESTS,
+  });
+}
+
+/**
+ * Payment rate limiter (prevents payment spam/attacks)
+ */
+export function paymentRateLimit(req: NextApiRequest, res: NextApiResponse): boolean {
+  return rateLimit(req, res, {
+    windowMs: RATE_LIMIT_CONFIG.PAYMENT_WINDOW_MS,
+    maxRequests: RATE_LIMIT_CONFIG.PAYMENT_MAX_REQUESTS,
   });
 }

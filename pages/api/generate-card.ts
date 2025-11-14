@@ -1,9 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { createCanvas, loadImage } from '@napi-rs/canvas';
 import { isValidSolanaAddress } from '../../lib/services/helius';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { prisma } from '../../lib/prisma';
 
 // Función auxiliar para formatear SOL
 function formatSOL(amount: number, decimals: number = 2): string {
@@ -158,13 +156,15 @@ async function generateCardImage(
   metrics: any
 ): Promise<Buffer> {
   console.log('🎨 generateCardImage called with isPaid:', metrics.isPaid);
-  
+
   // Si está pagado, usar estilo premium del leaderboard
   if (metrics.isPaid) {
     console.log('✅ Generating PREMIUM card...');
     try {
       const premiumBuffer = await generatePremiumCardImage(walletAddress, metrics);
       console.log('✅ Premium card generated successfully');
+      // Force garbage collection hint
+      if (global.gc) global.gc();
       return premiumBuffer;
     } catch (error) {
       console.error('❌ Error generating premium card:', error);
@@ -172,10 +172,13 @@ async function generateCardImage(
       return generateBasicCardImage(walletAddress, metrics);
     }
   }
-  
+
   // Si NO está pagado, usar el estilo básico original
   console.log('📝 Generating BASIC card...');
-  return generateBasicCardImage(walletAddress, metrics);
+  const buffer = await generateBasicCardImage(walletAddress, metrics);
+  // Force garbage collection hint
+  if (global.gc) global.gc();
+  return buffer;
 }
 
 // 🔥 PREMIUM CARD ULTRA ENHANCED
@@ -228,13 +231,19 @@ async function generatePremiumCardImage(
   if (metrics.profileImage) {
     try {
       let imageUrl = metrics.profileImage;
-      
+
       if (!imageUrl.startsWith('http')) {
         const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3001';
         imageUrl = `${baseUrl}${imageUrl}`;
       }
-      
-      const profileImg = await loadImage(imageUrl);
+
+      // Load image with timeout (5 seconds max)
+      const profileImg = await Promise.race([
+        loadImage(imageUrl),
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('Image load timeout')), 5000)
+        )
+      ]);
       
       const imgSize = 140;
       const imgX = width / 2;
@@ -501,7 +510,13 @@ async function generatePremiumCardImage(
   ctx.textAlign = 'center';
   ctx.fillText('Powered by Helius × Solana', width / 2, currentY);
 
-  return canvas.toBuffer('image/png');
+  // Convert to buffer and clear canvas reference to help GC
+  const buffer = canvas.toBuffer('image/png');
+
+  // Clear canvas context to free memory
+  ctx.clearRect(0, 0, width, height);
+
+  return buffer;
 }
 
 // Función para dibujar métricas premium MEJORADAS
@@ -656,7 +671,13 @@ async function generateBasicCardImage(
   ctx.font = '15px Arial';
   ctx.fillText('Powered by Helius × Solana', width / 2, currentY);
 
-  return canvas.toBuffer('image/png');
+  // Convert to buffer and clear canvas reference to help GC
+  const buffer = canvas.toBuffer('image/png');
+
+  // Clear canvas context to free memory
+  ctx.clearRect(0, 0, width, height);
+
+  return buffer;
 }
 
 function drawMetric(

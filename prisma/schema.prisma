@@ -6,6 +6,8 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  // Optimización para alta concurrencia
+  // Configurar en DATABASE_URL: ?connection_limit=20&pool_timeout=20
 }
 
 model DegenCard {
@@ -63,11 +65,20 @@ model DegenCard {
   // Relaciones
   badges          Badge[]
   
+  // Índices simples para consultas individuales
   @@index([degenScore])
   @@index([totalVolume])
   @@index([winRate])
   @@index([isPaid])
   @@index([likes])
+  @@index([mintedAt])
+  @@index([createdAt])
+
+  // Índices compuestos para leaderboard (ordenamiento)
+  @@index([degenScore(sort: Desc), mintedAt(sort: Desc)])
+  @@index([totalVolume(sort: Desc), mintedAt(sort: Desc)])
+  @@index([winRate(sort: Desc), mintedAt(sort: Desc)])
+  @@index([likes(sort: Desc), mintedAt(sort: Desc)])
 }
 
 model Badge {
