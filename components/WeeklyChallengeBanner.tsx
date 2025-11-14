@@ -46,11 +46,15 @@ export default function WeeklyChallengeBanner() {
 
   const { totalPremiumCards, milestoneTarget, percentage, currentLeader, prizeAmount, isCompleted } = milestoneData;
 
+  const cardsRemaining = milestoneTarget - totalPremiumCards;
+  const isUrgent = cardsRemaining > 0 && cardsRemaining <= 10;
+  const isCritical = cardsRemaining > 0 && cardsRemaining <= 5;
+
   return (
     <div className="mb-6 sm:mb-8 relative px-2 sm:px-0">
-      <div className="bg-gradient-to-r from-yellow-500/20 via-orange-500/20 to-red-500/20 border-2 border-yellow-500/50 rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-[0_0_40px_rgba(251,191,36,0.3)] relative overflow-hidden">
+      <div className={`bg-gradient-to-r ${isCritical ? 'from-red-500/30 via-orange-500/30 to-yellow-500/30 border-red-500/70' : isUrgent ? 'from-orange-500/25 via-yellow-500/25 to-red-500/25 border-orange-500/60' : 'from-yellow-500/20 via-orange-500/20 to-red-500/20 border-yellow-500/50'} border-2 rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-[0_0_40px_rgba(251,191,36,0.3)] relative overflow-hidden`}>
         {/* Animated background */}
-        <div className="absolute inset-0 bg-gradient-to-r from-yellow-500/5 via-orange-500/10 to-red-500/5 animate-pulse"></div>
+        <div className={`absolute inset-0 bg-gradient-to-r from-yellow-500/5 via-orange-500/10 to-red-500/5 ${isCritical ? 'animate-pulse' : ''}`}></div>
 
         <div className="relative z-10">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 gap-3">
@@ -63,6 +67,11 @@ export default function WeeklyChallengeBanner() {
                 <p className="text-gray-300 text-xs sm:text-sm">
                   {isCompleted ? 'Milestone reached! Winner decided' : `Get the most likes to win when we reach ${milestoneTarget} premium cards`}
                 </p>
+                {!isCompleted && cardsRemaining > 0 && (
+                  <p className={`text-xs sm:text-sm font-bold mt-1 ${isCritical ? 'text-red-400 animate-pulse' : isUrgent ? 'text-orange-400' : 'text-yellow-400'}`}>
+                    ⏰ Only {cardsRemaining} {cardsRemaining === 1 ? 'card' : 'cards'} left!
+                  </p>
+                )}
               </div>
             </div>
 
