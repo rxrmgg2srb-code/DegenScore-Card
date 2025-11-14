@@ -5,7 +5,7 @@ import { GlobalStats } from '../components/GlobalStats';
 import { LiveActivityFeed } from '../components/LiveActivityFeed';
 import OnboardingTour from '../components/OnboardingTour';
 import WeeklyChallengeBanner from '../components/WeeklyChallengeBanner';
-import LanguageSelector from '../components/LanguageSelector';
+import { LanguageSelector } from '../components/LanguageSelector';
 
 export default function Home() {
   return (
