@@ -1,6 +1,7 @@
 import { PublicKey } from '@solana/web3.js';
 import nacl from 'tweetnacl';
 import bs58 from 'bs58';
+import jwt from 'jsonwebtoken';
 
 /**
  * Wallet Authentication Utility
@@ -114,38 +115,63 @@ export function verifyAuthentication(authResponse: WalletAuthResponse): {
 }
 
 /**
- * Generate a session token for authenticated users
+ * Generate a session token for authenticated users using JWT
  */
 export function generateSessionToken(walletAddress: string): string {
+  const jwtSecret = process.env.JWT_SECRET;
+
+  if (!jwtSecret || jwtSecret.length < 32) {
+    throw new Error('JWT_SECRET must be set and at least 32 characters');
+  }
+
   const payload = {
     wallet: walletAddress,
     timestamp: Date.now(),
     nonce: Math.random().toString(36).substring(2),
   };
 
-  // In production, use JWT with proper secret
-  return Buffer.from(JSON.stringify(payload)).toString('base64');
+  // Generate JWT with 7-day expiration
+  return jwt.sign(payload, jwtSecret, {
+    expiresIn: '7d',
+    algorithm: 'HS256',
+    issuer: 'degenscore-card',
+    subject: walletAddress,
+  });
 }
 
 /**
- * Verify session token
+ * Verify JWT session token
  */
 export function verifySessionToken(token: string): {
   valid: boolean;
   wallet?: string;
   error?: string;
 } {
-  try {
-    const payload = JSON.parse(Buffer.from(token, 'base64').toString());
+  const jwtSecret = process.env.JWT_SECRET;
 
-    // Check if token is still valid (24 hours)
-    const ONE_DAY = 24 * 60 * 60 * 1000;
-    if (Date.now() - payload.timestamp > ONE_DAY) {
-      return { valid: false, error: 'Session expired' };
+  if (!jwtSecret || jwtSecret.length < 32) {
+    return { valid: false, error: 'JWT_SECRET not configured' };
+  }
+
+  try {
+    const decoded = jwt.verify(token, jwtSecret, {
+      algorithms: ['HS256'],
+      issuer: 'degenscore-card',
+    }) as { wallet: string; timestamp: number; nonce: string; sub: string };
+
+    // JWT handles expiration automatically, but double-check wallet
+    if (!decoded.wallet || decoded.wallet !== decoded.sub) {
+      return { valid: false, error: 'Invalid token payload' };
     }
 
-    return { valid: true, wallet: payload.wallet };
+    return { valid: true, wallet: decoded.wallet };
   } catch (error) {
-    return { valid: false, error: 'Invalid session token' };
+    if (error instanceof jwt.TokenExpiredError) {
+      return { valid: false, error: 'Session expired' };
+    }
+    if (error instanceof jwt.JsonWebTokenError) {
+      return { valid: false, error: 'Invalid token signature' };
+    }
+    return { valid: false, error: 'Token verification failed' };
   }
 }

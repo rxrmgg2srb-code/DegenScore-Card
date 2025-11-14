@@ -2,6 +2,13 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { createCanvas, loadImage } from '@napi-rs/canvas';
 import { isValidSolanaAddress } from '../../lib/services/helius';
 import { prisma } from '../../lib/prisma';
+import { cacheGet, cacheSet, CacheKeys } from '../../lib/cache/redis';
+import {
+  uploadImage,
+  generateCardImageKey,
+  getPublicUrl,
+  isStorageEnabled,
+} from '../../lib/storage/r2';
 
 // Función auxiliar para formatear SOL
 function formatSOL(amount: number, decimals: number = 2): string {
@@ -120,6 +127,25 @@ export default async function handler(
     console.log(`✅ Found card in database with score: ${card.degenScore}`);
     console.log(`💎 Premium status: ${card.isPaid ? 'PREMIUM' : 'BASIC'}`);
 
+    // 🚀 OPTIMIZACIÓN: Verificar cache de imagen
+    const cacheKey = CacheKeys.cardImage(walletAddress);
+    const cachedImageUrl = await cacheGet<string>(cacheKey);
+
+    if (cachedImageUrl) {
+      console.log('⚡ Serving card from cache/R2');
+      // Si tenemos URL de R2, redirigir
+      if (cachedImageUrl.startsWith('http')) {
+        return res.redirect(302, cachedImageUrl);
+      }
+      // Si es buffer en cache, servir directamente
+      const buffer = Buffer.from(cachedImageUrl, 'base64');
+      res.setHeader('Content-Type', 'image/png');
+      res.setHeader('Cache-Control', 'public, max-age=604800, immutable'); // 7 días
+      res.setHeader('X-Cache-Status', 'HIT');
+      return res.status(200).send(buffer);
+    }
+
+    // No hay cache, generar imagen
     const imageBuffer = await generateCardImage(walletAddress, {
       degenScore: card.degenScore,
       totalTrades: card.totalTrades,
@@ -138,8 +164,30 @@ export default async function handler(
       isPaid: card.isPaid,
     });
 
+    // 🚀 OPTIMIZACIÓN: Subir a R2 si está habilitado
+    if (isStorageEnabled) {
+      const imageKey = generateCardImageKey(walletAddress);
+      const publicUrl = await uploadImage(imageKey, imageBuffer, {
+        contentType: 'image/png',
+        cacheControl: 'public, max-age=31536000, immutable', // 1 año
+      });
+
+      if (publicUrl) {
+        console.log('☁️ Image uploaded to R2:', publicUrl);
+        // Cachear la URL por 7 días
+        await cacheSet(cacheKey, publicUrl, { ttl: 604800 });
+        // Redirigir a R2
+        return res.redirect(302, publicUrl);
+      }
+    }
+
+    // Si R2 no está habilitado o falló, cachear el buffer
+    const base64Buffer = imageBuffer.toString('base64');
+    await cacheSet(cacheKey, base64Buffer, { ttl: 3600 }); // 1 hora
+
     res.setHeader('Content-Type', 'image/png');
     res.setHeader('Cache-Control', 'public, max-age=3600');
+    res.setHeader('X-Cache-Status', 'MISS');
     res.status(200).send(imageBuffer);
 
   } catch (error) {

@@ -100,7 +100,7 @@ Check your Solana trading score at ${appUrl}
             </li>
             <li className="flex items-center gap-2">
               <span className="text-green-400">✓</span>
-              <span>Enter weekly contest (3 SOL prize!)</span>
+              <span>Enter weekly contest (1 SOL prize!)</span>
             </li>
             <li className="flex items-center gap-2">
               <span className="text-green-400">✓</span>
@@ -160,7 +160,7 @@ Check your Solana trading score at ${appUrl}
         )}
 
         <p className="text-gray-600 text-xs text-center mt-4">
-          💡 Sharing increases your chances to win the weekly 3 SOL prize!
+          💡 Sharing increases your chances to win the weekly 1 SOL prize!
         </p>
       </div>
     </div>

@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { prisma } from '../../lib/prisma';
 import { rateLimit } from '../../lib/rateLimit';
+import { sanitizePromoCode, sanitizeText } from '../../lib/sanitize';
 
 export default async function handler(
   req: NextApiRequest,
@@ -24,14 +25,17 @@ export default async function handler(
       });
     }
 
+    // Sanitize promo code to prevent SQL injection and XSS
+    const sanitizedCode = sanitizePromoCode(promoCode);
+
     console.log(`🎟️ Applying promo code for: ${walletAddress}`);
-    console.log(`📝 Promo code: ${promoCode}`);
+    console.log(`📝 Promo code: ${sanitizedCode}`);
 
     // Usar transacción para garantizar atomicidad
     const result = await prisma.$transaction(async (tx) => {
       // 1. Buscar el código promocional
       const promo = await tx.promoCode.findUnique({
-        where: { code: promoCode.toUpperCase().trim() },
+        where: { code: sanitizedCode },
         include: {
           redemptions: {
             where: { walletAddress }
@@ -130,7 +134,7 @@ export default async function handler(
 
     res.status(200).json({
       success: true,
-      message: `Promo code "${result.promo.description || promoCode}" applied successfully! 🎉`,
+      message: `Promo code "${sanitizeText(result.promo.description || sanitizedCode)}" applied successfully! 🎉`,
       card: result.card
     });
 

@@ -3,6 +3,7 @@ import { prisma } from '../../lib/prisma';
 import { isValidSolanaAddress } from '../../lib/validation';
 import { rateLimit } from '../../lib/rateLimit';
 import { logger } from '../../lib/logger';
+import { sanitizeText } from '../../lib/sanitize';
 
 export default async function handler(
   req: NextApiRequest,
@@ -31,11 +32,11 @@ export default async function handler(
 
     logger.debug('Saving card for wallet:', walletAddress);
 
-    // Convert badges to correct format
+    // Convert badges to correct format with XSS sanitization
     const badgesData = (analysisData.badges || []).map((badge: any) => ({
-      name: String(badge.name || ''),
-      description: String(badge.description || ''),
-      icon: String(badge.icon || ''),
+      name: sanitizeText(String(badge.name || '')).slice(0, 100),
+      description: sanitizeText(String(badge.description || '')).slice(0, 500),
+      icon: sanitizeText(String(badge.icon || '')).slice(0, 50),
       rarity: String(badge.rarity || 'COMMON').toUpperCase(),
     }));
 

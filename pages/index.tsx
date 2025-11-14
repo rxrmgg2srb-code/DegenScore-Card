@@ -5,12 +5,9 @@ import { GlobalStats } from '../components/GlobalStats';
 import { LiveActivityFeed } from '../components/LiveActivityFeed';
 import OnboardingTour from '../components/OnboardingTour';
 import WeeklyChallengeBanner from '../components/WeeklyChallengeBanner';
-import LanguageSwitch from '../components/LanguageSwitch';
-import { useLanguage } from '../lib/LanguageContext';
+import LanguageSelector from '../components/LanguageSelector';
 
 export default function Home() {
-  const { t } = useLanguage();
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 relative overflow-hidden">
       {/* Animated background effects */}
@@ -24,34 +21,35 @@ export default function Home() {
 
       {/* Header */}
       <div className="container mx-auto px-4 py-6">
+        {/* Language Selector - Top Right */}
+        <div className="flex justify-end mb-4">
+          <LanguageSelector />
+        </div>
+
         <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-6">
           {/* Logo/Title */}
           <div className="text-center sm:text-left">
             <h1 className="text-4xl sm:text-5xl font-bold gradient-text-gold animate-float">
-              {t('title')}
+              DegenScore
             </h1>
-            <p className="text-gray-400 text-sm mt-1">{t('subtitle')}</p>
+            <p className="text-gray-400 text-sm mt-1">Track your trading mastery</p>
           </div>
 
-          {/* Navigation and Language Switcher */}
-          <div className="flex flex-wrap items-center gap-3">
-            <LanguageSwitch />
-
+          {/* Navigation Buttons */}
+          <div className="flex flex-wrap gap-3 justify-center sm:justify-end">
             <Link href="/compare">
-              <button className="px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-500 text-white rounded-lg font-bold hover:scale-105 transition shadow-lg hover:shadow-cyan-500/50">
-                {t('compareCards')}
+              <button className="px-4 py-2 bg-blue-700 hover:bg-blue-600 text-white rounded-lg font-medium transition">
+                ⚔️ Compare
               </button>
             </Link>
-
-            <Link href="/docs">
-              <button className="px-6 py-3 bg-gradient-to-r from-green-500 to-teal-500 text-white rounded-lg font-bold hover:scale-105 transition shadow-lg hover:shadow-green-500/50">
-                📖 {t('documentation')}
+            <Link href="/documentation">
+              <button className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg font-medium transition">
+                📚 Docs
               </button>
             </Link>
-
             <Link href="/leaderboard">
               <button className="btn-premium px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg font-bold hover:scale-105 transition shadow-lg hover:shadow-purple-500/50">
-                {t('viewLeaderboard')}
+                🏆 Leaderboard
               </button>
             </Link>
           </div>
