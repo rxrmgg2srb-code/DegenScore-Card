@@ -153,7 +153,7 @@ export default function UpgradeModal({ isOpen, onClose, onUpgrade, onSkip }: Upg
 
   return (
     <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl border-2 border-purple-500/50 shadow-2xl shadow-purple-500/20 max-w-lg w-full p-8 relative">
+      <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl border-2 border-purple-500/50 shadow-2xl shadow-purple-500/20 max-w-lg w-full max-h-[90vh] overflow-y-auto p-8 relative">
         <button
           onClick={onClose}
           className="absolute top-4 right-4 text-gray-400 hover:text-white transition text-2xl"
