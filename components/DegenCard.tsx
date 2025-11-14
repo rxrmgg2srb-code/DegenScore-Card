@@ -6,6 +6,8 @@ import UpgradeModal from './UpgradeModal';
 import ShareModal from './ShareModal';
 import { Celebration } from './Celebration';
 import { AchievementPopup, achievements, Achievement } from './AchievementPopup';
+import toast from 'react-hot-toast';
+import { triggerConfetti } from '../lib/confetti';
 
 export default function DegenCard() {
   const { publicKey, connected } = useWallet();
@@ -126,11 +128,14 @@ export default function DegenCard() {
         if (score >= 90) {
           setCelebrationType('legendary');
           setCurrentAchievement(achievements.legendary);
+          triggerConfetti('legendary'); // Epic confetti for 90+ scores
         } else if (score >= 80) {
           setCelebrationType('card-generated');
           setCurrentAchievement(achievements.highScore);
+          triggerConfetti('premium'); // Premium confetti for 80+ scores
         } else {
           setCelebrationType('card-generated');
+          triggerConfetti('default'); // Standard confetti for all cards
         }
 
         setShowCelebration(true);
@@ -211,7 +216,7 @@ export default function DegenCard() {
 
     } catch (error) {
       console.error('Error updating profile after payment:', error);
-      alert(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      toast.error(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
 

@@ -6,6 +6,7 @@ import { ConnectionProvider, WalletProvider } from '@solana/wallet-adapter-react
 import { WalletModalProvider } from '@solana/wallet-adapter-react-ui';
 import { PhantomWalletAdapter, SolflareWalletAdapter } from '@solana/wallet-adapter-wallets';
 import { ErrorBoundary } from '../components/ErrorBoundary';
+import { ToastProvider } from '../components/ToastProvider';
 
 export default function App({ Component, pageProps }: AppProps) {
   // Configure RPC endpoint
@@ -28,7 +29,9 @@ export default function App({ Component, pageProps }: AppProps) {
       <ConnectionProvider endpoint={endpoint}>
         <WalletProvider wallets={wallets} autoConnect>
           <WalletModalProvider>
-            <Component {...pageProps} />
+            <ToastProvider>
+              <Component {...pageProps} />
+            </ToastProvider>
           </WalletModalProvider>
         </WalletProvider>
       </ConnectionProvider>

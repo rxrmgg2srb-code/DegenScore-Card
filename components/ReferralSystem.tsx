@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import CountUp from 'react-countup';
 import toast from 'react-hot-toast';
+import { triggerReferralConfetti } from '../lib/confetti';
 
 interface ReferralStats {
   referralCode: string;
@@ -52,6 +53,7 @@ export default function ReferralSystem({ walletAddress }: ReferralSystemProps) {
     navigator.clipboard.writeText(link);
     setCopied(true);
     toast.success('Referral link copied!');
+    triggerReferralConfetti(); // Celebration for sharing
     setTimeout(() => setCopied(false), 2000);
   };
 

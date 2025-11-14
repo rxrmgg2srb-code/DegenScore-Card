@@ -32,13 +32,16 @@ export default function ShareModal({ isOpen, onShared, onSkip, walletAddress, de
   };
 
   const generateTweet = () => {
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://degenscore.com';
+    const baseUrl = typeof window !== 'undefined' ? window.location.origin : (process.env.NEXT_PUBLIC_BASE_URL || 'https://degenscore.com');
+    const cardUrl = `${baseUrl}/card/${walletAddress}`;
     const tierEmoji = getTierEmoji(degenScore);
     const tierName = getTierName(degenScore);
 
     const tweetText = `${tierEmoji} Just got my DegenScore: ${degenScore}/100 (${tierName})!
 
-Check your Solana trading score at ${appUrl}
+Check out my card: ${cardUrl}
+
+Get your own at ${baseUrl}
 
 #DegenScore #Solana #SolanaTrading`;
 

@@ -3,9 +3,8 @@ import { prisma } from '../../lib/prisma';
 import { Connection, PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { paymentRateLimit } from '../../lib/rateLimit';
 import { retry } from '../../lib/retryLogic';
-
-const TREASURY_WALLET = process.env.TREASURY_WALLET!;
-const MINT_PRICE_SOL = 0.2; // Premium tier price
+import { PAYMENT_CONFIG } from '../../lib/config';
+import { isValidSolanaAddress } from '../../lib/validation';
 
 export default async function handler(
   req: NextApiRequest,
@@ -23,19 +22,29 @@ export default async function handler(
   try {
     const { walletAddress, paymentSignature } = req.body;
 
-    if (!walletAddress || !paymentSignature) {
-      return res.status(400).json({
-        error: 'Missing walletAddress or paymentSignature'
-      });
+    // Validate inputs
+    if (!walletAddress || typeof walletAddress !== 'string') {
+      return res.status(400).json({ error: 'Invalid wallet address' });
+    }
+
+    if (!paymentSignature || typeof paymentSignature !== 'string') {
+      return res.status(400).json({ error: 'Invalid payment signature' });
+    }
+
+    if (!isValidSolanaAddress(walletAddress)) {
+      return res.status(400).json({ error: 'Invalid Solana address format' });
     }
 
     console.log(`💰 Verifying payment for: ${walletAddress}`);
     console.log(`📝 Payment signature: ${paymentSignature}`);
 
-    const connection = new Connection(
-      process.env.HELIUS_RPC_URL || 'https://api.mainnet-beta.solana.com',
-      'confirmed'
-    );
+    // Use configured RPC URL with fallback
+    const rpcUrl = process.env.HELIUS_RPC_URL ||
+                   process.env.NEXT_PUBLIC_HELIUS_RPC_URL ||
+                   PAYMENT_CONFIG.SOLANA_NETWORK;
+
+    const connection = new Connection(rpcUrl, 'confirmed');
+    console.log(`🌐 Using RPC: ${rpcUrl.substring(0, 30)}...`);
 
     // Retry transaction fetching to handle network issues
     const txInfo = await retry(
@@ -56,34 +65,57 @@ export default async function handler(
       });
     }
 
+    // Verify transaction was successful
+    if (txInfo.meta?.err) {
+      console.error('❌ Transaction failed on-chain:', txInfo.meta.err);
+      return res.status(400).json({
+        error: 'Transaction failed on-chain'
+      });
+    }
+
     const message = txInfo.transaction.message;
     const accountKeys = message.getAccountKeys();
-    
-    const treasuryPubkey = new PublicKey(TREASURY_WALLET);
+
+    const treasuryPubkey = new PublicKey(PAYMENT_CONFIG.TREASURY_WALLET);
+    const senderPubkey = new PublicKey(walletAddress);
 
     let validPayment = false;
     let paidAmount = 0;
+    let senderVerified = false;
 
     if (txInfo.meta?.preBalances && txInfo.meta?.postBalances) {
       for (let i = 0; i < accountKeys.length; i++) {
         const account = accountKeys[i];
-        
+
+        // Verify this is from the claimed sender
+        if (account.equals(senderPubkey)) {
+          senderVerified = true;
+        }
+
+        // Check payment to treasury
         if (account.equals(treasuryPubkey)) {
           const balanceChange =
             (txInfo.meta.postBalances[i] - txInfo.meta.preBalances[i]) / LAMPORTS_PER_SOL;
-          
-          if (balanceChange >= MINT_PRICE_SOL) {
+
+          if (balanceChange >= PAYMENT_CONFIG.MINT_PRICE_SOL) {
             validPayment = true;
             paidAmount = balanceChange;
-            break;
           }
         }
       }
     }
 
-    if (!validPayment) {
+    if (!senderVerified) {
+      console.error('❌ Sender mismatch: transaction not from claimed wallet');
       return res.status(400).json({
-        error: `Invalid payment. Expected ${MINT_PRICE_SOL} SOL to ${TREASURY_WALLET}. Paid amount change: ${paidAmount.toFixed(4)} SOL.`
+        error: 'Transaction sender does not match wallet address'
+      });
+    }
+
+    if (!validPayment) {
+      console.error(`❌ Invalid payment amount: ${paidAmount.toFixed(4)} SOL (expected ${PAYMENT_CONFIG.MINT_PRICE_SOL} SOL)`);
+      return res.status(400).json({
+        error: `Invalid payment. Expected ${PAYMENT_CONFIG.MINT_PRICE_SOL} SOL to treasury. Received: ${paidAmount.toFixed(4)} SOL.`
       });
     }
 
@@ -112,6 +144,16 @@ export default async function handler(
 
       console.log(`✅ Payment saved: ${paymentSignature}`);
 
+      // Get card before update to check referral
+      const cardBeforeUpdate = await tx.degenCard.findUnique({
+        where: { walletAddress },
+        select: { referredBy: true, isPaid: true },
+      });
+
+      if (!cardBeforeUpdate) {
+        throw new Error('Card not found');
+      }
+
       // Update card as paid
       const updatedCard = await tx.degenCard.update({
         where: { walletAddress },
@@ -123,6 +165,19 @@ export default async function handler(
       });
 
       console.log(`✅ Card marked as paid for wallet: ${walletAddress}`);
+
+      // Update referrer's paid referrals count (only if wasn't paid before)
+      if (cardBeforeUpdate.referredBy && !cardBeforeUpdate.isPaid) {
+        await tx.degenCard.update({
+          where: { walletAddress: cardBeforeUpdate.referredBy },
+          data: {
+            paidReferrals: {
+              increment: 1,
+            },
+          },
+        });
+        console.log(`✅ Updated referrer ${cardBeforeUpdate.referredBy} paid referrals count`);
+      }
 
       // Create or update subscription with 30-day PRO trial
       const trialEndDate = new Date();

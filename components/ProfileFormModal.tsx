@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import Image from 'next/image';
+import toast from 'react-hot-toast';
 
 interface ProfileFormModalProps {
   isOpen: boolean;
@@ -33,13 +34,13 @@ export default function ProfileFormModal({ isOpen, onClose, onSubmit, walletAddr
 
     // Validar tamaño (máx 2MB)
     if (file.size > 2 * 1024 * 1024) {
-      alert('Image must be less than 2MB');
+      toast.error('Image must be less than 2MB');
       return;
     }
 
     // Validar tipo
     if (!file.type.startsWith('image/')) {
-      alert('File must be an image');
+      toast.error('File must be an image');
       return;
     }
 
@@ -67,12 +68,13 @@ export default function ProfileFormModal({ isOpen, onClose, onSubmit, walletAddr
 
       if (data.success) {
         setFormData({ ...formData, profileImage: data.imageUrl });
+        toast.success('Profile image uploaded successfully!');
       } else {
-        alert('Failed to upload image');
+        toast.error('Failed to upload image');
       }
     } catch (error) {
       console.error('Error uploading image:', error);
-      alert('Error uploading image');
+      toast.error('Error uploading image');
     } finally {
       setIsUploading(false);
     }
@@ -83,7 +85,7 @@ export default function ProfileFormModal({ isOpen, onClose, onSubmit, walletAddr
 
     // Validaciones básicas
     if (!formData.displayName.trim()) {
-      alert('Please enter your name');
+      toast.error('Please enter your name');
       return;
     }
 

@@ -3,6 +3,7 @@ import { useWallet } from '@solana/wallet-adapter-react';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import { Connection, PublicKey, Transaction, SystemProgram, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { PAYMENT_CONFIG } from '../lib/config';
+import toast from 'react-hot-toast';
 
 interface UpgradeModalProps {
   isOpen: boolean;
@@ -104,7 +105,7 @@ export default function UpgradeModal({ isOpen, onClose, onUpgrade, onSkip }: Upg
 
   const handlePayment = async () => {
     if (!publicKey) {
-      alert('Please connect your wallet first');
+      toast.error('Please connect your wallet first');
       return;
     }
 
