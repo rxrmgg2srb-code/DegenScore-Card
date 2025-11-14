@@ -103,3 +103,35 @@ model GlobalStats {
   topScore      Int      @default(0)
   updatedAt     DateTime @updatedAt
 }
+
+model HotTrade {
+  id              String   @id @default(cuid())
+  walletAddress   String   // Top wallet que hizo el trade
+  displayName     String?  // Nombre del degen
+  tokenMint       String
+  tokenSymbol     String?
+  type            String   // "buy" | "sell"
+  solAmount       Float    
+  timestamp       DateTime
+  degenScore      Int      // Score del wallet en ese momento
+  
+  createdAt       DateTime @default(now())
+  
+  @@index([timestamp])
+  @@index([walletAddress])
+  @@index([createdAt])
+}
+
+model Subscription {
+  id              String   @id @default(cuid())
+  walletAddress   String   @unique
+  tier            String   @default("FREE") // "FREE" | "BASIC" | "PRO"
+  expiresAt       DateTime?
+  paymentSignature String?
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@index([walletAddress])
+  @@index([tier])
+}
