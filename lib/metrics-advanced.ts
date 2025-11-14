@@ -120,22 +120,32 @@ async function fetchAllTransactionsOptimized(
   const allTransactions: ParsedTransaction[] = [];
   let before: string | undefined;
   let fetchCount = 0;
-  const MAX_BATCHES = 100; // Mismo que original pero con batches más grandes
-  const BATCH_SIZE = 1000; // 10x más grande (Helius soporta hasta 1000)
-  const DELAY_MS = 200; // Delay conservador para no saturar API
+  let consecutiveEmpty = 0;
+  const MAX_BATCHES = 100;
+  const BATCH_SIZE = 1000;
+  const DELAY_MS = 100; // 🚀 2x más rápido (100ms vs 200ms)
+  const MAX_EMPTY = 3; // Parar después de 3 batches vacíos consecutivos
 
-  console.log(`📊 Fetching ALL batches (1000/batch, 200ms delay, ${MAX_BATCHES} batches)`);
+  console.log(`📊 Fetching batches (1000/batch, 100ms delay, max ${MAX_BATCHES} batches)`);
 
-  // SIEMPRE hacer todos los batches - NO early exit
   while (fetchCount < MAX_BATCHES) {
     try {
       const batch = await getWalletTransactions(walletAddress, BATCH_SIZE, before);
 
-      console.log(`  Batch ${fetchCount + 1}/${MAX_BATCHES}: got ${batch.length} transactions`);
-
       if (batch.length > 0) {
         allTransactions.push(...batch);
         before = batch[batch.length - 1].signature;
+        consecutiveEmpty = 0; // Reset contador
+        console.log(`  Batch ${fetchCount + 1}: ${batch.length} txs (Total: ${allTransactions.length})`);
+      } else {
+        consecutiveEmpty++;
+        console.log(`  Batch ${fetchCount + 1}: vacío (${consecutiveEmpty}/${MAX_EMPTY})`);
+
+        // Early exit si ya no hay más datos
+        if (consecutiveEmpty >= MAX_EMPTY) {
+          console.log(`  ✅ No hay más transacciones, parando early`);
+          break;
+        }
       }
 
       fetchCount++;

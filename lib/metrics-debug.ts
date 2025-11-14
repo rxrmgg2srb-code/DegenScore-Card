@@ -94,11 +94,13 @@ async function fetchAllTransactions(
   const allTransactions: ParsedTransaction[] = [];
   let before: string | undefined;
   let fetchCount = 0;
+  let consecutiveEmpty = 0;
   const MAX_BATCHES = 100;
   const BATCH_SIZE = 1000;
-  const DELAY_MS = 200;
+  const DELAY_MS = 100; // 🚀 2x más rápido (100ms vs 200ms)
+  const MAX_EMPTY = 3; // Parar después de 3 batches vacíos consecutivos
 
-  console.log(`\n🔄 Fetching hasta ${MAX_BATCHES} batches de ${BATCH_SIZE} transacciones`);
+  console.log(`\n🔄 Fetching hasta ${MAX_BATCHES} batches de ${BATCH_SIZE} transacciones (100ms delay)`);
 
   while (fetchCount < MAX_BATCHES) {
     try {
@@ -107,9 +109,17 @@ async function fetchAllTransactions(
       if (batch.length > 0) {
         allTransactions.push(...batch);
         before = batch[batch.length - 1].signature;
+        consecutiveEmpty = 0; // Reset contador
         console.log(`  ✓ Batch ${fetchCount + 1}: ${batch.length} txs (Total: ${allTransactions.length})`);
       } else {
-        console.log(`  ⚠️ Batch ${fetchCount + 1}: vacío`);
+        consecutiveEmpty++;
+        console.log(`  ⚠️ Batch ${fetchCount + 1}: vacío (${consecutiveEmpty}/${MAX_EMPTY})`);
+
+        // Early exit si ya no hay más datos
+        if (consecutiveEmpty >= MAX_EMPTY) {
+          console.log(`  ✅ No hay más transacciones, parando early`);
+          break;
+        }
       }
 
       fetchCount++;
