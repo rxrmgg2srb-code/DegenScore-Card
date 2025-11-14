@@ -48,7 +48,13 @@ model DegenCard {
   twitter         String?
   telegram        String?
   profileImage    String?
-  
+
+  // Daily Streaks & Engagement
+  lastCheckIn     DateTime?
+  streakDays      Int       @default(0)
+  totalXP         Int       @default(0)
+  longestStreak   Int       @default(0)
+
   // Estado
   isMinted        Boolean   @default(false)
   isPaid          Boolean   @default(false)
@@ -215,4 +221,26 @@ model Referral {
   @@index([referredAddress])
   @@index([hasPaid])
   @@unique([referrerAddress, referredAddress]) // No duplicar referidos
+}
+
+model RateLimitLog {
+  id          String   @id @default(cuid())
+  identifier  String   // IP address or wallet address
+  endpoint    String?  // Optional: track specific endpoint
+  timestamp   DateTime @default(now())
+
+  @@index([identifier, timestamp])
+  @@index([timestamp])
+}
+
+model ActivityLog {
+  id            String   @id @default(cuid())
+  walletAddress String
+  action        String   // "upgrade", "moonshot", "leaderboard", "referral", "share"
+  metadata      Json?    // Additional data (rank, amount, etc)
+  createdAt     DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([walletAddress])
+  @@index([action])
 }

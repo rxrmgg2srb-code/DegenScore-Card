@@ -2,6 +2,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { exec } from 'child_process';
 import { promisify } from 'util';
+import { verifyAdminAuth } from '../../../lib/adminAuth';
 
 const execAsync = promisify(exec);
 
@@ -9,13 +10,14 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  // Simple security: require a secret token
-  const authToken = req.headers.authorization?.replace('Bearer ', '');
-  const expectedToken = process.env.ADMIN_SECRET || 'temp-admin-secret-123';
-
-  if (authToken !== expectedToken) {
-    return res.status(401).json({ error: 'Unauthorized' });
+  // Verify admin authentication
+  const auth = verifyAdminAuth(req);
+  if (!auth.authorized) {
+    console.warn(`❌ Unauthorized admin access attempt${auth.wallet ? ` from ${auth.wallet}` : ''}`);
+    return res.status(403).json({ error: auth.error || 'Forbidden' });
   }
+
+  console.log(`✅ Admin operation authorized for wallet: ${auth.wallet}`);
 
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
