@@ -13,6 +13,7 @@
     "postinstall": "prisma generate"
   },
   "dependencies": {
+    "@hcaptcha/react-hcaptcha": "^1.14.0",
     "@napi-rs/canvas": "^0.1.44",
     "@prisma/client": "^5.22.0",
     "@solana/wallet-adapter-base": "^0.9.27",
@@ -21,16 +22,25 @@
     "@solana/wallet-adapter-wallets": "^0.19.37",
     "@solana/web3.js": "^1.98.4",
     "autoprefixer": "^10.0.1",
+    "bs58": "^6.0.0",
     "canvas-confetti": "^1.9.4",
+    "chart.js": "^4.5.1",
+    "date-fns": "^4.1.0",
     "formidable": "^3.5.4",
     "framer-motion": "^12.23.24",
+    "joyride": "^0.1.4",
     "next": "^14.0.4",
     "postcss": "^8",
     "react": "^18.2.0",
+    "react-chartjs-2": "^5.3.1",
     "react-countup": "^6.5.3",
     "react-dom": "^18.2.0",
     "react-hot-toast": "^2.6.0",
-    "tailwindcss": "^3.3.0"
+    "react-joyride": "^2.9.3",
+    "recharts": "^3.4.1",
+    "tailwindcss": "^3.3.0",
+    "tweetnacl": "^1.0.3",
+    "zustand": "^5.0.8"
   },
   "devDependencies": {
     "@types/formidable": "^3.4.6",

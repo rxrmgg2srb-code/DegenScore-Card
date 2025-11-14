@@ -3,12 +3,16 @@ import Link from 'next/link';
 import HotFeedWidget from '../components/HotFeedWidget';
 import { GlobalStats } from '../components/GlobalStats';
 import { LiveActivityFeed } from '../components/LiveActivityFeed';
+import OnboardingTour from '../components/OnboardingTour';
 
 export default function Home() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 relative overflow-hidden">
       {/* Animated background effects */}
       <div className="neon-streak"></div>
+
+      {/* Onboarding Tour */}
+      <OnboardingTour />
 
       {/* Live Activity Feed */}
       <LiveActivityFeed />
@@ -33,7 +37,7 @@ export default function Home() {
         </div>
 
         {/* Global Stats */}
-        <GlobalStats className="mb-8 animate-slide-up" />
+        <GlobalStats className="mb-8 animate-slide-up global-stats" />
       </div>
 
       {/* Layout con Card Generator y Hot Feed */}
@@ -45,7 +49,7 @@ export default function Home() {
           </div>
 
           {/* Hot Feed Widget - 1 columna */}
-          <div className="lg:col-span-1">
+          <div className="lg:col-span-1 activity-feed">
             <HotFeedWidget />
           </div>
         </div>
