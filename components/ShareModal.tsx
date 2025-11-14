@@ -166,7 +166,7 @@ Check your Solana trading score at ${appUrl}
         )}
 
         <p className="text-gray-600 text-xs text-center mt-4">
-          💡 Sharing increases your chances to win the weekly 3 SOL prize!
+          💡 Sharing increases your chances to win the 1 SOL prize at 100 cards!
         </p>
       </div>
     </div>
