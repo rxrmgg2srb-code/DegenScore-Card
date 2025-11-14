@@ -97,7 +97,13 @@ export async function triggerBatch(
   }
 
   try {
-    await pusherServer.triggerBatch(batch);
+    // Pusher requiere 'name' en vez de 'event' en el tipo BatchEvent
+    const pusherBatch = batch.map(({ channel, event, data }) => ({
+      channel,
+      name: event,
+      data,
+    }));
+    await pusherServer.triggerBatch(pusherBatch);
     return true;
   } catch (error) {
     console.error('Pusher batch trigger error:', error);
