@@ -1,5 +1,6 @@
 import DegenCard from '../components/DegenCard';
 import Link from 'next/link';
+import HotFeedWidget from '../components/HotFeedWidget';
 
 export default function Home() {
   return (
@@ -15,8 +16,20 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Componente principal */}
-      <DegenCard />
+      {/* Layout con Card Generator y Hot Feed */}
+      <div className="container mx-auto px-4 pb-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Card Generator - 2 columnas */}
+          <div className="lg:col-span-2">
+            <DegenCard />
+          </div>
+
+          {/* Hot Feed Widget - 1 columna */}
+          <div className="lg:col-span-1">
+            <HotFeedWidget />
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

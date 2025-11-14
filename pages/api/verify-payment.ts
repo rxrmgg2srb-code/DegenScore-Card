@@ -1,11 +1,10 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { PrismaClient } from '@prisma/client';
-import { Connection, PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js'; // Eliminamos Transaction, SystemProgram
+import { Connection, PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js';
 
 const prisma = new PrismaClient();
-// ⚠️ Asegúrate de que TREASURY_WALLET esté configurada en tus variables de entorno (.env)
 const TREASURY_WALLET = process.env.TREASURY_WALLET!;
-const MINT_PRICE_SOL = 0.1; // Precio para mintear/guardar la card
+const MINT_PRICE_SOL = 0.1;
 
 export default async function handler(
   req: NextApiRequest,
@@ -27,8 +26,6 @@ export default async function handler(
     console.log(`💰 Verifying payment for: ${walletAddress}`);
     console.log(`📝 Payment signature: ${paymentSignature}`);
 
-    // 1. Verificar que el pago sea válido
-    // ⚠️ Usa la URL de Helius en la variable de entorno
     const connection = new Connection(
       process.env.HELIUS_RPC_URL || 'https://api.mainnet-beta.solana.com',
       'confirmed'
@@ -44,38 +41,26 @@ export default async function handler(
       });
     }
 
-    // 2. Verificar que el pago fue a nuestra treasury wallet
-    // ✅ FIX: Obtener accountKeys de forma compatible para Legacy y Versioned
     const message = txInfo.transaction.message;
-    // La propiedad accountKeys contiene todas las claves firmantes/no firmantes en orden.
     const accountKeys = message.getAccountKeys();
     
-    // Si la transacción es Versioned (v0), 'accountKeys' será un array de PublicKey.
-    // Si la transacción es Legacy, 'accountKeys' será un array de PublicKey (pero se llama 'staticAccountKeys' en el tipo interno antiguo).
-    // Usamos el método `getAccountKeys()` para obtener las claves de la transacción de forma unificada.
-    
     const treasuryPubkey = new PublicKey(TREASURY_WALLET);
-    // const fromPubkey = new PublicKey(walletAddress); // No es necesario aquí, la usaremos implícitamente
 
     let validPayment = false;
     let paidAmount = 0;
 
-    // Verificar native transfers
     if (txInfo.meta?.preBalances && txInfo.meta?.postBalances) {
-      // Iteramos sobre las claves de cuenta obtenidas con getAccountKeys()
       for (let i = 0; i < accountKeys.length; i++) {
         const account = accountKeys[i];
         
         if (account.equals(treasuryPubkey)) {
-          // El cambio de balance en la cuenta de la Treasury.
-          // El índice 'i' del array accountKeys se corresponde con los índices de preBalances y postBalances.
           const balanceChange =
             (txInfo.meta.postBalances[i] - txInfo.meta.preBalances[i]) / LAMPORTS_PER_SOL;
           
           if (balanceChange >= MINT_PRICE_SOL) {
             validPayment = true;
             paidAmount = balanceChange;
-            break; // Encontramos el pago en la Treasury, no necesitamos seguir.
+            break;
           }
         }
       }
@@ -89,7 +74,6 @@ export default async function handler(
 
     console.log(`✅ Valid payment received: ${paidAmount} SOL`);
 
-    // 3. Verificar que no haya usado esta firma antes
     const existingPayment = await prisma.payment.findUnique({
       where: { signature: paymentSignature },
     });
@@ -100,7 +84,6 @@ export default async function handler(
       });
     }
 
-    // 4. Registrar el pago
     await prisma.payment.create({
       data: {
         signature: paymentSignature,
@@ -110,24 +93,34 @@ export default async function handler(
       },
     });
 
-    // 5. Marcar la card como "minted" (pagada)
-    // ⚠️ Asegúrate de que tu modelo DegenCard use `isMinted: Boolean` en lugar de `isPaid: Boolean`
-    const card = await prisma.degenCard.update({
+    console.log(`✅ Payment saved: ${paymentSignature}`);
+
+    // Marcar la card como pagada
+    await prisma.degenCard.update({
       where: { walletAddress },
       data: {
         isMinted: true,
         mintedAt: new Date(),
-        // Si usas un campo para el status de pago general, usa isPaid
-        isPaid: true, 
+        isPaid: true,
       },
     });
 
-    console.log(`🎉 Card minted successfully for ${walletAddress}`);
+    console.log(`✅ Card marked as paid for wallet: ${walletAddress}`);
+
+    // ⏱️ CRÍTICO: Esperar para que la DB se actualice completamente
+    await new Promise(resolve => setTimeout(resolve, 800));
+
+    // 🔄 Recargar la card fresh de la DB para confirmar
+    const freshCard = await prisma.degenCard.findUnique({
+      where: { walletAddress },
+    });
+
+    console.log(`💎 Fresh card status - isPaid: ${freshCard?.isPaid}, isMinted: ${freshCard?.isMinted}`);
 
     res.status(200).json({
       success: true,
       message: 'Payment verified and card minted',
-      card,
+      card: freshCard,
     });
 
   } catch (error) {

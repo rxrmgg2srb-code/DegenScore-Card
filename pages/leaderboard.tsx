@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
+import HotFeedWidget from '../components/HotFeedWidget';
 
 interface LeaderboardEntry {
   id: string;
@@ -144,23 +145,22 @@ const LeaderboardCard = ({ entry, index, handleLike, userLikes }: LeaderboardCar
   const isTop3 = index < 3;
   const levelPhrase = getLevelPhrase(entry.level);
   
-  // 🔥 AGREGAR FRASE FOMO
   const getFOMOPhrase = (score: number): string => {
-  if (score >= 95) return "🔥 GOD MODE - They Bow to You";
-  if (score >= 90) return "👑 APEX PREDATOR - Pure Domination";
-  if (score >= 85) return "💎 GENERATIONAL WEALTH - GG EZ";
-  if (score >= 80) return "⚡ MAIN CHARACTER - Eating Good";
-  if (score >= 75) return "🚀 MOON MISSION - Keep Stacking";
-  if (score >= 70) return "🔥 KILLING IT - Above Average Chad";
-  if (score >= 65) return "💪 SOLID - You'll Make It Anon";
-  if (score >= 60) return "📈 MID CURVE - Touch Grass King";
-  if (score >= 55) return "🎯 SLIGHTLY MID - Do Better";
-  if (score >= 50) return "😬 NGMI VIBES - Yikes";
-  if (score >= 40) return "📉 EXIT LIQUIDITY - That's You";
-  if (score >= 30) return "💀 ABSOLUTELY COOKED - RIP";
-  if (score >= 20) return "🤡 CIRCUS CLOWN - Everyone's Laughing";
-  if (score >= 10) return "⚰️ DELETE APP - Uninstall Now";
-  return "🪦 QUIT FOREVER - It's Over Bro";
+    if (score >= 95) return "🔥 GOD MODE - They Bow to You";
+    if (score >= 90) return "👑 APEX PREDATOR - Pure Domination";
+    if (score >= 85) return "💎 GENERATIONAL WEALTH - GG EZ";
+    if (score >= 80) return "⚡ MAIN CHARACTER - Eating Good";
+    if (score >= 75) return "🚀 MOON MISSION - Keep Stacking";
+    if (score >= 70) return "🔥 KILLING IT - Above Average Chad";
+    if (score >= 65) return "💪 SOLID - You'll Make It Anon";
+    if (score >= 60) return "📈 MID CURVE - Touch Grass King";
+    if (score >= 55) return "🎯 SLIGHTLY MID - Do Better";
+    if (score >= 50) return "😬 NGMI VIBES - Yikes";
+    if (score >= 40) return "📉 EXIT LIQUIDITY - That's You";
+    if (score >= 30) return "💀 ABSOLUTELY COOKED - RIP";
+    if (score >= 20) return "🤡 CIRCUS CLOWN - Everyone's Laughing";
+    if (score >= 10) return "⚰️ DELETE APP - Uninstall Now";
+    return "🪦 QUIT FOREVER - It's Over Bro";
   };
 
   const fomoPhrase = getFOMOPhrase(entry.degenScore);
@@ -180,7 +180,6 @@ const LeaderboardCard = ({ entry, index, handleLike, userLikes }: LeaderboardCar
         <div className={`absolute inset-0 bg-gradient-to-br ${tier.gradient} opacity-10`}></div>
 
         <div className="relative h-full flex flex-col p-5 bg-gray-900/85 backdrop-blur-sm justify-between">
-          {/* RANK */}
           <div className="flex justify-between items-start mb-2">
             <div className={`text-3xl font-black ${tier.textColor} drop-shadow-lg`}>
               #{index + 1}
@@ -194,7 +193,6 @@ const LeaderboardCard = ({ entry, index, handleLike, userLikes }: LeaderboardCar
             )}
           </div>
 
-          {/* PERFIL */}
           <div className="flex flex-col items-center gap-2 mb-3">
             {entry.profileImage ? (
               <div className="w-20 h-20 rounded-full border-4 border-cyan-500/60 overflow-hidden bg-gray-800 shadow-xl">
@@ -223,30 +221,29 @@ const LeaderboardCard = ({ entry, index, handleLike, userLikes }: LeaderboardCar
             {(entry.twitter || entry.telegram) && (
               <div className="flex gap-2 text-xs flex-wrap justify-center">
                 {entry.twitter && (
-                  <a // <-- CORREGIDO: Faltaba la etiqueta <a> de apertura.
+                  <a
                     href={`https://twitter.com/${entry.twitter}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-cyan-400 hover:text-cyan-300 transition bg-black/30 px-2 py-1 rounded"
                   >
                     🐦 @{entry.twitter.slice(0, 10)}
-                  </a> // <-- CORREGIDO: Faltaba la etiqueta </a> de cierre.
+                  </a>
                 )}
                 {entry.telegram && (
-                  <a // <-- CORREGIDO: Faltaba la etiqueta <a> de apertura.
+                  <a
                     href={`https://t.me/${entry.telegram}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-cyan-400 hover:text-cyan-300 transition bg-black/30 px-2 py-1 rounded"
                   >
                     ✈️ @{entry.telegram.slice(0, 10)}
-                  </a> // <-- CORREGIDO: Faltaba la etiqueta </a> de cierre.
+                  </a>
                 )}
               </div>
             )}
           </div>
 
-          {/* SCORE */}
           <div className="flex flex-col items-center mb-3">
             <div className={`text-7xl font-black bg-gradient-to-br ${tier.gradient} bg-clip-text text-transparent drop-shadow-2xl mb-1`}>
               {entry.degenScore}
@@ -255,7 +252,6 @@ const LeaderboardCard = ({ entry, index, handleLike, userLikes }: LeaderboardCar
               DEGEN SCORE
             </div>
             
-            {/* 🔥 FRASE FOMO - DESTACADA */}
             <div className="bg-gradient-to-r from-yellow-500/20 via-yellow-400/20 to-yellow-500/20 px-3 py-1.5 rounded-lg border border-yellow-500/30 backdrop-blur-sm">
               <div className="text-yellow-300 font-bold text-[11px] text-center leading-tight">
                 {fomoPhrase}
@@ -263,7 +259,6 @@ const LeaderboardCard = ({ entry, index, handleLike, userLikes }: LeaderboardCar
             </div>
           </div>
 
-          {/* TIER BADGE */}
           <div className="flex justify-center mb-3">
             <div className={`px-5 py-2 rounded-full bg-gradient-to-r ${tier.badgeGradient} shadow-xl`}>
               <span className="text-white font-black text-xs flex items-center gap-2">
@@ -272,7 +267,6 @@ const LeaderboardCard = ({ entry, index, handleLike, userLikes }: LeaderboardCar
             </div>
           </div>
 
-          {/* STATS */}
           <div className="grid grid-cols-2 gap-2 mb-3">
             <div className="bg-black/50 rounded-xl p-2.5 border border-gray-600/50 shadow-lg backdrop-blur-sm">
               <div className="text-[9px] text-gray-400 uppercase mb-1 font-semibold">Trades</div>
@@ -294,7 +288,6 @@ const LeaderboardCard = ({ entry, index, handleLike, userLikes }: LeaderboardCar
             </div>
           </div>
 
-          {/* LEVEL */}
           <div className="text-center space-y-1">
             <div className={`inline-block px-4 py-1.5 rounded-full bg-gradient-to-r ${tier.gradient} opacity-90 shadow-lg`}>
               <span className="text-white font-bold text-xs">LVL {entry.level}</span>
@@ -306,7 +299,6 @@ const LeaderboardCard = ({ entry, index, handleLike, userLikes }: LeaderboardCar
         </div>
       </div>
 
-      {/* BOTÓN DE LIKE */}
       <button
         onClick={() => handleLike(entry.id)}
         className={`mt-4 px-6 py-3 rounded-xl transition-all flex items-center justify-center gap-3 font-bold text-base shadow-lg ${
@@ -395,7 +387,7 @@ const LeaderboardTable = ({ filteredLeaderboard, handleLike, userLikes }: Leader
                         {(entry.twitter || entry.telegram) && (
                           <div className="flex gap-2 mt-0.5 text-[10px]">
                             {entry.twitter && (
-                              <a // <-- CORREGIDO: Faltaba la etiqueta <a> de apertura.
+                              <a
                                 href={`https://twitter.com/${entry.twitter}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
@@ -405,7 +397,7 @@ const LeaderboardTable = ({ filteredLeaderboard, handleLike, userLikes }: Leader
                               </a>
                             )}
                             {entry.telegram && (
-                              <a // <-- CORREGIDO: Faltaba la etiqueta <a> de apertura.
+                              <a
                                 href={`https://t.me/${entry.telegram}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
@@ -487,8 +479,6 @@ export default function Leaderboard() {
   const fetchLeaderboard = async () => {
     try {
       setLoading(true);
-      // Asume que la función de formato se maneja en el backend,
-      // pero se usa `sortBy` para la consulta.
       const response = await fetch(`/api/leaderboard?sortBy=${sortBy}&limit=100`);
 
       if (!response.ok) {
@@ -511,7 +501,6 @@ export default function Leaderboard() {
   const handleLike = async (cardId: string) => {
     const hasLiked = userLikes[cardId];
     
-    // Optimistic UI update
     setUserLikes(prev => ({ ...prev, [cardId]: !hasLiked }));
     setLeaderboard(prev => 
       prev.map(entry => {
@@ -536,7 +525,6 @@ export default function Leaderboard() {
 
       const data = await response.json();
       
-      // Update with the final count from the server
       setLeaderboard(prev => 
         prev.map(entry => 
           entry.id === cardId 
@@ -546,7 +534,6 @@ export default function Leaderboard() {
       );
     } catch (error) {
       console.error('Error updating like:', error);
-      // Revert local changes if the API call fails
       setUserLikes(prev => ({ ...prev, [cardId]: hasLiked }));
       setLeaderboard(prev => 
         prev.map(entry => 
@@ -589,16 +576,18 @@ export default function Leaderboard() {
         }
       `}</style>
 
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900">
-        <div className="container mx-auto px-4 py-8">
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 py-8 px-4">
+        <div className="max-w-7xl mx-auto">
           <div className="flex justify-between items-center mb-8">
-            <Link href="/" legacyBehavior>
-              <button className="px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg transition">
+            <Link href="/">
+              <button className="px-6 py-3 bg-gray-800 hover:bg-gray-700 text-white rounded-lg font-bold transition">
                 ← Back Home
               </button>
             </Link>
-            <h1 className="text-4xl font-bold text-white">🏆 Leaderboard</h1>
-            <div className="w-24"></div>
+            <h1 className="text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500">
+              🏆 Leaderboard
+            </h1>
+            <div className="w-32"></div>
           </div>
 
           {stats && (
@@ -622,109 +611,117 @@ export default function Leaderboard() {
             </div>
           )}
 
-          <div className="flex flex-col md:flex-row gap-4 mb-6">
-            <div className="flex gap-2">
-              <button
-                onClick={() => setSortBy('degenScore')}
-                className={`px-4 py-2 rounded-lg transition ${
-                  sortBy === 'degenScore' ? 'bg-cyan-500 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
-                }`}
-              >
-                🏆 Score
-              </button>
-              <button
-                onClick={() => setSortBy('totalVolume')}
-                className={`px-4 py-2 rounded-lg transition ${
-                  sortBy === 'totalVolume' ? 'bg-cyan-500 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
-                }`}
-              >
-                💰 Volume
-              </button>
-              <button
-                onClick={() => setSortBy('winRate')}
-                className={`px-4 py-2 rounded-lg transition ${
-                  sortBy === 'winRate' ? 'bg-cyan-500 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
-                }`}
-              >
-                🎯 Win Rate
-              </button>
-              <button
-                onClick={() => setSortBy('likes')}
-                className={`px-4 py-2 rounded-lg transition ${
-                  sortBy === 'likes' ? 'bg-cyan-500 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
-                }`}
-              >
-                ❤️ Likes
-              </button>
-            </div>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-2">
+              <div className="flex flex-col md:flex-row gap-4 mb-6">
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setSortBy('degenScore')}
+                    className={`px-4 py-2 rounded-lg transition ${
+                      sortBy === 'degenScore' ? 'bg-cyan-500 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                    }`}
+                  >
+                    🏆 Score
+                  </button>
+                  <button
+                    onClick={() => setSortBy('totalVolume')}
+                    className={`px-4 py-2 rounded-lg transition ${
+                      sortBy === 'totalVolume' ? 'bg-cyan-500 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                    }`}
+                  >
+                    💰 Volume
+                  </button>
+                  <button
+                    onClick={() => setSortBy('winRate')}
+                    className={`px-4 py-2 rounded-lg transition ${
+                      sortBy === 'winRate' ? 'bg-cyan-500 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                    }`}
+                  >
+                    🎯 Win Rate
+                  </button>
+                  <button
+                    onClick={() => setSortBy('likes')}
+                    className={`px-4 py-2 rounded-lg transition ${
+                      sortBy === 'likes' ? 'bg-cyan-500 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                    }`}
+                  >
+                    ❤️ Likes
+                  </button>
+                </div>
 
-            <div className="flex gap-2 md:border-l md:border-gray-700 md:pl-4">
-              <button
-                onClick={() => setViewMode('cards')}
-                className={`px-4 py-2 rounded-lg transition ${
-                  viewMode === 'cards' ? 'bg-purple-500 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
-                }`}
-              >
-                🎴 Cards
-              </button>
-              <button
-                onClick={() => setViewMode('table')}
-                className={`px-4 py-2 rounded-lg transition ${
-                  viewMode === 'table' ? 'bg-purple-500 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
-                }`}
-              >
-                📊 Table
-              </button>
-            </div>
+                <div className="flex gap-2 md:border-l md:border-gray-700 md:pl-4">
+                  <button
+                    onClick={() => setViewMode('cards')}
+                    className={`px-4 py-2 rounded-lg transition ${
+                      viewMode === 'cards' ? 'bg-purple-500 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                    }`}
+                  >
+                    🎴 Cards
+                  </button>
+                  <button
+                    onClick={() => setViewMode('table')}
+                    className={`px-4 py-2 rounded-lg transition ${
+                      viewMode === 'table' ? 'bg-purple-500 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                    }`}
+                  >
+                    📊 Table
+                  </button>
+                </div>
 
-            <input
-              type="text"
-              placeholder="Search wallet/name..."
-              value={searchWallet}
-              onChange={(e) => setSearchWallet(e.target.value)}
-              className="flex-1 px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500"
-            />
-          </div>
+                <input
+                  type="text"
+                  placeholder="Search wallet/name..."
+                  value={searchWallet}
+                  onChange={(e) => setSearchWallet(e.target.value)}
+                  className="flex-1 px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500"
+                />
+              </div>
 
-          {loading ? (
-            <div className="text-center py-20">
-              <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-cyan-500"></div>
-              <p className="text-gray-400 mt-4">Loading leaderboard...</p>
-            </div>
-          ) : (
-            <>
-              {filteredLeaderboard.length > 0 ? (
+              {loading ? (
+                <div className="text-center py-20">
+                  <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-cyan-500"></div>
+                  <p className="text-gray-400 mt-4">Loading leaderboard...</p>
+                </div>
+              ) : (
                 <>
-                  {viewMode === 'cards' && (
-                    <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                      {filteredLeaderboard.map((entry, index) => (
-                        <LeaderboardCard
-                          key={entry.id}
-                          entry={entry}
-                          index={index}
+                  {filteredLeaderboard.length > 0 ? (
+                    <>
+                      {viewMode === 'cards' && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          {filteredLeaderboard.map((entry, index) => (
+                            <LeaderboardCard
+                              key={entry.id}
+                              entry={entry}
+                              index={index}
+                              handleLike={handleLike}
+                              userLikes={userLikes}
+                            />
+                          ))}
+                        </div>
+                      )}
+
+                      {viewMode === 'table' && (
+                        <LeaderboardTable
+                          filteredLeaderboard={filteredLeaderboard}
                           handleLike={handleLike}
                           userLikes={userLikes}
                         />
-                      ))}
-                    </div>
-                  )}
-
-                  {viewMode === 'table' && (
-                    <LeaderboardTable
-                      filteredLeaderboard={filteredLeaderboard}
-                      handleLike={handleLike}
-                      userLikes={userLikes}
-                    />
+                      )}
+                    </>
+                  ) : (
+                    <div className="text-center py-12 text-gray-400">No results found</div>
                   )}
                 </>
-              ) : (
-                <div className="text-center py-12 text-gray-400">No results found</div>
               )}
-            </>
-          )}
 
-          <div className="mt-8 text-center text-gray-500 text-sm">
-            Showing top {filteredLeaderboard.length} degens • Updated in real-time
+              <div className="mt-8 text-center text-gray-500 text-sm">
+                Showing top {filteredLeaderboard.length} degens • Updated in real-time
+              </div>
+            </div>
+
+            <div className="lg:col-span-1">
+              <HotFeedWidget />
+            </div>
           </div>
         </div>
       </div>
