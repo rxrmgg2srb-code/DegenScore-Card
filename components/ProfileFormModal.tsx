@@ -190,7 +190,7 @@ export default function ProfileFormModal({ isOpen, onClose, onSubmit, walletAddr
                 value={formData.twitter}
                 onChange={(e) => setFormData({ ...formData, twitter: e.target.value.replace('@', '') })}
                 className="w-full pl-8 pr-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500 transition"
-                maxLength={50}
+                maxLength={200}
               />
             </div>
           </div>
@@ -210,7 +210,7 @@ export default function ProfileFormModal({ isOpen, onClose, onSubmit, walletAddr
                 value={formData.telegram}
                 onChange={(e) => setFormData({ ...formData, telegram: e.target.value.replace('@', '') })}
                 className="w-full pl-8 pr-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500 transition"
-                maxLength={50}
+                maxLength={200}
               />
             </div>
           </div>
