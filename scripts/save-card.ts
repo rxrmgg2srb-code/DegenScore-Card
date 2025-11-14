@@ -1,8 +1,8 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { PrismaClient } from '@prisma/client';
-import { getWalletTransactions, isValidSolanaAddress } from '../../lib/services/helius';
-import { calculateMetrics } from '../../lib/metrics';
-import { calculateUnlockedBadges, calculateLevel, calculateXP } from '../../lib/badges';
+import { getWalletTransactions, isValidSolanaAddress } from '../lib/services/helius';
+import { calculateMetrics } from '../lib/metrics';
+import { calculateUnlockedBadges, calculateLevel, calculateXP } from '../lib/badges-advanced';
 
 const prisma = new PrismaClient();
 
