@@ -28,7 +28,7 @@ if (typeof window !== 'undefined' && !i18n.isInitialized) {
       resources,
       fallbackLng: 'en', // Idioma por defecto si no se detecta
       lng: 'es', // Idioma inicial
-      debug: false,
+      debug: process.env.NODE_ENV === 'development',
 
       interpolation: {
         escapeValue: false, // React ya escapa por defecto

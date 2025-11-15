@@ -219,30 +219,28 @@ const LeaderboardCard = ({ entry, index, handleLike, userLikes }: LeaderboardCar
               {entry.walletAddress.slice(0, 6)}...{entry.walletAddress.slice(-6)}
             </div>
 
-            {(entry.twitter || entry.telegram) && (
-              <div className="flex gap-2 text-xs flex-wrap justify-center">
-                {entry.twitter && (
-                  <a
-                    href={`https://twitter.com/${entry.twitter}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-cyan-400 hover:text-cyan-300 transition bg-black/30 px-2 py-1 rounded"
-                  >
-                    🐦 @{entry.twitter.slice(0, 10)}
-                  </a>
-                )}
-                {entry.telegram && (
-                  <a
-                    href={`https://t.me/${entry.telegram}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-cyan-400 hover:text-cyan-300 transition bg-black/30 px-2 py-1 rounded"
-                  >
-                    ✈️ @{entry.telegram.slice(0, 10)}
-                  </a>
-                )}
-              </div>
-            )}
+            <div className="flex gap-2 text-xs flex-wrap justify-center min-h-[28px]">
+              {entry.twitter && (
+                <a
+                  href={`https://twitter.com/${entry.twitter}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-cyan-400 hover:text-cyan-300 transition bg-black/30 px-2 py-1 rounded"
+                >
+                  🐦 @{entry.twitter.slice(0, 10)}
+                </a>
+              )}
+              {entry.telegram && (
+                <a
+                  href={`https://t.me/${entry.telegram}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-cyan-400 hover:text-cyan-300 transition bg-black/30 px-2 py-1 rounded"
+                >
+                  ✈️ @{entry.telegram}
+                </a>
+              )}
+            </div>
           </div>
 
           <div className="flex flex-col items-center mb-3">
@@ -385,30 +383,28 @@ const LeaderboardTable = ({ filteredLeaderboard, handleLike, userLikes }: Leader
                         <div className="text-xs font-mono text-gray-400">
                           {entry.walletAddress.slice(0, 4)}...{entry.walletAddress.slice(-4)}
                         </div>
-                        {(entry.twitter || entry.telegram) && (
-                          <div className="flex gap-2 mt-0.5 text-[10px]">
-                            {entry.twitter && (
-                              <a
-                                href={`https://twitter.com/${entry.twitter}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-cyan-400 hover:text-cyan-300"
-                              >
-                                🐦 @{entry.twitter.slice(0, 8)}
-                              </a>
-                            )}
-                            {entry.telegram && (
-                              <a
-                                href={`https://t.me/${entry.telegram}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-cyan-400 hover:text-cyan-300"
-                              >
-                                ✈️ @{entry.telegram.slice(0, 8)}
-                              </a>
-                            )}
-                          </div>
-                        )}
+                        <div className="flex gap-2 mt-0.5 text-[10px] min-h-[16px]">
+                          {entry.twitter && (
+                            <a
+                              href={`https://twitter.com/${entry.twitter}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-cyan-400 hover:text-cyan-300"
+                            >
+                              🐦 @{entry.twitter.slice(0, 8)}
+                            </a>
+                          )}
+                          {entry.telegram && (
+                            <a
+                              href={`https://t.me/${entry.telegram}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-cyan-400 hover:text-cyan-300"
+                            >
+                              ✈️ @{entry.telegram}
+                            </a>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </td>
