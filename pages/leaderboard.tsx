@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import HotFeedWidget from '../components/HotFeedWidget';
+import { LanguageSelector } from '../components/LanguageSelector';
 
 interface LeaderboardEntry {
   id: string;
@@ -578,6 +579,11 @@ export default function Leaderboard() {
 
       <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 py-8 px-4">
         <div className="max-w-7xl mx-auto">
+          {/* Header con selector de idiomas */}
+          <div className="flex justify-end mb-4">
+            <LanguageSelector />
+          </div>
+
           <div className="flex justify-between items-center mb-8">
             <Link href="/">
               <button className="px-6 py-3 bg-gray-800 hover:bg-gray-700 text-white rounded-lg font-bold transition">

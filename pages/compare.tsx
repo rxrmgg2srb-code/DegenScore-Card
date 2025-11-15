@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
+import { LanguageSelector } from '../components/LanguageSelector';
 
 interface ComparisonData {
   wallet1: any;
@@ -74,6 +75,11 @@ export default function ComparePage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 py-12 px-4">
       <div className="container mx-auto max-w-6xl">
+        {/* Language Selector - Top Right */}
+        <div className="flex justify-end mb-4">
+          <LanguageSelector />
+        </div>
+
         {/* Header */}
         <div className="text-center mb-12">
           <Link href="/">

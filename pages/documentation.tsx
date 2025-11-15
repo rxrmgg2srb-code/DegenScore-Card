@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import Head from 'next/head';
 import { motion } from 'framer-motion';
+import { LanguageSelector } from '../components/LanguageSelector';
 
 interface Section {
   id: string;
@@ -50,12 +51,15 @@ export default function Documentation() {
               <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
                 📚 DegenScore Documentation
               </h1>
-              <a
-                href="/"
-                className="bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded-lg font-medium transition-colors"
-              >
-                ← Volver al Inicio
-              </a>
+              <div className="flex items-center gap-4">
+                <LanguageSelector />
+                <a
+                  href="/"
+                  className="bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded-lg font-medium transition-colors"
+                >
+                  ← Volver al Inicio
+                </a>
+              </div>
             </div>
           </div>
         </header>
