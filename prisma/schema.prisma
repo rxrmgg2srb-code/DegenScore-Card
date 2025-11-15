@@ -303,3 +303,227 @@ model NotificationPreferences {
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 }
+
+// ═══════════════════════════════════════════════════════════════
+// ENGAGEMENT & RETENTION FEATURES
+// ═══════════════════════════════════════════════════════════════
+
+// Daily Login Streak System
+model UserStreak {
+  walletAddress    String   @id
+  currentStreak    Int      @default(0)  // Días consecutivos
+  longestStreak    Int      @default(0)  // Récord personal
+  lastLoginDate    DateTime @default(now())
+  totalLogins      Int      @default(1)
+
+  // Rewards earned from streaks
+  streakPoints     Int      @default(0)  // XP ganados por rachas
+
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([currentStreak])
+  @@index([lastLoginDate])
+}
+
+// Daily Challenges System
+model DailyChallenge {
+  id               String   @id @default(cuid())
+  date             DateTime @db.Date  // Día del challenge
+  challengeType    String   // "trades", "winRate", "volume", "follows", "share"
+
+  // Challenge parameters
+  targetValue      Int      // Meta a alcanzar
+  rewardXP         Int      // XP reward
+  rewardBadge      String?  // Badge opcional
+
+  title            String   // "Haz 5 trades ganadores"
+  description      String   // Descripción del challenge
+
+  // Participations
+  completions      DailyChallengeCompletion[]
+
+  createdAt        DateTime @default(now())
+
+  @@unique([date, challengeType])
+  @@index([date])
+}
+
+model DailyChallengeCompletion {
+  id               String   @id @default(cuid())
+  challengeId      String
+  challenge        DailyChallenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  walletAddress    String
+
+  progress         Int      @default(0)  // Progreso actual
+  completed        Boolean  @default(false)
+  completedAt      DateTime?
+
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@unique([challengeId, walletAddress])
+  @@index([walletAddress])
+  @@index([completed])
+}
+
+// Trading Competitions (Daily Duels 1v1)
+model TradingDuel {
+  id               String   @id @default(cuid())
+  status           String   @default("open")  // "open", "active", "finished", "cancelled"
+
+  // Participants
+  creatorWallet    String
+  opponentWallet   String?  // null si aún no hay oponente
+
+  // Competition config
+  entryFee         Float    // SOL entry fee (e.g., 0.5)
+  duration         Int      @default(86400)  // Duration in seconds (24h)
+  startTime        DateTime?
+  endTime          DateTime?
+
+  // Virtual trading
+  virtualStartBalance Float  @default(10)  // Start balance in virtual SOL
+
+  // Results
+  winnerWallet     String?
+  creatorROI       Float?   // Return on Investment %
+  opponentROI      Float?
+
+  // Transactions
+  creatorTxSignature   String?  // Signature del pago de entry
+  opponentTxSignature  String?
+  payoutTxSignature    String?  // Signature del pago al ganador
+
+  // Virtual trades
+  trades           VirtualTrade[]
+
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([status])
+  @@index([creatorWallet])
+  @@index([opponentWallet])
+  @@index([createdAt])
+}
+
+model VirtualTrade {
+  id               String   @id @default(cuid())
+  duelId           String
+  duel             TradingDuel @relation(fields: [duelId], references: [id], onDelete: Cascade)
+
+  walletAddress    String   // Quién hizo el trade
+
+  // Trade details
+  action           String   // "buy" | "sell"
+  tokenMint        String   // Token address
+  tokenSymbol      String   // Token symbol (e.g., "BONK")
+
+  amountSOL        Float    // Cantidad de SOL virtual usado
+  tokenPrice       Float    // Precio del token al momento
+  tokenAmount      Float    // Cantidad de tokens comprados/vendidos
+
+  // Balance tracking
+  balanceBefore    Float    // Balance antes del trade
+  balanceAfter     Float    // Balance después del trade
+
+  timestamp        DateTime @default(now())
+
+  @@index([duelId, walletAddress])
+  @@index([timestamp])
+}
+
+// User Analytics & Engagement Tracking
+model UserAnalytics {
+  walletAddress       String   @id
+
+  // Login tracking
+  lastLogin           DateTime @default(now())
+  loginCount          Int      @default(1)
+
+  // Engagement metrics
+  challengesCompleted Int      @default(0)
+  duelsPlayed         Int      @default(0)
+  duelsWon            Int      @default(0)
+
+  // XP & Leveling
+  totalXP             Int      @default(0)
+  level               Int      @default(1)
+
+  // Social
+  referralsCount      Int      @default(0)
+  sharesCount         Int      @default(0)
+
+  // Time spent (in seconds)
+  totalTimeSpent      Int      @default(0)
+
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@index([totalXP])
+  @@index([level])
+  @@index([lastLogin])
+}
+
+// Achievement System
+model Achievement {
+  id               String   @id @default(cuid())
+  key              String   @unique  // "unicorn_hunter", "ghost_trader", etc.
+
+  name             String   // "Unicorn Hunter"
+  description      String   // "Find a 1000x token"
+  icon             String   // Emoji or icon
+  rarity           String   // "common", "rare", "epic", "legendary"
+
+  // Requirements
+  requirementType  String   // "trades", "winRate", "streak", "custom"
+  requirementValue Int      // Threshold to unlock
+
+  // Rewards
+  rewardXP         Int      @default(0)
+  rewardBadge      Boolean  @default(true)
+
+  // Hidden achievements
+  isHidden         Boolean  @default(false)
+
+  // Tracking
+  unlocks          AchievementUnlock[]
+
+  createdAt        DateTime @default(now())
+
+  @@index([key])
+  @@index([rarity])
+}
+
+model AchievementUnlock {
+  id               String   @id @default(cuid())
+  achievementId    String
+  achievement      Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+
+  walletAddress    String
+  unlockedAt       DateTime @default(now())
+
+  @@unique([achievementId, walletAddress])
+  @@index([walletAddress])
+  @@index([unlockedAt])
+}
+
+// Referral System
+model Referral {
+  id               String   @id @default(cuid())
+  referrerWallet   String   // Quien refiere
+  referredWallet   String   // Quien fue referido
+
+  // Tracking
+  referredPremium  Boolean  @default(false)  // ¿El referido compró premium?
+  rewardPaid       Boolean  @default(false)   // ¿Se pagó reward al referrer?
+  rewardAmount     Float?   // Cantidad pagada
+  rewardTxSignature String? // Signature del pago
+
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@unique([referredWallet])  // Cada usuario solo puede ser referido una vez
+  @@index([referrerWallet])
+  @@index([referredPremium])
+}
