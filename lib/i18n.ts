@@ -19,24 +19,31 @@ const resources = {
   },
 };
 
-i18n
-  .use(LanguageDetector) // Detecta idioma del navegador
-  .use(initReactI18next) // Pasa i18n a react-i18next
-  .init({
-    resources,
-    fallbackLng: 'en', // Idioma por defecto si no se detecta
-    lng: 'en', // Idioma inicial
-    debug: process.env.NODE_ENV === 'development',
+// Solo inicializar en el browser
+if (typeof window !== 'undefined' && !i18n.isInitialized) {
+  i18n
+    .use(LanguageDetector) // Detecta idioma del navegador
+    .use(initReactI18next) // Pasa i18n a react-i18next
+    .init({
+      resources,
+      fallbackLng: 'en', // Idioma por defecto si no se detecta
+      lng: 'es', // Idioma inicial
+      debug: process.env.NODE_ENV === 'development',
 
-    interpolation: {
-      escapeValue: false, // React ya escapa por defecto
-    },
+      interpolation: {
+        escapeValue: false, // React ya escapa por defecto
+      },
 
-    detection: {
-      // Orden de detección
-      order: ['localStorage', 'navigator', 'htmlTag'],
-      caches: ['localStorage'],
-    },
-  });
+      detection: {
+        // Orden de detección
+        order: ['localStorage', 'navigator', 'htmlTag'],
+        caches: ['localStorage'],
+      },
+
+      react: {
+        useSuspense: false, // Importante para Next.js
+      },
+    });
+}
 
 export default i18n;
