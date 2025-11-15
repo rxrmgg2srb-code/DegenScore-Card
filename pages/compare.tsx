@@ -285,3 +285,10 @@ function ComparisonRow({ label, value1, value2, winner, formatter }: ComparisonR
     </div>
   );
 }
+
+// Force Server-Side Rendering (no static generation at build time)
+export async function getServerSideProps() {
+  return {
+    props: {},
+  };
+}

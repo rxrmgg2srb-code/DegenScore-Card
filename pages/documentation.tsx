@@ -706,6 +706,13 @@ export default function Documentation() {
   );
 }
 
+// Force Server-Side Rendering (no static generation at build time)
+export async function getServerSideProps() {
+  return {
+    props: {},
+  };
+}
+
 // Helper Components
 
 function Section({ id, title, icon, children }: { id: string; title: string; icon: string; children: React.ReactNode }) {
