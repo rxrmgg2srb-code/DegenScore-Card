@@ -26,7 +26,7 @@ export function isValidUUID(uuid: string): boolean {
  */
 export function sanitizeHandle(handle: string): string {
   if (!handle) return '';
-  return handle.replace(/[^a-zA-Z0-9_]/g, '').slice(0, 50);
+  return handle.replace(/[^a-zA-Z0-9_]/g, '').slice(0, 200);
 }
 
 /**
