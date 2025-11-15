@@ -85,6 +85,11 @@ model DegenCard {
   @@index([totalVolume(sort: Desc), mintedAt(sort: Desc)])
   @@index([winRate(sort: Desc), mintedAt(sort: Desc)])
   @@index([likes(sort: Desc), mintedAt(sort: Desc)])
+
+  // PERFORMANCE: Índices adicionales para queries comunes
+  @@index([isPaid, degenScore(sort: Desc), createdAt(sort: Desc)])
+  @@index([createdAt(sort: Desc)])
+  @@index([lastSeen(sort: Desc)])
 }
 
 model Badge {
@@ -133,10 +138,13 @@ model HotTrade {
   degenScore      Int      // Score del wallet en ese momento
   
   createdAt       DateTime @default(now())
-  
+
   @@index([timestamp])
   @@index([walletAddress])
   @@index([createdAt])
+
+  // PERFORMANCE: Índice compuesto para consultas por wallet y tiempo
+  @@index([walletAddress, timestamp(sort: Desc)])
 }
 
 model Subscription {

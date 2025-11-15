@@ -25,6 +25,24 @@ export default function PaymentButton({ walletAddress, onPaymentSuccess }: Payme
     setError(null);
 
     try {
+      console.log('💰 Checking balance and fees...');
+
+      // SEGURIDAD: Verificar balance antes de crear transacción
+      const balance = await connection.getBalance(publicKey);
+      const feeEstimate = 5000; // ~5000 lamports para transaction fee
+      const paymentAmount = PAYMENT_CONFIG.MINT_PRICE_SOL * LAMPORTS_PER_SOL;
+      const totalRequired = paymentAmount + feeEstimate;
+
+      if (balance < totalRequired) {
+        const shortfall = (totalRequired - balance) / LAMPORTS_PER_SOL;
+        throw new Error(
+          `Balance insuficiente. Necesitas ${(totalRequired / LAMPORTS_PER_SOL).toFixed(4)} SOL, ` +
+          `pero solo tienes ${(balance / LAMPORTS_PER_SOL).toFixed(4)} SOL. ` +
+          `Faltan ${shortfall.toFixed(4)} SOL.`
+        );
+      }
+
+      console.log(`✅ Balance verificado: ${(balance / LAMPORTS_PER_SOL).toFixed(4)} SOL`);
       console.log('💰 Creating payment transaction...');
 
       // Crear transacción de pago
@@ -32,7 +50,7 @@ export default function PaymentButton({ walletAddress, onPaymentSuccess }: Payme
         SystemProgram.transfer({
           fromPubkey: publicKey,
           toPubkey: new PublicKey(PAYMENT_CONFIG.TREASURY_WALLET),
-          lamports: PAYMENT_CONFIG.MINT_PRICE_SOL * LAMPORTS_PER_SOL,
+          lamports: paymentAmount,
         })
       );
 
@@ -48,11 +66,16 @@ export default function PaymentButton({ walletAddress, onPaymentSuccess }: Payme
 
       console.log('⏳ Waiting for confirmation...', signature);
 
-      // Esperar confirmación
-      const confirmation = await connection.confirmTransaction(signature, 'confirmed');
+      // SEGURIDAD: Esperar confirmación con timeout de 30 segundos
+      const confirmationPromise = connection.confirmTransaction(signature, 'confirmed');
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('Transaction confirmation timeout (30s)')), 30000)
+      );
+
+      const confirmation = await Promise.race([confirmationPromise, timeoutPromise]);
 
       if (confirmation.value.err) {
-        throw new Error('Transaction failed');
+        throw new Error('Transaction failed on blockchain');
       }
 
       console.log('✅ Transaction confirmed!');

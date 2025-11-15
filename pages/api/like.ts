@@ -3,6 +3,7 @@ import { prisma } from '../../lib/prisma';
 import { isValidUUID } from '../../lib/validation';
 import { rateLimit } from '../../lib/rateLimit';
 import { logger } from '../../lib/logger';
+import { verifySessionToken } from '../../lib/walletAuth';
 
 export default async function handler(
   req: NextApiRequest,
@@ -21,6 +22,20 @@ export default async function handler(
     const { cardId, increment } = req.body;
 
     logger.debug('Like request - cardId:', cardId, 'increment:', increment);
+
+    // SECURITY: Require authentication to prevent spam
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ error: 'Authentication required to like cards' });
+    }
+
+    const token = authHeader.replace('Bearer ', '');
+    const authResult = verifySessionToken(token);
+
+    if (!authResult.valid) {
+      logger.warn('Invalid authentication token for like:', authResult.error);
+      return res.status(401).json({ error: 'Invalid or expired authentication token' });
+    }
 
     // Validate cardId
     if (!cardId || typeof cardId !== 'string' || !isValidUUID(cardId)) {
