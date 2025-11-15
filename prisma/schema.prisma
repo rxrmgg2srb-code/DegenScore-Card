@@ -253,3 +253,53 @@ model ActivityLog {
   @@index([walletAddress])
   @@index([action])
 }
+
+// NUEVO: Histórico de scores para gráficos de evolución
+model ScoreHistory {
+  id            String   @id @default(cuid())
+  walletAddress String
+  timestamp     DateTime @default(now())
+  score         Int      // DegenScore en ese momento
+  rank          Int?     // Ranking global en ese momento
+  totalTrades   Int
+  totalVolume   Float
+  profitLoss    Float
+  winRate       Float
+  badges        Int      // Cantidad de badges
+
+  @@index([walletAddress, timestamp(sort: Desc)])
+  @@index([timestamp])
+}
+
+// NUEVO: Sistema de seguimiento de wallets
+model UserFollows {
+  id        String   @id @default(cuid())
+  follower  String   // Wallet que sigue
+  following String   // Wallet siendo seguida
+  createdAt DateTime @default(now())
+
+  @@index([follower, following])
+  @@index([following])
+  @@unique([follower, following]) // Prevenir duplicados
+}
+
+// NUEVO: Preferencias de notificaciones
+model NotificationPreferences {
+  walletAddress    String   @id
+  emailEnabled     Boolean  @default(false)
+  telegramEnabled  Boolean  @default(false)
+  discordEnabled   Boolean  @default(false)
+
+  // Contactos
+  email            String?
+  telegramChatId   String?
+  discordWebhook   String?
+
+  // Tipos de notificaciones
+  followedTrades   Boolean  @default(true)
+  milestones       Boolean  @default(true)
+  challenges       Boolean  @default(true)
+
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
