@@ -183,10 +183,10 @@ export default async function handler(
 
     // Si R2 no está habilitado o falló, cachear el buffer
     const base64Buffer = imageBuffer.toString('base64');
-    await cacheSet(cacheKey, base64Buffer, { ttl: 3600 }); // 1 hora
+    await cacheSet(cacheKey, base64Buffer, { ttl: 86400 }); // 24 horas (optimización de performance)
 
     res.setHeader('Content-Type', 'image/png');
-    res.setHeader('Cache-Control', 'public, max-age=3600');
+    res.setHeader('Cache-Control', 'public, max-age=86400'); // 24 horas
     res.setHeader('X-Cache-Status', 'MISS');
     res.status(200).send(imageBuffer);
 

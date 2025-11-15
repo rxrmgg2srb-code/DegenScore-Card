@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { calculateAdvancedMetrics } from '../../lib/metrics-debug'; // USANDO VERSION DEBUG
+import { calculateAdvancedMetrics } from '../../lib/metrics';
 import { generateBadges } from '../../lib/badges-generator';
 import { isValidSolanaAddress } from '../../lib/validation';
 import { strictRateLimit } from '../../lib/rateLimit';
@@ -32,8 +32,25 @@ export default async function handler(
 
     logger.info('Analyzing wallet:', walletAddress);
 
-    // 1. Usar la función real de análisis
-    const metrics = await calculateAdvancedMetrics(walletAddress);
+    // PERFORMANCE: Agregar timeout de 45 segundos para análisis de wallet
+    const metricsPromise = calculateAdvancedMetrics(walletAddress);
+    const timeoutPromise = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error('Analysis timeout - wallet took too long to analyze')), 45000)
+    );
+
+    let metrics;
+    try {
+      metrics = await Promise.race([metricsPromise, timeoutPromise]);
+    } catch (error) {
+      if (error instanceof Error && error.message.includes('timeout')) {
+        logger.warn('Wallet analysis timeout:', walletAddress);
+        return res.status(504).json({
+          error: 'El análisis está tomando demasiado tiempo. Por favor intenta de nuevo en unos minutos.',
+          details: 'Wallet analysis timeout'
+        });
+      }
+      throw error;
+    }
 
     logger.info('Analysis complete for wallet:', walletAddress);
 

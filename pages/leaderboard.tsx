@@ -730,3 +730,10 @@ export default function Leaderboard() {
     </>
   );
 }
+
+// Force Server-Side Rendering (no static generation at build time)
+export async function getServerSideProps() {
+  return {
+    props: {},
+  };
+}
