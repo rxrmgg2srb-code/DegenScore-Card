@@ -57,11 +57,31 @@ export default async function handler(
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  // SECURITY: Verify webhook authentication
+  const apiKey = req.headers['x-api-key'] as string;
+  const webhookSecret = process.env.WEBHOOK_SECRET;
+
+  if (!webhookSecret) {
+    console.error('WEBHOOK_SECRET not configured');
+    return res.status(500).json({ error: 'Server configuration error' });
+  }
+
+  if (!apiKey || apiKey !== webhookSecret) {
+    console.warn('Unauthorized webhook attempt from:', req.headers['x-forwarded-for'] || req.socket.remoteAddress);
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
   try {
     const { event, data } = req.body;
 
     if (!event) {
       return res.status(400).json({ error: 'Missing event type' });
+    }
+
+    // Validate event type
+    const validEvents = ['new_premium', 'new_record', 'weekly_challenge_winner', 'milestone', 'hot_trade'];
+    if (!validEvents.includes(event)) {
+      return res.status(400).json({ error: 'Invalid event type' });
     }
 
     let embeds: DiscordEmbed[] = [];
@@ -161,9 +181,6 @@ export default async function handler(
           timestamp: new Date().toISOString(),
         }];
         break;
-
-      default:
-        return res.status(400).json({ error: 'Unknown event type' });
     }
 
     const success = await sendToDiscord(embeds);

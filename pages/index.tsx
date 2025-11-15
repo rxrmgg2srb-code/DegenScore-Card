@@ -1,11 +1,29 @@
 import DegenCard from '../components/DegenCard';
 import Link from 'next/link';
-import HotFeedWidget from '../components/HotFeedWidget';
-import { GlobalStats } from '../components/GlobalStats';
-import { LiveActivityFeed } from '../components/LiveActivityFeed';
-import OnboardingTour from '../components/OnboardingTour';
-import WeeklyChallengeBanner from '../components/WeeklyChallengeBanner';
+import dynamic from 'next/dynamic';
 import { LanguageSelector } from '../components/LanguageSelector';
+
+// PERFORMANCE: Lazy loading de componentes pesados para reducir bundle inicial
+const HotFeedWidget = dynamic(() => import('../components/HotFeedWidget'), {
+  loading: () => <div className="h-96 bg-gray-800/30 animate-pulse rounded-lg" />,
+  ssr: false,
+});
+
+const GlobalStats = dynamic(() => import('../components/GlobalStats').then(mod => ({ default: mod.GlobalStats })), {
+  loading: () => <div className="h-32 bg-gray-800/30 animate-pulse rounded-lg" />,
+});
+
+const LiveActivityFeed = dynamic(() => import('../components/LiveActivityFeed').then(mod => ({ default: mod.LiveActivityFeed })), {
+  ssr: false,
+});
+
+const OnboardingTour = dynamic(() => import('../components/OnboardingTour'), {
+  ssr: false,
+});
+
+const WeeklyChallengeBanner = dynamic(() => import('../components/WeeklyChallengeBanner'), {
+  loading: () => <div className="h-24 bg-gray-800/30 animate-pulse rounded-lg" />,
+});
 
 export default function Home() {
   return (
@@ -78,4 +96,11 @@ export default function Home() {
       </div>
     </div>
   );
+}
+
+// Force Server-Side Rendering (no static generation at build time)
+export async function getServerSideProps() {
+  return {
+    props: {},
+  };
 }

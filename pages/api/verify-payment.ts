@@ -38,9 +38,11 @@ export default async function handler(
     );
 
     // Retry transaction fetching to handle network issues
+    // SEGURIDAD: Soportar todas las versiones de transacción (legacy y versioned)
     const txInfo = await retry(
       () => connection.getTransaction(paymentSignature, {
-        maxSupportedTransactionVersion: 0,
+        maxSupportedTransactionVersion: undefined, // Acepta cualquier versión
+        commitment: 'confirmed',
       }),
       {
         maxRetries: 3,
