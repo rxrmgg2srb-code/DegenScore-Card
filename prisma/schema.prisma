@@ -527,3 +527,139 @@ model Referral {
   @@index([referrerWallet])
   @@index([referredPremium])
 }
+
+// ═══════════════════════════════════════════════════════════════
+// KILLER FEATURES - BE #1 IN WEB3
+// ═══════════════════════════════════════════════════════════════
+
+// AI Trading Coach Analysis
+model AICoachAnalysis {
+  id                String   @id @default(cuid())
+  walletAddress     String
+
+  // Analysis metadata
+  analyzedAt        DateTime @default(now())
+  tradesAnalyzed    Int      // Number of trades analyzed
+
+  // AI-generated insights
+  overallScore      Int      // 0-100 discipline score
+  strengths         String   @db.Text  // JSON array of strengths
+  weaknesses        String   @db.Text  // JSON array of weaknesses
+  recommendations   String   @db.Text  // JSON array of recommendations
+  patterns          String   @db.Text  // JSON array of detected patterns
+
+  // Risk analysis
+  riskProfile       String   // "conservative", "moderate", "aggressive", "degen"
+  emotionalTrading  Int      // 0-100 score
+
+  // Performance predictions
+  predictedROI      Float?   // Next 30 days
+  confidenceScore   Float?   // 0-1
+
+  // Full AI response
+  fullAnalysis      String   @db.Text  // Complete AI response
+
+  @@index([walletAddress])
+  @@index([analyzedAt])
+  @@index([overallScore])
+}
+
+// Whale Tracking
+model WhaleWallet {
+  id                String   @id @default(cuid())
+  walletAddress     String   @unique
+
+  // Whale classification
+  tier              String   // "megawhale" (>1000 SOL), "whale" (>100), "shark" (>10)
+  totalBalance      Float    // Current SOL balance
+
+  // Trading stats
+  totalVolume       Float    @default(0)
+  totalTrades       Int      @default(0)
+  winRate           Float    @default(0)
+  avgTradeSize      Float    @default(0)
+
+  // Tracking
+  firstSeenAt       DateTime @default(now())
+  lastTradeAt       DateTime?
+  isActive          Boolean  @default(true)
+
+  // Metadata
+  label             String?  // Optional label/name
+  tags              String?  // JSON array of tags
+
+  // Alerts
+  alerts            WhaleAlert[]
+
+  @@index([tier])
+  @@index([totalBalance])
+  @@index([isActive])
+  @@index([lastTradeAt])
+}
+
+model WhaleAlert {
+  id                String   @id @default(cuid())
+  whaleId           String
+  whale             WhaleWallet @relation(fields: [whaleId], references: [id], onDelete: Cascade)
+
+  // Alert details
+  alertType         String   // "large_buy", "large_sell", "new_whale", "whale_awakened"
+  tokenMint         String?  // Token involved
+  tokenSymbol       String?
+  amount            Float    // SOL amount
+
+  // Context
+  description       String   // Human-readable description
+  timestamp         DateTime @default(now())
+
+  // Notifications sent
+  notificationsSent Int      @default(0)
+
+  @@index([whaleId])
+  @@index([alertType])
+  @@index([timestamp])
+}
+
+// Telegram User Integration
+model TelegramUser {
+  id                String   @id @default(cuid())
+  telegramId        String   @unique  // Telegram user ID
+  username          String?
+
+  // Linked wallet
+  walletAddress     String?  @unique
+  linkedAt          DateTime?
+
+  // Preferences
+  language          String   @default("en")
+  notifications     Boolean  @default(true)
+  whaleAlerts       Boolean  @default(true)
+  challengeReminders Boolean @default(true)
+
+  // Stats
+  commandsUsed      Int      @default(0)
+  lastActiveAt      DateTime @default(now())
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([telegramId])
+  @@index([walletAddress])
+}
+
+// Whale Followers (users following specific whales)
+model WhaleFollower {
+  id                String   @id @default(cuid())
+  walletAddress     String   // User following
+  whaleAddress      String   // Whale being followed
+
+  // Alert preferences
+  alertOnTrades     Boolean  @default(true)
+  minTradeSize      Float    @default(1)  // Min SOL to alert
+
+  createdAt         DateTime @default(now())
+
+  @@unique([walletAddress, whaleAddress])
+  @@index([walletAddress])
+  @@index([whaleAddress])
+}
