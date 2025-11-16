@@ -88,7 +88,7 @@ model DegenCard {
 
   // PERFORMANCE: Índices adicionales para queries comunes
   @@index([isPaid, degenScore(sort: Desc), createdAt(sort: Desc)])
-  @@index([createdAt(sort: Desc)])
+  @@index([createdAt(sort: Desc)], map: "DegenCard_createdAt_desc_idx")
   @@index([lastSeen(sort: Desc)])
 }
 
