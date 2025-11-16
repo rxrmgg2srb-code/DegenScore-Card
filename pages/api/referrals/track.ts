@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { prisma } from '../../../lib/prisma';
+import { trackReferral } from '../../../lib/referralEngine';
+import { verifySessionToken } from '../../../lib/walletAuth';
 
 export default async function handler(
   req: NextApiRequest,
@@ -10,48 +11,43 @@ export default async function handler(
   }
 
   try {
-    const { referrerAddress, referredAddress } = req.body;
+    const { referralCode } = req.body;
 
-    if (!referrerAddress || !referredAddress) {
-      return res.status(400).json({
-        error: 'Missing referrerAddress or referredAddress'
-      });
+    // Verify authentication
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    // No puedes referirte a ti mismo
-    if (referrerAddress === referredAddress) {
-      return res.status(400).json({
-        error: 'Cannot refer yourself'
-      });
+    const token = authHeader.substring(7);
+    const authResult = verifySessionToken(token);
+
+    if (!authResult.valid || !authResult.wallet) {
+      return res.status(401).json({ error: 'Invalid session' });
     }
 
-    // Crear referral (si no existe)
-    const referral = await prisma.referral.upsert({
-      where: {
-        referrerAddress_referredAddress: {
-          referrerAddress,
-          referredAddress
-        }
-      },
-      create: {
-        referrerAddress,
-        referredAddress
-      },
-      update: {} // No hacer nada si ya existe
-    });
+    const userWallet = authResult.wallet;
 
-    console.log(`✅ Referral tracked: ${referrerAddress} → ${referredAddress}`);
+    if (!referralCode) {
+      return res.status(400).json({ error: 'Referral code required' });
+    }
+
+    // Track the referral
+    const result = await trackReferral(referralCode, userWallet);
+
+    if (!result.success) {
+      return res.status(400).json({ error: result.error });
+    }
 
     res.status(200).json({
       success: true,
       message: 'Referral tracked successfully',
-      referral
     });
-
   } catch (error) {
-    console.error('Error tracking referral:', error);
+    console.error('Error in track referral API:', error);
     res.status(500).json({
-      error: 'Failed to track referral'
+      error: 'Failed to track referral',
+      details: error instanceof Error ? error.message : 'Unknown error',
     });
   }
 }
