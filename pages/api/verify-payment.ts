@@ -60,34 +60,83 @@ export default async function handler(
 
     const message = txInfo.transaction.message;
     const accountKeys = message.getAccountKeys();
-    
+
     const treasuryPubkey = new PublicKey(TREASURY_WALLET);
+    const senderPubkey = new PublicKey(walletAddress);
 
-    let validPayment = false;
-    let paidAmount = 0;
+    // SECURITY: Verify sender is in the transaction
+    let senderIndex = -1;
+    let treasuryIndex = -1;
 
-    if (txInfo.meta?.preBalances && txInfo.meta?.postBalances) {
-      for (let i = 0; i < accountKeys.length; i++) {
-        const account = accountKeys[i];
-        
-        if (account.equals(treasuryPubkey)) {
-          const balanceChange =
-            (txInfo.meta.postBalances[i] - txInfo.meta.preBalances[i]) / LAMPORTS_PER_SOL;
-          
-          if (balanceChange >= MINT_PRICE_SOL) {
-            validPayment = true;
-            paidAmount = balanceChange;
-            break;
-          }
-        }
+    for (let i = 0; i < accountKeys.length; i++) {
+      const account = accountKeys[i];
+      if (account.equals(senderPubkey)) {
+        senderIndex = i;
+      }
+      if (account.equals(treasuryPubkey)) {
+        treasuryIndex = i;
       }
     }
 
-    if (!validPayment) {
+    if (senderIndex === -1) {
       return res.status(400).json({
-        error: `Invalid payment. Expected ${MINT_PRICE_SOL} SOL to ${TREASURY_WALLET}. Paid amount change: ${paidAmount.toFixed(4)} SOL.`
+        error: 'Wallet address not found in transaction. Possible fraud attempt.'
       });
     }
+
+    if (treasuryIndex === -1) {
+      return res.status(400).json({
+        error: 'Treasury wallet not found in transaction.'
+      });
+    }
+
+    // SECURITY: Verify that the sender LOST SOL (sent payment)
+    // and treasury GAINED SOL (received payment)
+    if (!txInfo.meta?.preBalances || !txInfo.meta?.postBalances) {
+      return res.status(400).json({
+        error: 'Transaction metadata incomplete. Cannot verify payment.'
+      });
+    }
+
+    const senderBalanceChange =
+      (txInfo.meta.postBalances[senderIndex] - txInfo.meta.preBalances[senderIndex]) / LAMPORTS_PER_SOL;
+
+    const treasuryBalanceChange =
+      (txInfo.meta.postBalances[treasuryIndex] - txInfo.meta.preBalances[treasuryIndex]) / LAMPORTS_PER_SOL;
+
+    // Sender should have LOST at least MINT_PRICE_SOL (negative change)
+    // Treasury should have GAINED at least MINT_PRICE_SOL (positive change)
+    const senderPaidAmount = Math.abs(senderBalanceChange);
+    const treasuryReceivedAmount = treasuryBalanceChange;
+
+    console.log(`💰 Payment verification:`);
+    console.log(`   Sender (${walletAddress}) balance change: ${senderBalanceChange.toFixed(4)} SOL`);
+    console.log(`   Treasury balance change: ${treasuryBalanceChange.toFixed(4)} SOL`);
+
+    // CRITICAL VALIDATION: Sender must have sent money (negative balance change)
+    if (senderBalanceChange >= 0) {
+      return res.status(400).json({
+        error: 'Invalid payment. Sender did not send any SOL in this transaction.'
+      });
+    }
+
+    // CRITICAL VALIDATION: Treasury must have received money (positive balance change)
+    if (treasuryBalanceChange < MINT_PRICE_SOL) {
+      return res.status(400).json({
+        error: `Invalid payment. Treasury received ${treasuryBalanceChange.toFixed(4)} SOL, expected at least ${MINT_PRICE_SOL} SOL.`
+      });
+    }
+
+    // CRITICAL VALIDATION: Sender must have sent at least MINT_PRICE_SOL
+    // (accounting for transaction fees, they might have sent slightly more)
+    if (senderPaidAmount < MINT_PRICE_SOL) {
+      return res.status(400).json({
+        error: `Invalid payment amount. Sender paid ${senderPaidAmount.toFixed(4)} SOL, expected at least ${MINT_PRICE_SOL} SOL.`
+      });
+    }
+
+    const validPayment = true;
+    const paidAmount = treasuryReceivedAmount;
 
     console.log(`✅ Valid payment received: ${paidAmount} SOL`);
 
