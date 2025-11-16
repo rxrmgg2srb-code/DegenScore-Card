@@ -303,3 +303,41 @@ model NotificationPreferences {
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 }
+
+// Flash Sales System - Time-limited offers with countdown timers
+model FlashSale {
+  id                  String   @id @default(cuid())
+  name                String
+  description         String
+  type                String   // "percentage", "fixed", "bonus"
+  discount            Float    // Percentage or fixed amount
+  originalPrice       Float
+  salePrice           Float
+  startTime           DateTime
+  endTime             DateTime
+  maxRedemptions      Int?     // null = unlimited
+  currentRedemptions  Int      @default(0)
+  isActive            Boolean  @default(true)
+  tier                String?  // "bronze", "silver", "gold", "platinum"
+
+  redemptions         FlashSaleRedemption[]
+
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@index([isActive, startTime, endTime])
+  @@index([endTime])
+}
+
+model FlashSaleRedemption {
+  id            String    @id @default(cuid())
+  flashSaleId   String
+  flashSale     FlashSale @relation(fields: [flashSaleId], references: [id])
+  walletAddress String
+  redeemedAt    DateTime  @default(now())
+  pricePaid     Float
+
+  @@index([flashSaleId])
+  @@index([walletAddress])
+  @@unique([flashSaleId, walletAddress]) // One redemption per user per sale
+}
