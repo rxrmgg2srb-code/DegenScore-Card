@@ -109,13 +109,26 @@ jobs:
       - name: Generate Prisma Client
         run: npx prisma generate
 
-      - name: Run unit tests
-        run: npm test --if-present
-        continue-on-error: true
+      - name: Run unit tests with coverage
+        run: npm test -- --coverage --passWithNoTests
+        env:
+          CI: true
 
-      - name: Upload coverage
+      - name: Check coverage thresholds
+        run: npm test -- --coverage --passWithNoTests
+        continue-on-error: false
+
+      - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
         if: always()
         with:
           files: ./coverage/lcov.info
           flags: unittests
+          fail_ci_if_error: false
+
+      - name: Comment coverage on PR
+        uses: romeovs/lcov-reporter-action@v0.3.1
+        if: github.event_name == 'pull_request'
+        with:
+          lcov-file: ./coverage/lcov.info
+          github-token: ${{ secrets.GITHUB_TOKEN }}
