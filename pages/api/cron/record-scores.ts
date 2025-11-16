@@ -7,7 +7,7 @@ import { logger } from '../../../lib/logger';
  * Permite generar gráficos de evolución temporal
  *
  * Configurar en Render/Vercel Cron:
- * - Schedule: 0 */6 * * * (cada 6 horas)
+ * - Schedule: 0 star-slash-6 star star star (cada 6 horas) - replace star-slash with asterisk-slash
  * - URL: https://your-app.com/api/cron/record-scores
  * - Headers: x-cron-key: <CRON_API_KEY>
  */
