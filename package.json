@@ -28,7 +28,7 @@
     "docker:dev": "docker-compose up",
     "docker:build": "docker build -t degenscore:latest .",
     "docker:down": "docker-compose down",
-    "prepare": "husky install"
+    "prepare:husky": "husky install"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.932.0",
