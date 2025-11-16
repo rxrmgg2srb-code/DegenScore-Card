@@ -1,223 +1,322 @@
 # Contributing to DegenScore
 
-First off, thank you for considering contributing to DegenScore! It's people like you that make DegenScore such a great tool.
+First off, thank you for considering contributing to DegenScore! 🎉
+
+It's people like you that make DegenScore such a great tool for the Solana community.
 
 ## 📋 Table of Contents
 
 - [Code of Conduct](#code-of-conduct)
-- [Getting Started](#getting-started)
-- [Development Process](#development-process)
-- [Code Standards](#code-standards)
-- [Testing](#testing)
-- [Submitting Changes](#submitting-changes)
-- [Reporting Bugs](#reporting-bugs)
-- [Suggesting Enhancements](#suggesting-enhancements)
+- [How Can I Contribute?](#how-can-i-contribute)
+- [Development Setup](#development-setup)
+- [Pull Request Process](#pull-request-process)
+- [Coding Standards](#coding-standards)
+- [Commit Message Guidelines](#commit-message-guidelines)
+- [Testing Requirements](#testing-requirements)
+- [Community](#community)
 
 ## 📜 Code of Conduct
 
-This project and everyone participating in it is governed by our [Code of Conduct](CODE_OF_CONDUCT.md). By participating, you are expected to uphold this code.
+This project and everyone participating in it is governed by our [Code of Conduct](CODE_OF_CONDUCT.md). By participating, you are expected to uphold this code. Please report unacceptable behavior to hello@degenscore.com.
 
-## 🚀 Getting Started
+## 🤝 How Can I Contribute?
+
+### Reporting Bugs
+
+Before creating bug reports, please check the [existing issues](https://github.com/rxrmgg2srb-code/DegenScore-Card/issues) to avoid duplicates.
+
+When you create a bug report, include as many details as possible:
+
+- **Use a clear and descriptive title**
+- **Describe the exact steps to reproduce the problem**
+- **Provide specific examples** (code snippets, screenshots)
+- **Describe the behavior you observed** and what you expected
+- **Include your environment details** (OS, browser, Node version)
+
+Use the [Bug Report template](.github/ISSUE_TEMPLATE/bug_report.md) when creating issues.
+
+### Suggesting Enhancements
+
+Enhancement suggestions are tracked as GitHub issues. When creating an enhancement suggestion:
+
+- **Use a clear and descriptive title**
+- **Provide a detailed description** of the proposed functionality
+- **Explain why this enhancement would be useful** to most users
+- **List any alternatives you've considered**
+
+Use the [Feature Request template](.github/ISSUE_TEMPLATE/feature_request.md) when suggesting features.
+
+### Your First Code Contribution
+
+Unsure where to begin? Look for issues labeled:
+
+- `good first issue` - Good for newcomers
+- `help wanted` - Extra attention needed
+- `documentation` - Improvements or additions to documentation
+
+### Security Vulnerabilities
+
+**DO NOT** report security vulnerabilities through public GitHub issues. See our [Security Policy](SECURITY.md) for responsible disclosure.
+
+## 🛠️ Development Setup
 
 ### Prerequisites
 
-- Node.js 18+ ([Download](https://nodejs.org/))
-- npm or yarn
-- Git
-- Solana Wallet (for testing)
-- Helius API Key ([Free tier](https://helius.dev))
+- **Node.js**: v18.0.0 or higher ([Download](https://nodejs.org/))
+- **npm**: v9.0.0 or higher (comes with Node.js)
+- **Git**: Latest version ([Download](https://git-scm.com/))
+- **PostgreSQL**: v14 or higher (for local development)
+- **Solana CLI**: v1.16+ (for smart contract development)
 
-### Setting Up Development Environment
+### Initial Setup
 
-1. **Fork the repository**
+1. **Fork the repository** on GitHub
+
+2. **Clone your fork locally**:
    ```bash
-   # Click 'Fork' on GitHub, then:
    git clone https://github.com/YOUR_USERNAME/DegenScore-Card.git
    cd DegenScore-Card
    ```
 
-2. **Install dependencies**
+3. **Add upstream remote**:
+   ```bash
+   git remote add upstream https://github.com/rxrmgg2srb-code/DegenScore-Card.git
+   ```
+
+4. **Install dependencies**:
    ```bash
    npm install
    ```
 
-3. **Set up environment variables**
+5. **Copy environment variables**:
    ```bash
-   cp .env.local.example .env.local
-   # Edit .env.local with your credentials
+   cp .env.example .env.local
+   ```
+   Then fill in the required values (see [SETUP_INSTRUCTIONS.md](SETUP_INSTRUCTIONS.md))
+
+6. **Set up the database**:
+   ```bash
+   npx prisma migrate dev
+   npx prisma db seed  # (if seed script exists)
    ```
 
-4. **Generate Prisma client**
-   ```bash
-   npx prisma generate
-   ```
-
-5. **Run development server**
+7. **Run the development server**:
    ```bash
    npm run dev
-   # Open http://localhost:3000
    ```
 
-## 🔄 Development Process
+8. **Open [http://localhost:3000](http://localhost:3000)** in your browser
 
-### Branching Strategy
+### Keeping Your Fork Updated
 
-- `main` - Production-ready code
-- `develop` - Development branch
-- `feature/*` - New features
-- `bugfix/*` - Bug fixes
-- `hotfix/*` - Emergency fixes
+```bash
+git fetch upstream
+git checkout main
+git merge upstream/main
+```
 
-### Workflow
+## 🔄 Pull Request Process
 
-1. Create a new branch from `develop`
+### Before You Start
+
+1. **Check existing PRs** to avoid duplicates
+2. **Create an issue first** for major changes (so we can discuss the approach)
+3. **Work on a feature branch**, never on `main`
+
+### Branch Naming Convention
+
+Use descriptive branch names:
+
+- `feature/add-leaderboard` - New features
+- `fix/wallet-connection-bug` - Bug fixes
+- `docs/update-readme` - Documentation updates
+- `refactor/optimize-metrics-engine` - Code refactoring
+- `test/add-api-tests` - Test additions
+
+### Step-by-Step Process
+
+1. **Create a feature branch**:
    ```bash
-   git checkout develop
-   git pull origin develop
    git checkout -b feature/your-feature-name
    ```
 
-2. Make your changes
+2. **Make your changes** (follow [Coding Standards](#coding-standards))
 
-3. Write/update tests
+3. **Write/update tests** (see [Testing Requirements](#testing-requirements))
 
-4. Run tests and linting
+4. **Run the test suite**:
    ```bash
-   npm test
+   npm run test
    npm run lint
+   npm run type-check
    ```
 
-5. Commit your changes (see [Commit Messages](#commit-messages))
+5. **Commit your changes** (see [Commit Message Guidelines](#commit-message-guidelines)):
+   ```bash
+   git add .
+   git commit -m "feat: add leaderboard component"
+   ```
 
-6. Push to your fork
+6. **Push to your fork**:
    ```bash
    git push origin feature/your-feature-name
    ```
 
-7. Open a Pull Request
+7. **Open a Pull Request** on GitHub using the [PR template](.github/PULL_REQUEST_TEMPLATE.md)
 
-## 💻 Code Standards
+### PR Requirements
+
+Your PR must:
+
+- ✅ Pass all CI checks (lint, type-check, tests, build)
+- ✅ Include tests for new functionality
+- ✅ Maintain or increase code coverage
+- ✅ Update documentation if needed
+- ✅ Follow our coding standards
+- ✅ Have a clear description of changes
+- ✅ Reference related issues (`Fixes #123`)
+
+### Review Process
+
+1. **Automated checks** run first (CI/CD)
+2. **Maintainers review** your code (usually within 48 hours)
+3. **Address feedback** by pushing new commits to your branch
+4. **Approval required** from at least 1 maintainer
+5. **Merge** by maintainers (we use squash merge)
+
+## 📐 Coding Standards
+
+### General Principles
+
+- **Follow existing patterns** in the codebase
+- **Keep it simple** - clarity over cleverness
+- **Write self-documenting code** - good naming reduces need for comments
+- **Avoid premature optimization** - readable code first, optimize later if needed
 
 ### TypeScript
 
-- **Strict mode enabled** - All code must pass TypeScript strict checks
-- Use **explicit types** - Avoid `any` unless absolutely necessary
-- **Interfaces over types** for object shapes
-- Use **enum** for constants with multiple values
+We use **TypeScript in strict mode**. All code must:
+
+- ✅ Have explicit type annotations for function parameters and return types
+- ✅ Avoid `any` type (use `unknown` if truly necessary)
+- ✅ Use interfaces for object shapes, types for unions/primitives
+- ✅ Leverage type inference where obvious
+- ✅ No `@ts-ignore` or `@ts-nocheck` (fix the type issue instead)
+
+**Example**:
+```typescript
+// ✅ Good
+interface UserProfile {
+  walletAddress: string;
+  score: number;
+}
+
+function calculateScore(wallet: string): Promise<number> {
+  // implementation
+}
+
+// ❌ Bad
+function calculateScore(wallet: any) {
+  // @ts-ignore
+  return wallet.score;
+}
+```
+
+### React Components
+
+- ✅ Use functional components with hooks
+- ✅ Extract reusable logic to custom hooks
+- ✅ Keep components small and focused (<200 lines)
+- ✅ Use TypeScript for props
+
+**Example**:
+```tsx
+// ✅ Good
+interface ScoreCardProps {
+  score: number;
+  walletAddress: string;
+  onRefresh?: () => void;
+}
+
+export function ScoreCard({ score, walletAddress, onRefresh }: ScoreCardProps) {
+  // implementation
+}
+
+// ❌ Bad
+export function ScoreCard(props: any) {
+  // implementation
+}
+```
+
+### File Organization
+
+```
+/components        # React components
+  /ui              # Generic UI components (Button, Card, etc.)
+  /features        # Feature-specific components
+/lib               # Business logic and utilities
+  /services        # External service integrations
+  /utils           # Pure utility functions
+/pages             # Next.js pages and API routes
+  /api             # API endpoints
+/__tests__         # Test files (mirror source structure)
+```
+
+### Naming Conventions
+
+- **Files**: `camelCase.ts` for utilities, `PascalCase.tsx` for components
+- **Components**: `PascalCase`
+- **Functions**: `camelCase`
+- **Constants**: `UPPER_SNAKE_CASE`
+- **Interfaces**: `PascalCase` (no `I` prefix)
+- **Types**: `PascalCase`
 
 ### Code Style
 
-- **Prettier** for formatting (auto-format on save)
-- **ESLint** for linting
-- **4 spaces** for indentation (automatic via Prettier)
-- **120 character** line limit
-
-### File Naming
-
-- Components: `PascalCase.tsx` (e.g., `DegenCard.tsx`)
-- Utilities: `camelCase.ts` (e.g., `metricsEngine.ts`)
-- API routes: `kebab-case.ts` (e.g., `verify-payment.ts`)
-- Tests: `*.test.ts` or `*.test.tsx`
-
-### Import Order
-
-```typescript
-// 1. External packages
-import { NextPage } from 'next';
-import React from 'react';
-
-// 2. Internal utilities
-import { logger } from '@/lib/logger';
-import { calculateMetrics } from '@/lib/metricsEngine';
-
-// 3. Components
-import DegenCard from '@/components/DegenCard';
-
-// 4. Types
-import type { WalletMetrics } from '@/lib/metricsEngine';
-
-// 5. Styles
-import styles from './styles.module.css';
-```
-
-### Logging
-
-**Do NOT use `console.log` in production code.** Use the logger:
-
-```typescript
-import { logger } from '@/lib/logger';
-
-// Development only
-logger.debug('Debugging info', { userId: 123 });
-
-// Production and development
-logger.info('User logged in', { walletAddress });
-
-// Warnings
-logger.warn('Rate limit approaching', { requests: 95 });
-
-// Errors (automatically sent to Sentry)
-logger.error('Payment failed', error, { walletAddress });
-```
-
-## 🧪 Testing
-
-### Running Tests
+We use **Prettier** for formatting and **ESLint** for linting:
 
 ```bash
-# Run all tests
-npm test
-
-# Run tests in watch mode
-npm run test:watch
-
-# Run tests with coverage
-npm test -- --coverage
-
-# Run specific test file
-npm test -- __tests__/lib/metricsEngine.test.ts
+npm run lint        # Check for issues
+npm run lint:fix    # Auto-fix issues
+npm run format      # Format with Prettier
 ```
 
-### Writing Tests
+**Pre-commit hooks** will run these automatically.
 
-- **Minimum 70% coverage** required
-- Test file must be in `__tests__/` directory
-- Follow the Arrange-Act-Assert (AAA) pattern
+### Comments
 
-Example:
+- **Use JSDoc** for public APIs and complex functions
+- **Avoid obvious comments** - code should be self-explanatory
+- **Explain "why", not "what"** - the code shows what it does
 
+**Example**:
 ```typescript
-describe('calculateDegenScore', () => {
-  it('should return score between 0-100', () => {
-    // Arrange
-    const metrics = {
-      profitLoss: 10,
-      winRate: 70,
-      moonshots: 2,
-    };
+// ✅ Good
+/**
+ * Calculates the DegenScore using FIFO position tracking.
+ * We use FIFO instead of average cost because it more accurately
+ * reflects actual trading decisions.
+ */
+function calculateScore(trades: Trade[]): number {
+  // implementation
+}
 
-    // Act
-    const score = calculateDegenScore(metrics);
-
-    // Assert
-    expect(score).toBeGreaterThanOrEqual(0);
-    expect(score).toBeLessThanOrEqual(100);
-  });
-});
+// ❌ Bad
+// This function calculates the score
+function calculateScore(trades: any) {
+  let score = 0; // Initialize score to 0
+  // Loop through trades
+  for (let trade of trades) {
+    score += trade.value; // Add trade value to score
+  }
+}
 ```
 
-### Test Coverage Requirements
+## 📝 Commit Message Guidelines
 
-- **Lines**: 70%+
-- **Functions**: 70%+
-- **Branches**: 70%+
-- **Statements**: 70%+
+We follow the [Conventional Commits](https://www.conventionalcommits.org/) specification:
 
-## 📝 Submitting Changes
-
-### Commit Messages
-
-We use [Conventional Commits](https://www.conventionalcommits.org/):
+### Format
 
 ```
 <type>(<scope>): <subject>
@@ -227,198 +326,131 @@ We use [Conventional Commits](https://www.conventionalcommits.org/):
 <footer>
 ```
 
-**Types:**
+### Types
+
 - `feat`: New feature
 - `fix`: Bug fix
 - `docs`: Documentation changes
-- `style`: Code style changes (formatting, etc.)
-- `refactor`: Code refactoring
+- `style`: Code style changes (formatting, no logic change)
+- `refactor`: Code refactoring (no feature/bug change)
+- `perf`: Performance improvements
 - `test`: Adding or updating tests
-- `chore`: Maintenance tasks
+- `chore`: Maintenance tasks (dependencies, config)
+- `ci`: CI/CD changes
 
-**Examples:**
-```
-feat(metrics): add moonshot detection algorithm
+### Examples
 
-Implemented 100x+ gain detection for position tracking.
-Uses FIFO accounting to calculate profit percentage.
+```bash
+feat(leaderboard): add real-time ranking updates
 
-Closes #123
-```
+Implement WebSocket connection for live leaderboard updates.
+Users now see rank changes without refreshing the page.
 
-```
-fix(api): prevent payment verification exploit
-
-Added sender verification to ensure wallet actually sent SOL.
-Added balance change validation.
-
-Fixes #456
-```
-
-### Pull Request Process
-
-1. **Update documentation** if needed
-2. **Add tests** for new features
-3. **Ensure all tests pass** (`npm test`)
-4. **Update CHANGELOG.md** with your changes
-5. **Request review** from at least one maintainer
-6. **Address feedback** promptly
-7. **Squash commits** before merging (if requested)
-
-### PR Title Format
-
-```
-[TYPE] Brief description (max 50 chars)
-```
-
-Examples:
-- `[FEAT] Add multi-level referral system`
-- `[FIX] Resolve rate limiting race condition`
-- `[DOCS] Update API documentation`
-
-### PR Description Template
-
-```markdown
-## Description
-Brief description of changes
-
-## Type of Change
-- [ ] Bug fix
-- [ ] New feature
-- [ ] Breaking change
-- [ ] Documentation update
-
-## Testing
-- [ ] Unit tests added/updated
-- [ ] Manual testing completed
-- [ ] Coverage threshold met (70%+)
-
-## Checklist
-- [ ] Code follows project style guidelines
-- [ ] Self-review completed
-- [ ] Comments added for complex code
-- [ ] Documentation updated
-- [ ] No new warnings introduced
-- [ ] Tests pass locally
-- [ ] Dependent changes merged
-
-## Screenshots (if applicable)
-
-## Related Issues
-Closes #123
-Related to #456
-```
-
-## 🐛 Reporting Bugs
-
-### Before Submitting
-
-1. **Check existing issues** - Your bug may already be reported
-2. **Try latest version** - Bug might be fixed
-3. **Reproduce consistently** - Provide clear steps
-
-### Bug Report Template
-
-```markdown
-## Bug Description
-Clear description of the bug
-
-## Steps to Reproduce
-1. Go to '...'
-2. Click on '...'
-3. See error
-
-## Expected Behavior
-What should happen
-
-## Actual Behavior
-What actually happens
-
-## Environment
-- OS: [e.g., macOS 14.0]
-- Browser: [e.g., Chrome 120]
-- Node Version: [e.g., 18.17.0]
-- DegenScore Version: [e.g., 0.2.0]
-
-## Screenshots
-If applicable
-
-## Additional Context
-Any other relevant information
-```
-
-## 💡 Suggesting Enhancements
-
-### Feature Request Template
-
-```markdown
-## Feature Description
-Clear description of the proposed feature
-
-## Problem It Solves
-What problem does this solve?
-
-## Proposed Solution
-How would this work?
-
-## Alternatives Considered
-Other approaches you've considered
-
-## Additional Context
-Any mockups, examples, or references
-```
-
-## 🏗️ Architecture Guidelines
-
-### Smart Contracts (Solana/Anchor)
-
-- Use Anchor framework for all programs
-- Include comprehensive tests
-- Document all instructions
-- Implement pause mechanism for emergencies
-- Consider upgrade paths
-
-### API Endpoints
-
-- Use Next.js API routes
-- Implement rate limiting
-- Validate all inputs with Zod
-- Return consistent error format
-- Log all requests
-
-### Database
-
-- Use Prisma ORM
-- Write migrations for schema changes
-- Add indices for performance
-- Use transactions for atomic operations
-
-### Frontend Components
-
-- Use React hooks
-- Implement error boundaries
-- Add loading states
-- Make components reusable
-- Document complex components
-
-## 📚 Additional Resources
-
-- [TypeScript Handbook](https://www.typescriptlang.org/docs/)
-- [Next.js Documentation](https://nextjs.org/docs)
-- [Anchor Documentation](https://www.anchor-lang.com/)
-- [Solana Cookbook](https://solanacookbook.com/)
-- [Jest Documentation](https://jestjs.io/docs/getting-started)
-
-## 🤝 Community
-
-- **Discord**: [discord.gg/degenscore](https://discord.gg/degenscore)
-- **Twitter**: [@DegenScore](https://twitter.com/DegenScore)
-- **Email**: hello@degenscore.com
-
-## 📄 License
-
-By contributing, you agree that your contributions will be licensed under the MIT License.
+Closes #234
 
 ---
 
-Thank you for contributing to DegenScore! 🚀
+fix(wallet): resolve Phantom connection timeout
+
+Increased connection timeout from 5s to 15s to handle
+slow wallet responses.
+
+Fixes #456
+
+---
+
+docs(readme): update setup instructions
+
+Added troubleshooting section for common Vercel deployment issues.
+
+---
+
+test(metrics): add unit tests for score calculation
+
+Increased coverage of metricsEngine from 45% to 87%.
+```
+
+### Rules
+
+- ✅ Use present tense ("add feature" not "added feature")
+- ✅ Use imperative mood ("move cursor to..." not "moves cursor to...")
+- ✅ Keep subject line under 72 characters
+- ✅ Reference issues/PRs in footer
+- ✅ Include breaking changes in footer with `BREAKING CHANGE:`
+
+## 🧪 Testing Requirements
+
+All new code must include tests:
+
+### Unit Tests
+
+- **Location**: `__tests__/` directory (mirror source structure)
+- **Framework**: Jest + Testing Library
+- **Coverage**: Maintain >80% coverage for new code
+
+**Example**:
+```typescript
+// __tests__/lib/metricsEngine.test.ts
+import { calculateScore } from '@/lib/metricsEngine';
+
+describe('calculateScore', () => {
+  it('should return 0 for empty trade history', () => {
+    const score = calculateScore([]);
+    expect(score).toBe(0);
+  });
+
+  it('should calculate correct score for profitable trades', () => {
+    const trades = [
+      { type: 'buy', amount: 100, price: 1 },
+      { type: 'sell', amount: 100, price: 2 },
+    ];
+    const score = calculateScore(trades);
+    expect(score).toBeGreaterThan(50);
+  });
+});
+```
+
+### Running Tests
+
+```bash
+npm run test              # Run all tests
+npm run test:watch        # Watch mode
+npm run test:coverage     # Generate coverage report
+npm run test:unit         # Unit tests only
+npm run test:integration  # Integration tests only
+```
+
+### Coverage Thresholds
+
+Minimum coverage requirements:
+
+- **Statements**: 80%
+- **Branches**: 75%
+- **Functions**: 80%
+- **Lines**: 80%
+
+## 🌐 Community
+
+### Get Help
+
+- **Discord**: [discord.gg/degenscore](https://discord.gg/degenscore) - `#dev-chat` channel
+- **Discussions**: [GitHub Discussions](https://github.com/rxrmgg2srb-code/DegenScore-Card/discussions)
+- **Email**: dev@degenscore.com
+
+### Stay Updated
+
+- **Follow us on Twitter**: [@DegenScore](https://twitter.com/DegenScore)
+- **Star the repo** to get notifications
+- **Watch releases** for new versions
+
+## 📄 License
+
+By contributing, you agree that your contributions will be licensed under the [MIT License](LICENSE).
+
+## 🙏 Thank You!
+
+Your contributions make DegenScore better for everyone in the Solana community. We appreciate your time and effort! 🚀
+
+---
+
+**Questions?** Open a [GitHub Discussion](https://github.com/rxrmgg2srb-code/DegenScore-Card/discussions) or join our [Discord](https://discord.gg/degenscore).

@@ -26,8 +26,11 @@ jobs:
       - name: Run ESLint
         run: npm run lint
 
+      - name: Check Prettier formatting
+        run: npm run format:check
+
       - name: Check TypeScript
-        run: npx tsc --noEmit
+        run: npm run type-check
 
   security:
     name: Security Scan

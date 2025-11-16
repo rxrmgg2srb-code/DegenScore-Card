@@ -24,6 +24,9 @@ community include:
   and learning from the experience
 * Focusing on what is best not just for us as individuals, but for the overall
   community
+* Using welcoming and inclusive language
+* Being respectful of differing viewpoints and experiences
+* Showing patience with new community members
 
 Examples of unacceptable behavior include:
 
@@ -33,6 +36,7 @@ Examples of unacceptable behavior include:
 * Public or private harassment
 * Publishing others' private information, such as a physical or email address,
   without their explicit permission
+* Spamming, excessive self-promotion, or shilling
 * Other conduct which could reasonably be considered inappropriate in a
   professional setting
 
@@ -59,8 +63,9 @@ representative at an online or offline event.
 ## Enforcement
 
 Instances of abusive, harassing, or otherwise unacceptable behavior may be
-reported to the community leaders responsible for enforcement at
-[hello@degenscore.com](mailto:hello@degenscore.com).
+reported to the community leaders responsible for enforcement at:
+
+**hello@degenscore.com**
 
 All complaints will be reviewed and investigated promptly and fairly.
 
