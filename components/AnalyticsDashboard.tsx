@@ -46,7 +46,7 @@ interface TradingMetrics {
   sharpeRatio: number;
 }
 
-export default function AnalyticsDashboard({ walletAddress, analysisData }: AnalyticsProps) {
+export default function AnalyticsDashboard({ walletAddress: _walletAddress, analysisData }: AnalyticsProps) {
   const [activeTab, setActiveTab] = useState<'overview' | 'performance' | 'insights'>('overview');
   const [metrics, setMetrics] = useState<TradingMetrics | null>(null);
 
