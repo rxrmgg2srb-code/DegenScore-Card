@@ -53,7 +53,7 @@ export async function checkDailyStreak(walletAddress: string): Promise<StreakInf
           longestStreak: 1,
           lastLoginDate: today,
           totalLogins: 1,
-          streakPoints: STREAK_REWARDS[0].xp,
+          streakPoints: STREAK_REWARDS[0]?.xp || 10,
         },
       });
 
@@ -64,7 +64,7 @@ export async function checkDailyStreak(walletAddress: string): Promise<StreakInf
         longestStreak: 1,
         lastLoginDate: today,
         totalLogins: 1,
-        streakPoints: STREAK_REWARDS[0].xp,
+        streakPoints: STREAK_REWARDS[0]?.xp || 10,
         todayCheckedIn: true,
         nextReward: STREAK_REWARDS[1],
       };
@@ -137,7 +137,7 @@ export async function checkDailyStreak(walletAddress: string): Promise<StreakInf
           currentStreak: 1,
           lastLoginDate: today,
           totalLogins: streak.totalLogins + 1,
-          streakPoints: streak.streakPoints + STREAK_REWARDS[0].xp,
+          streakPoints: streak.streakPoints + (STREAK_REWARDS[0]?.xp || 10),
         },
       });
 
@@ -169,7 +169,7 @@ function getStreakReward(day: number) {
   // Find the highest reward tier that applies
   const rewards = STREAK_REWARDS.filter((r) => r.day <= day).sort((a, b) => b.day - a.day);
 
-  if (rewards.length > 0 && rewards[0].day === day) {
+  if (rewards.length > 0 && rewards[0] && rewards[0].day === day) {
     // Exact match - special reward
     return rewards[0];
   }
@@ -194,7 +194,7 @@ async function awardStreakBadge(walletAddress: string, badgeKey: string, streakD
     // Check if badge already exists
     const existingBadge = await prisma.badge.findFirst({
       where: {
-        DegenCard: {
+        card: {
           walletAddress,
         },
         name: { contains: badgeKey },
@@ -217,7 +217,7 @@ async function awardStreakBadge(walletAddress: string, badgeKey: string, streakD
     // Award badge
     await prisma.badge.create({
       data: {
-        degenCardId: card.id,
+        cardId: card.id,
         name: `${streakDays} Day Streak`,
         description: `Maintained a ${streakDays} day login streak`,
         icon: '🔥',
