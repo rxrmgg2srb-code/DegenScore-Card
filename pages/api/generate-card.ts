@@ -4,6 +4,7 @@ import { isValidSolanaAddress } from '../../lib/services/helius';
 import { prisma } from '../../lib/prisma';
 import { cacheGet, cacheSet, CacheKeys } from '../../lib/cache/redis';
 import {
+import { logger } from '@/lib/logger';
   uploadImage,
   generateCardImageKey,
   isStorageEnabled,
@@ -111,7 +112,7 @@ export default async function handler(
       return res.status(400).json({ error: 'Invalid Solana wallet address' });
     }
 
-    console.log(`🎨 Generating card image for: ${walletAddress}`);
+    logger.info(`🎨 Generating card image for: ${walletAddress}`);
 
     const card = await prisma.degenCard.findUnique({
       where: { walletAddress },
@@ -123,15 +124,15 @@ export default async function handler(
       });
     }
 
-    console.log(`✅ Found card in database with score: ${card.degenScore}`);
-    console.log(`💎 Premium status: ${card.isPaid ? 'PREMIUM' : 'BASIC'}`);
+    logger.info(`✅ Found card in database with score: ${card.degenScore}`);
+    logger.info(`💎 Premium status: ${card.isPaid ? 'PREMIUM' : 'BASIC'}`);
 
     // 🚀 OPTIMIZACIÓN: Verificar cache de imagen
     const cacheKey = CacheKeys.cardImage(walletAddress);
     const cachedImageUrl = await cacheGet<string>(cacheKey);
 
     if (cachedImageUrl) {
-      console.log('⚡ Serving card from cache/R2');
+      logger.info('⚡ Serving card from cache/R2');
       // Si tenemos URL de R2, redirigir
       if (cachedImageUrl.startsWith('http')) {
         return res.redirect(302, cachedImageUrl);
@@ -172,7 +173,7 @@ export default async function handler(
       });
 
       if (publicUrl) {
-        console.log('☁️ Image uploaded to R2:', publicUrl);
+        logger.info('☁️ Image uploaded to R2:', publicUrl);
         // Cachear la URL por 7 días
         await cacheSet(cacheKey, publicUrl, { ttl: 604800 });
         // Redirigir a R2
@@ -190,7 +191,7 @@ export default async function handler(
     res.status(200).send(imageBuffer);
 
   } catch (error) {
-    console.error('❌ Error generating card:', error);
+    logger.error('❌ Error generating card:', error);
     res.status(500).json({
       error: 'Failed to generate card',
       details: error instanceof Error ? error.message : 'Unknown error'
@@ -202,26 +203,26 @@ async function generateCardImage(
   walletAddress: string,
   metrics: any
 ): Promise<Buffer> {
-  console.log('🎨 generateCardImage called with isPaid:', metrics.isPaid);
+  logger.info('🎨 generateCardImage called with isPaid:', metrics.isPaid);
 
   // Si está pagado, usar estilo premium del leaderboard
   if (metrics.isPaid) {
-    console.log('✅ Generating PREMIUM card...');
+    logger.info('✅ Generating PREMIUM card...');
     try {
       const premiumBuffer = await generatePremiumCardImage(walletAddress, metrics);
-      console.log('✅ Premium card generated successfully');
+      logger.info('✅ Premium card generated successfully');
       // Force garbage collection hint
       if (global.gc) global.gc();
       return premiumBuffer;
     } catch (error) {
-      console.error('❌ Error generating premium card:', error);
-      console.log('⚠️ Falling back to basic card');
+      logger.error('❌ Error generating premium card:', error);
+      logger.info('⚠️ Falling back to basic card');
       return generateBasicCardImage(walletAddress, metrics);
     }
   }
 
   // Si NO está pagado, usar el estilo básico original
-  console.log('📝 Generating BASIC card...');
+  logger.info('📝 Generating BASIC card...');
   const buffer = await generateBasicCardImage(walletAddress, metrics);
   // Force garbage collection hint
   if (global.gc) global.gc();
@@ -318,7 +319,7 @@ async function generatePremiumCardImage(
       currentY += imgSize / 2 + 25;
       
     } catch (error) {
-      console.error('⚠️ Error loading profile image:', error);
+      logger.error('⚠️ Error loading profile image:', error);
       const imgSize = 140;
       const imgX = width / 2;
       

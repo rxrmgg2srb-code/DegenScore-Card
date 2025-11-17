@@ -1,4 +1,5 @@
 import { Redis } from '@upstash/redis';
+import { logger } from '@/lib/logger';
 
 // Cliente de Upstash Redis (gratis: 10k comandos/día)
 // Si excede límite, cambiar a Redis Cloud (30MB gratis)
@@ -22,7 +23,7 @@ export interface CacheOptions {
  */
 export async function cacheGet<T>(key: string): Promise<T | null> {
   if (!isRedisEnabled) {
-    console.warn('Redis not configured, cache disabled');
+    logger.warn('Redis not configured, cache disabled');
     return null;
   }
 
@@ -30,7 +31,7 @@ export async function cacheGet<T>(key: string): Promise<T | null> {
     const value = await redis.get<T>(key);
     return value;
   } catch (error) {
-    console.error('Redis get error:', error);
+    logger.error('Redis get error:', error);
     return null; // Fail gracefully
   }
 }
@@ -67,7 +68,7 @@ export async function cacheSet<T>(
 
     return true;
   } catch (error) {
-    console.error('Redis set error:', error);
+    logger.error('Redis set error:', error);
     return false;
   }
 }
@@ -84,7 +85,7 @@ export async function cacheDel(key: string): Promise<boolean> {
     await redis.del(key);
     return true;
   } catch (error) {
-    console.error('Redis del error:', error);
+    logger.error('Redis del error:', error);
     return false;
   }
 }
@@ -105,7 +106,7 @@ export async function cacheInvalidateTag(tag: string): Promise<boolean> {
     }
     return true;
   } catch (error) {
-    console.error('Redis invalidate tag error:', error);
+    logger.error('Redis invalidate tag error:', error);
     return false;
   }
 }
@@ -151,7 +152,7 @@ export async function cacheIncr(
     }
     return value;
   } catch (error) {
-    console.error('Redis incr error:', error);
+    logger.error('Redis incr error:', error);
     return null;
   }
 }

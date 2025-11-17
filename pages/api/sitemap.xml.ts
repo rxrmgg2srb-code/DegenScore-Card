@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { prisma } from '../../lib/prisma';
+import { logger } from '@/lib/logger';
 
 export default async function handler(
   req: NextApiRequest,
@@ -62,7 +63,7 @@ ${publicCards
     res.setHeader('Cache-Control', 'public, max-age=3600, s-maxage=3600'); // 1 hora
     res.status(200).send(sitemap);
   } catch (error) {
-    console.error('Error generating sitemap:', error);
+    logger.error('Error generating sitemap:', error);
     res.status(500).json({ error: 'Failed to generate sitemap' });
   }
 }

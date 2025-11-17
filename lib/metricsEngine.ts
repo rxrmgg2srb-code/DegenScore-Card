@@ -13,6 +13,7 @@
  */
 
 import { ParsedTransaction, getWalletTransactions } from './services/helius';
+import { logger } from '@/lib/logger';
 
 const SOL_MINT = 'So11111111111111111111111111111111111111112';
 
@@ -91,30 +92,30 @@ export async function calculateAdvancedMetrics(
   onProgress?: (progress: number, message: string) => void
 ): Promise<WalletMetrics> {
   try {
-    console.log('🔥 DegenScore Engine v2.0 - Professional Analysis Starting');
+    logger.info('🔥 DegenScore Engine v2.0 - Professional Analysis Starting');
 
     if (onProgress) onProgress(5, '📡 Fetching transactions...');
 
     const allTransactions = await fetchAllTransactions(walletAddress, onProgress);
 
     if (!allTransactions || allTransactions.length === 0) {
-      console.log('❌ No transactions found');
+      logger.info('❌ No transactions found');
       return getDefaultMetrics();
     }
 
-    console.log(`📊 Total transactions: ${allTransactions.length}`);
+    logger.info(`📊 Total transactions: ${allTransactions.length}`);
 
     if (onProgress) onProgress(75, '💱 Analyzing trades...');
 
     // Extract all trades
     const trades = extractTrades(allTransactions, walletAddress);
-    console.log(`✅ Extracted ${trades.length} valid trades`);
+    logger.info(`✅ Extracted ${trades.length} valid trades`);
 
     if (onProgress) onProgress(85, '📈 Building positions...');
 
     // Build positions from trades
     const positions = buildPositions(trades);
-    console.log(`📦 Built ${positions.length} positions`);
+    logger.info(`📦 Built ${positions.length} positions`);
 
     if (onProgress) onProgress(95, '🎯 Calculating metrics...');
 
@@ -125,7 +126,7 @@ export async function calculateAdvancedMetrics(
 
     return metrics;
   } catch (error) {
-    console.error('❌ Error in metrics engine:', error);
+    logger.error('❌ Error in metrics engine:', error);
     return getDefaultMetrics();
   }
 }
@@ -148,7 +149,7 @@ async function fetchAllTransactions(
   const DELAY_MS = 100;
   const MAX_EMPTY = 3;
 
-  console.log(`🔄 Fetching up to ${MAX_BATCHES} batches (${BATCH_SIZE} each)`);
+  logger.info(`🔄 Fetching up to ${MAX_BATCHES} batches (${BATCH_SIZE} each)`);
 
   while (fetchCount < MAX_BATCHES) {
     try {
@@ -158,13 +159,13 @@ async function fetchAllTransactions(
         allTransactions.push(...batch);
         before = batch[batch.length - 1]?.signature;
         consecutiveEmpty = 0;
-        console.log(`  ✓ Batch ${fetchCount + 1}: ${batch.length} txs (Total: ${allTransactions.length})`);
+        logger.info(`  ✓ Batch ${fetchCount + 1}: ${batch.length} txs (Total: ${allTransactions.length})`);
       } else {
         consecutiveEmpty++;
-        console.log(`  ⚠️ Batch ${fetchCount + 1}: empty (${consecutiveEmpty}/${MAX_EMPTY})`);
+        logger.info(`  ⚠️ Batch ${fetchCount + 1}: empty (${consecutiveEmpty}/${MAX_EMPTY})`);
 
         if (consecutiveEmpty >= MAX_EMPTY) {
-          console.log(`  ✅ No more transactions`);
+          logger.info(`  ✅ No more transactions`);
           break;
         }
       }
@@ -178,7 +179,7 @@ async function fetchAllTransactions(
 
       await new Promise(resolve => setTimeout(resolve, DELAY_MS));
     } catch (error) {
-      console.error(`  ❌ Error batch ${fetchCount + 1}:`, error);
+      logger.error(`  ❌ Error batch ${fetchCount + 1}:`, error);
       fetchCount++;
       await new Promise(resolve => setTimeout(resolve, 500));
       continue;

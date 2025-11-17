@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { logger } from '@/lib/logger';
 
 interface ProfileFormModalProps {
   isOpen: boolean;
@@ -70,7 +71,7 @@ export default function ProfileFormModal({ isOpen, onClose, onSubmit, walletAddr
         alert('Failed to upload image');
       }
     } catch (error) {
-      console.error('Error uploading image:', error);
+      logger.error('Error uploading image:', error);
       alert('Error uploading image');
     } finally {
       setIsUploading(false);

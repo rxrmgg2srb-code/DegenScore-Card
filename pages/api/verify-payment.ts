@@ -1,8 +1,9 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { prisma } from '../../lib/prisma';
 import { Connection, PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js';
-import { paymentRateLimit } from '../../lib/rateLimit';
+import { paymentRateLimit } from '../../lib/rateLimitRedis';
 import { retry } from '../../lib/retryLogic';
+import { logger } from '@/lib/logger';
 
 const TREASURY_WALLET = process.env.TREASURY_WALLET!;
 const MINT_PRICE_SOL = 1; // Premium tier price
@@ -16,7 +17,7 @@ export default async function handler(
   }
 
   // Apply payment rate limiting to prevent abuse
-  if (!paymentRateLimit(req, res)) {
+  if (!(await paymentRateLimit(req, res)) {
     return;
   }
 
@@ -29,8 +30,8 @@ export default async function handler(
       });
     }
 
-    console.log(`💰 Verifying payment for: ${walletAddress}`);
-    console.log(`📝 Payment signature: ${paymentSignature}`);
+    logger.info(`💰 Verifying payment for: ${walletAddress}`);
+    logger.info(`📝 Payment signature: ${paymentSignature}`);
 
     const connection = new Connection(
       process.env.HELIUS_RPC_URL || 'https://api.mainnet-beta.solana.com',
@@ -47,7 +48,7 @@ export default async function handler(
       {
         maxRetries: 3,
         onRetry: (attempt, error) => {
-          console.warn(`[Payment] Retrying transaction fetch (attempt ${attempt}):`, error.message);
+          logger.warn(`[Payment] Retrying transaction fetch (attempt ${attempt}):`, error.message);
         }
       }
     );
@@ -109,9 +110,9 @@ export default async function handler(
     const senderPaidAmount = Math.abs(senderBalanceChange);
     const treasuryReceivedAmount = treasuryBalanceChange;
 
-    console.log(`💰 Payment verification:`);
-    console.log(`   Sender (${walletAddress}) balance change: ${senderBalanceChange.toFixed(4)} SOL`);
-    console.log(`   Treasury balance change: ${treasuryBalanceChange.toFixed(4)} SOL`);
+    logger.info(`💰 Payment verification:`);
+    logger.info(`   Sender (${walletAddress}) balance change: ${senderBalanceChange.toFixed(4)} SOL`);
+    logger.info(`   Treasury balance change: ${treasuryBalanceChange.toFixed(4)} SOL`);
 
     // CRITICAL VALIDATION: Sender must have sent money (negative balance change)
     if (senderBalanceChange >= 0) {
@@ -137,7 +138,7 @@ export default async function handler(
 
     const paidAmount = treasuryReceivedAmount;
 
-    console.log(`✅ Valid payment received: ${paidAmount} SOL`);
+    logger.info(`✅ Valid payment received: ${paidAmount} SOL`);
 
     // Use transaction to ensure atomicity and prevent race conditions
     const result = await prisma.$transaction(async (tx) => {
@@ -160,7 +161,7 @@ export default async function handler(
         },
       });
 
-      console.log(`✅ Payment saved: ${paymentSignature}`);
+      logger.info(`✅ Payment saved: ${paymentSignature}`);
 
       // Update card as paid
       const updatedCard = await tx.degenCard.update({
@@ -172,7 +173,7 @@ export default async function handler(
         },
       });
 
-      console.log(`✅ Card marked as paid for wallet: ${walletAddress}`);
+      logger.info(`✅ Card marked as paid for wallet: ${walletAddress}`);
 
       // Create or update subscription with 30-day PRO trial
       const trialEndDate = new Date();
@@ -193,7 +194,7 @@ export default async function handler(
         }
       });
 
-      console.log(`✅ PRO subscription created with 30-day trial (expires: ${trialEndDate.toISOString()})`);
+      logger.info(`✅ PRO subscription created with 30-day trial (expires: ${trialEndDate.toISOString()})`);
 
       return updatedCard;
     }, {
@@ -201,7 +202,7 @@ export default async function handler(
       timeout: 10000, // 10 seconds transaction timeout
     });
 
-    console.log(`💎 Card status - isPaid: ${result.isPaid}, isMinted: ${result.isMinted}`);
+    logger.info(`💎 Card status - isPaid: ${result.isPaid}, isMinted: ${result.isMinted}`);
 
     res.status(200).json({
       success: true,
@@ -210,7 +211,7 @@ export default async function handler(
     });
 
   } catch (error) {
-    console.error('❌ Error verifying payment:', error);
+    logger.error('❌ Error verifying payment:', error);
 
     // Handle specific error cases
     if (error instanceof Error && error.message === 'Payment signature already used') {

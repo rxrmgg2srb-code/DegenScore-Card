@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { claimReferralRewards } from '../../../lib/referralEngine';
 import { verifySessionToken } from '../../../lib/walletAuth';
+import { logger } from '@/lib/logger';
 
 export default async function handler(
   req: NextApiRequest,
@@ -36,7 +37,7 @@ export default async function handler(
       message: `Claimed ${result.amount} $DEGEN tokens`,
     });
   } catch (error) {
-    console.error('Error claiming referral rewards:', error);
+    logger.error('Error claiming referral rewards:', error);
     res.status(500).json({
       error: 'Failed to claim rewards',
       details: error instanceof Error ? error.message : 'Unknown error',

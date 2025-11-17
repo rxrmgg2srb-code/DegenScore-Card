@@ -1,3 +1,5 @@
+import { logger } from '@/lib/logger';
+
 /**
  * Centralized configuration for the application
  * Validates and exports all environment variables
@@ -70,10 +72,10 @@ if (typeof window === 'undefined' && process.env.NODE_ENV !== 'test') {
   try {
     validateEnv();
   } catch (error) {
-    console.error('Environment validation failed:', error);
+    logger.error('Environment validation failed:', error);
     // Don't throw in build time to allow builds to complete
     if (process.env.NODE_ENV === 'production') {
-      console.warn('Running with missing environment variables');
+      logger.warn('Running with missing environment variables');
     }
   }
 }

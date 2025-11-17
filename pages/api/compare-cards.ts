@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { prisma } from '../../lib/prisma';
 import { isValidSolanaAddress } from '../../lib/services/helius';
+import { logger } from '@/lib/logger';
 
 export default async function handler(
   req: NextApiRequest,
@@ -114,7 +115,7 @@ export default async function handler(
       overallWinner,
     });
   } catch (error: any) {
-    console.error('Error comparing cards:', error);
+    logger.error('Error comparing cards:', error);
     res.status(500).json({
       error: 'Failed to compare cards',
       details: process.env.NODE_ENV === 'development' ? error.message : undefined,

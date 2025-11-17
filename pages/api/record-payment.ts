@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { prisma } from '../../lib/prisma';
 import { Connection } from '@solana/web3.js';
+import { logger } from '@/lib/logger';
 
 export default async function handler(
   req: NextApiRequest,
@@ -13,10 +14,10 @@ export default async function handler(
   try {
     const { walletAddress, signature, amount } = req.body;
 
-    console.log('📥 Payment received:', { walletAddress, signature, amount });
+    logger.info('📥 Payment received:', { walletAddress, signature, amount });
 
     if (!walletAddress || !signature || !amount) {
-      console.error('❌ Missing fields:', { walletAddress, signature, amount });
+      logger.error('❌ Missing fields:', { walletAddress, signature, amount });
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
@@ -32,19 +33,19 @@ export default async function handler(
       });
 
       if (!tx) {
-        console.error('❌ Transaction not found:', signature);
+        logger.error('❌ Transaction not found:', signature);
         return res.status(400).json({ error: 'Transaction not found' });
       }
 
       // Verificar que la transacción fue exitosa
       if (tx.meta?.err) {
-        console.error('❌ Transaction failed:', tx.meta.err);
+        logger.error('❌ Transaction failed:', tx.meta.err);
         return res.status(400).json({ error: 'Transaction failed' });
       }
 
-      console.log('✅ Transaction verified:', signature);
+      logger.info('✅ Transaction verified:', signature);
     } catch (error) {
-      console.error('❌ Error verifying transaction:', error);
+      logger.error('❌ Error verifying transaction:', error);
       return res.status(400).json({ error: 'Failed to verify transaction' });
     }
 
@@ -58,7 +59,7 @@ export default async function handler(
       },
     });
 
-    console.log('✅ Payment saved:', payment.id);
+    logger.info('✅ Payment saved:', payment.id);
 
     // Marcar la card como pagada
     await prisma.degenCard.update({
@@ -69,7 +70,7 @@ export default async function handler(
       },
     });
 
-    console.log('✅ Card marked as paid for wallet:', walletAddress);
+    logger.info('✅ Card marked as paid for wallet:', walletAddress);
 
     res.status(200).json({
       success: true,
@@ -77,7 +78,7 @@ export default async function handler(
       payment,
     });
   } catch (error) {
-    console.error('❌ Error recording payment:', error);
+    logger.error('❌ Error recording payment:', error);
     res.status(500).json({
       error: 'Failed to record payment',
       details: error instanceof Error ? error.message : 'Unknown error',

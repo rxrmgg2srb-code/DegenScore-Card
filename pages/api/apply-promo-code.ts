@@ -1,7 +1,8 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { prisma } from '../../lib/prisma';
-import { rateLimit } from '../../lib/rateLimit';
+import { rateLimit } from '../../lib/rateLimitRedis';
 import { sanitizePromoCode, sanitizeText } from '../../lib/sanitize';
+import { logger } from '@/lib/logger';
 
 export default async function handler(
   req: NextApiRequest,
@@ -12,7 +13,7 @@ export default async function handler(
   }
 
   // Apply rate limiting
-  if (!rateLimit(req, res)) {
+  if (!(await rateLimit(req, res)) {
     return;
   }
 
@@ -28,8 +29,8 @@ export default async function handler(
     // Sanitize promo code to prevent SQL injection and XSS
     const sanitizedCode = sanitizePromoCode(promoCode);
 
-    console.log(`🎟️ Applying promo code for: ${walletAddress}`);
-    console.log(`📝 Promo code: ${sanitizedCode}`);
+    logger.info(`🎟️ Applying promo code for: ${walletAddress}`);
+    logger.info(`📝 Promo code: ${sanitizedCode}`);
 
     // Usar transacción para garantizar atomicidad
     const result = await prisma.$transaction(async (tx) => {
@@ -122,7 +123,7 @@ export default async function handler(
         }
       });
 
-      console.log(`✅ PRO subscription created with 30-day trial (expires: ${trialEndDate.toISOString()})`);
+      logger.info(`✅ PRO subscription created with 30-day trial (expires: ${trialEndDate.toISOString()})`);
 
       return { card: updatedCard, promo };
     }, {
@@ -130,7 +131,7 @@ export default async function handler(
       timeout: 10000
     });
 
-    console.log(`✅ Promo code applied successfully for wallet: ${walletAddress}`);
+    logger.info(`✅ Promo code applied successfully for wallet: ${walletAddress}`);
 
     res.status(200).json({
       success: true,
@@ -139,7 +140,7 @@ export default async function handler(
     });
 
   } catch (error) {
-    console.error('❌ Error applying promo code:', error);
+    logger.error('❌ Error applying promo code:', error);
 
     // Handle specific error messages
     if (error instanceof Error) {

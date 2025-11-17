@@ -1,5 +1,6 @@
 import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { logger } from '@/lib/logger';
 
 // Cloudflare R2 es compatible con S3
 // Gratis: 10GB storage + 10M requests/mes
@@ -40,7 +41,7 @@ export async function uploadImage(
   options: UploadOptions = {}
 ): Promise<string | null> {
   if (!isR2Enabled || !r2Client) {
-    console.warn('R2 not configured, skipping upload');
+    logger.warn('R2 not configured, skipping upload');
     return null;
   }
 
@@ -65,7 +66,7 @@ export async function uploadImage(
     // Retornar URL pública
     return `${PUBLIC_URL}/${key}`;
   } catch (error) {
-    console.error('R2 upload error:', error);
+    logger.error('R2 upload error:', error);
     return null;
   }
 }
@@ -90,7 +91,7 @@ export async function getImageUrl(
     const url = await getSignedUrl(r2Client, command, { expiresIn });
     return url;
   } catch (error) {
-    console.error('R2 get URL error:', error);
+    logger.error('R2 get URL error:', error);
     return null;
   }
 }
@@ -112,7 +113,7 @@ export async function deleteImage(key: string): Promise<boolean> {
     );
     return true;
   } catch (error) {
-    console.error('R2 delete error:', error);
+    logger.error('R2 delete error:', error);
     return false;
   }
 }

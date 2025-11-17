@@ -2,6 +2,7 @@ import { PublicKey } from '@solana/web3.js';
 import nacl from 'tweetnacl';
 import bs58 from 'bs58';
 import jwt from 'jsonwebtoken';
+import { logger } from '@/lib/logger';
 
 /**
  * Wallet Authentication Utility
@@ -67,7 +68,7 @@ export function verifyWalletSignature(
 
     return verified;
   } catch (error) {
-    console.error('Signature verification failed:', error);
+    logger.error('Signature verification failed:', error);
     return false;
   }
 }

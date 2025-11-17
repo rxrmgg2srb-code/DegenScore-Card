@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { prisma } from '../../../lib/prisma';
+import { logger } from '@/lib/logger';
 
 export default async function handler(
   req: NextApiRequest,
@@ -58,7 +59,7 @@ export default async function handler(
     });
 
   } catch (error) {
-    console.error('Error fetching referrals:', error);
+    logger.error('Error fetching referrals:', error);
     res.status(500).json({
       error: 'Failed to fetch referrals'
     });

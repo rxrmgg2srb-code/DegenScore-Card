@@ -38,6 +38,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for better secret detection
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -48,16 +50,68 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run npm audit
+      - name: Run npm audit (STRICT - Fails on high/critical)
         run: npm audit --audit-level=high
-        continue-on-error: true
+        continue-on-error: false  # CHANGED: Fail CI on high vulnerabilities
 
-      - name: Check for secrets
+      - name: Check for hardcoded secrets
         uses: trufflesecurity/trufflehog@main
         with:
           path: ./
           base: ${{ github.event.repository.default_branch }}
           head: HEAD
+
+      - name: OWASP Dependency Check
+        uses: dependency-check/Dependency-Check_Action@main
+        with:
+          project: 'DegenScore-Card'
+          path: '.'
+          format: 'HTML'
+          args: >
+            --enableRetired
+            --enableExperimental
+            --failOnCVSS 7
+
+      - name: Upload OWASP Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: owasp-dependency-check-report
+          path: ${{ github.workspace }}/reports
+
+      - name: Semgrep Security Scan
+        uses: returntocorp/semgrep-action@v1
+        with:
+          config: >-
+            p/security-audit
+            p/secrets
+            p/owasp-top-ten
+            p/nodejs
+          generateSarif: true
+
+      - name: Upload Semgrep SARIF
+        uses: github/codeql-action/upload-sarif@v2
+        if: always()
+        with:
+          sarif_file: semgrep.sarif
+
+      - name: License Compliance Check
+        run: npx license-checker --summary --onlyAllow "MIT;Apache-2.0;BSD-2-Clause;BSD-3-Clause;ISC"
+        continue-on-error: true
+
+      - name: Check for console.log in production code
+        run: |
+          if grep -r "console\\.log" lib/ pages/api/ components/ --include="*.ts" --include="*.tsx" --exclude-dir=node_modules --exclude-dir=.next; then
+            echo "❌ ERROR: console.log found in production code!"
+            exit 1
+          else
+            echo "✅ No console.log in production code"
+          fi
+
+      - name: Check environment variable usage
+        run: |
+          echo "Checking for hardcoded credentials..."
+          ! grep -rE "(password|secret|key|token)\s*=\s*['\"][^'\"]{8,}" . --include="*.ts" --include="*.tsx" --include="*.js" --exclude-dir=node_modules --exclude-dir=.next --exclude-dir=coverage
 
   build:
     name: Build Application

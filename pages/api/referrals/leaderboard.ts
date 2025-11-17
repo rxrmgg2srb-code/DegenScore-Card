@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse} from 'next';
 import { getReferralLeaderboard } from '../../../lib/referralEngine';
+import { logger } from '@/lib/logger';
 
 export default async function handler(
   req: NextApiRequest,
@@ -18,7 +19,7 @@ export default async function handler(
       leaderboard,
     });
   } catch (error) {
-    console.error('Error getting referral leaderboard:', error);
+    logger.error('Error getting referral leaderboard:', error);
     res.status(500).json({
       error: 'Failed to get leaderboard',
       details: error instanceof Error ? error.message : 'Unknown error',

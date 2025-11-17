@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { prisma } from '../../lib/prisma';
-import { rateLimit } from '../../lib/rateLimit';
+import { rateLimit } from '../../lib/rateLimitRedis';
+import { logger } from '@/lib/logger';
 
 /**
  * Scarcity settings
@@ -21,7 +22,7 @@ export default async function handler(
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  if (!rateLimit(req, res)) {
+  if (!(await rateLimit(req, res)) {
     return;
   }
 
@@ -57,7 +58,7 @@ export default async function handler(
       showScarcityBanner: spotsRemaining < 100, // Show when under 100 spots
     });
   } catch (error: any) {
-    console.error('Error fetching spots remaining:', error);
+    logger.error('Error fetching spots remaining:', error);
     res.status(500).json({
       error: process.env.NODE_ENV === 'development'
         ? error.message

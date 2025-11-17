@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { prisma } from '../../lib/prisma';
-import { rateLimit } from '../../lib/rateLimit';
+import { rateLimit } from '../../lib/rateLimitRedis';
+import { logger } from '@/lib/logger';
 
 export default async function handler(
   req: NextApiRequest,
@@ -10,7 +11,7 @@ export default async function handler(
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  if (!rateLimit(req, res)) {
+  if (!(await rateLimit(req, res)) {
     return;
   }
 
@@ -92,7 +93,7 @@ export default async function handler(
       count: formatted.length,
     });
   } catch (error: any) {
-    console.error('Error fetching recent activity:', error);
+    logger.error('Error fetching recent activity:', error);
     res.status(500).json({
       error: process.env.NODE_ENV === 'development'
         ? error.message

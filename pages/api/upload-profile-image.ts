@@ -4,7 +4,7 @@ import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
 import { isValidSolanaAddress, isValidImageType } from '../../lib/validation';
-import { rateLimit } from '../../lib/rateLimit';
+import { rateLimit } from '../../lib/rateLimitRedis';
 import { logger } from '../../lib/logger';
 import { UPLOAD_CONFIG } from '../../lib/config';
 
@@ -23,7 +23,7 @@ export default async function handler(
   }
 
   // Apply rate limiting
-  if (!rateLimit(req, res)) {
+  if (!(await rateLimit(req, res)) {
     return;
   }
 

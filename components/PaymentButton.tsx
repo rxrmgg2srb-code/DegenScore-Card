@@ -3,6 +3,7 @@ import { useConnection, useWallet } from '@solana/wallet-adapter-react';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import { PublicKey, Transaction, SystemProgram, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { PAYMENT_CONFIG } from '../lib/config';
+import { logger } from '@/lib/logger';
 
 interface PaymentButtonProps {
   walletAddress: string;
@@ -25,7 +26,7 @@ export default function PaymentButton({ walletAddress, onPaymentSuccess }: Payme
     setError(null);
 
     try {
-      console.log('💰 Checking balance and fees...');
+      logger.info('💰 Checking balance and fees...');
 
       // SEGURIDAD: Verificar balance antes de crear transacción
       const balance = await connection.getBalance(publicKey);
@@ -42,8 +43,8 @@ export default function PaymentButton({ walletAddress, onPaymentSuccess }: Payme
         );
       }
 
-      console.log(`✅ Balance verificado: ${(balance / LAMPORTS_PER_SOL).toFixed(4)} SOL`);
-      console.log('💰 Creating payment transaction...');
+      logger.info(`✅ Balance verificado: ${(balance / LAMPORTS_PER_SOL).toFixed(4)} SOL`);
+      logger.info('💰 Creating payment transaction...');
 
       // Crear transacción de pago
       const transaction = new Transaction().add(
@@ -59,12 +60,12 @@ export default function PaymentButton({ walletAddress, onPaymentSuccess }: Payme
       transaction.recentBlockhash = blockhash;
       transaction.feePayer = publicKey;
 
-      console.log('📤 Sending transaction...');
+      logger.info('📤 Sending transaction...');
 
       // Enviar transacción
       const signature = await sendTransaction(transaction, connection);
 
-      console.log('⏳ Waiting for confirmation...', signature);
+      logger.info('⏳ Waiting for confirmation...', signature);
 
       // SEGURIDAD: Esperar confirmación con timeout de 30 segundos
       const confirmationPromise = connection.confirmTransaction(signature, 'confirmed');
@@ -78,10 +79,10 @@ export default function PaymentButton({ walletAddress, onPaymentSuccess }: Payme
         throw new Error('Transaction failed on blockchain');
       }
 
-      console.log('✅ Transaction confirmed!');
+      logger.info('✅ Transaction confirmed!');
 
       // Verificar pago en el backend
-      console.log('🔍 Verifying payment...');
+      logger.info('🔍 Verifying payment...');
       const response = await fetch('/api/verify-payment', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -96,11 +97,11 @@ export default function PaymentButton({ walletAddress, onPaymentSuccess }: Payme
         throw new Error(data.error || 'Payment verification failed');
       }
 
-      console.log('🎉 Payment verified! Card minted!');
+      logger.info('🎉 Payment verified! Card minted!');
       onPaymentSuccess();
 
     } catch (err) {
-      console.error('❌ Payment error:', err);
+      logger.error('❌ Payment error:', err);
       setError(err instanceof Error ? err.message : 'Payment failed');
     } finally {
       setIsPaying(false);

@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { trackReferral } from '../../../lib/referralEngine';
 import { verifySessionToken } from '../../../lib/walletAuth';
+import { logger } from '@/lib/logger';
 
 export default async function handler(
   req: NextApiRequest,
@@ -44,7 +45,7 @@ export default async function handler(
       message: 'Referral tracked successfully',
     });
   } catch (error) {
-    console.error('Error in track referral API:', error);
+    logger.error('Error in track referral API:', error);
     res.status(500).json({
       error: 'Failed to track referral',
       details: error instanceof Error ? error.message : 'Unknown error',
