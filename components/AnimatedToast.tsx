@@ -34,6 +34,7 @@ export function AnimatedToast({
 
       return () => clearTimeout(timer);
     }
+    return undefined;
   }, [duration, onClose]);
 
   const configs = {
@@ -68,7 +69,6 @@ export function AnimatedToast({
   };
 
   const config = configs[type];
-  const progressPercent = duration > 0 ? 100 : 0;
 
   return (
     <AnimatePresence>
