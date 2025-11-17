@@ -48,7 +48,7 @@ export default async function handler(
       {
         maxRetries: 3,
         onRetry: (attempt, error) => {
-          logger.warn(`[Payment] Retrying transaction fetch (attempt ${attempt}):`, error.message);
+          logger.warn(`[Payment] Retrying transaction fetch (attempt ${attempt}):`, { error: error.message });
         }
       }
     );
