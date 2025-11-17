@@ -17,7 +17,7 @@ export function LiveActivityFeed() {
     // Generate fake activity for demo (in production, fetch from API)
     const generateActivity = (): Activity => {
       const types: Activity['type'][] = ['card-generated', 'premium-unlock', 'high-score'];
-      const type = types[Math.floor(Math.random() * types.length)];
+      const type = types[Math.floor(Math.random() * types.length)] as Activity['type'];
       const score = type === 'card-generated' || type === 'high-score'
         ? Math.floor(Math.random() * 40) + 60
         : undefined;
@@ -53,6 +53,7 @@ export function LiveActivityFeed() {
 
       return () => clearInterval(interval);
     }
+    return undefined;
   }, [activities.length]);
 
   const currentActivity = activities[currentIndex];

@@ -30,7 +30,7 @@ export default async function handler(
       return res.status(400).json({ error: 'Invalid Solana wallet address' });
     }
 
-    logger.info('Analyzing wallet:', walletAddress);
+    logger.info('Analyzing wallet:', { walletAddress });
 
     // PERFORMANCE: Agregar timeout de 45 segundos para análisis de wallet
     const metricsPromise = calculateAdvancedMetrics(walletAddress);
@@ -43,7 +43,7 @@ export default async function handler(
       metrics = await Promise.race([metricsPromise, timeoutPromise]);
     } catch (error) {
       if (error instanceof Error && error.message.includes('timeout')) {
-        logger.warn('Wallet analysis timeout:', walletAddress);
+        logger.warn('Wallet analysis timeout:', { walletAddress });
         return res.status(504).json({
           error: 'El análisis está tomando demasiado tiempo. Por favor intenta de nuevo en unos minutos.',
           details: 'Wallet analysis timeout'

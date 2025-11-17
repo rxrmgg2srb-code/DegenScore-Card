@@ -294,7 +294,7 @@ export function validateUploadedFileServer(
   }
 
   // Validate MIME type
-  if (!allowedTypes.includes(mimeType)) {
+  if (!allowedTypes.includes(mimeType as any)) {
     return {
       isValid: false,
       error: 'Invalid file type',

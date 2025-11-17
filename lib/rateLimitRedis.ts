@@ -351,6 +351,3 @@ export async function cleanupExpiredKeys(): Promise<number> {
     return 0;
   }
 }
-
-// Export types
-export type { RateLimitOptions, RateLimitResult };

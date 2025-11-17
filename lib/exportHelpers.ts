@@ -1,5 +1,3 @@
-import type { DegenCard } from '@prisma/client';
-
 export interface ExportableCard {
   walletAddress: string;
   displayName: string | null;

@@ -230,6 +230,7 @@ function extractTrades(
     if (tokenTransfers.length === 0) continue;
 
     const tokenTransfer = tokenTransfers[0];
+    if (!tokenTransfer) continue;
 
     // Determine if this is a buy or sell
     // Buy = SOL goes out (negative solNet), tokens come in
@@ -302,6 +303,7 @@ function buildPositions(trades: Trade[]): Position[] {
 
       while (tokensToSell > 0 && tokenPositions.length > 0) {
         const position = tokenPositions[0];
+        if (!position) break;
 
         if (!position.isOpen) {
           tokenPositions.shift();
@@ -373,7 +375,6 @@ function calculateMetrics(
 
   // Win rate
   const winningTrades = closedPositions.filter(p => (p.profitLoss || 0) > 0).length;
-  const losingTrades = closedPositions.filter(p => (p.profitLoss || 0) < 0).length;
   const totalClosedTrades = closedPositions.length;
   const winRate = totalClosedTrades > 0 ? (winningTrades / totalClosedTrades) * 100 : 0;
 
@@ -416,7 +417,7 @@ function calculateMetrics(
   ).size;
 
   // First trade date
-  const firstTradeDate = trades.length > 0 ? trades[0].timestamp : Date.now() / 1000;
+  const firstTradeDate = trades.length > 0 ? trades[0]?.timestamp ?? Date.now() / 1000 : Date.now() / 1000;
 
   // Win/loss streaks
   const { longestWinStreak, longestLossStreak } = calculateStreaks(closedPositions);

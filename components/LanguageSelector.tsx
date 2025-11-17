@@ -20,7 +20,7 @@ export const LanguageSelector = () => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const currentLanguage: Language = languages.find(lang => lang.code === i18n.language) || languages[0];
+  const currentLanguage = (languages.find(lang => lang.code === i18n.language) ?? languages[0]) as Language;
 
   // Cerrar dropdown cuando se hace clic fuera
   useEffect(() => {
@@ -113,7 +113,7 @@ export const LanguageSelectorSimple = () => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const currentLanguage: Language = languages.find(lang => lang.code === i18n.language) || languages[0];
+  const currentLanguage = (languages.find(lang => lang.code === i18n.language) ?? languages[0]) as Language;
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
