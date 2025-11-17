@@ -43,3 +43,10 @@ export default function TokenScannerPage() {
     </>
   );
 }
+
+// Force this page to be server-side rendered to avoid timeout during static generation
+export async function getServerSideProps() {
+  return {
+    props: {}, // Empty props, page doesn't need server data
+  };
+}
