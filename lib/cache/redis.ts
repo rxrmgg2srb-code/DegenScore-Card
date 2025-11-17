@@ -1,17 +1,27 @@
 import { Redis } from '@upstash/redis';
 import { logger } from '@/lib/logger';
 
-// Cliente de Upstash Redis (gratis: 10k comandos/día)
-// Si excede límite, cambiar a Redis Cloud (30MB gratis)
-const redis = new Redis({
-  url: process.env.UPSTASH_REDIS_REST_URL || '',
-  token: process.env.UPSTASH_REDIS_REST_TOKEN || '',
-});
-
 // Verificar si Redis está configurado
 const isRedisEnabled = !!(
   process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN
 );
+
+// Cliente de Upstash Redis (gratis: 10k comandos/día)
+// Si excede límite, cambiar a Redis Cloud (30MB gratis)
+// Solo se crea el cliente si las variables de entorno están configuradas
+let redis: Redis | null = null;
+
+if (isRedisEnabled) {
+  redis = new Redis({
+    url: process.env.UPSTASH_REDIS_REST_URL!,
+    token: process.env.UPSTASH_REDIS_REST_TOKEN!,
+  });
+} else {
+  if (typeof window === 'undefined') {
+    logger.warn('[Upstash Redis] The \'url\' property is missing or undefined in your Redis config.');
+    logger.warn('[Upstash Redis] The \'token\' property is missing or undefined in your Redis config.');
+  }
+}
 
 export interface CacheOptions {
   ttl?: number; // Time to live en segundos
@@ -22,8 +32,8 @@ export interface CacheOptions {
  * Get value from cache
  */
 export async function cacheGet<T>(key: string): Promise<T | null> {
-  if (!isRedisEnabled) {
-    logger.warn('Redis not configured, cache disabled');
+  if (!isRedisEnabled || !redis) {
+    logger.warn('[Upstash Redis] Redis client was initialized without url or token. Failed to execute command.');
     return null;
   }
 
@@ -46,7 +56,7 @@ export async function cacheSet<T>(
   value: T,
   options: CacheOptions = {}
 ): Promise<boolean> {
-  if (!isRedisEnabled) {
+  if (!isRedisEnabled || !redis) {
     return false;
   }
 
@@ -81,7 +91,7 @@ export async function cacheSet<T>(
  * Delete from cache
  */
 export async function cacheDel(key: string): Promise<boolean> {
-  if (!isRedisEnabled) {
+  if (!isRedisEnabled || !redis) {
     return false;
   }
 
@@ -100,7 +110,7 @@ export async function cacheDel(key: string): Promise<boolean> {
  * Invalidate all keys with a specific tag
  */
 export async function cacheInvalidateTag(tag: string): Promise<boolean> {
-  if (!isRedisEnabled) {
+  if (!isRedisEnabled || !redis) {
     return false;
   }
 
@@ -149,7 +159,7 @@ export async function cacheIncr(
   key: string,
   ttl?: number
 ): Promise<number | null> {
-  if (!isRedisEnabled) {
+  if (!isRedisEnabled || !redis) {
     return null;
   }
 

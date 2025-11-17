@@ -5,10 +5,11 @@ declare global {
 }
 
 // Optimized Prisma Client for high concurrency (100+ simultaneous users)
+// Always use singleton pattern to prevent prepared statement collisions in serverless
 export const prisma = global.prisma || new PrismaClient({
   log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
 
-  // Connection pool configuration for high load
+  // Connection pool configuration for high load and serverless compatibility
   datasources: {
     db: {
       url: process.env.DATABASE_URL,
@@ -16,8 +17,9 @@ export const prisma = global.prisma || new PrismaClient({
   },
 });
 
-// Enable connection pooling and optimize for serverless/edge
-if (process.env.NODE_ENV !== 'production') {
+// Store in global to prevent multiple instances (critical for serverless)
+// This prevents PostgreSQL "prepared statement already exists" errors
+if (!global.prisma) {
   global.prisma = prisma;
 }
 
