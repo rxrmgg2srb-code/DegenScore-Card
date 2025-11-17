@@ -46,7 +46,10 @@
     "@solana/wallet-adapter-react-ui": "^0.9.39",
     "@solana/wallet-adapter-wallets": "^0.19.37",
     "@solana/web3.js": "^1.98.4",
+    "@types/node": "^20.17.10",
     "@types/node-telegram-bot-api": "^0.64.12",
+    "@types/react": "^18.3.18",
+    "@types/react-dom": "^18.3.5",
     "@upstash/redis": "^1.35.6",
     "autoprefixer": "^10.0.1",
     "bs58": "^6.0.0",
@@ -78,6 +81,7 @@
     "recharts": "^3.4.1",
     "tailwindcss": "^3.3.0",
     "tweetnacl": "^1.0.3",
+    "typescript": "^5.7.2",
     "zod": "^3.25.76",
     "zustand": "^5.0.8"
   },
@@ -91,9 +95,6 @@
     "@types/formidable": "^3.4.6",
     "@types/jest": "^29.5.11",
     "@types/jsonwebtoken": "^9.0.10",
-    "@types/node": "^20.17.10",
-    "@types/react": "^18.3.18",
-    "@types/react-dom": "^18.3.5",
     "@typescript-eslint/eslint-plugin": "^6.15.0",
     "@typescript-eslint/parser": "^6.15.0",
     "eslint": "^8",
@@ -104,8 +105,7 @@
     "lint-staged": "^15.2.0",
     "node-mocks-http": "^1.14.0",
     "prettier": "^3.1.1",
-    "prisma": "^6.19.0",
-    "typescript": "^5.7.2"
+    "prisma": "^6.19.0"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [
