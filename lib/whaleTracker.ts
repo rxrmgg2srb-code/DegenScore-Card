@@ -86,7 +86,7 @@ export async function calculateWhaleMetrics(walletAddress: string): Promise<Whal
       totalProfit,
       topTokens,
     };
-  } catch (error) {
+  } catch (error: any) {
     logger.error('Error calculating whale metrics:', error);
     return null;
   }
@@ -139,7 +139,7 @@ export async function detectAndRegisterWhale(walletAddress: string): Promise<boo
 
     logger.info(`New whale detected: ${walletAddress}`);
     return true;
-  } catch (error) {
+  } catch (error: any) {
     logger.error('Error detecting whale:', error);
     return false;
   }
@@ -167,7 +167,7 @@ export async function updateWhaleMetrics(walletAddress: string): Promise<void> {
         lastActive: new Date(),
       },
     });
-  } catch (error) {
+  } catch (error: any) {
     logger.error('Error updating whale metrics:', error);
   }
 }
@@ -200,7 +200,7 @@ export async function createWhaleAlert(
     });
 
     logger.info(`Whale alert created: ${alertType} for ${tokenSymbol}`);
-  } catch (error) {
+  } catch (error: any) {
     logger.error('Error creating whale alert:', error);
   }
 }
@@ -222,7 +222,7 @@ export async function getTopWhales(limit = 50) {
       ...whale,
       topTokens: whale.topTokens ? JSON.parse(whale.topTokens) : [],
     }));
-  } catch (error) {
+  } catch (error: any) {
     logger.error('Error fetching top whales:', error);
     return [];
   }
@@ -269,7 +269,7 @@ export async function getWhaleAlertsForUser(
     });
 
     return alerts;
-  } catch (error) {
+  } catch (error: any) {
     logger.error('Error fetching whale alerts:', error);
     return [];
   }
@@ -309,7 +309,7 @@ export async function followWhale(
     });
 
     return true;
-  } catch (error) {
+  } catch (error: any) {
     // Might already be following
     logger.error('Error following whale:', error);
     return false;
@@ -343,7 +343,7 @@ export async function unfollowWhale(
     }
 
     return false;
-  } catch (error) {
+  } catch (error: any) {
     logger.error('Error unfollowing whale:', error);
     return false;
   }
@@ -365,7 +365,7 @@ export async function isFollowingWhale(
     });
 
     return !!follow;
-  } catch (error) {
+  } catch (error: any) {
     logger.error('Error checking whale follow:', error);
     return false;
   }
@@ -392,7 +392,7 @@ export async function getFollowedWhales(walletAddress: string) {
       followedAt: f.followedAt,
       notificationsEnabled: f.notificationsEnabled,
     }));
-  } catch (error) {
+  } catch (error: any) {
     logger.error('Error fetching followed whales:', error);
     return [];
   }
@@ -446,7 +446,7 @@ export async function processTradeForWhaleDetection(
       // Update whale metrics
       await updateWhaleMetrics(walletAddress);
     }
-  } catch (error) {
+  } catch (error: any) {
     logger.error('Error processing trade for whale detection:', error);
   }
 }

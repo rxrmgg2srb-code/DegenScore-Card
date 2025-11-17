@@ -44,7 +44,7 @@ export default function AITradingCoach() {
     try {
       const token = generateSessionToken(publicKey.toString());
       setSessionToken(token);
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Failed to generate session token:', error);
     }
   };

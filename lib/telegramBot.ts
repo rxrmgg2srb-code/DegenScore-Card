@@ -28,7 +28,7 @@ export function createTelegramBot(): TelegramBot | null {
     const bot = new TelegramBot(token, { polling: false });
     logger.info('Telegram bot created successfully');
     return bot;
-  } catch (error) {
+  } catch (error: any) {
     logger.error('Failed to create Telegram bot:', error);
     return null;
   }
@@ -63,7 +63,7 @@ export async function getOrCreateTelegramUser(telegramId: number, username?: str
     }
 
     return user;
-  } catch (error) {
+  } catch (error: any) {
     logger.error('Error getting/creating Telegram user:', error);
     return null;
   }
@@ -84,7 +84,7 @@ export async function linkTelegramToWallet(
 
     logger.info(`Telegram ${telegramId} linked to wallet ${walletAddress}`);
     return true;
-  } catch (error) {
+  } catch (error: any) {
     logger.error('Error linking Telegram to wallet:', error);
     return false;
   }
@@ -145,7 +145,7 @@ export async function getScoreMessage(walletAddress: string): Promise<string> {
 🏆 Ranking: #${scoreCard.ranking || '---'}
 
 🌐 Ver card completa: https://www.solanamillondollar.com/${walletAddress}`;
-  } catch (error) {
+  } catch (error: any) {
     logger.error('Error fetching score message:', error);
     return '❌ Error al obtener tu score. Intenta de nuevo.';
   }
@@ -191,7 +191,7 @@ export async function getChallengeMessage(walletAddress: string): Promise<string
     });
 
     return message + '🌐 Completa en: https://www.solanamillondollar.com';
-  } catch (error) {
+  } catch (error: any) {
     logger.error('Error fetching challenges:', error);
     return '❌ Error al obtener desafíos. Intenta de nuevo.';
   }
@@ -249,7 +249,7 @@ export async function getWhaleMessage(walletAddress?: string): Promise<string> {
     });
 
     return message + '🌐 Ver más: https://www.solanamillondollar.com';
-  } catch (error) {
+  } catch (error: any) {
     logger.error('Error fetching whale alerts:', error);
     return '❌ Error al obtener alertas de whales.';
   }
@@ -282,7 +282,7 @@ Recibirás alertas de:
 
 Para gestionar tus notificaciones:
 🌐 https://www.solanamillondollar.com/settings`;
-  } catch (error) {
+  } catch (error: any) {
     logger.error('Error fetching alerts:', error);
     return '❌ Error al obtener alertas.';
   }
@@ -325,7 +325,7 @@ export async function sendTelegramNotification(
       parse_mode: 'Markdown',
     });
     return true;
-  } catch (error) {
+  } catch (error: any) {
     logger.error('Error sending Telegram notification:', error);
     return false;
   }
@@ -371,7 +371,7 @@ export async function notifyWhaleFollowers(
 
     logger.info(`Notified ${notifiedCount} followers about whale alert`);
     return notifiedCount;
-  } catch (error) {
+  } catch (error: any) {
     logger.error('Error notifying whale followers:', error);
     return 0;
   }
