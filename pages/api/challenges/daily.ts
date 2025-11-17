@@ -81,7 +81,7 @@ async function handlePost(req: NextApiRequest, res: NextApiResponse) {
     const authResult = verifySessionToken(token);
 
     if (!authResult.valid) {
-      logger.warn('Invalid authentication token for challenge update:', authResult.error);
+      logger.warn('Invalid authentication token for challenge update', { error: authResult.error });
       return res.status(401).json({ error: 'Invalid or expired authentication token' });
     }
 

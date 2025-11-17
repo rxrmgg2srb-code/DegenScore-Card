@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { detectAndRegisterWhale, updateWhaleMetrics } from '../../../lib/whaleTracker';
-import prisma from '../../../lib/prisma';
+import { prisma } from '../../../lib/prisma';
 import { logger } from '../../../lib/logger';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {

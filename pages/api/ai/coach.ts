@@ -39,7 +39,7 @@ async function handleGet(req: NextApiRequest, res: NextApiResponse) {
     const authResult = verifySessionToken(token);
 
     if (!authResult.valid) {
-      logger.warn('Invalid authentication token for AI coach:', authResult.error);
+      logger.warn('Invalid authentication token for AI coach', { error: authResult.error });
       return res.status(401).json({ error: 'Invalid or expired authentication token' });
     }
 
@@ -89,7 +89,7 @@ async function handlePost(req: NextApiRequest, res: NextApiResponse) {
     const authResult = verifySessionToken(token);
 
     if (!authResult.valid) {
-      logger.warn('Invalid authentication token for AI coach:', authResult.error);
+      logger.warn('Invalid authentication token for AI coach', { error: authResult.error });
       return res.status(401).json({ error: 'Invalid or expired authentication token' });
     }
 

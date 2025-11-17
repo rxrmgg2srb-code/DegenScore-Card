@@ -1,9 +1,9 @@
 /**
  * Hot Wallet Cache System
- * 
+ *
  * Caches frequently accessed wallet data to reduce Helius API calls
  * and improve response times for popular wallets.
- * 
+ *
  * Features:
  * - Multi-tier caching (in-memory + Redis)
  * - Automatic cache warming for trending wallets
@@ -11,7 +11,8 @@
  * - Cache hit/miss metrics
  */
 
-import { redis } from './redis';
+import redis from './redis';
+import { logger } from '../logger';
 
 interface CachedWalletData {
   metrics: any;
@@ -65,7 +66,7 @@ export async function getCachedWalletMetrics(
   // Check Redis cache (slower but persistent)
   try {
     const redisCached = await redis?.get(`wallet:metrics:${walletAddress}`);
-    if (redisCached) {
+    if (redisCached && typeof redisCached === 'string') {
       const parsed: CachedWalletData = JSON.parse(redisCached);
       
       if (!isCacheExpired(parsed)) {
@@ -89,7 +90,7 @@ export async function getCachedWalletMetrics(
       }
     }
   } catch (error) {
-    console.error('Redis cache read error:', error);
+    logger.error('Redis cache read error', error instanceof Error ? error : new Error(String(error)));
   }
 
   cacheStats.misses++;
@@ -118,7 +119,7 @@ export async function setCachedWalletMetrics(
       { ex: CACHE_TTL.NORMAL_WALLET / 1000 }
     );
   } catch (error) {
-    console.error('Redis cache write error:', error);
+    logger.error('Redis cache write error', error instanceof Error ? error : new Error(String(error)));
   }
 
   // Add to memory cache if there's space or it's replacing an existing entry
@@ -136,7 +137,7 @@ export async function invalidateWalletCache(walletAddress: string): Promise<void
   try {
     await redis?.del(`wallet:metrics:${walletAddress}`);
   } catch (error) {
-    console.error('Redis cache invalidation error:', error);
+    logger.error('Redis cache invalidation error', error instanceof Error ? error : new Error(String(error)));
   }
 }
 
@@ -144,14 +145,14 @@ export async function invalidateWalletCache(walletAddress: string): Promise<void
  * Warm cache for hot wallets
  */
 export async function warmCacheForHotWallets(wallets: string[]): Promise<void> {
-  console.log(`Warming cache for ${wallets.length} hot wallets...`);
+  logger.info('Warming cache for hot wallets', { count: wallets.length });
   
   // This would be called by a background job
   // For now, it just ensures these wallets are marked as hot
   for (const wallet of wallets) {
     try {
       const cached = await redis?.get(`wallet:metrics:${wallet}`);
-      if (cached) {
+      if (cached && typeof cached === 'string') {
         const parsed: CachedWalletData = JSON.parse(cached);
         parsed.hitCount = Math.max(parsed.hitCount, 10); // Mark as hot
         
@@ -162,7 +163,7 @@ export async function warmCacheForHotWallets(wallets: string[]): Promise<void> {
         );
       }
     } catch (error) {
-      console.error(`Failed to warm cache for ${wallet}:`, error);
+      logger.error('Failed to warm cache for wallet', error instanceof Error ? error : new Error(String(error)), { wallet });
     }
   }
 }
@@ -221,9 +222,11 @@ function setMemoryCache(walletAddress: string, data: CachedWalletData): void {
   // Evict least recently used if cache is full
   if (memoryCache.size >= MAX_MEMORY_CACHE_SIZE && !memoryCache.has(walletAddress)) {
     const oldestKey = memoryCache.keys().next().value;
-    memoryCache.delete(oldestKey);
+    if (oldestKey !== undefined) {
+      memoryCache.delete(oldestKey);
+    }
   }
-  
+
   memoryCache.set(walletAddress, data);
 }
 

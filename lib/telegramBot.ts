@@ -1,6 +1,6 @@
 import TelegramBot from 'node-telegram-bot-api';
 import { logger } from './logger';
-import prisma from './prisma';
+import { prisma } from './prisma';
 
 // Bot commands and responses
 export const TELEGRAM_COMMANDS = {
@@ -40,13 +40,13 @@ export function createTelegramBot(): TelegramBot | null {
 export async function getOrCreateTelegramUser(telegramId: number, username?: string) {
   try {
     let user = await prisma.telegramUser.findUnique({
-      where: { telegramId: BigInt(telegramId) },
+      where: { telegramId: String(telegramId) },
     });
 
     if (!user) {
       user = await prisma.telegramUser.create({
         data: {
-          telegramId: BigInt(telegramId),
+          telegramId: String(telegramId),
           username: username || null,
         },
       });
@@ -54,7 +54,7 @@ export async function getOrCreateTelegramUser(telegramId: number, username?: str
     } else {
       // Update last interaction
       user = await prisma.telegramUser.update({
-        where: { telegramId: BigInt(telegramId) },
+        where: { telegramId: String(telegramId) },
         data: {
           lastInteraction: new Date(),
           totalInteractions: { increment: 1 },
@@ -78,7 +78,7 @@ export async function linkTelegramToWallet(
 ): Promise<boolean> {
   try {
     await prisma.telegramUser.update({
-      where: { telegramId: BigInt(telegramId) },
+      where: { telegramId: String(telegramId) },
       data: { walletAddress },
     });
 

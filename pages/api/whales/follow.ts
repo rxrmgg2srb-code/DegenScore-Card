@@ -12,11 +12,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     const token = authHeader.substring(7);
-    const walletAddress = verifySessionToken(token);
+    const authResult = verifySessionToken(token);
 
-    if (!walletAddress) {
+    if (!authResult.valid || !authResult.wallet) {
       return res.status(401).json({ error: 'Invalid token' });
     }
+
+    const walletAddress = authResult.wallet;
 
     // GET - Get followed whales
     if (req.method === 'GET') {
@@ -71,7 +73,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     return res.status(405).json({ error: 'Method not allowed' });
   } catch (error: any) {
-    logger.error('Error in /api/whales/follow:', error);
+    logger.error('Error in /api/whales/follow:', error instanceof Error ? error : new Error(String(error)));
     return res.status(500).json({
       error: 'Server error',
       message: error.message,
