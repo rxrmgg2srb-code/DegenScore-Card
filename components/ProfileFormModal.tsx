@@ -1,4 +1,8 @@
 import { useState } from 'react';
+import Image from 'next/image';
+import { useWallet } from '@solana/wallet-adapter-react';
+import { Connection, PublicKey, Transaction, SystemProgram, LAMPORTS_PER_SOL } from '@solana/web3.js';
+import { PAYMENT_CONFIG } from '../lib/config';
 import { logger } from '@/lib/logger';
 
 interface ProfileFormModalProps {
@@ -6,6 +10,8 @@ interface ProfileFormModalProps {
   onClose: () => void;
   onSubmit: (data: ProfileData) => void;
   walletAddress: string;
+  hasPromoCode?: boolean; // Si ya aplicó un código promocional
+  promoCodeApplied?: string; // El código que se aplicó
 }
 
 export interface ProfileData {
@@ -15,7 +21,8 @@ export interface ProfileData {
   profileImage: string | null;
 }
 
-export default function ProfileFormModal({ isOpen, onClose, onSubmit, walletAddress }: ProfileFormModalProps) {
+export default function ProfileFormModal({ isOpen, onClose, onSubmit, walletAddress, hasPromoCode = false, promoCodeApplied }: ProfileFormModalProps) {
+  const { publicKey, sendTransaction } = useWallet();
   const [formData, setFormData] = useState<ProfileData>({
     displayName: '',
     twitter: '',
@@ -24,6 +31,8 @@ export default function ProfileFormModal({ isOpen, onClose, onSubmit, walletAddr
   });
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [isPaying, setIsPaying] = useState(false);
+  const [paymentError, setPaymentError] = useState<string | null>(null);
 
   if (!isOpen) return null;
 
@@ -80,7 +89,7 @@ export default function ProfileFormModal({ isOpen, onClose, onSubmit, walletAddr
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     // Validaciones básicas
@@ -89,7 +98,91 @@ export default function ProfileFormModal({ isOpen, onClose, onSubmit, walletAddr
       return;
     }
 
-    onSubmit(formData);
+    // Si tiene código promocional, no necesita pagar
+    if (hasPromoCode) {
+      // Guardar perfil y activar premium gratis
+      try {
+        const response = await fetch('/api/update-profile', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            walletAddress,
+            ...formData,
+          }),
+        });
+
+        if (!response.ok) throw new Error('Failed to save profile');
+
+        onSubmit(formData);
+      } catch (error: any) {
+        alert('Error saving profile: ' + error.message);
+      }
+      return;
+    }
+
+    // Si NO tiene promo code, necesita pagar primero
+    if (!publicKey) {
+      alert('Please connect your wallet first');
+      return;
+    }
+
+    setIsPaying(true);
+    setPaymentError(null);
+
+    try {
+      // 1. Crear transacción de pago
+      const connection = new Connection(PAYMENT_CONFIG.SOLANA_NETWORK, 'confirmed');
+      const lamports = PAYMENT_CONFIG.MINT_PRICE_SOL * LAMPORTS_PER_SOL;
+
+      const transaction = new Transaction().add(
+        SystemProgram.transfer({
+          fromPubkey: publicKey,
+          toPubkey: new PublicKey(PAYMENT_CONFIG.TREASURY_WALLET),
+          lamports,
+        })
+      );
+
+      // 2. Enviar transacción
+      const signature = await sendTransaction(transaction, connection);
+      await connection.confirmTransaction(signature, 'confirmed');
+
+      // 3. Guardar perfil
+      const profileResponse = await fetch('/api/update-profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          walletAddress,
+          ...formData,
+        }),
+      });
+
+      if (!profileResponse.ok) throw new Error('Failed to save profile');
+
+      // 4. Verificar pago en backend
+      const paymentResponse = await fetch('/api/verify-payment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          signature,
+          walletAddress: publicKey.toString(),
+        }),
+      });
+
+      const paymentData = await paymentResponse.json();
+
+      if (!paymentResponse.ok) {
+        throw new Error(paymentData.error || 'Failed to verify payment');
+      }
+
+      // ✅ Éxito total
+      onSubmit(formData);
+
+    } catch (error: any) {
+      console.error('Payment error:', error);
+      setPaymentError(error.message || 'Payment failed');
+    } finally {
+      setIsPaying(false);
+    }
   };
 
   return (
@@ -217,6 +310,23 @@ export default function ProfileFormModal({ isOpen, onClose, onSubmit, walletAddr
             </div>
           </div>
 
+          {/* Payment Error */}
+          {paymentError && (
+            <div className="p-3 bg-red-500/10 border border-red-500/50 rounded-lg">
+              <p className="text-red-400 text-sm">{paymentError}</p>
+            </div>
+          )}
+
+          {/* Promo Code Badge */}
+          {hasPromoCode && promoCodeApplied && (
+            <div className="p-3 bg-green-500/10 border border-green-500/50 rounded-lg">
+              <p className="text-green-400 text-sm flex items-center gap-2">
+                <span>✅</span>
+                <span>Promo code <strong>{promoCodeApplied}</strong> applied - Premium FREE!</span>
+              </p>
+            </div>
+          )}
+
           {/* Buttons */}
           <div className="flex gap-3 pt-4">
             <button
@@ -228,10 +338,22 @@ export default function ProfileFormModal({ isOpen, onClose, onSubmit, walletAddr
             </button>
             <button
               type="submit"
-              disabled={isUploading}
+              disabled={isUploading || isPaying}
               className="flex-1 px-6 py-3 bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-400 hover:to-purple-400 text-white rounded-lg font-bold transition disabled:opacity-50"
             >
-              Save & Continue
+              {isPaying ? (
+                <span className="flex items-center justify-center">
+                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Paying...
+                </span>
+              ) : hasPromoCode ? (
+                'Save (FREE)'
+              ) : (
+                `Save & Pay ${PAYMENT_CONFIG.MINT_PRICE_SOL} SOL`
+              )}
             </button>
           </div>
         </form>
