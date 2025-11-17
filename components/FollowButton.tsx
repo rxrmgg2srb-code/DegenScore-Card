@@ -15,7 +15,7 @@ export default function FollowButton({
   className = '',
   showCounts = true,
 }: FollowButtonProps) {
-  const { publicKey, signMessage } = useWallet();
+  const { publicKey } = useWallet();
   const [isFollowing, setIsFollowing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [followersCount, setFollowersCount] = useState(0);
@@ -31,16 +31,16 @@ export default function FollowButton({
 
   // Generate session token when wallet connects
   useEffect(() => {
-    if (publicKey && signMessage) {
+    if (publicKey) {
       generateToken();
     }
-  }, [publicKey, signMessage]);
+  }, [publicKey]);
 
-  const generateToken = async () => {
-    if (!publicKey || !signMessage) return;
+  const generateToken = () => {
+    if (!publicKey) return;
 
     try {
-      const token = await generateSessionToken(publicKey, signMessage);
+      const token = generateSessionToken(publicKey.toBase58());
       setSessionToken(token);
     } catch (error) {
       logger.error('Failed to generate session token:', error);
@@ -76,7 +76,7 @@ export default function FollowButton({
 
     if (!sessionToken) {
       toast.error('Authenticating...');
-      await generateToken();
+      generateToken();
       return;
     }
 
