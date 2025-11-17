@@ -18,15 +18,15 @@ export function AchievementPopup({ achievement, onClose }: AchievementPopupProps
   const [show, setShow] = useState(false);
 
   useEffect(() => {
-    if (achievement) {
-      setShow(true);
-      const timer = setTimeout(() => {
-        setShow(false);
-        setTimeout(onClose, 300);
-      }, 4000);
+    if (!achievement) return;
 
-      return () => clearTimeout(timer);
-    }
+    setShow(true);
+    const timer = setTimeout(() => {
+      setShow(false);
+      setTimeout(onClose, 300);
+    }, 4000);
+
+    return () => clearTimeout(timer);
   }, [achievement, onClose]);
 
   if (!achievement) return null;
