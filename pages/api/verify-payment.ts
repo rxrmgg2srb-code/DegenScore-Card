@@ -69,11 +69,11 @@ export default async function handler(
     let treasuryIndex = -1;
 
     for (let i = 0; i < accountKeys.length; i++) {
-      const account = accountKeys[i];
-      if (account.equals(senderPubkey)) {
+      const account = accountKeys.get(i);
+      if (account && account.equals(senderPubkey)) {
         senderIndex = i;
       }
-      if (account.equals(treasuryPubkey)) {
+      if (account && account.equals(treasuryPubkey)) {
         treasuryIndex = i;
       }
     }
@@ -99,10 +99,10 @@ export default async function handler(
     }
 
     const senderBalanceChange =
-      (txInfo.meta.postBalances[senderIndex] - txInfo.meta.preBalances[senderIndex]) / LAMPORTS_PER_SOL;
+      (txInfo.meta!.postBalances[senderIndex]! - txInfo.meta!.preBalances[senderIndex]!) / LAMPORTS_PER_SOL;
 
     const treasuryBalanceChange =
-      (txInfo.meta.postBalances[treasuryIndex] - txInfo.meta.preBalances[treasuryIndex]) / LAMPORTS_PER_SOL;
+      (txInfo.meta!.postBalances[treasuryIndex]! - txInfo.meta!.preBalances[treasuryIndex]!) / LAMPORTS_PER_SOL;
 
     // Sender should have LOST at least MINT_PRICE_SOL (negative change)
     // Treasury should have GAINED at least MINT_PRICE_SOL (positive change)
@@ -135,7 +135,6 @@ export default async function handler(
       });
     }
 
-    const validPayment = true;
     const paidAmount = treasuryReceivedAmount;
 
     console.log(`✅ Valid payment received: ${paidAmount} SOL`);

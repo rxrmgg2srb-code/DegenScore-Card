@@ -27,7 +27,7 @@ export default async function handler(
     const authResult = verifySessionToken(token);
 
     if (!authResult.valid) {
-      logger.warn('Invalid authentication token for unfollow:', authResult.error);
+      logger.warn('Invalid authentication token for unfollow:', { error: authResult.error });
       return res.status(401).json({ error: 'Invalid or expired authentication token' });
     }
 

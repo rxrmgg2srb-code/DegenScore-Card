@@ -24,8 +24,7 @@ export default async function handler(
       displayName,
       twitter,
       telegram,
-      profileImage,
-      paymentWallet
+      profileImage
     } = req.body;
 
     // Validate wallet address
@@ -43,7 +42,7 @@ export default async function handler(
     const authResult = verifySessionToken(token);
 
     if (!authResult.valid) {
-      logger.warn('Invalid authentication token for profile update:', authResult.error);
+      logger.warn('Invalid authentication token for profile update:', { error: authResult.error });
       return res.status(401).json({ error: 'Invalid or expired authentication token' });
     }
 
@@ -55,7 +54,7 @@ export default async function handler(
       return res.status(403).json({ error: 'Not authorized to update this profile' });
     }
 
-    logger.debug('Updating profile for:', walletAddress);
+    logger.debug('Updating profile for:', { walletAddress });
 
     // Sanitize user inputs to prevent XSS
     const sanitizedData = {
@@ -75,7 +74,7 @@ export default async function handler(
       },
     });
 
-    logger.info('Profile updated for wallet:', walletAddress);
+    logger.info('Profile updated for wallet:', { walletAddress });
 
     res.status(200).json({
       success: true,

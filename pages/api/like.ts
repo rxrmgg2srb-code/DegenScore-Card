@@ -21,7 +21,7 @@ export default async function handler(
   try {
     const { cardId, increment } = req.body;
 
-    logger.debug('Like request - cardId:', cardId, 'increment:', increment);
+    logger.debug('Like request:', { cardId, increment });
 
     // SECURITY: Require authentication to prevent spam
     const authHeader = req.headers.authorization;
@@ -33,7 +33,7 @@ export default async function handler(
     const authResult = verifySessionToken(token);
 
     if (!authResult.valid) {
-      logger.warn('Invalid authentication token for like:', authResult.error);
+      logger.warn('Invalid authentication token for like:', { error: authResult.error });
       return res.status(401).json({ error: 'Invalid or expired authentication token' });
     }
 
@@ -72,7 +72,7 @@ export default async function handler(
       }
     });
 
-    logger.debug('Likes updated for card:', cardId, 'new count:', updatedCard.likes);
+    logger.debug('Likes updated for card:', { cardId, newCount: updatedCard.likes });
 
     res.status(200).json({ success: true, likes: updatedCard.likes });
   } catch (error: any) {
