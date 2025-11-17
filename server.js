@@ -14,6 +14,7 @@ const dev = process.env.NODE_ENV !== 'production';
 
 console.log(`🚀 Starting Next.js server on ${host}:${port}...`);
 console.log(`📊 Environment: ${dev ? 'development' : 'production'}`);
+console.log(`📝 Database configured: ${!!process.env.DATABASE_URL}`);
 
 // Initialize Next.js app
 const app = next({ dev, hostname: host, port });
