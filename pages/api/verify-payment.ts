@@ -17,7 +17,7 @@ export default async function handler(
   }
 
   // Apply payment rate limiting to prevent abuse
-  if (!(await paymentRateLimit(req, res)) {
+  if (!(await paymentRateLimit(req, res))) {
     return;
   }
 

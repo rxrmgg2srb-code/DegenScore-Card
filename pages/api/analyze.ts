@@ -14,7 +14,7 @@ export default async function handler(
   }
 
   // Apply strict rate limiting (expensive operation)
-  if (!(await strictRateLimit(req, res)) {
+  if (!(await strictRateLimit(req, res))) {
     return;
   }
 

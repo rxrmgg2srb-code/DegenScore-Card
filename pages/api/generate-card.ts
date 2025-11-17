@@ -4,11 +4,11 @@ import { isValidSolanaAddress } from '../../lib/services/helius';
 import { prisma } from '../../lib/prisma';
 import { cacheGet, cacheSet, CacheKeys } from '../../lib/cache/redis';
 import {
-import { logger } from '@/lib/logger';
   uploadImage,
   generateCardImageKey,
   isStorageEnabled,
 } from '../../lib/storage/r2';
+import { logger } from '@/lib/logger';
 
 // Función auxiliar para formatear SOL
 function formatSOL(amount: number, decimals: number = 2): string {

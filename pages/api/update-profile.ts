@@ -14,7 +14,7 @@ export default async function handler(
   }
 
   // Apply rate limiting
-  if (!(await rateLimit(req, res)) {
+  if (!(await rateLimit(req, res))) {
     return;
   }
 
