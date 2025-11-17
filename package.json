@@ -9,7 +9,7 @@
     "dev": "next dev",
     "build": "node generate-prisma.js && next build",
     "build:render": "node generate-prisma.js && next build",
-    "start": "next start",
+    "start": "next start -H 0.0.0.0 -p ${PORT:-10000}",
     "lint": "next lint",
     "lint:fix": "next lint --fix",
     "format": "prettier --write \"**/*.{js,jsx,ts,tsx,json,css,md}\"",
