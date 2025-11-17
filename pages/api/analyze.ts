@@ -52,7 +52,7 @@ export default async function handler(
       throw error;
     }
 
-    logger.info('Analysis complete for wallet:', walletAddress);
+    logger.info('Analysis complete for wallet:', { walletAddress });
 
     // 2. Generar badges usando la función encapsulada (MÁS LIMPIO)
     const badges = generateBadges(metrics); // <--- LÓGICA EXTRAÍDA AQUÍ
