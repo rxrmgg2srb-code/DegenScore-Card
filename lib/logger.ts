@@ -1,5 +1,3 @@
-import { logger } from '@/lib/logger';
-
 /**
  * 📝 Professional Logging System for DegenScore
  *
@@ -82,13 +80,13 @@ class Logger {
       const emoji = this.getLevelEmoji(level);
       const color = this.getLevelColor(level);
 
-      logger.info(
+      console.log(
         `${emoji} [${timestamp}] ${color}${level.toUpperCase()}${this.getResetColor()}: ${message}`,
         context ? context : ''
       );
     } else {
       // In production: structured JSON logs
-      logger.info(JSON.stringify(logData));
+      console.log(JSON.stringify(logData));
     }
   }
 

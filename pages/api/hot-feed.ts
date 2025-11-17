@@ -98,7 +98,9 @@ export default async function handler(
     });
 
   } catch (error) {
-    logger.error('❌ Error fetching hot feed:', error);
+    logger.error('❌ Error fetching hot feed:', error instanceof Error ? error : undefined, {
+      error: String(error),
+    });
     res.status(500).json({
       error: 'Failed to fetch hot feed',
       details: error instanceof Error ? error.message : 'Unknown error',

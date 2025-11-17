@@ -75,7 +75,9 @@ export default async function handler(
     });
 
   } catch (error: any) {
-    logger.error('Error listing followers:', error);
+    logger.error('Error listing followers:', error instanceof Error ? error : undefined, {
+      error: String(error),
+    });
 
     const errorMessage = process.env.NODE_ENV === 'development'
       ? error.message

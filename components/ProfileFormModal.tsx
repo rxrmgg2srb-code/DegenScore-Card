@@ -71,7 +71,9 @@ export default function ProfileFormModal({ isOpen, onClose, onSubmit, walletAddr
         alert('Failed to upload image');
       }
     } catch (error) {
-      logger.error('Error uploading image:', error);
+      logger.error('Error uploading image', error instanceof Error ? error : undefined, {
+        error: String(error),
+      });
       alert('Error uploading image');
     } finally {
       setIsUploading(false);

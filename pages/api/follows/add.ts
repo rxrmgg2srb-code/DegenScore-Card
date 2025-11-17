@@ -93,7 +93,9 @@ export default async function handler(
     });
 
   } catch (error: any) {
-    logger.error('Error adding follow:', error);
+    logger.error('Error adding follow:', error instanceof Error ? error : undefined, {
+      error: String(error),
+    });
 
     // Handle unique constraint violation
     if (error.code === 'P2002') {

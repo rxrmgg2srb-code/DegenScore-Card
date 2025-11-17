@@ -115,7 +115,9 @@ export async function checkRateLimitPersistent(
       resetAt: new Date(now.getTime() + windowMs),
     };
   } catch (error) {
-    logger.error('Rate limit check failed:', error);
+    logger.error('Rate limit check failed', error instanceof Error ? error : undefined, {
+      error: String(error),
+    });
     // On error, allow the request but log it
     return {
       allowed: true,

@@ -86,7 +86,9 @@ export default async function handler(
     res.setHeader('Cache-Control', 'public, max-age=300'); // 5 minutos
     res.status(200).json(result);
   } catch (error: any) {
-    logger.error('Error fetching leaderboard:', error);
+    logger.error('Error fetching leaderboard:', error instanceof Error ? error : undefined, {
+      error: String(error),
+    });
 
     const errorMessage = process.env.NODE_ENV === 'development'
       ? error.message

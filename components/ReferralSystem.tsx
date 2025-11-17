@@ -33,7 +33,9 @@ export default function ReferralSystem({ walletAddress }: ReferralSystemProps) {
         setStats(data.stats);
       }
     } catch (error) {
-      logger.error('Error fetching referral stats:', error);
+      logger.error('Error fetching referral stats', error instanceof Error ? error : undefined, {
+        error: String(error),
+      });
     } finally {
       setLoading(false);
     }

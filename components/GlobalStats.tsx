@@ -32,7 +32,9 @@ export function GlobalStats({ className = '' }: GlobalStatsProps) {
           });
         }
       } catch (error) {
-        logger.error('Error fetching stats:', error);
+        logger.error('Error fetching stats', error instanceof Error ? error : undefined, {
+          error: String(error),
+        });
         // Fallback values
         setStats({
           onlineUsers: 127,

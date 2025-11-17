@@ -76,7 +76,9 @@ export default async function handler(
 
     res.status(200).json({ success: true, likes: updatedCard.likes });
   } catch (error: any) {
-    logger.error('Error updating likes:', error);
+    logger.error('Error updating likes:', error instanceof Error ? error : undefined, {
+      error: String(error),
+    });
 
     const errorMessage = process.env.NODE_ENV === 'development'
       ? error.message

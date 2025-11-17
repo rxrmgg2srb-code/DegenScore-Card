@@ -142,7 +142,9 @@ export default async function handler(
 
     res.status(200).json(response);
   } catch (error: any) {
-    logger.error('Error checking referral rewards:', error);
+    logger.error('Error checking referral rewards:', error instanceof Error ? error : undefined, {
+      error: String(error),
+    });
     res.status(500).json({
       error: process.env.NODE_ENV === 'development'
         ? error.message

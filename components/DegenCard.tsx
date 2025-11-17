@@ -148,7 +148,9 @@ export default function DegenCard() {
       
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
-      logger.error('Error generating card:', err);
+      logger.error('Error generating card', err instanceof Error ? err : undefined, {
+        error: String(err),
+      });
       setAnalyzing(false);
     } finally {
       setLoading(false);
@@ -206,7 +208,7 @@ export default function DegenCard() {
 
   const handleProfileSubmit = async (profileData: ProfileData) => {
     try {
-      logger.info('📝 Saving profile for:', walletAddress);
+      logger.info('📝 Saving profile for:', { walletAddress });
       const response = await fetch('/api/update-profile', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -244,7 +246,9 @@ export default function DegenCard() {
       // ❌ ELIMINADO: downloadPremiumCard(); 
       
     } catch (error) {
-      logger.error('Error:', error);
+      logger.error('Payment error', error instanceof Error ? error : undefined, {
+        error: String(error),
+      });
       alert(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };

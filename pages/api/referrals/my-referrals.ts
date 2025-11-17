@@ -59,7 +59,9 @@ export default async function handler(
     });
 
   } catch (error) {
-    logger.error('Error fetching referrals:', error);
+    logger.error('Error fetching referrals:', error instanceof Error ? error : undefined, {
+      error: String(error),
+    });
     res.status(500).json({
       error: 'Failed to fetch referrals'
     });

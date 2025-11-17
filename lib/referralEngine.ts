@@ -167,7 +167,9 @@ export async function trackReferral(
 
     return { success: true };
   } catch (error) {
-    logger.error('Error tracking referral:', error);
+    logger.error('Error tracking referral', error instanceof Error ? error : undefined, {
+      error: String(error),
+    });
     return { success: false, error: 'Failed to track referral' };
   }
 }
@@ -247,7 +249,9 @@ export async function distributeReferralRewards(
       );
     }
   } catch (error) {
-    logger.error('Error distributing referral rewards:', error);
+    logger.error('Error distributing referral rewards', error instanceof Error ? error : undefined, {
+      error: String(error),
+    });
   }
 }
 
@@ -352,7 +356,9 @@ export async function claimReferralRewards(
     // Schema doesn't have rewardsClaimed field, skip update for now
     return { success: true, amount: stats.pendingRewards };
   } catch (error) {
-    logger.error('Error claiming rewards:', error);
+    logger.error('Error claiming rewards', error instanceof Error ? error : undefined, {
+      error: String(error),
+    });
     return { success: false, amount: 0, error: 'Failed to claim rewards' };
   }
 }

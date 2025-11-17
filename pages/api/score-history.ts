@@ -115,7 +115,9 @@ export default async function handler(
     });
 
   } catch (error: any) {
-    logger.error('Error fetching score history:', error);
+    logger.error('Error fetching score history:', error instanceof Error ? error : undefined, {
+      error: String(error),
+    });
 
     const errorMessage = process.env.NODE_ENV === 'development'
       ? error.message

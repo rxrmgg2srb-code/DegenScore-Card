@@ -45,7 +45,9 @@ export default async function handler(
       message: 'Referral tracked successfully',
     });
   } catch (error) {
-    logger.error('Error in track referral API:', error);
+    logger.error('Error in track referral API:', error instanceof Error ? error : undefined, {
+      error: String(error),
+    });
     res.status(500).json({
       error: 'Failed to track referral',
       details: error instanceof Error ? error.message : 'Unknown error',

@@ -68,7 +68,9 @@ export function verifyWalletSignature(
 
     return verified;
   } catch (error) {
-    logger.error('Signature verification failed:', error);
+    logger.error('Signature verification failed', error instanceof Error ? error : undefined, {
+      error: String(error),
+    });
     return false;
   }
 }

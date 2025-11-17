@@ -34,8 +34,8 @@ export default async function handler(
     });
 
     logger.info('✅ Database sync completed');
-    logger.info('STDOUT:', stdout);
-    if (stderr) logger.info('STDERR:', stderr);
+    logger.info('STDOUT:', { stdout });
+    if (stderr) logger.info('STDERR:', { stderr });
 
     return res.status(200).json({
       success: true,
@@ -44,7 +44,9 @@ export default async function handler(
       stderr: stderr || null,
     });
   } catch (error: any) {
-    logger.error('❌ Database sync failed:', error);
+    logger.error('❌ Database sync failed:', error instanceof Error ? error : undefined, {
+      error: String(error),
+    });
     return res.status(500).json({
       success: false,
       error: error.message,

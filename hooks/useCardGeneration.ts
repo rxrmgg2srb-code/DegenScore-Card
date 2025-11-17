@@ -180,7 +180,9 @@ export function useCardGeneration() {
         analyzing: false,
         loading: false,
       }));
-      logger.error('Error generating card:', err);
+      logger.error('Error generating card', err instanceof Error ? err : undefined, {
+        error: String(err),
+      });
     } finally {
       setState(prev => ({ ...prev, loading: false }));
     }

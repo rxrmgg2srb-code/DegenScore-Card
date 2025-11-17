@@ -37,7 +37,9 @@ export default function WeeklyChallengeBanner() {
         setChallengeData(data);
       }
     } catch (error) {
-      logger.error('Error fetching challenge:', error);
+      logger.error('Error fetching challenge', error instanceof Error ? error : undefined, {
+        error: String(error),
+      });
     } finally {
       setLoading(false);
     }

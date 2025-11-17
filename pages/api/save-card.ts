@@ -96,7 +96,9 @@ export default async function handler(
 
     res.status(200).json({ success: true, card });
   } catch (error: any) {
-    logger.error('Error saving card:', error);
+    logger.error('Error saving card:', error instanceof Error ? error : undefined, {
+      error: String(error),
+    });
 
     const errorMessage = process.env.NODE_ENV === 'development'
       ? error.message

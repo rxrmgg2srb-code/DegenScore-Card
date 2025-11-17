@@ -75,7 +75,9 @@ export default async function handler(
     });
 
   } catch (error: any) {
-    logger.error('Error listing follows:', error);
+    logger.error('Error listing follows:', error instanceof Error ? error : undefined, {
+      error: String(error),
+    });
 
     const errorMessage = process.env.NODE_ENV === 'development'
       ? error.message

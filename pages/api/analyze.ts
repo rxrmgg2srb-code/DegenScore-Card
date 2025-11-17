@@ -92,7 +92,9 @@ export default async function handler(
     res.status(200).json(analysisData);
 
   } catch (error: any) {
-    logger.error('Error analyzing wallet:', error);
+    logger.error('Error analyzing wallet:', error instanceof Error ? error : undefined, {
+      error: String(error),
+    });
 
     // Don't expose internal error details in production
     const errorMessage = process.env.NODE_ENV === 'development'

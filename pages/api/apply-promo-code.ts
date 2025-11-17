@@ -140,7 +140,9 @@ export default async function handler(
     });
 
   } catch (error) {
-    logger.error('❌ Error applying promo code:', error);
+    logger.error('❌ Error applying promo code', error instanceof Error ? error : undefined, {
+      error: String(error),
+    });
 
     // Handle specific error messages
     if (error instanceof Error) {

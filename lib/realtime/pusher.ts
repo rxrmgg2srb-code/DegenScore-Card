@@ -74,7 +74,7 @@ export async function triggerEvent(
   data: any
 ): Promise<boolean> {
   if (!isPusherEnabled || !pusherServer) {
-    logger.warn('Pusher not configured, skipping event:', event);
+    logger.warn('Pusher not configured, skipping event:', { event });
     return false;
   }
 
@@ -82,7 +82,9 @@ export async function triggerEvent(
     await pusherServer.trigger(channel, event, data);
     return true;
   } catch (error) {
-    logger.error('Pusher trigger error:', error);
+    logger.error('Pusher trigger error', error instanceof Error ? error : undefined, {
+      error: String(error),
+    });
     return false;
   }
 }
@@ -107,7 +109,9 @@ export async function triggerBatch(
     await pusherServer.triggerBatch(pusherBatch);
     return true;
   } catch (error) {
-    logger.error('Pusher batch trigger error:', error);
+    logger.error('Pusher batch trigger error', error instanceof Error ? error : undefined, {
+      error: String(error),
+    });
     return false;
   }
 }

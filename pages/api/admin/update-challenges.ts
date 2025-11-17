@@ -60,7 +60,9 @@ export default async function handler(
       })),
     });
   } catch (error: any) {
-    logger.error('❌ Error updating challenges:', error);
+    logger.error('❌ Error updating challenges:', error instanceof Error ? error : undefined, {
+      error: String(error),
+    });
     res.status(500).json({
       error: 'Failed to update challenges',
       details: process.env.NODE_ENV === 'development' ? error.message : undefined,

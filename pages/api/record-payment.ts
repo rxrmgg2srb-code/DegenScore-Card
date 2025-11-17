@@ -17,7 +17,7 @@ export default async function handler(
     logger.info('📥 Payment received:', { walletAddress, signature, amount });
 
     if (!walletAddress || !signature || !amount) {
-      logger.error('❌ Missing fields:', { walletAddress, signature, amount });
+      logger.error('❌ Missing fields', undefined, { walletAddress, signature, amount });
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
@@ -39,13 +39,15 @@ export default async function handler(
 
       // Verificar que la transacción fue exitosa
       if (tx.meta?.err) {
-        logger.error('❌ Transaction failed:', tx.meta.err);
+        logger.error('❌ Transaction failed', undefined, { transactionError: tx.meta.err });
         return res.status(400).json({ error: 'Transaction failed' });
       }
 
-      logger.info('✅ Transaction verified:', signature);
+      logger.info('✅ Transaction verified:', { signature });
     } catch (error) {
-      logger.error('❌ Error verifying transaction:', error);
+      logger.error('❌ Error verifying transaction:', error instanceof Error ? error : undefined, {
+      error: String(error),
+    });
       return res.status(400).json({ error: 'Failed to verify transaction' });
     }
 
@@ -59,7 +61,7 @@ export default async function handler(
       },
     });
 
-    logger.info('✅ Payment saved:', payment.id);
+    logger.info('✅ Payment saved:', { paymentId: payment.id });
 
     // Marcar la card como pagada
     await prisma.degenCard.update({
@@ -78,7 +80,9 @@ export default async function handler(
       payment,
     });
   } catch (error) {
-    logger.error('❌ Error recording payment:', error);
+    logger.error('❌ Error recording payment:', error instanceof Error ? error : undefined, {
+      error: String(error),
+    });
     res.status(500).json({
       error: 'Failed to record payment',
       details: error instanceof Error ? error.message : 'Unknown error',
