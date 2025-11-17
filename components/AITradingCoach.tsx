@@ -17,7 +17,7 @@ interface CoachAnalysis {
 }
 
 export default function AITradingCoach() {
-  const { publicKey, signMessage } = useWallet();
+  const { publicKey } = useWallet();
   const [analysis, setAnalysis] = useState<CoachAnalysis | null>(null);
   const [loading, setLoading] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
@@ -25,22 +25,24 @@ export default function AITradingCoach() {
   const [sessionToken, setSessionToken] = useState<string | null>(null);
 
   useEffect(() => {
-    if (publicKey && signMessage) {
+    if (publicKey) {
       generateToken();
     }
-  }, [publicKey, signMessage]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [publicKey]);
 
   useEffect(() => {
     if (sessionToken) {
       fetchAnalysis();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionToken]);
 
   const generateToken = async () => {
-    if (!publicKey || !signMessage) return;
+    if (!publicKey) return;
 
     try {
-      const token = await generateSessionToken(publicKey, signMessage);
+      const token = generateSessionToken(publicKey.toString());
       setSessionToken(token);
     } catch (error) {
       logger.error('Failed to generate session token:', error);

@@ -61,7 +61,7 @@ export default function WhaleRadar() {
     if (!publicKey || !signMessage) return;
 
     try {
-      const token = await generateSessionToken(publicKey, signMessage);
+      const token = generateSessionToken(publicKey.toString());
       setSessionToken(token);
     } catch (error) {
       logger.error('Failed to generate session token:', error);
