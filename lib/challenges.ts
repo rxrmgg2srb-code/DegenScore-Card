@@ -111,8 +111,8 @@ export async function getDailyChallenges(walletAddress?: string): Promise<Challe
       rewardBadge: c.rewardBadge,
       title: c.title,
       description: c.description,
-      progress: walletAddress && c.completions?.[0]?.progress || 0,
-      completed: walletAddress && c.completions?.[0]?.completed || false,
+      progress: walletAddress && ('completions' in c) && c.completions?.[0]?.progress || 0,
+      completed: walletAddress && ('completions' in c) && c.completions?.[0]?.completed || false,
     }));
   } catch (error: any) {
     logger.error('Error getting daily challenges:', error);
