@@ -81,28 +81,41 @@ export async function getDailyChallenges(walletAddress?: string): Promise<Challe
     today.setHours(0, 0, 0, 0);
 
     // Get challenges for today
-    let challenges = await prisma.dailyChallenge.findMany({
+    const challenges = await prisma.dailyChallenge.findMany({
       where: {
         date: today,
       },
-      include: walletAddress
-        ? {
-            completions: {
-              where: {
-                walletAddress,
-              },
+      ...(walletAddress && {
+        include: {
+          completions: {
+            where: {
+              walletAddress,
             },
-          }
-        : undefined,
+          },
+        },
+      }),
     });
 
     // If no challenges exist for today, create them
     if (challenges.length === 0) {
-      challenges = await createDailyChallenges(today);
+      const created = await createDailyChallenges(today);
+      // Return without completions since they're new
+      return created.map((c) => ({
+        id: c.id,
+        date: c.date,
+        challengeType: c.challengeType,
+        targetValue: c.targetValue,
+        rewardXP: c.rewardXP,
+        rewardBadge: c.rewardBadge,
+        title: c.title,
+        description: c.description,
+        progress: 0,
+        completed: false,
+      }));
     }
 
     // Format response
-    return challenges.map((c) => ({
+    return challenges.map((c: any) => ({
       id: c.id,
       date: c.date,
       challengeType: c.challengeType,
@@ -111,8 +124,8 @@ export async function getDailyChallenges(walletAddress?: string): Promise<Challe
       rewardBadge: c.rewardBadge,
       title: c.title,
       description: c.description,
-      progress: walletAddress && ('completions' in c) && c.completions?.[0]?.progress || 0,
-      completed: walletAddress && ('completions' in c) && c.completions?.[0]?.completed || false,
+      progress: c.completions?.[0]?.progress ?? 0,
+      completed: c.completions?.[0]?.completed ?? false,
     }));
   } catch (error: any) {
     logger.error('Error getting daily challenges:', error);
@@ -300,7 +313,9 @@ function shuffleArray<T>(array: T[]): T[] {
   const arr = [...array];
   for (let i = arr.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
-    [arr[i], arr[j]] = [arr[j], arr[i]];
+    const temp = arr[i]!;
+    arr[i] = arr[j]!;
+    arr[j] = temp;
   }
   return arr;
 }

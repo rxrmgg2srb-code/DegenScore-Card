@@ -21,7 +21,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // Get active traders (traded in last 7 days)
     const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
-    const activeWallets = await prisma.trade.findMany({
+    const activeWallets = await prisma.hotTrade.findMany({
       where: {
         timestamp: {
           gte: sevenDaysAgo,
