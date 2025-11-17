@@ -6,6 +6,7 @@
  */
 
 import { prisma } from './prisma';
+import { logger } from './logger';
 
 export interface FlashSale {
   id: string;
@@ -89,8 +90,8 @@ export async function getActiveFlashSales(): Promise<FlashSale[]> {
       if (!sale.maxRedemptions) return true;
       return sale.currentRedemptions < sale.maxRedemptions;
     }) as FlashSale[];
-  } catch (error) {
-    console.error('Error fetching active flash sales:', error);
+  } catch (error: any) {
+    logger.error('Error fetching active flash sales:', error);
     return [];
   }
 }
@@ -124,8 +125,8 @@ export async function createFlashSale(config: FlashSaleConfig): Promise<FlashSal
     });
 
     return sale as FlashSale;
-  } catch (error) {
-    console.error('Error creating flash sale:', error);
+  } catch (error: any) {
+    logger.error('Error creating flash sale:', error);
     return null;
   }
 }
@@ -189,8 +190,8 @@ export async function redeemFlashSale(
     });
 
     return { success: true, finalPrice: sale.salePrice };
-  } catch (error) {
-    console.error('Error redeeming flash sale:', error);
+  } catch (error: any) {
+    logger.error('Error redeeming flash sale:', error);
     return { success: false, error: 'Failed to redeem flash sale' };
   }
 }
@@ -213,8 +214,8 @@ export async function deactivateExpiredSales(): Promise<number> {
     });
 
     return result.count;
-  } catch (error) {
-    console.error('Error deactivating expired sales:', error);
+  } catch (error: any) {
+    logger.error('Error deactivating expired sales:', error);
     return 0;
   }
 }
@@ -248,8 +249,8 @@ export async function getFlashSaleStats(saleId: string) {
       isExpired: now > sale.endTime,
       isSoldOut: sale.maxRedemptions ? sale.currentRedemptions >= sale.maxRedemptions : false,
     };
-  } catch (error) {
-    console.error('Error getting flash sale stats:', error);
+  } catch (error: any) {
+    logger.error('Error getting flash sale stats:', error);
     return null;
   }
 }
@@ -262,13 +263,18 @@ export function getRecommendedFlashSale(userTier?: string): FlashSaleConfig {
   const userTierValue = tierPriority[userTier as keyof typeof tierPriority] ?? 999;
 
   // Find the best sale for user's tier
-  const bestSale = FLASH_SALE_PRESETS.filter(sale => {
+  const filteredSales = FLASH_SALE_PRESETS.filter(sale => {
     if (!sale.tier) return true;
     const saleTierValue = tierPriority[sale.tier];
     return saleTierValue >= userTierValue;
-  }).sort((a, b) => b.discountPercent - a.discountPercent)[0];
+  }).sort((a, b) => b.discountPercent - a.discountPercent);
 
-  return bestSale || FLASH_SALE_PRESETS[0];
+  // Return best sale or fallback to first preset (guaranteed to exist)
+  if (filteredSales.length > 0) {
+    return filteredSales[0]!;
+  }
+
+  return FLASH_SALE_PRESETS[0]!;
 }
 
 export { FLASH_SALE_PRESETS };
