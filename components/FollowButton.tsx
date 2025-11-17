@@ -43,7 +43,7 @@ export default function FollowButton({
       const token = generateSessionToken(publicKey.toBase58());
       setSessionToken(token);
     } catch (error) {
-      logger.error('Failed to generate session token:', error);
+      logger.error('Failed to generate session token:', error as Error);
     }
   };
 
@@ -64,7 +64,7 @@ export default function FollowButton({
         setFollowingCount(data.counts.following);
       }
     } catch (error) {
-      logger.error('Error checking follow status:', error);
+      logger.error('Error checking follow status:', error as Error);
     }
   };
 

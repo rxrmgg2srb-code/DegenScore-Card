@@ -49,7 +49,7 @@ export default function NotificationSettings() {
       const token = generateSessionToken(publicKey.toBase58());
       setSessionToken(token);
     } catch (error) {
-      logger.error('Failed to generate session token:', error);
+      logger.error('Failed to generate session token:', error as Error);
       toast.error('Failed to authenticate');
     }
   };
