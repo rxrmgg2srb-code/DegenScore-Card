@@ -1,5 +1,6 @@
 import Pusher from 'pusher';
 import PusherClient from 'pusher-js';
+import { logger } from '@/lib/logger';
 
 // Pusher gratis: 200k mensajes/día, 100 conexiones concurrentes
 // Si excede: Ably (6M mensajes/mes gratis, 200 conexiones concurrentes)
@@ -73,7 +74,7 @@ export async function triggerEvent(
   data: any
 ): Promise<boolean> {
   if (!isPusherEnabled || !pusherServer) {
-    console.warn('Pusher not configured, skipping event:', event);
+    logger.warn('Pusher not configured, skipping event:', event);
     return false;
   }
 
@@ -81,7 +82,7 @@ export async function triggerEvent(
     await pusherServer.trigger(channel, event, data);
     return true;
   } catch (error) {
-    console.error('Pusher trigger error:', error);
+    logger.error('Pusher trigger error:', error);
     return false;
   }
 }
@@ -106,7 +107,7 @@ export async function triggerBatch(
     await pusherServer.triggerBatch(pusherBatch);
     return true;
   } catch (error) {
-    console.error('Pusher batch trigger error:', error);
+    logger.error('Pusher batch trigger error:', error);
     return false;
   }
 }

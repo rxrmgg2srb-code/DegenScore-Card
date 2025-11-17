@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import CountUp from 'react-countup';
 import toast from 'react-hot-toast';
+import { logger } from '@/lib/logger';
 
 interface ReferralStats {
   referralCode: string;
@@ -32,7 +33,7 @@ export default function ReferralSystem({ walletAddress }: ReferralSystemProps) {
         setStats(data.stats);
       }
     } catch (error) {
-      console.error('Error fetching referral stats:', error);
+      logger.error('Error fetching referral stats:', error);
     } finally {
       setLoading(false);
     }

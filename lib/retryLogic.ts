@@ -1,3 +1,5 @@
+import { logger } from '@/lib/logger';
+
 /**
  * Robust retry logic for API calls
  * Handles network failures, rate limiting, and transient errors
@@ -72,7 +74,7 @@ export async function retry<T>(
         opts.backoffMultiplier
       );
 
-      console.warn(`[Retry] Attempt ${attempt + 1}/${opts.maxRetries} failed, retrying in ${Math.round(delay)}ms...`, {
+      logger.warn(`[Retry] Attempt ${attempt + 1}/${opts.maxRetries} failed, retrying in ${Math.round(delay)}ms...`, {
         error: lastError.message,
       });
 
@@ -133,7 +135,7 @@ export class CircuitBreaker {
       // Check if we should transition to HALF_OPEN
       if (Date.now() - this.lastFailureTime > this.timeout) {
         this.state = 'HALF_OPEN';
-        console.log('[CircuitBreaker] Transitioning to HALF_OPEN state');
+        logger.info('[CircuitBreaker] Transitioning to HALF_OPEN state');
       } else {
         throw new Error('Circuit breaker is OPEN');
       }
@@ -153,7 +155,7 @@ export class CircuitBreaker {
     this.failures = 0;
     if (this.state === 'HALF_OPEN') {
       this.state = 'CLOSED';
-      console.log('[CircuitBreaker] Transitioning to CLOSED state');
+      logger.info('[CircuitBreaker] Transitioning to CLOSED state');
     }
   }
 
@@ -163,7 +165,7 @@ export class CircuitBreaker {
 
     if (this.failures >= this.threshold) {
       this.state = 'OPEN';
-      console.error(`[CircuitBreaker] Transitioning to OPEN state (${this.failures} failures)`);
+      logger.error(`[CircuitBreaker] Transitioning to OPEN state (${this.failures} failures)`);
     }
   }
 

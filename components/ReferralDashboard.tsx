@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useWallet } from '@solana/wallet-adapter-react';
 import toast from 'react-hot-toast';
+import { logger } from '@/lib/logger';
 
 interface ReferralStats {
   totalReferrals: number;
@@ -41,7 +42,7 @@ export default function ReferralDashboard() {
         setStats(data.stats);
       }
     } catch (error) {
-      console.error('Error fetching referral stats:', error);
+      logger.error('Error fetching referral stats:', error);
     } finally {
       setLoading(false);
     }

@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { prisma } from '../../lib/prisma';
 import { getWalletTransactions } from '../../lib/services/helius'; // <--- RUTA CORREGIDA
+import { logger } from '@/lib/logger';
 
 export default async function handler(
   req: NextApiRequest,
@@ -13,7 +14,7 @@ export default async function handler(
   }
 
   try {
-    console.log('🔥 Starting Hot Wallet Tracker...');
+    logger.info('🔥 Starting Hot Wallet Tracker...');
 
     // 1. Obtener Top 10 wallets pagadas del leaderboard
     const topWallets = await prisma.degenCard.findMany({
@@ -27,14 +28,14 @@ export default async function handler(
       },
     });
 
-    console.log(`📊 Tracking ${topWallets.length} top wallets`);
+    logger.info(`📊 Tracking ${topWallets.length} top wallets`);
 
     let newTradesCount = 0;
 
     // 2. Para cada wallet, obtener sus últimas transacciones
     for (const wallet of topWallets) {
       try {
-        console.log(`🔍 Analyzing ${wallet.displayName || wallet.walletAddress}...`);
+        logger.info(`🔍 Analyzing ${wallet.displayName || wallet.walletAddress}...`);
 
         // Obtener últimas 20 transacciones
         const transactions = await getWalletTransactions(wallet.walletAddress, 20);
@@ -46,7 +47,7 @@ export default async function handler(
           tx.timestamp > sixHoursAgo
         );
 
-        console.log(`  Found ${recentSwaps.length} recent swaps`);
+        logger.info(`  Found ${recentSwaps.length} recent swaps`);
 
         // 3. Procesar cada swap
         for (const swap of recentSwaps) {
@@ -59,7 +60,7 @@ export default async function handler(
           });
 
           if (existing) {
-            console.log(`  ⏭️  Skip: Trade already tracked`);
+            logger.info(`  ⏭️  Skip: Trade already tracked`);
             continue;
           }
 
@@ -87,7 +88,7 @@ export default async function handler(
           }
 
           if (solAmount === 0 || !tokenMint) {
-            console.log(`  ⏭️  Skip: Invalid swap data`);
+            logger.info(`  ⏭️  Skip: Invalid swap data`);
             continue;
           }
 
@@ -107,19 +108,19 @@ export default async function handler(
           });
 
           newTradesCount++;
-          console.log(`  ✅ Saved ${type} of ${solAmount.toFixed(2)} SOL`);
+          logger.info(`  ✅ Saved ${type} of ${solAmount.toFixed(2)} SOL`);
         }
 
         // Delay para no saturar Helius
         await new Promise(resolve => setTimeout(resolve, 1000));
 
       } catch (error) {
-        console.error(`❌ Error analyzing ${wallet.walletAddress}:`, error);
+        logger.error(`❌ Error analyzing ${wallet.walletAddress}:`, error);
         continue;
       }
     }
 
-    console.log(`🎉 Tracking complete! ${newTradesCount} new trades saved`);
+    logger.info(`🎉 Tracking complete! ${newTradesCount} new trades saved`);
 
     // 5. Limpiar trades antiguos (más de 7 días)
     const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
@@ -129,7 +130,7 @@ export default async function handler(
       },
     });
 
-    console.log(`🗑️  Cleaned ${deleted.count} old trades`);
+    logger.info(`🗑️  Cleaned ${deleted.count} old trades`);
 
     res.status(200).json({
       success: true,
@@ -139,7 +140,7 @@ export default async function handler(
     });
 
   } catch (error) {
-    console.error('❌ Error in hot wallet tracker:', error);
+    logger.error('❌ Error in hot wallet tracker:', error);
     res.status(500).json({
       error: 'Failed to track hot wallets',
       details: error instanceof Error ? error.message : 'Unknown error',

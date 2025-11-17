@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { logger } from '@/lib/logger';
 
 interface ChallengeData {
   hasChallenge: boolean;
@@ -36,7 +37,7 @@ export default function WeeklyChallengeBanner() {
         setChallengeData(data);
       }
     } catch (error) {
-      console.error('Error fetching challenge:', error);
+      logger.error('Error fetching challenge:', error);
     } finally {
       setLoading(false);
     }

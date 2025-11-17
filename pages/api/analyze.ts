@@ -2,7 +2,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { calculateAdvancedMetrics } from '../../lib/metrics';
 import { generateBadges } from '../../lib/badges-generator';
 import { isValidSolanaAddress } from '../../lib/validation';
-import { strictRateLimit } from '../../lib/rateLimit';
+import { strictRateLimit } from '../../lib/rateLimitRedis';
 import { logger } from '../../lib/logger';
 
 export default async function handler(
@@ -14,7 +14,7 @@ export default async function handler(
   }
 
   // Apply strict rate limiting (expensive operation)
-  if (!strictRateLimit(req, res)) {
+  if (!(await strictRateLimit(req, res)) {
     return;
   }
 

@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { prisma } from '../../../lib/prisma';
+import { logger } from '@/lib/logger';
 
 const MAX_PREMIUM_SLOTS = parseInt(process.env.NEXT_PUBLIC_MAX_PREMIUM_SLOTS || '1000');
 
@@ -29,7 +30,7 @@ export default async function handler(
       percentageFilled: (premiumCount / MAX_PREMIUM_SLOTS) * 100,
     });
   } catch (error) {
-    console.error('Error getting slot count:', error);
+    logger.error('Error getting slot count:', error);
     res.status(500).json({
       error: 'Failed to get slot count',
       details: error instanceof Error ? error.message : 'Unknown error',

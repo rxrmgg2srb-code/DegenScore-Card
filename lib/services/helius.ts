@@ -1,5 +1,6 @@
 import { Connection, PublicKey } from '@solana/web3.js';
 import { retry, CircuitBreaker } from '../retryLogic';
+import { logger } from '@/lib/logger';
 
 const HELIUS_API_KEY = process.env.HELIUS_API_KEY || '';
 const HELIUS_RPC_URL = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_API_KEY}`;
@@ -105,7 +106,7 @@ export async function getWalletTransactions(
       maxRetries: 3,
       retryableStatusCodes: [408, 429, 500, 502, 503, 504],
       onRetry: (attempt, error) => {
-        console.warn(`[Helius] Retrying getWalletTransactions (attempt ${attempt}):`, error.message);
+        logger.warn(`[Helius] Retrying getWalletTransactions (attempt ${attempt}):`, error.message);
       }
     })
   );
@@ -160,11 +161,11 @@ export async function getTokenMetadata(mintAddresses: string[]): Promise<Map<str
       maxRetries: 3,
       retryableStatusCodes: [408, 429, 500, 502, 503, 504],
       onRetry: (attempt, error) => {
-        console.warn(`[Helius] Retrying getTokenMetadata (attempt ${attempt}):`, error.message);
+        logger.warn(`[Helius] Retrying getTokenMetadata (attempt ${attempt}):`, error.message);
       }
     })
   ).catch((error) => {
-    console.error('Error fetching token metadata after retries:', error);
+    logger.error('Error fetching token metadata after retries:', error);
     return new Map(); // Fallback to empty map on failure
   });
 }
@@ -184,11 +185,11 @@ export async function getWalletBalance(walletAddress: string): Promise<number> {
       maxRetries: 3,
       retryableStatusCodes: [408, 429, 500, 502, 503, 504],
       onRetry: (attempt, error) => {
-        console.warn(`[Helius] Retrying getWalletBalance (attempt ${attempt}):`, error.message);
+        logger.warn(`[Helius] Retrying getWalletBalance (attempt ${attempt}):`, error.message);
       }
     })
   ).catch((error) => {
-    console.error('Error fetching wallet balance after retries:', error);
+    logger.error('Error fetching wallet balance after retries:', error);
     return 0; // Fallback to 0 on failure
   });
 }

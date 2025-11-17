@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { prisma } from '../../lib/prisma';
+import { logger } from '@/lib/logger';
 
 export default async function handler(
   req: NextApiRequest,
@@ -35,7 +36,7 @@ export default async function handler(
             }
           });
           tier = 'PREMIUM';
-          console.log(`⬇️ Downgraded ${walletAddress} from PRO to PREMIUM (trial expired)`);
+          logger.info(`⬇️ Downgraded ${walletAddress} from PRO to PREMIUM (trial expired)`);
         } else if (!subscription.expiresAt || subscription.expiresAt > new Date()) {
           tier = subscription.tier;
         } else {
@@ -52,7 +53,7 @@ export default async function handler(
       }
     }
 
-    console.log(`📊 Fetching hot feed for tier: ${tier} (actual: ${actualTier})`);
+    logger.info(`📊 Fetching hot feed for tier: ${tier} (actual: ${actualTier})`);
 
     // 2. Calcular el delay según el tier (PLAN DE NEGOCIO)
     let delayHours = 72; // FREE: 72h delay
@@ -97,7 +98,7 @@ export default async function handler(
     });
 
   } catch (error) {
-    console.error('❌ Error fetching hot feed:', error);
+    logger.error('❌ Error fetching hot feed:', error);
     res.status(500).json({
       error: 'Failed to fetch hot feed',
       details: error instanceof Error ? error.message : 'Unknown error',

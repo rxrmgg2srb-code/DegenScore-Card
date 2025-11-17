@@ -38,8 +38,12 @@ export const RATE_LIMITS = {
     premium: { requests: 150, window: 60 }, // 150 requests per minute
   },
   'generate-card': {
-    free: { requests: 5, window: 60 }, // 5 requests per minute
+    free: { requests: 5, window: 60 }, // 5 requests per minute (expensive operation)
     premium: { requests: 50, window: 60 }, // 50 requests per minute
+  },
+  payment: {
+    free: { requests: 3, window: 60 }, // 3 payment attempts per minute
+    premium: { requests: 10, window: 60 }, // 10 payment attempts per minute
   },
   default: {
     free: { requests: 30, window: 60 }, // 30 requests per minute
@@ -350,4 +354,88 @@ export async function cleanupExpiredKeys(): Promise<number> {
     logger.error('Failed to cleanup expired keys', error as Error);
     return 0;
   }
+}
+
+// ============================================================================
+// SIMPLIFIED RATE LIMITING FUNCTIONS (Compatible with legacy API)
+// ============================================================================
+
+/**
+ * Simple rate limit function compatible with old in-memory API
+ * Usage: if (!await rateLimit(req, res)) return;
+ */
+export async function rateLimit(
+  req: NextApiRequest,
+  res: NextApiResponse,
+  options?: { endpoint?: string; maxRequests?: number; windowMs?: number }
+): Promise<boolean> {
+  const endpoint = options?.endpoint || 'default';
+  const identifier = getClientIdentifier(req);
+  const isPremium = await checkPremiumStatus(req);
+
+  const result = await checkRateLimit({
+    identifier,
+    endpoint,
+    isPremium,
+  });
+
+  // Set rate limit headers
+  res.setHeader('X-RateLimit-Limit', result.limit.toString());
+  res.setHeader('X-RateLimit-Remaining', result.remaining.toString());
+  res.setHeader('X-RateLimit-Reset', result.reset.toString());
+
+  if (!result.success) {
+    res.setHeader('Retry-After', Math.ceil((result.reset - Date.now()) / 1000).toString());
+    res.status(429).json({
+      error: 'Too Many Requests',
+      message: result.error,
+      limit: result.limit,
+      remaining: result.remaining,
+      reset: new Date(result.reset).toISOString(),
+    });
+    return false;
+  }
+
+  return true;
+}
+
+/**
+ * Strict rate limiting for expensive operations (analyze, generate-card)
+ * Lower limits than default
+ */
+export async function strictRateLimit(
+  req: NextApiRequest,
+  res: NextApiResponse
+): Promise<boolean> {
+  return rateLimit(req, res, { endpoint: 'generate-card' });
+}
+
+/**
+ * Payment rate limiting (prevents payment spam/attacks)
+ */
+export async function paymentRateLimit(
+  req: NextApiRequest,
+  res: NextApiResponse
+): Promise<boolean> {
+  return rateLimit(req, res, { endpoint: 'payment' });
+}
+
+/**
+ * Get client identifier from request
+ */
+function getClientIdentifier(req: NextApiRequest): string {
+  const forwarded = req.headers['x-forwarded-for'];
+  const realIp = req.headers['x-real-ip'];
+
+  if (forwarded) {
+    const ip = typeof forwarded === 'string' ? forwarded.split(',')[0] : forwarded[0];
+    return ip ? ip.trim() : 'unknown';
+  }
+
+  if (realIp) {
+    const ip = typeof realIp === 'string' ? realIp : realIp[0];
+    return ip || 'unknown';
+  }
+
+  return req.socket.remoteAddress || 'unknown';
 }

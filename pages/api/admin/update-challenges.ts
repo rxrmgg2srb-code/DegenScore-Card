@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { prisma } from '../../../lib/prisma';
 import { verifyAdminAuth } from '../../../lib/adminAuth';
+import { logger } from '@/lib/logger';
 
 export default async function handler(
   req: NextApiRequest,
@@ -20,8 +21,8 @@ export default async function handler(
       });
     }
 
-    console.log(`🔐 Admin authorized: ${authResult.wallet}`);
-    console.log('🔄 Updating weekly challenge prizes...');
+    logger.info(`🔐 Admin authorized: ${authResult.wallet}`);
+    logger.info('🔄 Updating weekly challenge prizes...');
 
     // Actualizar todos los challenges que tengan 3.0 SOL a 1.0 SOL
     const result = await prisma.weeklyChallenge.updateMany({
@@ -34,7 +35,7 @@ export default async function handler(
       },
     });
 
-    console.log(`✅ Updated ${result.count} challenge(s)`);
+    logger.info(`✅ Updated ${result.count} challenge(s)`);
 
     // Obtener challenges recientes
     const challenges = await prisma.weeklyChallenge.findMany({
@@ -59,7 +60,7 @@ export default async function handler(
       })),
     });
   } catch (error: any) {
-    console.error('❌ Error updating challenges:', error);
+    logger.error('❌ Error updating challenges:', error);
     res.status(500).json({
       error: 'Failed to update challenges',
       details: process.env.NODE_ENV === 'development' ? error.message : undefined,

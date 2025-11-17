@@ -4,6 +4,7 @@ import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import { Connection, PublicKey, Transaction, SystemProgram, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { PAYMENT_CONFIG } from '../lib/config';
 import CountUp from 'react-countup';
+import { logger } from '@/lib/logger';
 
 interface UpgradeModalProps {
   isOpen: boolean;
@@ -69,7 +70,7 @@ export default function UpgradeModal({ isOpen, onClose, onUpgrade, onSkip }: Upg
         throw new Error(data.error || 'Failed to apply promo code');
       }
 
-      console.log('✅ Promo code applied successfully!');
+      logger.info('✅ Promo code applied successfully!');
       setPromoSuccess(data.message);
 
       // Wait a bit to show success message, then trigger upgrade
@@ -78,7 +79,7 @@ export default function UpgradeModal({ isOpen, onClose, onUpgrade, onSkip }: Upg
       }, 1500);
 
     } catch (error: any) {
-      console.error('Promo code error:', error);
+      logger.error('Promo code error:', error);
       setPromoError(error.message || 'Invalid promo code');
     } finally {
       setIsApplyingPromo(false);
@@ -116,10 +117,10 @@ export default function UpgradeModal({ isOpen, onClose, onUpgrade, onSkip }: Upg
       // Enviar transacción
       const signature = await sendTransaction(transaction, connection);
 
-      console.log('Transaction sent:', signature);
+      logger.info('Transaction sent:', signature);
       await connection.confirmTransaction(signature, 'confirmed');
 
-      console.log('Payment confirmed!');
+      logger.info('Payment confirmed!');
 
       // Save payment to database
       const paymentResponse = await fetch('/api/record-payment', {
@@ -132,9 +133,9 @@ export default function UpgradeModal({ isOpen, onClose, onUpgrade, onSkip }: Upg
         }),
       });
 
-      console.log('📤 Payment response status:', paymentResponse.status);
+      logger.info('📤 Payment response status:', paymentResponse.status);
       const paymentData = await paymentResponse.json();
-      console.log('📤 Payment response data:', paymentData);
+      logger.info('📤 Payment response data:', paymentData);
 
       if (!paymentResponse.ok) {
         throw new Error(paymentData.error || 'Failed to record payment');
@@ -144,7 +145,7 @@ export default function UpgradeModal({ isOpen, onClose, onUpgrade, onSkip }: Upg
       onUpgrade();
       
     } catch (error: any) {
-      console.error('Payment error:', error);
+      logger.error('Payment error:', error);
       setPaymentError(error.message || 'Payment failed');
     } finally {
       setIsPaying(false);

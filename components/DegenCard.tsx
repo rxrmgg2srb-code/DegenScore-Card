@@ -6,6 +6,7 @@ import UpgradeModal from './UpgradeModal';
 import ShareModal from './ShareModal';
 import { Celebration } from './Celebration';
 import { AchievementPopup, achievements, Achievement } from './AchievementPopup';
+import { logger } from '@/lib/logger';
 
 export default function DegenCard() {
   const { publicKey, connected } = useWallet();
@@ -65,7 +66,7 @@ export default function DegenCard() {
       }
 
       const data = await analyzeResponse.json();
-      console.log('✅ Analysis complete:', data);
+      logger.info('✅ Analysis complete:', data);
       setAnalysisData(data);
 
       setAnalysisMessage('📊 Analysis complete!');
@@ -89,7 +90,7 @@ export default function DegenCard() {
       }
 
       const saveData = await saveResponse.json();
-      console.log('✅ Card saved:', saveData);
+      logger.info('✅ Card saved:', saveData);
       
       setAnalysisMessage('✅ Saved!');
       setAnalysisProgress(80);
@@ -147,7 +148,7 @@ export default function DegenCard() {
       
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
-      console.error('Error generating card:', err);
+      logger.error('Error generating card:', err);
       setAnalyzing(false);
     } finally {
       setLoading(false);
@@ -205,7 +206,7 @@ export default function DegenCard() {
 
   const handleProfileSubmit = async (profileData: ProfileData) => {
     try {
-      console.log('📝 Saving profile for:', walletAddress);
+      logger.info('📝 Saving profile for:', walletAddress);
       const response = await fetch('/api/update-profile', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -220,11 +221,11 @@ export default function DegenCard() {
         throw new Error(errorData.error || 'Failed to save profile');
       }
 
-      console.log('✅ Profile saved');
+      logger.info('✅ Profile saved');
 
       await new Promise(resolve => setTimeout(resolve, 1000));
 
-      console.log('🎨 Regenerating premium card...');
+      logger.info('🎨 Regenerating premium card...');
       const imageResponse = await fetch('/api/generate-card', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -235,7 +236,7 @@ export default function DegenCard() {
         const blob = await imageResponse.blob();
         const imageUrl = URL.createObjectURL(blob);
         setCardImage(imageUrl);
-        console.log('✅ Premium card generated!');
+        logger.info('✅ Premium card generated!');
       }
 
       setShowProfileModal(false);
@@ -243,7 +244,7 @@ export default function DegenCard() {
       // ❌ ELIMINADO: downloadPremiumCard(); 
       
     } catch (error) {
-      console.error('Error:', error);
+      logger.error('Error:', error);
       alert(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };

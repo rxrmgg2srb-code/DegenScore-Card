@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { getReferralStats } from '../../../lib/referralEngine';
 import { verifySessionToken } from '../../../lib/walletAuth';
+import { logger } from '@/lib/logger';
 
 export default async function handler(
   req: NextApiRequest,
@@ -31,7 +32,7 @@ export default async function handler(
       stats,
     });
   } catch (error) {
-    console.error('Error getting referral stats:', error);
+    logger.error('Error getting referral stats:', error);
     res.status(500).json({
       error: 'Failed to get referral stats',
       details: error instanceof Error ? error.message : 'Unknown error',

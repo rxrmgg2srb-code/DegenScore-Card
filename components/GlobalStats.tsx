@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import CountUp from 'react-countup';
+import { logger } from '@/lib/logger';
 
 interface GlobalStatsProps {
   className?: string;
@@ -31,7 +32,7 @@ export function GlobalStats({ className = '' }: GlobalStatsProps) {
           });
         }
       } catch (error) {
-        console.error('Error fetching stats:', error);
+        logger.error('Error fetching stats:', error);
         // Fallback values
         setStats({
           onlineUsers: 127,

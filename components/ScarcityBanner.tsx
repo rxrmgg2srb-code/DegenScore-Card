@@ -7,6 +7,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { logger } from '@/lib/logger';
 
 interface ScarcityBannerProps {
   maxSlots?: number;
@@ -39,7 +40,7 @@ export default function ScarcityBanner({
         setSlots(data.remaining);
       }
     } catch (error) {
-      console.error('Error fetching slot count:', error);
+      logger.error('Error fetching slot count:', error);
     }
   };
 

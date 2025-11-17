@@ -1,5 +1,6 @@
 import { prisma } from './prisma';
 import type { NextApiRequest, NextApiResponse } from 'next';
+import { logger } from '@/lib/logger';
 
 /**
  * Persistent rate limiting using database
@@ -114,7 +115,7 @@ export async function checkRateLimitPersistent(
       resetAt: new Date(now.getTime() + windowMs),
     };
   } catch (error) {
-    console.error('Rate limit check failed:', error);
+    logger.error('Rate limit check failed:', error);
     // On error, allow the request but log it
     return {
       allowed: true,

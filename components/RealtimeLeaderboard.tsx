@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { getPusherClient, PusherChannels, PusherEvents } from '../lib/realtime/pusher';
 import SkeletonLoader from './SkeletonLoader';
 import { motion, AnimatePresence } from 'framer-motion';
+import { logger } from '@/lib/logger';
 
 interface LeaderboardEntry {
   walletAddress: string;
@@ -23,7 +24,7 @@ export default function RealtimeLeaderboard() {
     // Configurar Pusher real-time
     const pusher = getPusherClient();
     if (!pusher) {
-      console.warn('Pusher not configured, falling back to polling');
+      logger.warn('Pusher not configured, falling back to polling');
       // Fallback: polling cada 30 segundos
       const interval = setInterval(fetchLeaderboard, 30000);
       return () => clearInterval(interval);
@@ -34,12 +35,12 @@ export default function RealtimeLeaderboard() {
 
     channel.bind('pusher:subscription_succeeded', () => {
       setIsConnected(true);
-      console.log('✅ Connected to real-time leaderboard');
+      logger.info('✅ Connected to real-time leaderboard');
     });
 
     // Escuchar updates del leaderboard
     channel.bind(PusherEvents.LEADERBOARD_UPDATE, (data: { leaderboard: LeaderboardEntry[] }) => {
-      console.log('📊 Leaderboard update received:', data.leaderboard.length);
+      logger.info('📊 Leaderboard update received:', data.leaderboard.length);
       setLeaderboard(data.leaderboard);
     });
 
@@ -47,7 +48,7 @@ export default function RealtimeLeaderboard() {
     channel.bind(
       PusherEvents.NEW_TOP_SCORER,
       (data: { walletAddress: string; username?: string; score: number }) => {
-        console.log('👑 New top scorer:', data);
+        logger.info('👑 New top scorer:', data);
         setNewTopScorer(data.username || data.walletAddress);
         // Mostrar notificación por 5 segundos
         setTimeout(() => setNewTopScorer(null), 5000);
@@ -72,7 +73,7 @@ export default function RealtimeLeaderboard() {
         setLeaderboard(data.leaderboard);
       }
     } catch (error) {
-      console.error('Error fetching leaderboard:', error);
+      logger.error('Error fetching leaderboard:', error);
     } finally {
       setLoading(false);
     }

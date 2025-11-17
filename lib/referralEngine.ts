@@ -17,6 +17,7 @@
  */
 
 import { prisma } from './prisma';
+import { logger } from '@/lib/logger';
 
 // ============================================================================
 // TYPES
@@ -166,7 +167,7 @@ export async function trackReferral(
 
     return { success: true };
   } catch (error) {
-    console.error('Error tracking referral:', error);
+    logger.error('Error tracking referral:', error);
     return { success: false, error: 'Failed to track referral' };
   }
 }
@@ -241,12 +242,12 @@ export async function distributeReferralRewards(
       });
 
       // Log the reward
-      console.log(
+      logger.info(
         `💰 Referral reward: ${referral.referrerAddress} earned ${rewardAmount} $DEGEN`
       );
     }
   } catch (error) {
-    console.error('Error distributing referral rewards:', error);
+    logger.error('Error distributing referral rewards:', error);
   }
 }
 
@@ -282,7 +283,7 @@ async function awardMilestone(
     },
   });
 
-  console.log(
+  logger.info(
     `🏆 Milestone achieved: ${wallet} reached ${milestone.tier} (${milestone.requiredReferrals} referrals)`
   );
 }
@@ -351,7 +352,7 @@ export async function claimReferralRewards(
     // Schema doesn't have rewardsClaimed field, skip update for now
     return { success: true, amount: stats.pendingRewards };
   } catch (error) {
-    console.error('Error claiming rewards:', error);
+    logger.error('Error claiming rewards:', error);
     return { success: false, amount: 0, error: 'Failed to claim rewards' };
   }
 }

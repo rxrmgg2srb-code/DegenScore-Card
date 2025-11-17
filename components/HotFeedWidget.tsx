@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { logger } from '@/lib/logger';
 
 interface HotTrade {
   id: string;
@@ -41,7 +42,7 @@ export default function HotFeedWidget({ walletAddress }: { walletAddress?: strin
         setFeedData(data);
       }
     } catch (error) {
-      console.error('Error fetching hot feed:', error);
+      logger.error('Error fetching hot feed:', error);
     } finally {
       setLoading(false);
     }

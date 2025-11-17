@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useWallet } from '@solana/wallet-adapter-react';
+import { logger } from '@/lib/logger';
 
 interface CheckInData {
   currentStreak: number;
@@ -60,7 +61,7 @@ export const DailyCheckIn = () => {
       }
     } catch (error) {
       setMessage('Failed to check in. Try again.');
-      console.error(error);
+      logger.error(error);
     } finally {
       setIsLoading(false);
     }

@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { prisma } from '../../lib/prisma';
 import { isValidUUID } from '../../lib/validation';
-import { rateLimit } from '../../lib/rateLimit';
+import { rateLimit } from '../../lib/rateLimitRedis';
 import { logger } from '../../lib/logger';
 import { verifySessionToken } from '../../lib/walletAuth';
 
@@ -14,7 +14,7 @@ export default async function handler(
   }
 
   // Apply rate limiting
-  if (!rateLimit(req, res)) {
+  if (!(await rateLimit(req, res)) {
     return;
   }
 

@@ -1,5 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { RATE_LIMIT_CONFIG } from './config';
+import { logger } from '@/lib/logger';
 
 interface RateLimitStore {
   [key: string]: {
@@ -25,7 +26,7 @@ setInterval(() => {
       }
     });
     if (cleaned > 0) {
-      console.log(`[RateLimit] Cleaned ${cleaned}/${keys.length} expired entries`);
+      logger.info(`[RateLimit] Cleaned ${cleaned}/${keys.length} expired entries`);
     }
   }
 }, 5 * 60 * 1000);
