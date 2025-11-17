@@ -153,12 +153,16 @@ const sentryWebpackPluginOptions = {
   authToken: process.env.SENTRY_AUTH_TOKEN,
 
   // Solo subir source maps en producción
-  widenClientFileUpload: true,
+  widenClientFileUpload: false, // Reduce memory during build
   hideSourceMaps: true,
   disableLogger: true,
+
+  // Reduce memory usage during build
+  dryRun: !process.env.SENTRY_AUTH_TOKEN, // Skip upload if no token
 };
 
-// Exportar con Sentry solo si está configurado
-module.exports = process.env.NEXT_PUBLIC_SENTRY_DSN
+// Exportar con Sentry solo si está configurado Y hay auth token
+// Esto reduce el uso de memoria durante el build
+module.exports = process.env.NEXT_PUBLIC_SENTRY_DSN && process.env.SENTRY_AUTH_TOKEN
   ? withSentryConfig(nextConfig, sentryWebpackPluginOptions)
   : nextConfig;
