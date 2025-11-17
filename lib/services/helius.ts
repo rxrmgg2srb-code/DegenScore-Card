@@ -82,26 +82,39 @@ export async function getWalletTransactions(
         url += `&before=${before}`;
       }
 
-      const response = await fetch(url);
+      // Timeout de 10 segundos para prevenir hangs
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
 
-      if (!response.ok) {
-        const error: any = new Error(`Helius API error: ${response.status} ${response.statusText}`);
-        error.status = response.status;
+      try {
+        const response = await fetch(url, { signal: controller.signal });
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+          const error: any = new Error(`Helius API error: ${response.status} ${response.statusText}`);
+          error.status = response.status;
+          throw error;
+        }
+
+        const transactions: HeliusTransaction[] = await response.json();
+
+        return transactions.map(tx => ({
+          signature: tx.signature,
+          timestamp: tx.timestamp,
+          type: tx.type,
+          nativeTransfers: tx.nativeTransfers,
+          tokenTransfers: tx.tokenTransfers,
+          description: tx.description,
+          fee: tx.fee,
+          feePayer: tx.feePayer,
+        }));
+      } catch (error: any) {
+        clearTimeout(timeoutId);
+        if (error.name === 'AbortError') {
+          throw new Error('Helius API timeout after 10 seconds');
+        }
         throw error;
       }
-
-      const transactions: HeliusTransaction[] = await response.json();
-
-      return transactions.map(tx => ({
-        signature: tx.signature,
-        timestamp: tx.timestamp,
-        type: tx.type,
-        nativeTransfers: tx.nativeTransfers,
-        tokenTransfers: tx.tokenTransfers,
-        description: tx.description,
-        fee: tx.fee,
-        feePayer: tx.feePayer,
-      }));
     }, {
       maxRetries: 3,
       retryableStatusCodes: [408, 429, 500, 502, 503, 504],
@@ -129,34 +142,48 @@ export async function getTokenMetadata(mintAddresses: string[]): Promise<Map<str
         params: { id: mint },
       }));
 
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(requests),
-      });
+      // Timeout de 10 segundos para prevenir hangs
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
 
-      if (!response.ok) {
-        const error: any = new Error(`Helius DAS API error: ${response.status}`);
-        error.status = response.status;
+      try {
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(requests),
+          signal: controller.signal,
+        });
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+          const error: any = new Error(`Helius DAS API error: ${response.status}`);
+          error.status = response.status;
+          throw error;
+        }
+
+        const results = await response.json();
+        const metadataMap = new Map();
+
+        if (Array.isArray(results)) {
+          results.forEach((result: any) => {
+            if (result.result) {
+              metadataMap.set(result.id, {
+                symbol: result.result.content?.metadata?.symbol || 'UNKNOWN',
+                name: result.result.content?.metadata?.name || 'Unknown Token',
+                image: result.result.content?.links?.image,
+              });
+            }
+          });
+        }
+
+        return metadataMap;
+      } catch (error: any) {
+        clearTimeout(timeoutId);
+        if (error.name === 'AbortError') {
+          throw new Error('Helius DAS API timeout after 10 seconds');
+        }
         throw error;
       }
-
-      const results = await response.json();
-      const metadataMap = new Map();
-
-      if (Array.isArray(results)) {
-        results.forEach((result: any) => {
-          if (result.result) {
-            metadataMap.set(result.id, {
-              symbol: result.result.content?.metadata?.symbol || 'UNKNOWN',
-              name: result.result.content?.metadata?.name || 'Unknown Token',
-              image: result.result.content?.links?.image,
-            });
-          }
-        });
-      }
-
-      return metadataMap;
     }, {
       maxRetries: 3,
       retryableStatusCodes: [408, 429, 500, 502, 503, 504],
