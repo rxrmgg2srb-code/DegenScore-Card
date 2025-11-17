@@ -146,8 +146,8 @@ export async function analyzeTokenSecurity(
 
     if (onProgress) onProgress(5, 'Validating token address...');
 
-    // Validate address
-    const mintPubkey = new PublicKey(tokenAddress);
+    // Validate address (throws if invalid)
+    new PublicKey(tokenAddress);
 
     if (onProgress) onProgress(10, 'Fetching token metadata...');
     const metadata = await getTokenMetadata(tokenAddress);

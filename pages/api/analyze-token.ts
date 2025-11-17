@@ -3,7 +3,7 @@ import { analyzeTokenSecurity } from '@/lib/services/tokenSecurityAnalyzer';
 import { isValidSolanaAddress } from '@/lib/validation';
 import { strictRateLimit } from '@/lib/rateLimitRedis';
 import { logger } from '@/lib/logger';
-import prisma from '@/lib/prisma';
+import { prisma } from '@/lib/prisma';
 import { redis } from '@/lib/cache/redis';
 
 /**
