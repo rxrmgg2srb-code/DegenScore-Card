@@ -117,7 +117,7 @@ export default function UpgradeModal({ isOpen, onClose, onUpgrade, onSkip }: Upg
       // Enviar transacción
       const signature = await sendTransaction(transaction, connection);
 
-      logger.info('Transaction sent:', signature);
+      logger.info('Transaction sent:', { signature });
       await connection.confirmTransaction(signature, 'confirmed');
 
       logger.info('Payment confirmed!');
@@ -133,9 +133,9 @@ export default function UpgradeModal({ isOpen, onClose, onUpgrade, onSkip }: Upg
         }),
       });
 
-      logger.info('📤 Payment response status:', paymentResponse.status);
+      logger.info('📤 Payment response status:', { status: paymentResponse.status });
       const paymentData = await paymentResponse.json();
-      logger.info('📤 Payment response data:', paymentData);
+      logger.info('📤 Payment response data:', { paymentData });
 
       if (!paymentResponse.ok) {
         throw new Error(paymentData.error || 'Failed to record payment');

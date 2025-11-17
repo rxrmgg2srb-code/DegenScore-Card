@@ -126,7 +126,9 @@ export async function calculateAdvancedMetrics(
 
     return metrics;
   } catch (error) {
-    logger.error('❌ Error in metrics engine:', error);
+    logger.error('❌ Error in metrics engine', error instanceof Error ? error : undefined, {
+      error: String(error),
+    });
     return getDefaultMetrics();
   }
 }
@@ -179,7 +181,9 @@ async function fetchAllTransactions(
 
       await new Promise(resolve => setTimeout(resolve, DELAY_MS));
     } catch (error) {
-      logger.error(`  ❌ Error batch ${fetchCount + 1}:`, error);
+      logger.error(`  ❌ Error batch ${fetchCount + 1}`, error instanceof Error ? error : undefined, {
+        error: String(error),
+      });
       fetchCount++;
       await new Promise(resolve => setTimeout(resolve, 500));
       continue;

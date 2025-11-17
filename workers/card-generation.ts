@@ -85,7 +85,9 @@ const worker = new Worker<CardGenerationJobData>(
           imageUrl = `${process.env.R2_PUBLIC_URL}/${key}`;
           logger.info('Uploaded to R2:', { walletAddress, url: imageUrl });
         } catch (error) {
-          logger.error('R2 upload failed, falling back to cache:', error);
+          logger.error('R2 upload failed, falling back to cache', error instanceof Error ? error : undefined, {
+            error: String(error),
+          });
         }
       }
 
@@ -142,7 +144,9 @@ worker.on('failed', (job, err) => {
 });
 
 worker.on('error', (err) => {
-  logger.error('Worker error:', err);
+  logger.error('Worker error', err instanceof Error ? err : undefined, {
+    error: String(err),
+  });
 });
 
 logger.info('Card generation worker started');

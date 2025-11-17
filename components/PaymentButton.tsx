@@ -65,7 +65,7 @@ export default function PaymentButton({ walletAddress, onPaymentSuccess }: Payme
       // Enviar transacción
       const signature = await sendTransaction(transaction, connection);
 
-      logger.info('⏳ Waiting for confirmation...', signature);
+      logger.info('⏳ Waiting for confirmation...', { signature });
 
       // SEGURIDAD: Esperar confirmación con timeout de 30 segundos
       const confirmationPromise = connection.confirmTransaction(signature, 'confirmed');
@@ -101,7 +101,9 @@ export default function PaymentButton({ walletAddress, onPaymentSuccess }: Payme
       onPaymentSuccess();
 
     } catch (err) {
-      logger.error('❌ Payment error:', err);
+      logger.error('❌ Payment error', err instanceof Error ? err : undefined, {
+        error: String(err),
+      });
       setError(err instanceof Error ? err.message : 'Payment failed');
     } finally {
       setIsPaying(false);

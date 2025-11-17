@@ -61,7 +61,9 @@ export const DailyCheckIn = () => {
       }
     } catch (error) {
       setMessage('Failed to check in. Try again.');
-      logger.error(error);
+      logger.error('Check-in failed', error instanceof Error ? error : undefined, {
+        error: String(error),
+      });
     } finally {
       setIsLoading(false);
     }

@@ -72,7 +72,9 @@ if (typeof window === 'undefined' && process.env.NODE_ENV !== 'test') {
   try {
     validateEnv();
   } catch (error) {
-    logger.error('Environment validation failed:', error);
+    logger.error('Environment validation failed', error instanceof Error ? error : undefined, {
+      error: String(error),
+    });
     // Don't throw in build time to allow builds to complete
     if (process.env.NODE_ENV === 'production') {
       logger.warn('Running with missing environment variables');

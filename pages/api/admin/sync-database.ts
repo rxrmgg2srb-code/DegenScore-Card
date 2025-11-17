@@ -34,8 +34,8 @@ export default async function handler(
     });
 
     logger.info('✅ Database sync completed');
-    logger.info('STDOUT:', stdout);
-    if (stderr) logger.info('STDERR:', stderr);
+    logger.info('STDOUT:', { stdout });
+    if (stderr) logger.info('STDERR:', { stderr });
 
     return res.status(200).json({
       success: true,

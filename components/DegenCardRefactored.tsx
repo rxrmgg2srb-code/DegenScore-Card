@@ -76,7 +76,7 @@ export default function DegenCardRefactored() {
 
   const handleProfileSubmit = async (profileData: ProfileData) => {
     try {
-      logger.info('📝 Saving profile for:', state.walletAddress);
+      logger.info('📝 Saving profile for:', { walletAddress: state.walletAddress });
 
       const response = await fetch('/api/update-profile', {
         method: 'POST',
@@ -99,7 +99,9 @@ export default function DegenCardRefactored() {
 
       setModalState(prev => ({ ...prev, showProfileModal: false, hasPaid: true }));
     } catch (error) {
-      logger.error('Error:', error);
+      logger.error('Payment error', error instanceof Error ? error : undefined, {
+        error: String(error),
+      });
       alert(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };

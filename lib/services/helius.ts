@@ -106,7 +106,7 @@ export async function getWalletTransactions(
       maxRetries: 3,
       retryableStatusCodes: [408, 429, 500, 502, 503, 504],
       onRetry: (attempt, error) => {
-        logger.warn(`[Helius] Retrying getWalletTransactions (attempt ${attempt}):`, error.message);
+        logger.warn(`[Helius] Retrying getWalletTransactions (attempt ${attempt}):`, { message: error.message });
       }
     })
   );
@@ -161,11 +161,13 @@ export async function getTokenMetadata(mintAddresses: string[]): Promise<Map<str
       maxRetries: 3,
       retryableStatusCodes: [408, 429, 500, 502, 503, 504],
       onRetry: (attempt, error) => {
-        logger.warn(`[Helius] Retrying getTokenMetadata (attempt ${attempt}):`, error.message);
+        logger.warn(`[Helius] Retrying getTokenMetadata (attempt ${attempt}):`, { message: error.message });
       }
     })
   ).catch((error) => {
-    logger.error('Error fetching token metadata after retries:', error);
+    logger.error('Error fetching token metadata after retries', error instanceof Error ? error : undefined, {
+      error: String(error),
+    });
     return new Map(); // Fallback to empty map on failure
   });
 }
@@ -185,11 +187,13 @@ export async function getWalletBalance(walletAddress: string): Promise<number> {
       maxRetries: 3,
       retryableStatusCodes: [408, 429, 500, 502, 503, 504],
       onRetry: (attempt, error) => {
-        logger.warn(`[Helius] Retrying getWalletBalance (attempt ${attempt}):`, error.message);
+        logger.warn(`[Helius] Retrying getWalletBalance (attempt ${attempt}):`, { message: error.message });
       }
     })
   ).catch((error) => {
-    logger.error('Error fetching wallet balance after retries:', error);
+    logger.error('Error fetching wallet balance after retries', error instanceof Error ? error : undefined, {
+      error: String(error),
+    });
     return 0; // Fallback to 0 on failure
   });
 }

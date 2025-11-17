@@ -40,7 +40,7 @@ export default function RealtimeLeaderboard() {
 
     // Escuchar updates del leaderboard
     channel.bind(PusherEvents.LEADERBOARD_UPDATE, (data: { leaderboard: LeaderboardEntry[] }) => {
-      logger.info('📊 Leaderboard update received:', data.leaderboard.length);
+      logger.info('📊 Leaderboard update received:', { count: data.leaderboard.length });
       setLeaderboard(data.leaderboard);
     });
 
@@ -73,7 +73,9 @@ export default function RealtimeLeaderboard() {
         setLeaderboard(data.leaderboard);
       }
     } catch (error) {
-      logger.error('Error fetching leaderboard:', error);
+      logger.error('Error fetching leaderboard', error instanceof Error ? error : undefined, {
+        error: String(error),
+      });
     } finally {
       setLoading(false);
     }

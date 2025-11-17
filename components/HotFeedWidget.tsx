@@ -42,7 +42,9 @@ export default function HotFeedWidget({ walletAddress }: { walletAddress?: strin
         setFeedData(data);
       }
     } catch (error) {
-      logger.error('Error fetching hot feed:', error);
+      logger.error('Error fetching hot feed', error instanceof Error ? error : undefined, {
+        error: String(error),
+      });
     } finally {
       setLoading(false);
     }

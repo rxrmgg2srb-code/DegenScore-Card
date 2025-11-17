@@ -40,7 +40,9 @@ export default function ScarcityBanner({
         setSlots(data.remaining);
       }
     } catch (error) {
-      logger.error('Error fetching slot count:', error);
+      logger.error('Error fetching slot count', error instanceof Error ? error : undefined, {
+        error: String(error),
+      });
     }
   };
 

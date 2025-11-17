@@ -31,7 +31,9 @@ export async function cacheGet<T>(key: string): Promise<T | null> {
     const value = await redis.get<T>(key);
     return value;
   } catch (error) {
-    logger.error('Redis get error:', error);
+    logger.error('Redis get error', error instanceof Error ? error : undefined, {
+      error: String(error),
+    });
     return null; // Fail gracefully
   }
 }
@@ -68,7 +70,9 @@ export async function cacheSet<T>(
 
     return true;
   } catch (error) {
-    logger.error('Redis set error:', error);
+    logger.error('Redis set error', error instanceof Error ? error : undefined, {
+      error: String(error),
+    });
     return false;
   }
 }
@@ -85,7 +89,9 @@ export async function cacheDel(key: string): Promise<boolean> {
     await redis.del(key);
     return true;
   } catch (error) {
-    logger.error('Redis del error:', error);
+    logger.error('Redis del error', error instanceof Error ? error : undefined, {
+      error: String(error),
+    });
     return false;
   }
 }
@@ -106,7 +112,9 @@ export async function cacheInvalidateTag(tag: string): Promise<boolean> {
     }
     return true;
   } catch (error) {
-    logger.error('Redis invalidate tag error:', error);
+    logger.error('Redis invalidate tag error', error instanceof Error ? error : undefined, {
+      error: String(error),
+    });
     return false;
   }
 }
@@ -152,7 +160,9 @@ export async function cacheIncr(
     }
     return value;
   } catch (error) {
-    logger.error('Redis incr error:', error);
+    logger.error('Redis incr error', error instanceof Error ? error : undefined, {
+      error: String(error),
+    });
     return null;
   }
 }

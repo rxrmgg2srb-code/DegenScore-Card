@@ -66,7 +66,9 @@ export async function uploadImage(
     // Retornar URL pública
     return `${PUBLIC_URL}/${key}`;
   } catch (error) {
-    logger.error('R2 upload error:', error);
+    logger.error('R2 upload error', error instanceof Error ? error : undefined, {
+      error: String(error),
+    });
     return null;
   }
 }
@@ -91,7 +93,9 @@ export async function getImageUrl(
     const url = await getSignedUrl(r2Client, command, { expiresIn });
     return url;
   } catch (error) {
-    logger.error('R2 get URL error:', error);
+    logger.error('R2 get URL error', error instanceof Error ? error : undefined, {
+      error: String(error),
+    });
     return null;
   }
 }
@@ -113,7 +117,9 @@ export async function deleteImage(key: string): Promise<boolean> {
     );
     return true;
   } catch (error) {
-    logger.error('R2 delete error:', error);
+    logger.error('R2 delete error', error instanceof Error ? error : undefined, {
+      error: String(error),
+    });
     return false;
   }
 }
