@@ -100,7 +100,9 @@ export default async function handler(
     });
 
   } catch (error) {
-    logger.error('Error fetching current challenge:', error);
+    logger.error('Error fetching current challenge', error instanceof Error ? error : undefined, {
+      error: String(error),
+    });
     res.status(500).json({
       error: 'Failed to fetch current challenge'
     });
