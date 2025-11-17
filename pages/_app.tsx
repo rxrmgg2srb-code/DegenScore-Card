@@ -35,7 +35,7 @@ export default function App({ Component, pageProps }: AppProps) {
     <ErrorBoundary>
       <I18nextProvider i18n={i18n}>
         <ConnectionProvider endpoint={endpoint}>
-          <WalletProvider wallets={wallets} autoConnect>
+          <WalletProvider wallets={wallets} autoConnect={false}>
             <WalletModalProvider>
               <Component {...pageProps} />
             </WalletModalProvider>
