@@ -8,7 +8,7 @@
  * 3. Next.js starts with correct configuration
  */
 
-const { execSync, spawn } = require('child_process');
+const { execSync } = require('child_process');
 const path = require('path');
 
 const PORT = process.env.PORT || 3000;
@@ -56,41 +56,70 @@ try {
   process.exit(1);
 }
 
-// Step 3: Start Next.js server
+// Step 3: Start Next.js server using programmatic API
 console.log(`🚀 [3/3] Starting Next.js on ${HOST}:${PORT}...`);
 console.log('');
 
-const nextProcess = spawn('next', ['start', '-H', HOST, '-p', PORT.toString()], {
-  stdio: 'inherit',
-  env: process.env,
-  cwd: process.cwd(),
-});
+const http = require('http');
+const next = require('next');
 
-// Handle errors
-nextProcess.on('error', (error) => {
-  console.error('❌ FATAL ERROR: Failed to start Next.js server');
-  console.error(error);
-  process.exit(1);
-});
+const dev = process.env.NODE_ENV !== 'production';
+const app = next({ dev, hostname: HOST, port: PORT });
+const handle = app.getRequestHandler();
 
-nextProcess.on('exit', (code) => {
-  console.log(`\n⚠️  Next.js process exited with code ${code}`);
-  process.exit(code || 0);
-});
+// Prepare Next.js and start server
+app
+  .prepare()
+  .then(() => {
+    // Create HTTP server
+    const server = http.createServer(async (req, res) => {
+      try {
+        await handle(req, res);
+      } catch (err) {
+        console.error('Error handling request:', err);
+        res.statusCode = 500;
+        res.end('Internal Server Error');
+      }
+    });
 
-// Forward termination signals
-['SIGINT', 'SIGTERM', 'SIGQUIT'].forEach((signal) => {
-  process.on(signal, () => {
-    console.log(`\n📡 Received ${signal}, shutting down gracefully...`);
-    nextProcess.kill(signal);
+    // Start listening
+    server.listen(PORT, HOST, (err) => {
+      if (err) {
+        console.error('❌ FATAL ERROR: Failed to start Next.js server');
+        console.error(err);
+        process.exit(1);
+      }
+
+      console.log('\n========================================');
+      console.log('✅ Server is ready!');
+      console.log(`🌐 Listening on http://${HOST}:${PORT}`);
+      console.log(`🏥 Health check: http://${HOST}:${PORT}/api/health`);
+      console.log('📡 Ready to accept connections');
+      console.log('========================================\n');
+    });
+
+    // Graceful shutdown
+    const shutdown = (signal) => {
+      console.log(`\n📡 Received ${signal}, shutting down gracefully...`);
+      server.close(() => {
+        console.log('✅ Server closed successfully');
+        process.exit(0);
+      });
+
+      // Force exit after 10 seconds
+      setTimeout(() => {
+        console.error('⚠️  Forced shutdown after timeout');
+        process.exit(1);
+      }, 10000);
+    };
+
+    // Forward termination signals
+    ['SIGINT', 'SIGTERM', 'SIGQUIT'].forEach((signal) => {
+      process.on(signal, () => shutdown(signal));
+    });
+  })
+  .catch((err) => {
+    console.error('❌ FATAL ERROR: Failed to prepare Next.js');
+    console.error(err);
+    process.exit(1);
   });
-});
-
-// Keep process alive and log readiness
-setTimeout(() => {
-  console.log('\n========================================');
-  console.log('✅ Server is ready!');
-  console.log(`🌐 Listening on http://${HOST}:${PORT}`);
-  console.log(`🏥 Health check: http://${HOST}:${PORT}/api/health`);
-  console.log('========================================\n');
-}, 3000);
