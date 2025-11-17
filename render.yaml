@@ -10,8 +10,13 @@ services:
     healthCheckPath: /api/health
     autoDeploy: true
     envVars:
+      # CRÍTICAS - Configurar manualmente en Render Dashboard
+      - key: NODE_ENV
+        value: production
       - key: DATABASE_URL
         sync: false # Lo configurarás manualmente
+      - key: JWT_SECRET
+        sync: false # Genera con: openssl rand -base64 32
       - key: HELIUS_API_KEY
         sync: false
       - key: HELIUS_RPC_URL
