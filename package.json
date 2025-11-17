@@ -3,7 +3,7 @@
   "version": "0.2.0",
   "private": true,
   "engines": {
-    "node": "18.x"
+    "node": "20.x"
   },
   "scripts": {
     "dev": "next dev",
@@ -91,9 +91,9 @@
     "@types/formidable": "^3.4.6",
     "@types/jest": "^29.5.11",
     "@types/jsonwebtoken": "^9.0.10",
-    "@types/node": "^20",
-    "@types/react": "^18",
-    "@types/react-dom": "^18",
+    "@types/node": "^20.17.10",
+    "@types/react": "^18.3.18",
+    "@types/react-dom": "^18.3.5",
     "@typescript-eslint/eslint-plugin": "^6.15.0",
     "@typescript-eslint/parser": "^6.15.0",
     "eslint": "^8",
@@ -105,7 +105,7 @@
     "node-mocks-http": "^1.14.0",
     "prettier": "^3.1.1",
     "prisma": "^6.19.0",
-    "typescript": "^5"
+    "typescript": "^5.7.2"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [
