@@ -146,9 +146,9 @@ async function fetchAllTransactions(
   let fetchCount = 0;
   let consecutiveEmpty = 0;
 
-  const MAX_BATCHES = 100;
+  const MAX_BATCHES = 30;  // Reducido de 100 a 30 para evitar timeouts
   const BATCH_SIZE = 1000;
-  const DELAY_MS = 100;
+  const DELAY_MS = 50;     // Reducido de 100ms a 50ms para ser más rápido
   const MAX_EMPTY = 3;
 
   logger.info(`🔄 Fetching up to ${MAX_BATCHES} batches (${BATCH_SIZE} each)`);

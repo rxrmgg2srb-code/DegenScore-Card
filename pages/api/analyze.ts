@@ -32,10 +32,10 @@ export default async function handler(
 
     logger.info('Analyzing wallet:', { walletAddress });
 
-    // PERFORMANCE: Agregar timeout de 45 segundos para análisis de wallet
+    // PERFORMANCE: Timeout de 30 segundos optimizado para análisis rápido
     const metricsPromise = calculateAdvancedMetrics(walletAddress);
     const timeoutPromise = new Promise<never>((_, reject) =>
-      setTimeout(() => reject(new Error('Analysis timeout - wallet took too long to analyze')), 45000)
+      setTimeout(() => reject(new Error('Analysis timeout - wallet took too long to analyze')), 30000)
     );
 
     let metrics;
