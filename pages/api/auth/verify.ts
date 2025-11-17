@@ -29,13 +29,13 @@ export default async function handler(
       return res.status(400).json({ error: 'Invalid wallet address' });
     }
 
-    logger.debug('Verifying auth for:', authResponse.publicKey);
+    logger.debug('Verifying auth for:', { publicKey: authResponse.publicKey });
 
     // Verify authentication
     const verification = verifyAuthentication(authResponse);
 
     if (!verification.valid) {
-      logger.warn('Authentication failed:', verification.error);
+      logger.warn('Authentication failed:', { error: verification.error });
       return res.status(401).json({
         error: verification.error || 'Authentication failed'
       });
@@ -44,7 +44,7 @@ export default async function handler(
     // Generate session token
     const sessionToken = generateSessionToken(authResponse.publicKey);
 
-    logger.info('Authentication successful for:', authResponse.publicKey);
+    logger.info('Authentication successful for:', { publicKey: authResponse.publicKey });
 
     res.status(200).json({
       success: true,

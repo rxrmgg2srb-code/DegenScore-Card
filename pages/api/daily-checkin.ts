@@ -156,7 +156,7 @@ export default async function handler(
         },
       });
 
-      logger.info(`Check-in for ${walletAddress}: ${newStreak}-day streak, ${totalXpEarned} XP`);
+      logger.info('Daily check-in completed:', { walletAddress, streak: newStreak, xpEarned: totalXpEarned });
 
       return {
         alreadyCheckedIn: false,
@@ -175,7 +175,6 @@ export default async function handler(
     if (result.alreadyCheckedIn) {
       return res.status(200).json({
         success: true,
-        alreadyCheckedIn: true,
         ...result,
       });
     }

@@ -187,10 +187,10 @@ export default function ProfilePage() {
             {/* Profile Info */}
             <div className="flex-grow">
               <h2 className="text-2xl font-bold text-white mb-1">
-                {cardData.profileName || `Degen ${walletAddress.slice(0, 6)}`}
+                {cardData.profileName || `Degen ${cardData.walletAddress.slice(0, 6)}`}
               </h2>
               <p className="text-gray-400 text-sm mb-2 font-mono">
-                {walletAddress}
+                {cardData.walletAddress}
               </p>
               {cardData.profileBio && (
                 <p className="text-gray-300 text-sm mb-3">{cardData.profileBio}</p>

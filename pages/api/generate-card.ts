@@ -6,7 +6,6 @@ import { cacheGet, cacheSet, CacheKeys } from '../../lib/cache/redis';
 import {
   uploadImage,
   generateCardImageKey,
-  getPublicUrl,
   isStorageEnabled,
 } from '../../lib/storage/r2';
 
@@ -251,9 +250,9 @@ async function generatePremiumCardImage(
 
   // PATRÓN DE FONDO CON GRADIENTE DEL TIER MÁS INTENSO
   const bgGradient = ctx.createLinearGradient(0, 0, width, height);
-  bgGradient.addColorStop(0, tier.colors[0] + '35');
-  bgGradient.addColorStop(0.5, tier.colors[1] + '20');
-  bgGradient.addColorStop(1, tier.colors[2] + '35');
+  bgGradient.addColorStop(0, (tier.colors[0] as string) + '35');
+  bgGradient.addColorStop(0.5, (tier.colors[1] as string) + '20');
+  bgGradient.addColorStop(1, (tier.colors[2] as string) + '35');
   ctx.fillStyle = bgGradient;
   ctx.fillRect(0, 0, width, height);
 
@@ -406,9 +405,9 @@ async function generatePremiumCardImage(
     width / 2 + 200,
     currentY
   );
-  scoreGradient.addColorStop(0, tier.colors[0]);
-  scoreGradient.addColorStop(0.5, tier.colors[1]);
-  scoreGradient.addColorStop(1, tier.colors[2]);
+  scoreGradient.addColorStop(0, tier.colors[0] as string);
+  scoreGradient.addColorStop(0.5, tier.colors[1] as string);
+  scoreGradient.addColorStop(1, tier.colors[2] as string);
 
   ctx.fillStyle = scoreGradient;
   ctx.font = 'bold 130px Arial';
@@ -481,9 +480,9 @@ async function generatePremiumCardImage(
     width / 2 + 130,
     currentY
   );
-  badgeGradient.addColorStop(0, tier.colors[0]);
-  badgeGradient.addColorStop(0.5, tier.colors[1]);
-  badgeGradient.addColorStop(1, tier.colors[2]);
+  badgeGradient.addColorStop(0, tier.colors[0] as string);
+  badgeGradient.addColorStop(0.5, tier.colors[1] as string);
+  badgeGradient.addColorStop(1, tier.colors[2] as string);
 
   ctx.shadowColor = tier.glowColor;
   ctx.shadowBlur = 30;

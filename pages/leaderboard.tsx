@@ -531,7 +531,7 @@ export default function Leaderboard() {
       );
     } catch (error) {
       console.error('Error updating like:', error);
-      setUserLikes(prev => ({ ...prev, [cardId]: hasLiked }));
+      setUserLikes(prev => ({ ...prev, [cardId]: hasLiked } as { [key: string]: boolean }));
       setLeaderboard(prev => 
         prev.map(entry => 
           entry.id === cardId 

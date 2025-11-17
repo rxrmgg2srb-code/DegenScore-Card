@@ -22,7 +22,8 @@ export default async function handler(
   // SECURITY: Verify cron authentication
   const cronKey = req.headers['x-cron-key'] as string;
   if (!cronKey || cronKey !== process.env.CRON_API_KEY) {
-    logger.warn('Unauthorized cron attempt from:', req.headers['x-forwarded-for'] || req.socket.remoteAddress);
+    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+    logger.warn('Unauthorized cron attempt:', { ip });
     return res.status(401).json({ error: 'Unauthorized' });
   }
 

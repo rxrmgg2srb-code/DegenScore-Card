@@ -1,9 +1,9 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { IncomingForm, File } from 'formidable';
+import { IncomingForm } from 'formidable';
 import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
-import { isValidSolanaAddress, VALID_IMAGE_TYPES, isValidImageType } from '../../lib/validation';
+import { isValidSolanaAddress, isValidImageType } from '../../lib/validation';
 import { rateLimit } from '../../lib/rateLimit';
 import { logger } from '../../lib/logger';
 import { UPLOAD_CONFIG } from '../../lib/config';
@@ -101,7 +101,7 @@ export default async function handler(
     // Public URL
     const imageUrl = `/uploads/profiles/${filename}`;
 
-    logger.info('Image uploaded successfully for wallet:', walletAddress);
+    logger.info('Image uploaded successfully for wallet:', { walletAddress });
 
     res.status(200).json({
       success: true,

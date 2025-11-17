@@ -30,7 +30,7 @@ export default async function handler(
       return res.status(400).json({ error: 'Invalid wallet address' });
     }
 
-    logger.debug('Saving card for wallet:', walletAddress);
+    logger.debug('Saving card for wallet:', { walletAddress });
 
     // Convert badges to correct format with XSS sanitization
     const badgesData = (analysisData.badges || []).map((badge: any) => ({
@@ -92,7 +92,7 @@ export default async function handler(
       },
     });
 
-    logger.info('Card saved successfully:', card.id);
+    logger.info('Card saved successfully:', { cardId: card.id });
 
     res.status(200).json({ success: true, card });
   } catch (error: any) {

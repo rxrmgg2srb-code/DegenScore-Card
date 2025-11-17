@@ -23,7 +23,7 @@ export default async function handler(
       return res.status(400).json({ error: 'Invalid wallet address' });
     }
 
-    logger.debug('Generating OG image for:', wallet);
+    logger.debug('Generating OG image for:', { wallet });
 
     // Fetch card data
     const card = await prisma.degenCard.findUnique({
@@ -97,7 +97,7 @@ export default async function handler(
 
     let yPos = 220;
     const xStart = 650;
-    stats.forEach((stat, index) => {
+    stats.forEach((stat) => {
       // Stat box background
       ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
       ctx.fillRect(xStart, yPos, 480, 80);

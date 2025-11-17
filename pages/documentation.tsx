@@ -870,15 +870,6 @@ function ReferralTier({ count, title, rewards }: { count: number; title: string;
   );
 }
 
-function ChallengeType({ title, description }: { title: string; description: string }) {
-  return (
-    <div className="bg-black/30 border border-gray-700 rounded-lg p-3">
-      <p className="font-bold text-sm mb-1">{title}</p>
-      <p className="text-xs text-gray-400">{description}</p>
-    </div>
-  );
-}
-
 function FeedDelayCard({ tier, delay, highlight }: { tier: string; delay: string; highlight?: boolean }) {
   return (
     <div className={`rounded-lg p-4 text-center ${highlight ? 'bg-purple-900/50 border-2 border-purple-500' : 'bg-black/30 border border-gray-700'}`}>

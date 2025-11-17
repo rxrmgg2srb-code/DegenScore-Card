@@ -29,7 +29,7 @@ export default async function handler(
       return res.status(400).json({ error: 'Invalid wallet address' });
     }
 
-    logger.debug('Generating auth challenge for:', walletAddress);
+    logger.debug('Generating auth challenge for:', { walletAddress });
 
     // Generate challenge
     const challenge = generateAuthChallenge(walletAddress);
