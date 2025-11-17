@@ -923,7 +923,7 @@ function calculateGini(amounts: number[]): number {
   return numerator / (n * sum);
 }
 
-async function detectBundleWallets(tokenAddress: string): Promise<number> {
+async function detectBundleWallets(_tokenAddress: string): Promise<number> {
   // Simplified - would need to analyze first transaction signatures
   // and check if multiple wallets received tokens in same tx
   return 0;
