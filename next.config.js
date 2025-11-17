@@ -14,6 +14,15 @@ const nextConfig = {
     ignoreBuildErrors: true,
   },
 
+  // Disable font optimization to reduce memory during build
+  optimizeFonts: false,
+
+  // Experimental features to reduce memory
+  experimental: {
+    workerThreads: false,
+    cpus: 1,
+  },
+
   // Security headers
   async headers() {
     return [
@@ -81,8 +90,9 @@ const nextConfig = {
   // Performance optimizations
   compress: true,
 
-  // Enable SWC minification
-  swcMinify: true,
+  // Disable SWC minification to reduce memory usage during build
+  // This increases build output size slightly but significantly reduces memory consumption
+  swcMinify: false,
 
   // Disable x-powered-by header
   poweredByHeader: false,

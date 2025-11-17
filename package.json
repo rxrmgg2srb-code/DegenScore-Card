@@ -5,10 +5,14 @@
   "engines": {
     "node": "20.x"
   },
+  "overrides": {
+    "prisma": "6.19.0",
+    "@prisma/client": "6.19.0"
+  },
   "scripts": {
     "dev": "next dev",
-    "build": "NODE_OPTIONS='--max-old-space-size=256' node generate-prisma.js && NODE_OPTIONS='--max-old-space-size=256' next build",
-    "build:render": "NODE_OPTIONS='--max-old-space-size=256' node generate-prisma.js && NODE_OPTIONS='--max-old-space-size=256' next build",
+    "build": "NODE_OPTIONS='--max-old-space-size=320' node generate-prisma.js && NODE_OPTIONS='--max-old-space-size=320' next build",
+    "build:render": "NODE_OPTIONS='--max-old-space-size=320' node generate-prisma.js && NODE_OPTIONS='--max-old-space-size=320' next build",
     "start": "next start -H 0.0.0.0 -p ${PORT:-3000}",
     "start:custom": "node server.js",
     "start:migrate": "node scripts/migrate-and-start.js",
