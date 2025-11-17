@@ -126,12 +126,23 @@ export default async function handler(
 
     logger.info(`✅ Found card in database with score: ${card.degenScore}`);
     logger.info(`💎 Premium status: ${card.isPaid ? 'PREMIUM' : 'BASIC'}`);
+    logger.info(`📊 Card data:`, {
+      degenScore: card.degenScore,
+      totalTrades: card.totalTrades,
+      totalVolume: card.totalVolume,
+      profitLoss: card.profitLoss,
+      winRate: card.winRate,
+      isPaid: card.isPaid,
+    });
 
     // 🚀 OPTIMIZACIÓN: Verificar cache de imagen
     const cacheKey = CacheKeys.cardImage(walletAddress);
     const cachedImageUrl = await cacheGet<string>(cacheKey);
 
-    if (cachedImageUrl) {
+    // Verificar si hay parámetro ?nocache en la query para forzar regeneración
+    const forceRegenerate = req.query.nocache === 'true';
+
+    if (cachedImageUrl && !forceRegenerate) {
       logger.info('⚡ Serving card from cache/R2');
       // Si tenemos URL de R2, redirigir
       if (cachedImageUrl.startsWith('http')) {
@@ -143,6 +154,10 @@ export default async function handler(
       res.setHeader('Cache-Control', 'public, max-age=604800, immutable'); // 7 días
       res.setHeader('X-Cache-Status', 'HIT');
       return res.status(200).send(buffer);
+    }
+
+    if (forceRegenerate) {
+      logger.info('🔄 Force regenerating card (nocache=true)');
     }
 
     // No hay cache, generar imagen
@@ -601,6 +616,21 @@ async function generateBasicCardImage(
   walletAddress: string,
   metrics: any
 ): Promise<Buffer> {
+  // Validar y proveer valores por defecto
+  const safeMetrics = {
+    degenScore: Number(metrics?.degenScore) || 0,
+    totalTrades: Number(metrics?.totalTrades) || 0,
+    totalVolume: Number(metrics?.totalVolume) || 0,
+    profitLoss: Number(metrics?.profitLoss) || 0,
+    winRate: Number(metrics?.winRate) || 0,
+    bestTrade: Number(metrics?.bestTrade) || 0,
+    worstTrade: Number(metrics?.worstTrade) || 0,
+    avgTradeSize: Number(metrics?.avgTradeSize) || 0,
+    tradingDays: Number(metrics?.tradingDays) || 0,
+  };
+
+  logger.info('📝 Generating BASIC card with data:', safeMetrics);
+
   const width = 600;
   const height = 950;
   const canvas = createCanvas(width, height);
@@ -638,18 +668,18 @@ async function generateBasicCardImage(
   currentY += 60;
 
   // DEGEN SCORE
-  const scoreColor = getScoreColor(metrics.degenScore);
+  const scoreColor = getScoreColor(safeMetrics.degenScore);
   ctx.fillStyle = scoreColor;
   ctx.font = 'bold 110px Arial';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  
+
   ctx.shadowColor = scoreColor;
   ctx.shadowBlur = 30;
-  ctx.fillText(metrics.degenScore.toString(), width / 2, currentY);
+  ctx.fillText(safeMetrics.degenScore.toString(), width / 2, currentY);
   ctx.shadowColor = 'transparent';
   ctx.shadowBlur = 0;
-  
+
   currentY += 75;
 
   ctx.fillStyle = '#aaaaaa';
@@ -659,7 +689,7 @@ async function generateBasicCardImage(
   currentY += 40;
 
   // FRASE FOMO
-  const fomoPhrase = getFOMOPhrase(metrics.degenScore);
+  const fomoPhrase = getFOMOPhrase(safeMetrics.degenScore);
   
   ctx.fillStyle = 'rgba(255, 215, 0, 0.15)';
   const textWidth = ctx.measureText(fomoPhrase).width;
@@ -687,21 +717,21 @@ async function generateBasicCardImage(
 
   ctx.textAlign = 'left';
 
-  drawMetric(ctx, 'TOTAL TRADES', metrics.totalTrades.toString(), leftX, currentY, true);
-  drawMetric(ctx, 'WIN RATE', `${metrics.winRate.toFixed(1)}%`, rightX, currentY, false);
+  drawMetric(ctx, 'TOTAL TRADES', safeMetrics.totalTrades.toString(), leftX, currentY, true);
+  drawMetric(ctx, 'WIN RATE', `${safeMetrics.winRate.toFixed(1)}%`, rightX, currentY, false);
   currentY += rowHeight;
 
-  drawMetric(ctx, 'VOLUME', `${formatSOL(metrics.totalVolume, 1)} SOL`, leftX, currentY, true);
-  const pnlColor = metrics.profitLoss >= 0 ? '#00ff88' : '#ff4444';
-  drawMetric(ctx, 'P&L', `${formatSOL(metrics.profitLoss, 2)} SOL`, rightX, currentY, false, pnlColor);
+  drawMetric(ctx, 'VOLUME', `${formatSOL(safeMetrics.totalVolume, 1)} SOL`, leftX, currentY, true);
+  const pnlColor = safeMetrics.profitLoss >= 0 ? '#00ff88' : '#ff4444';
+  drawMetric(ctx, 'P&L', `${formatSOL(safeMetrics.profitLoss, 2)} SOL`, rightX, currentY, false, pnlColor);
   currentY += rowHeight;
 
-  drawMetric(ctx, 'BEST TRADE', `${formatSOL(metrics.bestTrade, 2)} SOL`, leftX, currentY, true);
-  drawMetric(ctx, 'WORST TRADE', `${formatSOL(metrics.worstTrade, 2)} SOL`, rightX, currentY, false);
+  drawMetric(ctx, 'BEST TRADE', `${formatSOL(safeMetrics.bestTrade, 2)} SOL`, leftX, currentY, true);
+  drawMetric(ctx, 'WORST TRADE', `${formatSOL(safeMetrics.worstTrade, 2)} SOL`, rightX, currentY, false);
   currentY += rowHeight;
 
-  drawMetric(ctx, 'AVG TRADE', `${formatSOL(metrics.avgTradeSize, 2)} SOL`, leftX, currentY, true);
-  drawMetric(ctx, 'ACTIVE DAYS', metrics.tradingDays.toString(), rightX, currentY, false);
+  drawMetric(ctx, 'AVG TRADE', `${formatSOL(safeMetrics.avgTradeSize, 2)} SOL`, leftX, currentY, true);
+  drawMetric(ctx, 'ACTIVE DAYS', safeMetrics.tradingDays.toString(), rightX, currentY, false);
   currentY += 60;
 
   // LINEA DIVISORIA
@@ -714,7 +744,7 @@ async function generateBasicCardImage(
   currentY += 50;
 
   // FOOTER
-  const rating = getRating(metrics.degenScore);
+  const rating = getRating(safeMetrics.degenScore);
   ctx.fillStyle = '#ffffff';
   ctx.font = 'bold 26px Arial';
   ctx.textAlign = 'center';
