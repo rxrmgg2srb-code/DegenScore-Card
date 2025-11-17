@@ -65,7 +65,8 @@ export default function TokenSecurityScanner() {
 
     let messageIndex = 0;
     const messageInterval = setInterval(() => {
-      setProgressMessage(messages[messageIndex % messages.length]);
+      // Safe to use ! because modulo ensures index is always within bounds
+      setProgressMessage(messages[messageIndex % messages.length]!);
       messageIndex++;
     }, 1000);
 
