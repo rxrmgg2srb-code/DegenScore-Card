@@ -19,7 +19,9 @@ export default async function handler(
       leaderboard,
     });
   } catch (error) {
-    logger.error('Error getting referral leaderboard:', error);
+    logger.error('Error getting referral leaderboard:', error instanceof Error ? error : undefined, {
+      error: String(error),
+    });
     res.status(500).json({
       error: 'Failed to get leaderboard',
       details: error instanceof Error ? error.message : 'Unknown error',

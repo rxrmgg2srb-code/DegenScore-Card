@@ -115,7 +115,9 @@ export default async function handler(
         await new Promise(resolve => setTimeout(resolve, 1000));
 
       } catch (error) {
-        logger.error(`❌ Error analyzing ${wallet.walletAddress}:`, error);
+        logger.error(`❌ Error analyzing ${wallet.walletAddress}:`, error instanceof Error ? error : undefined, {
+      error: String(error),
+    });
         continue;
       }
     }
@@ -140,7 +142,9 @@ export default async function handler(
     });
 
   } catch (error) {
-    logger.error('❌ Error in hot wallet tracker:', error);
+    logger.error('❌ Error in hot wallet tracker:', error instanceof Error ? error : undefined, {
+      error: String(error),
+    });
     res.status(500).json({
       error: 'Failed to track hot wallets',
       details: error instanceof Error ? error.message : 'Unknown error',

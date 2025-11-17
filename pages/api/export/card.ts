@@ -80,7 +80,9 @@ export default async function handler(
     return res.status(400).json({ error: 'Unsupported format' });
 
   } catch (error: any) {
-    logger.error('Error exporting card data:', error);
+    logger.error('Error exporting card data:', error instanceof Error ? error : undefined, {
+      error: String(error),
+    });
 
     const errorMessage = process.env.NODE_ENV === 'development'
       ? error.message

@@ -63,7 +63,9 @@ ${publicCards
     res.setHeader('Cache-Control', 'public, max-age=3600, s-maxage=3600'); // 1 hora
     res.status(200).send(sitemap);
   } catch (error) {
-    logger.error('Error generating sitemap:', error);
+    logger.error('Error generating sitemap:', error instanceof Error ? error : undefined, {
+      error: String(error),
+    });
     res.status(500).json({ error: 'Failed to generate sitemap' });
   }
 }

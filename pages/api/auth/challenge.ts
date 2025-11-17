@@ -39,7 +39,9 @@ export default async function handler(
       challenge,
     });
   } catch (error: any) {
-    logger.error('Error generating auth challenge:', error);
+    logger.error('Error generating auth challenge:', error instanceof Error ? error : undefined, {
+      error: String(error),
+    });
 
     const errorMessage = process.env.NODE_ENV === 'development'
       ? error.message

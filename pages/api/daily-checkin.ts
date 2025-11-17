@@ -187,7 +187,9 @@ export default async function handler(
       ...result,
     });
   } catch (error: any) {
-    logger.error('Error processing check-in:', error);
+    logger.error('Error processing check-in:', error instanceof Error ? error : undefined, {
+      error: String(error),
+    });
     res.status(500).json({
       error: process.env.NODE_ENV === 'development'
         ? error.message

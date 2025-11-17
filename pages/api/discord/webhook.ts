@@ -44,7 +44,9 @@ async function sendToDiscord(embeds: DiscordEmbed[]): Promise<boolean> {
 
     return response.ok;
   } catch (error) {
-    logger.error('Failed to send Discord webhook:', error);
+    logger.error('Failed to send Discord webhook:', error instanceof Error ? error : undefined, {
+      error: String(error),
+    });
     return false;
   }
 }
@@ -67,7 +69,7 @@ export default async function handler(
   }
 
   if (!apiKey || apiKey !== webhookSecret) {
-    logger.warn('Unauthorized webhook attempt from:', req.headers['x-forwarded-for'] || req.socket.remoteAddress);
+    logger.warn('Unauthorized webhook attempt from:', { ip: req.headers['x-forwarded-for'] || req.socket.remoteAddress });
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
@@ -191,7 +193,9 @@ export default async function handler(
       res.status(500).json({ success: false, error: 'Failed to send webhook' });
     }
   } catch (error: any) {
-    logger.error('Discord webhook handler error:', error);
+    logger.error('Discord webhook handler error:', error instanceof Error ? error : undefined, {
+      error: String(error),
+    });
     res.status(500).json({
       error: process.env.NODE_ENV === 'development'
         ? error.message

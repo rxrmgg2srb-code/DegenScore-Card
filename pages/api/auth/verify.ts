@@ -52,7 +52,9 @@ export default async function handler(
       wallet: authResponse.publicKey,
     });
   } catch (error: any) {
-    logger.error('Error verifying authentication:', error);
+    logger.error('Error verifying authentication:', error instanceof Error ? error : undefined, {
+      error: String(error),
+    });
 
     const errorMessage = process.env.NODE_ENV === 'development'
       ? error.message

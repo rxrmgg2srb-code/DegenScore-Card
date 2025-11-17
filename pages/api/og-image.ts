@@ -142,7 +142,9 @@ export default async function handler(
     res.status(200).send(buffer);
 
   } catch (error: any) {
-    logger.error('Error generating OG image:', error);
+    logger.error('Error generating OG image:', error instanceof Error ? error : undefined, {
+      error: String(error),
+    });
 
     const errorMessage = process.env.NODE_ENV === 'development'
       ? error.message

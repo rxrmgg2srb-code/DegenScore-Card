@@ -108,7 +108,9 @@ export default async function handler(
       imageUrl,
     });
   } catch (error: any) {
-    logger.error('Error uploading image:', error);
+    logger.error('Error uploading image:', error instanceof Error ? error : undefined, {
+      error: String(error),
+    });
 
     const errorMessage = process.env.NODE_ENV === 'development'
       ? error.message

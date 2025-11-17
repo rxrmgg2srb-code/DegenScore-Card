@@ -211,7 +211,9 @@ export default async function handler(
     });
 
   } catch (error) {
-    logger.error('❌ Error verifying payment:', error);
+    logger.error('❌ Error verifying payment:', error instanceof Error ? error : undefined, {
+      error: String(error),
+    });
 
     // Handle specific error cases
     if (error instanceof Error && error.message === 'Payment signature already used') {

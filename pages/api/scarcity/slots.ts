@@ -30,7 +30,9 @@ export default async function handler(
       percentageFilled: (premiumCount / MAX_PREMIUM_SLOTS) * 100,
     });
   } catch (error) {
-    logger.error('Error getting slot count:', error);
+    logger.error('Error getting slot count:', error instanceof Error ? error : undefined, {
+      error: String(error),
+    });
     res.status(500).json({
       error: 'Failed to get slot count',
       details: error instanceof Error ? error.message : 'Unknown error',

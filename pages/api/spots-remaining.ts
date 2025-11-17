@@ -58,7 +58,9 @@ export default async function handler(
       showScarcityBanner: spotsRemaining < 100, // Show when under 100 spots
     });
   } catch (error: any) {
-    logger.error('Error fetching spots remaining:', error);
+    logger.error('Error fetching spots remaining:', error instanceof Error ? error : undefined, {
+      error: String(error),
+    });
     res.status(500).json({
       error: process.env.NODE_ENV === 'development'
         ? error.message

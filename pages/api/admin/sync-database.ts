@@ -44,7 +44,9 @@ export default async function handler(
       stderr: stderr || null,
     });
   } catch (error: any) {
-    logger.error('❌ Database sync failed:', error);
+    logger.error('❌ Database sync failed:', error instanceof Error ? error : undefined, {
+      error: String(error),
+    });
     return res.status(500).json({
       success: false,
       error: error.message,

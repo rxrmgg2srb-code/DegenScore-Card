@@ -115,7 +115,9 @@ export default async function handler(
       overallWinner,
     });
   } catch (error: any) {
-    logger.error('Error comparing cards:', error);
+    logger.error('Error comparing cards:', error instanceof Error ? error : undefined, {
+      error: String(error),
+    });
     res.status(500).json({
       error: 'Failed to compare cards',
       details: process.env.NODE_ENV === 'development' ? error.message : undefined,

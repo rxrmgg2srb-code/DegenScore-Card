@@ -67,7 +67,9 @@ export default async function handler(
     });
 
   } catch (error: any) {
-    logger.error('Error starting async card generation:', error);
+    logger.error('Error starting async card generation:', error instanceof Error ? error : undefined, {
+      error: String(error),
+    });
 
     const errorMessage = process.env.NODE_ENV === 'development'
       ? error.message

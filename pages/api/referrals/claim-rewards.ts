@@ -37,7 +37,9 @@ export default async function handler(
       message: `Claimed ${result.amount} $DEGEN tokens`,
     });
   } catch (error) {
-    logger.error('Error claiming referral rewards:', error);
+    logger.error('Error claiming referral rewards:', error instanceof Error ? error : undefined, {
+      error: String(error),
+    });
     res.status(500).json({
       error: 'Failed to claim rewards',
       details: error instanceof Error ? error.message : 'Unknown error',

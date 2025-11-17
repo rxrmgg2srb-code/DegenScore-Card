@@ -32,7 +32,9 @@ export default async function handler(
       stats,
     });
   } catch (error) {
-    logger.error('Error getting referral stats:', error);
+    logger.error('Error getting referral stats:', error instanceof Error ? error : undefined, {
+      error: String(error),
+    });
     res.status(500).json({
       error: 'Failed to get referral stats',
       details: error instanceof Error ? error.message : 'Unknown error',

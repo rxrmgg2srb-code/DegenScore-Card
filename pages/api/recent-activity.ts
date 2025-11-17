@@ -93,7 +93,9 @@ export default async function handler(
       count: formatted.length,
     });
   } catch (error: any) {
-    logger.error('Error fetching recent activity:', error);
+    logger.error('Error fetching recent activity:', error instanceof Error ? error : undefined, {
+      error: String(error),
+    });
     res.status(500).json({
       error: process.env.NODE_ENV === 'development'
         ? error.message

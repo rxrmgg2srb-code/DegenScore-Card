@@ -173,7 +173,7 @@ export default async function handler(
       });
 
       if (publicUrl) {
-        logger.info('☁️ Image uploaded to R2:', publicUrl);
+        logger.info('☁️ Image uploaded to R2:', { publicUrl });
         // Cachear la URL por 7 días
         await cacheSet(cacheKey, publicUrl, { ttl: 604800 });
         // Redirigir a R2
@@ -191,7 +191,9 @@ export default async function handler(
     res.status(200).send(imageBuffer);
 
   } catch (error) {
-    logger.error('❌ Error generating card:', error);
+    logger.error('❌ Error generating card:', error instanceof Error ? error : undefined, {
+      error: String(error),
+    });
     res.status(500).json({
       error: 'Failed to generate card',
       details: error instanceof Error ? error.message : 'Unknown error'
@@ -215,7 +217,9 @@ async function generateCardImage(
       if (global.gc) global.gc();
       return premiumBuffer;
     } catch (error) {
-      logger.error('❌ Error generating premium card:', error);
+      logger.error('❌ Error generating premium card:', error instanceof Error ? error : undefined, {
+      error: String(error),
+    });
       logger.info('⚠️ Falling back to basic card');
       return generateBasicCardImage(walletAddress, metrics);
     }
@@ -319,7 +323,9 @@ async function generatePremiumCardImage(
       currentY += imgSize / 2 + 25;
       
     } catch (error) {
-      logger.error('⚠️ Error loading profile image:', error);
+      logger.error('⚠️ Error loading profile image:', error instanceof Error ? error : undefined, {
+      error: String(error),
+    });
       const imgSize = 140;
       const imgX = width / 2;
       
