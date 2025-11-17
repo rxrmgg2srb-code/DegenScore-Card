@@ -27,7 +27,7 @@ export default async function handler(
       return res.status(400).json({ error: 'Invalid Solana wallet address' });
     }
 
-    logger.debug('List followers request:', walletAddress);
+    logger.debug('List followers request:', { walletAddress });
 
     // Fetch all wallets that follow this user
     const followers = await prisma.userFollows.findMany({
@@ -51,9 +51,9 @@ export default async function handler(
             totalVolume: true,
             winRate: true,
             isPaid: true,
-            profileName: true,
-            profileAvatar: true,
-            lastUpdated: true,
+            displayName: true,
+            profileImage: true,
+            updatedAt: true,
           },
         });
 

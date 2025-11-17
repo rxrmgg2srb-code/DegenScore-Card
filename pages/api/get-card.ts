@@ -27,7 +27,7 @@ export default async function handler(
       return res.status(400).json({ error: 'Invalid Solana wallet address' });
     }
 
-    logger.debug('Fetching card data for:', walletAddress);
+    logger.debug('Fetching card data for:', { walletAddress });
 
     // Fetch card data with all relations
     const card = await prisma.degenCard.findUnique({
@@ -57,12 +57,11 @@ export default async function handler(
       winRate: card.winRate,
       avgHoldTime: card.avgHoldTime,
       isPaid: card.isPaid,
-      profileName: card.profileName,
-      profileBio: card.profileBio,
-      profileAvatar: card.profileAvatar,
+      displayName: card.displayName,
+      profileImage: card.profileImage,
       badges: card.badges,
       createdAt: card.createdAt.toISOString(),
-      lastUpdated: card.lastUpdated.toISOString(),
+      updatedAt: card.updatedAt.toISOString(),
     });
 
   } catch (error: any) {

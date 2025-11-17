@@ -83,7 +83,7 @@ export default async function handler(
 
           // Obtener token mint
           if (swap.tokenTransfers && swap.tokenTransfers.length > 0) {
-            tokenMint = swap.tokenTransfers[0].mint;
+            tokenMint = swap.tokenTransfers[0]!.mint;
           }
 
           if (solAmount === 0 || !tokenMint) {

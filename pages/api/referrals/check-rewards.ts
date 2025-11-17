@@ -62,7 +62,7 @@ export default async function handler(
       return res.status(400).json({ error: 'Invalid wallet address' });
     }
 
-    logger.debug('Checking referral rewards for:', walletAddress);
+    logger.debug('Checking referral rewards for:', { walletAddress });
 
     // Count paid referrals
     const referralStats = await prisma.referral.aggregate({

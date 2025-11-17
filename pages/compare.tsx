@@ -60,12 +60,6 @@ export default function ComparePage() {
     return num.toFixed(decimals);
   };
 
-  const getWinnerColor = (winner: string) => {
-    if (winner === 'wallet1') return 'text-green-400';
-    if (winner === 'wallet2') return 'text-blue-400';
-    return 'text-gray-400';
-  };
-
   const getWinnerIcon = (winner: string) => {
     if (winner === 'wallet1') return '🥇';
     if (winner === 'wallet2') return '🥈';
