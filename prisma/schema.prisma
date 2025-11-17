@@ -88,7 +88,7 @@ model DegenCard {
 
   // PERFORMANCE: Índices adicionales para queries comunes
   @@index([isPaid, degenScore(sort: Desc), createdAt(sort: Desc)])
-  @@index([createdAt(sort: Desc)], map: "DegenCard_createdAt_desc_idx")
+  @@index([createdAt(sort: Desc)])
   @@index([lastSeen(sort: Desc)])
 }
 
@@ -393,4 +393,364 @@ model TokenAnalysis {
   @@index([analyzedAt(sort: Desc)])
   @@index([createdAt(sort: Desc)])
   @@index([verified, securityScore(sort: Desc)])
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ENGAGEMENT & RETENTION FEATURES
+// ═══════════════════════════════════════════════════════════════
+
+// Daily Login Streak System
+model UserStreak {
+  walletAddress    String   @id
+  currentStreak    Int      @default(0)  // Días consecutivos
+  longestStreak    Int      @default(0)  // Récord personal
+  lastLoginDate    DateTime @default(now())
+  totalLogins      Int      @default(1)
+
+  // Rewards earned from streaks
+  streakPoints     Int      @default(0)  // XP ganados por rachas
+
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([currentStreak])
+  @@index([lastLoginDate])
+}
+
+// Daily Challenges System
+model DailyChallenge {
+  id               String   @id @default(cuid())
+  date             DateTime @db.Date  // Día del challenge
+  challengeType    String   // "trades", "winRate", "volume", "follows", "share"
+
+  // Challenge parameters
+  targetValue      Int      // Meta a alcanzar
+  rewardXP         Int      // XP reward
+  rewardBadge      String?  // Badge opcional
+
+  title            String   // "Haz 5 trades ganadores"
+  description      String   // Descripción del challenge
+
+  // Participations
+  completions      DailyChallengeCompletion[]
+
+  createdAt        DateTime @default(now())
+
+  @@unique([date, challengeType])
+  @@index([date])
+}
+
+model DailyChallengeCompletion {
+  id               String   @id @default(cuid())
+  challengeId      String
+  challenge        DailyChallenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  walletAddress    String
+
+  progress         Int      @default(0)  // Progreso actual
+  completed        Boolean  @default(false)
+  completedAt      DateTime?
+
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@unique([challengeId, walletAddress])
+  @@index([walletAddress])
+  @@index([completed])
+}
+
+// Trading Competitions (Daily Duels 1v1)
+model TradingDuel {
+  id               String   @id @default(cuid())
+  status           String   @default("open")  // "open", "active", "finished", "cancelled"
+
+  // Participants
+  creatorWallet    String
+  opponentWallet   String?  // null si aún no hay oponente
+
+  // Competition config
+  entryFee         Float    // SOL entry fee (e.g., 0.5)
+  duration         Int      @default(86400)  // Duration in seconds (24h)
+  startTime        DateTime?
+  endTime          DateTime?
+
+  // Virtual trading
+  virtualStartBalance Float  @default(10)  // Start balance in virtual SOL
+
+  // Results
+  winnerWallet     String?
+  creatorROI       Float?   // Return on Investment %
+  opponentROI      Float?
+
+  // Transactions
+  creatorTxSignature   String?  // Signature del pago de entry
+  opponentTxSignature  String?
+  payoutTxSignature    String?  // Signature del pago al ganador
+
+  // Virtual trades
+  trades           VirtualTrade[]
+
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([status])
+  @@index([creatorWallet])
+  @@index([opponentWallet])
+  @@index([createdAt])
+}
+
+model VirtualTrade {
+  id               String   @id @default(cuid())
+  duelId           String
+  duel             TradingDuel @relation(fields: [duelId], references: [id], onDelete: Cascade)
+
+  walletAddress    String   // Quién hizo el trade
+
+  // Trade details
+  action           String   // "buy" | "sell"
+  tokenMint        String   // Token address
+  tokenSymbol      String   // Token symbol (e.g., "BONK")
+
+  amountSOL        Float    // Cantidad de SOL virtual usado
+  tokenPrice       Float    // Precio del token al momento
+  tokenAmount      Float    // Cantidad de tokens comprados/vendidos
+
+  // Balance tracking
+  balanceBefore    Float    // Balance antes del trade
+  balanceAfter     Float    // Balance después del trade
+
+  timestamp        DateTime @default(now())
+
+  @@index([duelId, walletAddress])
+  @@index([timestamp])
+}
+
+// User Analytics & Engagement Tracking
+model UserAnalytics {
+  walletAddress       String   @id
+
+  // Login tracking
+  lastLogin           DateTime @default(now())
+  loginCount          Int      @default(1)
+
+  // Engagement metrics
+  challengesCompleted Int      @default(0)
+  duelsPlayed         Int      @default(0)
+  duelsWon            Int      @default(0)
+
+  // XP & Leveling
+  totalXP             Int      @default(0)
+  level               Int      @default(1)
+
+  // Social
+  referralsCount      Int      @default(0)
+  sharesCount         Int      @default(0)
+
+  // Time spent (in seconds)
+  totalTimeSpent      Int      @default(0)
+
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@index([totalXP])
+  @@index([level])
+  @@index([lastLogin])
+}
+
+// Achievement System
+model Achievement {
+  id               String   @id @default(cuid())
+  key              String   @unique  // "unicorn_hunter", "ghost_trader", etc.
+
+  name             String   // "Unicorn Hunter"
+  description      String   // "Find a 1000x token"
+  icon             String   // Emoji or icon
+  rarity           String   // "common", "rare", "epic", "legendary"
+
+  // Requirements
+  requirementType  String   // "trades", "winRate", "streak", "custom"
+  requirementValue Int      // Threshold to unlock
+
+  // Rewards
+  rewardXP         Int      @default(0)
+  rewardBadge      Boolean  @default(true)
+
+  // Hidden achievements
+  isHidden         Boolean  @default(false)
+
+  // Tracking
+  unlocks          AchievementUnlock[]
+
+  createdAt        DateTime @default(now())
+
+  @@index([key])
+  @@index([rarity])
+}
+
+model AchievementUnlock {
+  id               String   @id @default(cuid())
+  achievementId    String
+  achievement      Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+
+  walletAddress    String
+  unlockedAt       DateTime @default(now())
+
+  @@unique([achievementId, walletAddress])
+  @@index([walletAddress])
+  @@index([unlockedAt])
+}
+
+// Referral System
+model Referral {
+  id               String   @id @default(cuid())
+  referrerWallet   String   // Quien refiere
+  referredWallet   String   // Quien fue referido
+
+  // Tracking
+  referredPremium  Boolean  @default(false)  // ¿El referido compró premium?
+  rewardPaid       Boolean  @default(false)   // ¿Se pagó reward al referrer?
+  rewardAmount     Float?   // Cantidad pagada
+  rewardTxSignature String? // Signature del pago
+
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@unique([referredWallet])  // Cada usuario solo puede ser referido una vez
+  @@index([referrerWallet])
+  @@index([referredPremium])
+}
+
+// ═══════════════════════════════════════════════════════════════
+// KILLER FEATURES - BE #1 IN WEB3
+// ═══════════════════════════════════════════════════════════════
+
+// AI Trading Coach Analysis
+model AICoachAnalysis {
+  id                String   @id @default(cuid())
+  walletAddress     String
+
+  // Analysis metadata
+  analyzedAt        DateTime @default(now())
+  tradesAnalyzed    Int      // Number of trades analyzed
+
+  // AI-generated insights
+  overallScore      Int      // 0-100 discipline score
+  strengths         String   @db.Text  // JSON array of strengths
+  weaknesses        String   @db.Text  // JSON array of weaknesses
+  recommendations   String   @db.Text  // JSON array of recommendations
+  patterns          String   @db.Text  // JSON array of detected patterns
+
+  // Risk analysis
+  riskProfile       String   // "conservative", "moderate", "aggressive", "degen"
+  emotionalTrading  Int      // 0-100 score
+
+  // Performance predictions
+  predictedROI      Float?   // Next 30 days
+  confidenceScore   Float?   // 0-1
+
+  // Full AI response
+  fullAnalysis      String   @db.Text  // Complete AI response
+
+  @@index([walletAddress])
+  @@index([analyzedAt])
+  @@index([overallScore])
+}
+
+// Whale Tracking
+model WhaleWallet {
+  id                String   @id @default(cuid())
+  walletAddress     String   @unique
+
+  // Whale classification
+  tier              String   // "megawhale" (>1000 SOL), "whale" (>100), "shark" (>10)
+  totalBalance      Float    // Current SOL balance
+
+  // Trading stats
+  totalVolume       Float    @default(0)
+  totalTrades       Int      @default(0)
+  winRate           Float    @default(0)
+  avgTradeSize      Float    @default(0)
+
+  // Tracking
+  firstSeenAt       DateTime @default(now())
+  lastTradeAt       DateTime?
+  isActive          Boolean  @default(true)
+
+  // Metadata
+  label             String?  // Optional label/name
+  tags              String?  // JSON array of tags
+
+  // Alerts
+  alerts            WhaleAlert[]
+
+  @@index([tier])
+  @@index([totalBalance])
+  @@index([isActive])
+  @@index([lastTradeAt])
+}
+
+model WhaleAlert {
+  id                String   @id @default(cuid())
+  whaleId           String
+  whale             WhaleWallet @relation(fields: [whaleId], references: [id], onDelete: Cascade)
+
+  // Alert details
+  alertType         String   // "large_buy", "large_sell", "new_whale", "whale_awakened"
+  tokenMint         String?  // Token involved
+  tokenSymbol       String?
+  amount            Float    // SOL amount
+
+  // Context
+  description       String   // Human-readable description
+  timestamp         DateTime @default(now())
+
+  // Notifications sent
+  notificationsSent Int      @default(0)
+
+  @@index([whaleId])
+  @@index([alertType])
+  @@index([timestamp])
+}
+
+// Telegram User Integration
+model TelegramUser {
+  id                String   @id @default(cuid())
+  telegramId        String   @unique  // Telegram user ID
+  username          String?
+
+  // Linked wallet
+  walletAddress     String?  @unique
+  linkedAt          DateTime?
+
+  // Preferences
+  language          String   @default("en")
+  notifications     Boolean  @default(true)
+  whaleAlerts       Boolean  @default(true)
+  challengeReminders Boolean @default(true)
+
+  // Stats
+  commandsUsed      Int      @default(0)
+  lastActiveAt      DateTime @default(now())
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([telegramId])
+  @@index([walletAddress])
+}
+
+// Whale Followers (users following specific whales)
+model WhaleFollower {
+  id                String   @id @default(cuid())
+  walletAddress     String   // User following
+  whaleAddress      String   // Whale being followed
+
+  // Alert preferences
+  alertOnTrades     Boolean  @default(true)
+  minTradeSize      Float    @default(1)  // Min SOL to alert
+
+  createdAt         DateTime @default(now())
+
+  @@unique([walletAddress, whaleAddress])
+  @@index([walletAddress])
+  @@index([whaleAddress])
 }

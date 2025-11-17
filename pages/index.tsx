@@ -25,6 +25,27 @@ const WeeklyChallengeBanner = dynamic(() => import('../components/WeeklyChalleng
   loading: () => <div className="h-24 bg-gray-800/30 animate-pulse rounded-lg" />,
 });
 
+// KILLER FEATURES: AI Coach, Whale Radar, Engagement
+const StreakWidget = dynamic(() => import('../components/StreakWidget'), {
+  loading: () => <div className="h-32 bg-gray-800/30 animate-pulse rounded-lg" />,
+  ssr: false,
+});
+
+const DailyChallengesWidget = dynamic(() => import('../components/DailyChallengesWidget'), {
+  loading: () => <div className="h-64 bg-gray-800/30 animate-pulse rounded-lg" />,
+  ssr: false,
+});
+
+const AITradingCoach = dynamic(() => import('../components/AITradingCoach'), {
+  loading: () => <div className="h-96 bg-gray-800/30 animate-pulse rounded-lg" />,
+  ssr: false,
+});
+
+const WhaleRadar = dynamic(() => import('../components/WhaleRadar'), {
+  loading: () => <div className="h-96 bg-gray-800/30 animate-pulse rounded-lg" />,
+  ssr: false,
+});
+
 export default function Home() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 relative overflow-hidden">
@@ -91,6 +112,36 @@ export default function Home() {
           {/* Hot Feed Widget - 1 columna */}
           <div className="lg:col-span-1 activity-feed">
             <HotFeedWidget />
+          </div>
+        </div>
+
+        {/* ENGAGEMENT FEATURES */}
+        <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Streak Widget */}
+          <StreakWidget />
+
+          {/* Daily Challenges */}
+          <DailyChallengesWidget />
+        </div>
+
+        {/* KILLER FEATURES */}
+        <div className="mt-8 space-y-8">
+          {/* AI Trading Coach */}
+          <div className="animate-slide-up">
+            <div className="flex items-center gap-2 mb-4">
+              <h2 className="text-3xl font-bold gradient-text-gold">🧠 AI Trading Coach</h2>
+              <span className="px-3 py-1 bg-purple-600 text-white text-xs font-bold rounded-full">NEW</span>
+            </div>
+            <AITradingCoach />
+          </div>
+
+          {/* Whale Tracking Radar */}
+          <div className="animate-slide-up">
+            <div className="flex items-center gap-2 mb-4">
+              <h2 className="text-3xl font-bold gradient-text-gold">🐋 Whale Tracking Radar</h2>
+              <span className="px-3 py-1 bg-blue-600 text-white text-xs font-bold rounded-full">NEW</span>
+            </div>
+            <WhaleRadar />
           </div>
         </div>
       </div>
