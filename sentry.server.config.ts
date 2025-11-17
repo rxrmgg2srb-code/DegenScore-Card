@@ -8,7 +8,7 @@ Sentry.init({
   environment: process.env.NODE_ENV,
 
   // Opciones específicas del servidor
-  beforeSend(event, hint) {
+  beforeSend(event, _hint) {
     // No enviar errores de desarrollo
     if (process.env.NODE_ENV === 'development') {
       return null;

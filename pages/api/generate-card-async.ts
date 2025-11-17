@@ -34,7 +34,7 @@ export default async function handler(
       return res.status(400).json({ error: 'Invalid Solana wallet address' });
     }
 
-    logger.debug('Async card generation request:', walletAddress);
+    logger.debug('Async card generation request:', { walletAddress });
 
     // Check if card exists in database
     const card = await prisma.degenCard.findUnique({

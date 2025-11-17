@@ -28,7 +28,7 @@ export default async function handler(
     const { limit } = validatePagination(undefined, limitParam);
     const safeLimit = Math.min(limit, 100); // Max 100 entries
 
-    logger.debug('Leaderboard request - sortBy:', sortField, 'limit:', safeLimit);
+    logger.debug('Leaderboard request:', { sortBy: sortField, limit: safeLimit });
 
     // 🚀 OPTIMIZACIÓN: Cachear leaderboard por 5 minutos
     const cacheKey = `${CacheKeys.leaderboard()}:${sortField}:${safeLimit}`;

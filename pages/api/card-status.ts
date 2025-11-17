@@ -21,7 +21,7 @@ export default async function handler(
       return res.status(400).json({ error: 'Job ID is required' });
     }
 
-    logger.debug('Checking job status:', jobId);
+    logger.debug('Checking job status:', { jobId });
 
     const status = await getJobStatus(jobId);
 

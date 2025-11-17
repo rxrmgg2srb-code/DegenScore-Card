@@ -27,15 +27,12 @@ export default async function handler(
       return res.status(400).json({ error: 'Invalid Solana wallet address' });
     }
 
-    logger.debug('List follows request:', walletAddress);
+    logger.debug('List follows request:', { walletAddress });
 
     // Fetch all wallets this user follows with card data
     const follows = await prisma.userFollows.findMany({
       where: {
         follower: walletAddress,
-      },
-      include: {
-        // Note: We need to add a relation in the schema, but for now we'll do a manual join
       },
       orderBy: {
         createdAt: 'desc',
@@ -54,9 +51,9 @@ export default async function handler(
             totalVolume: true,
             winRate: true,
             isPaid: true,
-            profileName: true,
-            profileAvatar: true,
-            lastUpdated: true,
+            displayName: true,
+            profileImage: true,
+            updatedAt: true,
           },
         });
 

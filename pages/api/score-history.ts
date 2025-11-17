@@ -76,8 +76,8 @@ export default async function handler(
     const maxScore = Math.max(...scores);
     const minScore = Math.min(...scores);
     const avgScore = scores.reduce((a, b) => a + b, 0) / scores.length;
-    const latestScore = scores[scores.length - 1];
-    const firstScore = scores[0];
+    const latestScore = scores[scores.length - 1] as number;
+    const firstScore = scores[0] as number;
     const scoreChange = latestScore - firstScore;
     const scoreChangePercent = firstScore > 0 ? ((scoreChange / firstScore) * 100) : 0;
 

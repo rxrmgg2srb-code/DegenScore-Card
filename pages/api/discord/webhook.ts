@@ -1,5 +1,4 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { verifyAdminAuth } from '../../../lib/adminAuth';
 
 /**
  * Discord webhook integration

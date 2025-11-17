@@ -38,7 +38,7 @@ export default async function handler(
     const spotsRemaining = Math.max(0, TOTAL_PREMIUM_SLOTS - premiumCount);
 
     // Determine current price tier
-    const currentTier = PRICE_TIERS.find(tier => premiumCount < tier.maxUsers) || PRICE_TIERS[PRICE_TIERS.length - 1];
+    const currentTier = PRICE_TIERS.find(tier => premiumCount < tier.maxUsers) || PRICE_TIERS[PRICE_TIERS.length - 1]!;
     const nextTier = PRICE_TIERS.find(tier => premiumCount < tier.maxUsers && tier.maxUsers > currentTier.maxUsers);
 
     // Calculate percentage filled
