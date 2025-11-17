@@ -20,6 +20,8 @@ export default function DegenCard() {
   const [showShareModal, setShowShareModal] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [hasPaid, setHasPaid] = useState(false);
+  const [hasPromoCode, setHasPromoCode] = useState(false);
+  const [promoCodeApplied, setPromoCodeApplied] = useState<string | null>(null);
 
   const [analyzing, setAnalyzing] = useState(false);
   const [analysisProgress, setAnalysisProgress] = useState(0);
@@ -446,6 +448,10 @@ export default function DegenCard() {
         onClose={() => setShowUpgradeModal(false)}
         onUpgrade={handleUpgrade}
         onSkip={handleSkip}
+        onPromoCodeApplied={(code) => {
+          setHasPromoCode(true);
+          setPromoCodeApplied(code);
+        }}
       />
 
       <ShareModal
@@ -461,6 +467,8 @@ export default function DegenCard() {
         onClose={() => setShowProfileModal(false)}
         onSubmit={handleProfileSubmit}
         walletAddress={walletAddress}
+        hasPromoCode={hasPromoCode}
+        promoCodeApplied={promoCodeApplied || undefined}
       />
 
       {/* Premium Features */}
