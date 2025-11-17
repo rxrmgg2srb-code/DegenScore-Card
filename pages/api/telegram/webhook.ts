@@ -44,10 +44,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     const message = update.message;
+    if (!message || !message.text) {
+      return res.status(200).json({ ok: true });
+    }
+
     const chatId = message.chat.id;
     const text = message.text.trim();
-    const telegramId = message.from.id;
-    const username = message.from.username;
+    const telegramId = message.from?.id;
+    const username = message.from?.username;
+
+    if (!telegramId) {
+      return res.status(200).json({ ok: true });
+    }
 
     // Get or create user
     const telegramUser = await getOrCreateTelegramUser(telegramId, username);
@@ -61,7 +69,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     // Handle commands
     if (text.startsWith('/')) {
-      const command = text.split(' ')[0].toLowerCase();
+      const command = text.split(' ')[0]?.toLowerCase() || '';
 
       switch (command) {
         case TELEGRAM_COMMANDS.START:
