@@ -247,7 +247,7 @@ export async function getLatestAnalysis(walletAddress: string): Promise<CoachAna
       predictedROI: analysis.predictedROI,
       confidenceScore: analysis.confidenceScore,
     };
-  } catch (error) {
+  } catch (error: any) {
     logger.error('Error getting latest analysis:', error);
     return null;
   }
@@ -280,7 +280,7 @@ export async function needsNewAnalysis(walletAddress: string): Promise<boolean> 
       (Date.now() - latestAnalysis.analyzedAt.getTime()) / (1000 * 60 * 60);
 
     return hoursSinceLastAnalysis >= cooldownHours;
-  } catch (error) {
+  } catch (error: any) {
     logger.error('Error checking analysis cooldown:', error);
     return false;
   }

@@ -163,7 +163,7 @@ async function sendTelegramMessage(chatId: number, text: string): Promise<void> 
     }
 
     logger.info(`Message sent to Telegram chat ${chatId}`);
-  } catch (error) {
+  } catch (error: any) {
     logger.error('Error sending Telegram message:', error);
     throw error;
   }

@@ -156,7 +156,7 @@ export async function checkDailyStreak(walletAddress: string): Promise<StreakInf
         nextReward: STREAK_REWARDS[1],
       };
     }
-  } catch (error) {
+  } catch (error: any) {
     logger.error('Error checking daily streak:', error);
     throw error;
   }
@@ -226,7 +226,7 @@ async function awardStreakBadge(walletAddress: string, badgeKey: string, streakD
     });
 
     logger.info('Streak badge awarded:', { walletAddress, badgeKey, streakDays });
-  } catch (error) {
+  } catch (error: any) {
     logger.error('Error awarding streak badge:', error);
   }
 }
@@ -260,7 +260,7 @@ export async function getStreakLeaderboard(limit: number = 100) {
     });
 
     return topStreaks;
-  } catch (error) {
+  } catch (error: any) {
     logger.error('Error fetching streak leaderboard:', error);
     return [];
   }

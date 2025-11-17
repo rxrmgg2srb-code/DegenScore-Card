@@ -114,7 +114,7 @@ export async function getDailyChallenges(walletAddress?: string): Promise<Challe
       progress: walletAddress && c.completions?.[0]?.progress || 0,
       completed: walletAddress && c.completions?.[0]?.completed || false,
     }));
-  } catch (error) {
+  } catch (error: any) {
     logger.error('Error getting daily challenges:', error);
     throw error;
   }
@@ -154,7 +154,7 @@ async function createDailyChallenges(date: Date) {
     logger.info('Created daily challenges:', { date, count: created.length });
 
     return created;
-  } catch (error) {
+  } catch (error: any) {
     logger.error('Error creating daily challenges:', error);
     throw error;
   }
@@ -231,7 +231,7 @@ export async function updateChallengeProgress(
         xpAwarded: challenge.rewardXP,
       });
     }
-  } catch (error) {
+  } catch (error: any) {
     logger.error('Error updating challenge progress:', error);
   }
 }
@@ -261,7 +261,7 @@ async function awardChallengeReward(walletAddress: string, xp: number) {
 
     // Calculate new level
     await updateUserLevel(walletAddress);
-  } catch (error) {
+  } catch (error: any) {
     logger.error('Error awarding challenge reward:', error);
   }
 }
@@ -288,7 +288,7 @@ async function updateUserLevel(walletAddress: string) {
 
       logger.info('User leveled up:', { walletAddress, newLevel });
     }
-  } catch (error) {
+  } catch (error: any) {
     logger.error('Error updating user level:', error);
   }
 }
@@ -331,7 +331,7 @@ export async function getUserChallengeStats(walletAddress: string) {
       todayCompleted: todayCompletions.length,
       streakDays: await calculateChallengeStreak(walletAddress),
     };
-  } catch (error) {
+  } catch (error: any) {
     logger.error('Error getting user challenge stats:', error);
     return {
       totalCompleted: 0,
@@ -381,7 +381,7 @@ async function calculateChallengeStreak(walletAddress: string): Promise<number> 
     }
 
     return streak;
-  } catch (error) {
+  } catch (error: any) {
     logger.error('Error calculating challenge streak:', error);
     return 0;
   }

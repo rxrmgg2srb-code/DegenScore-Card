@@ -55,7 +55,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             updated++;
           }
         }
-      } catch (error) {
+      } catch (error: any) {
         logger.error(`Error processing wallet ${walletAddress}:`, error);
         // Continue with next wallet
       }
