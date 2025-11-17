@@ -78,7 +78,6 @@ model DegenCard {
   @@index([isPaid])
   @@index([likes])
   @@index([mintedAt])
-  @@index([createdAt])
 
   // Índices compuestos para leaderboard (ordenamiento)
   @@index([degenScore(sort: Desc), mintedAt(sort: Desc)])
@@ -635,26 +634,6 @@ model AchievementUnlock {
   @@unique([achievementId, walletAddress])
   @@index([walletAddress])
   @@index([unlockedAt])
-}
-
-// Referral System
-model Referral {
-  id               String   @id @default(cuid())
-  referrerWallet   String   // Quien refiere
-  referredWallet   String   // Quien fue referido
-
-  // Tracking
-  referredPremium  Boolean  @default(false)  // ¿El referido compró premium?
-  rewardPaid       Boolean  @default(false)   // ¿Se pagó reward al referrer?
-  rewardAmount     Float?   // Cantidad pagada
-  rewardTxSignature String? // Signature del pago
-
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
-
-  @@unique([referredWallet])  // Cada usuario solo puede ser referido una vez
-  @@index([referrerWallet])
-  @@index([referredPremium])
 }
 
 // ═══════════════════════════════════════════════════════════════
