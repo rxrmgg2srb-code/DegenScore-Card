@@ -9,18 +9,9 @@ const nextConfig = {
     ignoreDuringBuilds: true,
   },
 
-  // Disable TypeScript type checking during builds to reduce memory usage
+  // Disable TypeScript type checking during builds (faster builds, check locally)
   typescript: {
     ignoreBuildErrors: true,
-  },
-
-  // Disable font optimization to reduce memory during build
-  optimizeFonts: false,
-
-  // Experimental features to reduce memory
-  experimental: {
-    workerThreads: false,
-    cpus: 1,
   },
 
   // Security headers
@@ -90,27 +81,21 @@ const nextConfig = {
   // Performance optimizations
   compress: true,
 
-  // Disable SWC minification to reduce memory usage during build
-  // This increases build output size slightly but significantly reduces memory consumption
-  swcMinify: false,
+  // Enable SWC minification (Vercel has 1GB RAM, can handle it)
+  swcMinify: true,
 
   // Disable x-powered-by header
   poweredByHeader: false,
 
-  // Webpack optimizations with memory constraints
+  // Webpack optimizations for production
   webpack: (config, { dev, isServer }) => {
-    // Reduce memory usage during builds
-    config.optimization = {
-      ...config.optimization,
-      // Minimize memory usage
-      minimize: !dev,
-      // Reduce parallelization to save memory
-      ...(isServer ? {} : {
+    if (!dev && !isServer) {
+      config.optimization = {
+        ...config.optimization,
         moduleIds: 'deterministic',
         runtimeChunk: 'single',
         splitChunks: {
           chunks: 'all',
-          maxSize: 244000, // Split large chunks to reduce memory
           cacheGroups: {
             default: false,
             vendors: false,
@@ -142,12 +127,7 @@ const nextConfig = {
             },
           },
         },
-      }),
-    };
-
-    // Reduce memory footprint by limiting parallelism
-    if (!dev) {
-      config.parallelism = 1;
+      };
     }
 
     return config;

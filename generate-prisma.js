@@ -59,7 +59,7 @@ try {
   } else {
     // Last resort: use npx
     console.log('Using npx as fallback...');
-    execSync('npx --yes prisma@5.22.0 generate', { stdio: 'inherit', cwd: __dirname });
+    execSync('npx --yes prisma@6.19.0 generate', { stdio: 'inherit', cwd: __dirname });
   }
 
   console.log('✅ Prisma Client generated successfully!');
