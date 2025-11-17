@@ -87,16 +87,20 @@ const nextConfig = {
   // Disable x-powered-by header
   poweredByHeader: false,
 
-  // Webpack optimizations
+  // Webpack optimizations with memory constraints
   webpack: (config, { dev, isServer }) => {
-    // Production optimizations
-    if (!dev && !isServer) {
-      config.optimization = {
-        ...config.optimization,
+    // Reduce memory usage during builds
+    config.optimization = {
+      ...config.optimization,
+      // Minimize memory usage
+      minimize: !dev,
+      // Reduce parallelization to save memory
+      ...(isServer ? {} : {
         moduleIds: 'deterministic',
         runtimeChunk: 'single',
         splitChunks: {
           chunks: 'all',
+          maxSize: 244000, // Split large chunks to reduce memory
           cacheGroups: {
             default: false,
             vendors: false,
@@ -128,7 +132,12 @@ const nextConfig = {
             },
           },
         },
-      };
+      }),
+    };
+
+    // Reduce memory footprint by limiting parallelism
+    if (!dev) {
+      config.parallelism = 1;
     }
 
     return config;
