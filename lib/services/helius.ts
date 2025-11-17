@@ -82,9 +82,9 @@ export async function getWalletTransactions(
         url += `&before=${before}`;
       }
 
-      // Timeout de 10 segundos para prevenir hangs
+      // Timeout de 30 segundos para prevenir hangs (aumentado porque Helius puede tardar)
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000);
+      const timeoutId = setTimeout(() => controller.abort(), 30000);
 
       try {
         const response = await fetch(url, { signal: controller.signal });
@@ -111,7 +111,7 @@ export async function getWalletTransactions(
       } catch (error: any) {
         clearTimeout(timeoutId);
         if (error.name === 'AbortError') {
-          throw new Error('Helius API timeout after 10 seconds');
+          throw new Error('Helius API timeout after 30 seconds');
         }
         throw error;
       }
@@ -142,9 +142,9 @@ export async function getTokenMetadata(mintAddresses: string[]): Promise<Map<str
         params: { id: mint },
       }));
 
-      // Timeout de 10 segundos para prevenir hangs
+      // Timeout de 30 segundos para prevenir hangs (aumentado porque Helius puede tardar)
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000);
+      const timeoutId = setTimeout(() => controller.abort(), 30000);
 
       try {
         const response = await fetch(url, {
@@ -180,7 +180,7 @@ export async function getTokenMetadata(mintAddresses: string[]): Promise<Map<str
       } catch (error: any) {
         clearTimeout(timeoutId);
         if (error.name === 'AbortError') {
-          throw new Error('Helius DAS API timeout after 10 seconds');
+          throw new Error('Helius DAS API timeout after 30 seconds');
         }
         throw error;
       }
