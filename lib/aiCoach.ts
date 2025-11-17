@@ -78,7 +78,7 @@ export async function analyzeTraderWithAI(walletAddress: string): Promise<CoachA
       response_format: { type: 'json_object' },
     });
 
-    const aiResponse = completion.choices[0].message.content;
+    const aiResponse = completion.choices[0]?.message?.content;
     if (!aiResponse) {
       throw new Error('No response from AI');
     }
@@ -146,7 +146,7 @@ function calculateTradingStats(card: any, trades: any[]) {
 
   // Find most active hours
   const mostActiveHours = Object.entries(hourlyDistribution)
-    .sort(([, a], [, b]) => b - a)
+    .sort(([, a], [, b]) => (b as number) - (a as number))
     .slice(0, 3)
     .map(([hour]) => parseInt(hour));
 
