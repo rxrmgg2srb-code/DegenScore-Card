@@ -53,7 +53,7 @@ export async function checkDailyStreak(walletAddress: string): Promise<StreakInf
           longestStreak: 1,
           lastLoginDate: today,
           totalLogins: 1,
-          streakPoints: STREAK_REWARDS[0].xp,
+          streakPoints: STREAK_REWARDS[0]!.xp,
         },
       });
 
@@ -64,7 +64,7 @@ export async function checkDailyStreak(walletAddress: string): Promise<StreakInf
         longestStreak: 1,
         lastLoginDate: today,
         totalLogins: 1,
-        streakPoints: STREAK_REWARDS[0].xp,
+        streakPoints: STREAK_REWARDS[0]!.xp,
         todayCheckedIn: true,
         nextReward: STREAK_REWARDS[1],
       };
@@ -109,14 +109,14 @@ export async function checkDailyStreak(walletAddress: string): Promise<StreakInf
           longestStreak: Math.max(newStreak, streak.longestStreak),
           lastLoginDate: today,
           totalLogins: streak.totalLogins + 1,
-          streakPoints: streak.streakPoints + reward.xp,
+          streakPoints: streak.streakPoints + (reward?.xp ?? 10),
         },
       });
 
-      logger.info('Streak continued:', { walletAddress, newStreak, xpGained: reward.xp });
+      logger.info('Streak continued:', { walletAddress, newStreak, xpGained: reward?.xp ?? 10 });
 
       // Award badge if applicable
-      if (reward.badge) {
+      if (reward && 'badge' in reward && reward.badge) {
         await awardStreakBadge(walletAddress, reward.badge, newStreak);
       }
 
@@ -137,7 +137,7 @@ export async function checkDailyStreak(walletAddress: string): Promise<StreakInf
           currentStreak: 1,
           lastLoginDate: today,
           totalLogins: streak.totalLogins + 1,
-          streakPoints: streak.streakPoints + STREAK_REWARDS[0].xp,
+          streakPoints: streak.streakPoints + STREAK_REWARDS[0]!.xp,
         },
       });
 
@@ -169,9 +169,9 @@ function getStreakReward(day: number) {
   // Find the highest reward tier that applies
   const rewards = STREAK_REWARDS.filter((r) => r.day <= day).sort((a, b) => b.day - a.day);
 
-  if (rewards.length > 0 && rewards[0].day === day) {
+  if (rewards.length > 0 && rewards[0]!.day === day) {
     // Exact match - special reward
-    return rewards[0];
+    return rewards[0]!;
   }
 
   // Regular day - give base XP
@@ -191,33 +191,29 @@ function getNextReward(currentStreak: number) {
  */
 async function awardStreakBadge(walletAddress: string, badgeKey: string, streakDays: number) {
   try {
-    // Check if badge already exists
-    const existingBadge = await prisma.badge.findFirst({
-      where: {
-        DegenCard: {
-          walletAddress,
-        },
-        name: { contains: badgeKey },
-      },
-    });
-
-    if (existingBadge) {
-      return; // Already has this badge
-    }
-
-    // Get user's card
+    // Get user's card first
     const card = await prisma.degenCard.findUnique({
       where: { walletAddress },
+      include: {
+        badges: true,
+      },
     });
 
     if (!card) {
       return; // No card yet
     }
 
+    // Check if badge already exists
+    const existingBadge = card.badges.find(b => b.name.includes(badgeKey));
+
+    if (existingBadge) {
+      return; // Already has this badge
+    }
+
     // Award badge
     await prisma.badge.create({
       data: {
-        degenCardId: card.id,
+        cardId: card.id,
         name: `${streakDays} Day Streak`,
         description: `Maintained a ${streakDays} day login streak`,
         icon: '🔥',

@@ -47,8 +47,8 @@ export async function getOptimizedLeaderboard(
         totalVolume: true,
         winRate: true,
         likes: true,
-        username: true,
-        avatarUrl: true,
+        displayName: true,
+        profileImage: true,
         level: true,
       },
       orderBy: { [sortBy]: 'desc' },
@@ -88,8 +88,8 @@ export async function batchFetchWallets(walletAddresses: string[]) {
       degenScore: true,
       totalVolume: true,
       winRate: true,
-      username: true,
-      avatarUrl: true,
+      displayName: true,
+      profileImage: true,
     },
   });
 }
@@ -101,19 +101,19 @@ export async function searchWallets(
   query: string,
   limit: number = 20
 ) {
-  // Search by wallet address or username
+  // Search by wallet address or displayName
   const results = await prisma.degenCard.findMany({
     where: {
       OR: [
         { walletAddress: { contains: query, mode: 'insensitive' } },
-        { username: { contains: query, mode: 'insensitive' } },
+        { displayName: { contains: query, mode: 'insensitive' } },
       ],
       isPaid: true,
     },
     select: {
       walletAddress: true,
-      username: true,
-      avatarUrl: true,
+      displayName: true,
+      profileImage: true,
       degenScore: true,
       level: true,
     },
@@ -137,8 +137,8 @@ export async function getTrendingWallets(limit: number = 10) {
     },
     select: {
       walletAddress: true,
-      username: true,
-      avatarUrl: true,
+      displayName: true,
+      profileImage: true,
       degenScore: true,
       totalVolume: true,
       level: true,
@@ -157,8 +157,15 @@ export async function getTrendingWallets(limit: number = 10) {
  * Efficient badge count aggregation
  */
 export async function getWalletBadgeCount(walletAddress: string): Promise<number> {
-  const count = await prisma.badge.count({
+  const card = await prisma.degenCard.findUnique({
     where: { walletAddress },
+    select: { id: true },
+  });
+
+  if (!card) return 0;
+
+  const count = await prisma.badge.count({
+    where: { cardId: card.id },
   });
 
   return count;
