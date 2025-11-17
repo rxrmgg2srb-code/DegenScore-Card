@@ -3,7 +3,7 @@
   "version": "0.2.0",
   "private": true,
   "engines": {
-    "node": ">=20.19.5"
+    "node": "^20.19.5"
   },
   "overrides": {
     "prisma": "6.19.0",
