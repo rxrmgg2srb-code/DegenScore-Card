@@ -87,16 +87,20 @@ const nextConfig = {
   // Disable x-powered-by header
   poweredByHeader: false,
 
-  // Webpack optimizations
+  // Webpack optimizations with memory constraints
   webpack: (config, { dev, isServer }) => {
-    // Production optimizations
-    if (!dev && !isServer) {
-      config.optimization = {
-        ...config.optimization,
+    // Reduce memory usage during builds
+    config.optimization = {
+      ...config.optimization,
+      // Minimize memory usage
+      minimize: !dev,
+      // Reduce parallelization to save memory
+      ...(isServer ? {} : {
         moduleIds: 'deterministic',
         runtimeChunk: 'single',
         splitChunks: {
           chunks: 'all',
+          maxSize: 244000, // Split large chunks to reduce memory
           cacheGroups: {
             default: false,
             vendors: false,
@@ -128,7 +132,12 @@ const nextConfig = {
             },
           },
         },
-      };
+      }),
+    };
+
+    // Reduce memory footprint by limiting parallelism
+    if (!dev) {
+      config.parallelism = 1;
     }
 
     return config;
@@ -144,12 +153,16 @@ const sentryWebpackPluginOptions = {
   authToken: process.env.SENTRY_AUTH_TOKEN,
 
   // Solo subir source maps en producción
-  widenClientFileUpload: true,
+  widenClientFileUpload: false, // Reduce memory during build
   hideSourceMaps: true,
   disableLogger: true,
+
+  // Reduce memory usage during build
+  dryRun: !process.env.SENTRY_AUTH_TOKEN, // Skip upload if no token
 };
 
-// Exportar con Sentry solo si está configurado
-module.exports = process.env.NEXT_PUBLIC_SENTRY_DSN
+// Exportar con Sentry solo si está configurado Y hay auth token
+// Esto reduce el uso de memoria durante el build
+module.exports = process.env.NEXT_PUBLIC_SENTRY_DSN && process.env.SENTRY_AUTH_TOKEN
   ? withSentryConfig(nextConfig, sentryWebpackPluginOptions)
   : nextConfig;
