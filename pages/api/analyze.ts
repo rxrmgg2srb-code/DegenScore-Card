@@ -30,7 +30,7 @@ export default async function handler(
       return res.status(400).json({ error: 'Invalid Solana wallet address' });
     }
 
-    logger.info('Analyzing wallet:', { walletAddress });
+    logger.info('🔍 Starting analysis for wallet:', { walletAddress });
 
     // PERFORMANCE: Timeout de 30 segundos optimizado para análisis rápido
     const metricsPromise = calculateAdvancedMetrics(walletAddress);
@@ -43,7 +43,7 @@ export default async function handler(
       metrics = await Promise.race([metricsPromise, timeoutPromise]);
     } catch (error) {
       if (error instanceof Error && error.message.includes('timeout')) {
-        logger.warn('Wallet analysis timeout:', { walletAddress });
+        logger.warn('⏱️ Wallet analysis timeout:', { walletAddress, timeout: '30s' });
         return res.status(504).json({
           error: 'El análisis está tomando demasiado tiempo. Por favor intenta de nuevo en unos minutos.',
           details: 'Wallet analysis timeout'
@@ -52,7 +52,24 @@ export default async function handler(
       throw error;
     }
 
-    logger.info('Analysis complete for wallet:', { walletAddress });
+    logger.info('✅ Analysis complete for wallet:', {
+      walletAddress,
+      degenScore: metrics.degenScore,
+      totalTrades: metrics.totalTrades,
+      hasData: metrics.degenScore > 0 || metrics.totalTrades > 0
+    });
+
+    // Log warning if we got default/empty metrics
+    if (metrics.degenScore === 0 && metrics.totalTrades === 0) {
+      logger.warn('⚠️ Analysis returned empty metrics (no trading activity found)', {
+        walletAddress,
+        metrics: {
+          degenScore: metrics.degenScore,
+          totalTrades: metrics.totalTrades,
+          totalVolume: metrics.totalVolume
+        }
+      });
+    }
 
     // 2. Generar badges usando la función encapsulada (MÁS LIMPIO)
     const badges = generateBadges(metrics); // <--- LÓGICA EXTRAÍDA AQUÍ

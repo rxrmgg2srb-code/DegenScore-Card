@@ -92,35 +92,64 @@ export async function calculateAdvancedMetrics(
   onProgress?: (progress: number, message: string) => void
 ): Promise<WalletMetrics> {
   try {
-    logger.info('🔥 DegenScore Engine v2.0 - Professional Analysis Starting');
+    logger.info('🔥 DegenScore Engine v2.0 - Professional Analysis Starting', { walletAddress });
 
     if (onProgress) onProgress(5, '📡 Fetching transactions...');
 
     const allTransactions = await fetchAllTransactions(walletAddress, onProgress);
 
     if (!allTransactions || allTransactions.length === 0) {
-      logger.info('❌ No transactions found');
+      logger.warn('❌ No transactions found for wallet', {
+        walletAddress,
+        transactionsLength: allTransactions?.length || 0,
+        reason: 'Wallet may have no transaction history or Helius API timed out'
+      });
       return getDefaultMetrics();
     }
 
-    logger.info(`📊 Total transactions: ${allTransactions.length}`);
+    logger.info(`📊 Total transactions: ${allTransactions.length}`, { walletAddress });
 
     if (onProgress) onProgress(75, '💱 Analyzing trades...');
 
     // Extract all trades
     const trades = extractTrades(allTransactions, walletAddress);
-    logger.info(`✅ Extracted ${trades.length} valid trades`);
+    logger.info(`✅ Extracted ${trades.length} valid trades from ${allTransactions.length} transactions`, {
+      walletAddress,
+      tradesFound: trades.length,
+      totalTransactions: allTransactions.length
+    });
+
+    if (trades.length === 0) {
+      logger.warn('⚠️ No valid SWAP trades found in transactions', {
+        walletAddress,
+        reason: 'Wallet may have transactions but no token swaps detected'
+      });
+    }
 
     if (onProgress) onProgress(85, '📈 Building positions...');
 
     // Build positions from trades
     const positions = buildPositions(trades);
-    logger.info(`📦 Built ${positions.length} positions`);
+    logger.info(`📦 Built ${positions.length} positions`, {
+      walletAddress,
+      positionsBuilt: positions.length,
+      openPositions: positions.filter(p => p.isOpen).length,
+      closedPositions: positions.filter(p => !p.isOpen).length
+    });
 
     if (onProgress) onProgress(95, '🎯 Calculating metrics...');
 
     // Calculate all metrics
     const metrics = calculateMetrics(trades, positions, allTransactions);
+
+    logger.info('✅ Metrics calculation complete', {
+      walletAddress,
+      degenScore: metrics.degenScore,
+      totalTrades: metrics.totalTrades,
+      totalVolume: metrics.totalVolume,
+      profitLoss: metrics.profitLoss,
+      winRate: metrics.winRate
+    });
 
     if (onProgress) onProgress(100, '✅ Analysis complete!');
 

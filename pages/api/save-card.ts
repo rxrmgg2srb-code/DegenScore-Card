@@ -30,7 +30,24 @@ export default async function handler(
       return res.status(400).json({ error: 'Invalid wallet address' });
     }
 
-    logger.debug('Saving card for wallet:', { walletAddress });
+    logger.info('💾 Saving card for wallet:', {
+      walletAddress,
+      degenScore: analysisData.degenScore,
+      totalTrades: analysisData.totalTrades,
+      hasData: (analysisData.degenScore > 0 || analysisData.totalTrades > 0)
+    });
+
+    // Warn if we're about to save empty data
+    if (analysisData.degenScore === 0 && analysisData.totalTrades === 0) {
+      logger.warn('⚠️ Saving card with empty/zero metrics', {
+        walletAddress,
+        analysisData: {
+          degenScore: analysisData.degenScore,
+          totalTrades: analysisData.totalTrades,
+          totalVolume: analysisData.totalVolume
+        }
+      });
+    }
 
     // Convert badges to correct format with XSS sanitization
     const badgesData = (analysisData.badges || []).map((badge: any) => ({
@@ -92,7 +109,14 @@ export default async function handler(
       },
     });
 
-    logger.info('Card saved successfully:', { cardId: card.id });
+    logger.info('✅ Card saved successfully to database:', {
+      cardId: card.id,
+      walletAddress: card.walletAddress,
+      degenScore: card.degenScore,
+      totalTrades: card.totalTrades,
+      totalVolume: card.totalVolume,
+      badgesCount: card.badges?.length || 0
+    });
 
     res.status(200).json({ success: true, card });
   } catch (error: any) {
