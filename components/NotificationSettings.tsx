@@ -17,7 +17,7 @@ interface NotificationPreferences {
 }
 
 export default function NotificationSettings() {
-  const { publicKey, signMessage } = useWallet();
+  const { publicKey } = useWallet();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [sessionToken, setSessionToken] = useState<string | null>(null);
@@ -31,10 +31,10 @@ export default function NotificationSettings() {
   });
 
   useEffect(() => {
-    if (publicKey && signMessage) {
+    if (publicKey) {
       generateToken();
     }
-  }, [publicKey, signMessage]);
+  }, [publicKey]);
 
   useEffect(() => {
     if (sessionToken) {
@@ -42,11 +42,11 @@ export default function NotificationSettings() {
     }
   }, [sessionToken]);
 
-  const generateToken = async () => {
-    if (!publicKey || !signMessage) return;
+  const generateToken = () => {
+    if (!publicKey) return;
 
     try {
-      const token = await generateSessionToken(publicKey, signMessage);
+      const token = generateSessionToken(publicKey.toBase58());
       setSessionToken(token);
     } catch (error) {
       logger.error('Failed to generate session token:', error);
