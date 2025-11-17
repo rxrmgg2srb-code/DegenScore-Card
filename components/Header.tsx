@@ -32,6 +32,12 @@ export const Header = () => {
               {t('nav.leaderboard')}
             </Link>
             <Link
+              href="/token-scanner"
+              className="text-gray-300 hover:text-white transition-colors flex items-center gap-1"
+            >
+              🔒 Token Scanner
+            </Link>
+            <Link
               href="/documentation"
               className="text-gray-300 hover:text-white transition-colors"
             >
@@ -62,6 +68,12 @@ export const Header = () => {
             className="text-sm text-gray-300 hover:text-white transition-colors"
           >
             {t('nav.leaderboard')}
+          </Link>
+          <Link
+            href="/token-scanner"
+            className="text-sm text-gray-300 hover:text-white transition-colors"
+          >
+            🔒 Scanner
           </Link>
           <Link
             href="/documentation"
