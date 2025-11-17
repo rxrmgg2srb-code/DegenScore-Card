@@ -247,11 +247,9 @@ export function SlideInFromSide({
 
 // Count Up Animation (for numbers)
 export function CountUpAnimation({
-  value,
-  duration = 1
+  value
 }: {
   value: number;
-  duration?: number;
 }) {
   return (
     <motion.span

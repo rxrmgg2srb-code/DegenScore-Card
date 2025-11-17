@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
-import { Connection, PublicKey, Transaction, SystemProgram, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { PAYMENT_CONFIG } from '../lib/config';
 import CountUp from 'react-countup';
 import { logger } from '@/lib/logger';
@@ -15,9 +14,7 @@ interface UpgradeModalProps {
 }
 
 export default function UpgradeModal({ isOpen, onClose, onUpgrade, onSkip, onPromoCodeApplied }: UpgradeModalProps) {
-  const { publicKey, sendTransaction } = useWallet();
-  const [isPaying, setIsPaying] = useState(false);
-  const [paymentError, setPaymentError] = useState<string | null>(null);
+  const { publicKey } = useWallet();
   const [upgradesCount, setUpgradesCount] = useState(0);
 
   // Promo code state
@@ -90,72 +87,6 @@ export default function UpgradeModal({ isOpen, onClose, onUpgrade, onSkip, onPro
       setPromoError(error.message || 'Invalid promo code');
     } finally {
       setIsApplyingPromo(false);
-    }
-  };
-
-  const handlePayment = async () => {
-    if (!publicKey) {
-      alert('Please connect your wallet first');
-      return;
-    }
-
-    setIsPaying(true);
-    setPaymentError(null);
-
-    try {
-      const connection = new Connection(
-        PAYMENT_CONFIG.SOLANA_NETWORK,
-        'confirmed'
-      );
-
-      // Crear transacción de pago
-      const transaction = new Transaction().add(
-        SystemProgram.transfer({
-          fromPubkey: publicKey,
-          toPubkey: new PublicKey(PAYMENT_CONFIG.TREASURY_WALLET),
-          lamports: PAYMENT_CONFIG.MINT_PRICE_SOL * LAMPORTS_PER_SOL,
-        })
-      );
-
-      const { blockhash } = await connection.getLatestBlockhash();
-      transaction.recentBlockhash = blockhash;
-      transaction.feePayer = publicKey;
-
-      // Enviar transacción
-      const signature = await sendTransaction(transaction, connection);
-
-      logger.info('Transaction sent:', { signature });
-      await connection.confirmTransaction(signature, 'confirmed');
-
-      logger.info('Payment confirmed!');
-
-      // Save payment to database
-      const paymentResponse = await fetch('/api/record-payment', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          walletAddress: publicKey.toString(),
-          signature,
-          amount: PAYMENT_CONFIG.MINT_PRICE_SOL,
-        }),
-      });
-
-      logger.info('📤 Payment response status:', { status: paymentResponse.status });
-      const paymentData = await paymentResponse.json();
-      logger.info('📤 Payment response data:', { paymentData });
-
-      if (!paymentResponse.ok) {
-        throw new Error(paymentData.error || 'Failed to record payment');
-      }
-
-      // ✅ Pago exitoso
-      onUpgrade();
-      
-    } catch (error: any) {
-      logger.error('Payment error:', error);
-      setPaymentError(error.message || 'Payment failed');
-    } finally {
-      setIsPaying(false);
     }
   };
 
@@ -313,12 +244,6 @@ export default function UpgradeModal({ isOpen, onClose, onUpgrade, onSkip, onPro
             <span className="px-4 bg-gray-900 text-gray-500">or pay with SOL</span>
           </div>
         </div>
-
-        {paymentError && (
-          <div className="mb-4 p-3 bg-red-500/10 border border-red-500 rounded-lg">
-            <p className="text-red-400 text-sm">{paymentError}</p>
-          </div>
-        )}
 
         {!publicKey ? (
           <div className="mb-4">
