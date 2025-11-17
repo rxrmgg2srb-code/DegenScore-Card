@@ -6,7 +6,7 @@ services:
     region: frankfurt # o oregon para gratis
     plan: free # Plan gratuito
     buildCommand: npm install && npx prisma generate && npm run build
-    startCommand: npm start
+    startCommand: node scripts/migrate-and-start.js
     healthCheckPath: /api/health
     autoDeploy: true
     envVars:
