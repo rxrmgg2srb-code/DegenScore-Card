@@ -16,12 +16,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     const token = authHeader.substring(7);
-    const walletAddress = verifySessionToken(token);
+    const authResult = verifySessionToken(token);
 
-    if (!walletAddress) {
+    if (!authResult.valid || !authResult.wallet) {
       return res.status(401).json({ error: 'Invalid token' });
     }
 
+    const walletAddress = authResult.wallet;
     const { telegramId } = req.body;
 
     if (!telegramId) {
@@ -49,7 +50,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       message: 'Telegram account linked successfully',
     });
   } catch (error: any) {
-    logger.error('Error in /api/telegram/link:', error);
+    logger.error('Error in /api/telegram/link:', error instanceof Error ? error : new Error(String(error)));
     return res.status(500).json({
       error: 'Server error',
       message: error.message,

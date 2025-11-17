@@ -16,12 +16,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     const token = authHeader.substring(7);
-    const walletAddress = verifySessionToken(token);
+    const authResult = verifySessionToken(token);
 
-    if (!walletAddress) {
+    if (!authResult.valid || !authResult.wallet) {
       return res.status(401).json({ error: 'Invalid token' });
     }
 
+    const walletAddress = authResult.wallet;
     const limit = req.query.limit ? parseInt(req.query.limit as string) : 20;
 
     const alerts = await getWhaleAlertsForUser(walletAddress, limit);
@@ -32,7 +33,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       alerts,
     });
   } catch (error: any) {
-    logger.error('Error in /api/whales/alerts:', error);
+    logger.error('Error in /api/whales/alerts:', error instanceof Error ? error : new Error(String(error)));
     return res.status(500).json({
       error: 'Failed to fetch alerts',
       message: error.message,
