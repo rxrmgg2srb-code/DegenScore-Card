@@ -1,12 +1,16 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { logger } from '@/lib/logger';
 
 interface Activity {
   id: string;
-  type: 'card-generated' | 'premium-unlock' | 'high-score';
+  type: 'card_created' | 'premium_upgrade' | 'high_score';
   walletAddress: string;
-  score?: number;
-  timestamp: number;
+  displayName: string | null;
+  degenScore: number;
+  timestamp: Date;
+  icon: string;
+  message: string;
 }
 
 export function LiveActivityFeed() {
@@ -14,32 +18,26 @@ export function LiveActivityFeed() {
   const [currentIndex, setCurrentIndex] = useState(0);
 
   useEffect(() => {
-    // Generate fake activity for demo (in production, fetch from API)
-    const generateActivity = (): Activity => {
-      const types: Activity['type'][] = ['card-generated', 'premium-unlock', 'high-score'];
-      const type = types[Math.floor(Math.random() * types.length)] as Activity['type'];
-      const score = type === 'card-generated' || type === 'high-score'
-        ? Math.floor(Math.random() * 40) + 60
-        : undefined;
-
-      return {
-        id: Math.random().toString(36),
-        type,
-        walletAddress: `${Math.random().toString(36).substring(2, 6)}...${Math.random().toString(36).substring(2, 6)}`,
-        score,
-        timestamp: Date.now(),
-      };
+    // Fetch real activities from API
+    const fetchActivities = async () => {
+      try {
+        const response = await fetch('/api/live-activity');
+        if (response.ok) {
+          const data = await response.json();
+          if (data.activities && data.activities.length > 0) {
+            setActivities(data.activities);
+          }
+        }
+      } catch (error) {
+        logger.error('Error fetching live activities', error instanceof Error ? error : undefined, {
+          error: String(error),
+        });
+      }
     };
 
-    // Initialize with some activities
-    const initial = Array.from({ length: 5 }, generateActivity);
-    setActivities(initial);
-
-    // Add new activity every 5-10 seconds
-    const interval = setInterval(() => {
-      const newActivity = generateActivity();
-      setActivities((prev) => [newActivity, ...prev].slice(0, 10));
-    }, Math.random() * 5000 + 5000);
+    fetchActivities();
+    // Refresh every 30 seconds
+    const interval = setInterval(fetchActivities, 30000);
 
     return () => clearInterval(interval);
   }, []);
@@ -53,43 +51,18 @@ export function LiveActivityFeed() {
 
       return () => clearInterval(interval);
     }
-    return undefined;
   }, [activities.length]);
 
   const currentActivity = activities[currentIndex];
 
   if (!currentActivity) return null;
 
-  const getActivityMessage = (activity: Activity) => {
-    switch (activity.type) {
-      case 'card-generated':
-        return {
-          icon: '🎴',
-          message: `generated a ${activity.score} score card!`,
-          color: activity.score! >= 80 ? 'text-purple-400' : 'text-cyan-400',
-        };
-      case 'premium-unlock':
-        return {
-          icon: '💎',
-          message: 'unlocked premium features!',
-          color: 'text-pink-400',
-        };
-      case 'high-score':
-        return {
-          icon: '⭐',
-          message: `achieved ${activity.score}+ degen score!`,
-          color: 'text-orange-400',
-        };
-      default:
-        return {
-          icon: '🎴',
-          message: 'did something cool!',
-          color: 'text-gray-400',
-        };
-    }
+  const getActivityColor = (activity: Activity) => {
+    if (activity.degenScore >= 90) return 'text-purple-400';
+    if (activity.degenScore >= 80) return 'text-orange-400';
+    if (activity.type === 'premium_upgrade') return 'text-pink-400';
+    return 'text-cyan-400';
   };
-
-  const activityInfo = getActivityMessage(currentActivity);
 
   return (
     <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-40 max-w-md w-full px-4">
@@ -103,23 +76,28 @@ export function LiveActivityFeed() {
           className="bg-gray-900/95 backdrop-blur-md rounded-lg px-4 py-3 border border-gray-700/50 shadow-xl"
         >
           <div className="flex items-center gap-3">
-            <span className="text-2xl">{activityInfo.icon}</span>
+            <span className="text-2xl">{currentActivity.icon}</span>
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 text-sm">
-                <span className="font-semibold text-white truncate">
-                  {currentActivity.walletAddress}
+              <div className="flex flex-col gap-0.5 text-sm">
+                <span className={`${getActivityColor(currentActivity)} font-medium truncate`}>
+                  {currentActivity.message}
                 </span>
-                <span className={`${activityInfo.color} font-medium`}>
-                  {activityInfo.message}
+                <span className="font-mono text-gray-500 text-xs truncate">
+                  {currentActivity.walletAddress.slice(0, 6)}...{currentActivity.walletAddress.slice(-4)}
                 </span>
               </div>
             </div>
-            <div className="flex items-center gap-1 text-gray-400 text-xs">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+            <div className="flex flex-col items-end gap-1">
+              <span className="text-cyan-400 font-bold text-sm">
+                {currentActivity.degenScore}/100
               </span>
-              LIVE
+              <div className="flex items-center gap-1 text-gray-400 text-xs">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                </span>
+                LIVE
+              </div>
             </div>
           </div>
         </motion.div>

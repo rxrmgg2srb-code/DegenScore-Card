@@ -1,10 +1,11 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { IncomingForm } from 'formidable';
+import { IncomingForm, File } from 'formidable';
 import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
-import { isValidSolanaAddress, isValidImageType } from '../../lib/validation';
-import { rateLimit } from '../../lib/rateLimitRedis';
+import { isValidSolanaAddress } from '../../lib/validation';
+import { validateImageFile } from '../../lib/imageValidation';
+import { rateLimit } from '../../lib/rateLimit';
 import { logger } from '../../lib/logger';
 import { UPLOAD_CONFIG } from '../../lib/config';
 
@@ -23,7 +24,7 @@ export default async function handler(
   }
 
   // Apply rate limiting
-  if (!(await rateLimit(req, res))) {
+  if (!rateLimit(req, res)) {
     return;
   }
 
@@ -57,15 +58,20 @@ export default async function handler(
 
     // Validate file type by MIME
     if (!UPLOAD_CONFIG.ALLOWED_MIME_TYPES.includes(file.mimetype || '')) {
+      fs.unlinkSync(file.filepath);
       return res.status(400).json({ error: 'Invalid file type' });
     }
 
     // Validate file type by magic numbers (prevents spoofing)
     const fileBuffer = fs.readFileSync(file.filepath);
-    if (!isValidImageType(fileBuffer, file.mimetype || '')) {
+    const validation = validateImageFile(fileBuffer);
+
+    if (!validation.isValid) {
       fs.unlinkSync(file.filepath); // Clean up
-      return res.status(400).json({ error: 'File content does not match declared type' });
+      return res.status(400).json({ error: validation.error || 'Invalid image file' });
     }
+
+    logger.info(`Validated image format: ${validation.format}`);
 
     // Additional file size check (server-side)
     if (file.size > UPLOAD_CONFIG.MAX_FILE_SIZE) {
@@ -101,16 +107,14 @@ export default async function handler(
     // Public URL
     const imageUrl = `/uploads/profiles/${filename}`;
 
-    logger.info('Image uploaded successfully for wallet:', { walletAddress });
+    logger.info('Image uploaded successfully for wallet:', walletAddress);
 
     res.status(200).json({
       success: true,
       imageUrl,
     });
   } catch (error: any) {
-    logger.error('Error uploading image:', error instanceof Error ? error : undefined, {
-      error: String(error),
-    });
+    logger.error('Error uploading image:', error);
 
     const errorMessage = process.env.NODE_ENV === 'development'
       ? error.message

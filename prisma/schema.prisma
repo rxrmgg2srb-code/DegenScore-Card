@@ -55,6 +55,12 @@ model DegenCard {
   totalXP         Int       @default(0)
   longestStreak   Int       @default(0)
 
+  // Sistema de referidos
+  referralCode    String?   @unique // Código único para compartir
+  referredBy      String?   // Wallet address de quien lo refirió
+  totalReferrals  Int       @default(0) // Total de personas que refirió
+  paidReferrals   Int       @default(0) // Cuántos de sus referidos pagaron
+
   // Estado
   isMinted        Boolean   @default(false)
   isPaid          Boolean   @default(false)
@@ -221,14 +227,18 @@ model Referral {
   referredAddress   String   // Quien fue referido
   hasPaid           Boolean  @default(false) // Si el referido pagó
   paidAt            DateTime? // Cuándo pagó
-  rewardPaid        Boolean  @default(false) // Si se pagó reward (para futuro)
-  rewardAmount      Float?   // Cuánto se pagó (para futuro)
+  referredPremium   Boolean  @default(false) // Si compró premium
+  rewardPaid        Boolean  @default(false) // Si se pagó reward
+  rewardAmount      Float?   // Cuánto se pagó
+  rewardTxSignature String?  // Signature del pago
 
   createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 
   @@index([referrerAddress])
   @@index([referredAddress])
   @@index([hasPaid])
+  @@index([referredPremium])
   @@unique([referrerAddress, referredAddress]) // No duplicar referidos
 }
 
@@ -635,26 +645,6 @@ model AchievementUnlock {
   @@unique([achievementId, walletAddress])
   @@index([walletAddress])
   @@index([unlockedAt])
-}
-
-// Referral System
-model Referral {
-  id               String   @id @default(cuid())
-  referrerWallet   String   // Quien refiere
-  referredWallet   String   // Quien fue referido
-
-  // Tracking
-  referredPremium  Boolean  @default(false)  // ¿El referido compró premium?
-  rewardPaid       Boolean  @default(false)   // ¿Se pagó reward al referrer?
-  rewardAmount     Float?   // Cantidad pagada
-  rewardTxSignature String? // Signature del pago
-
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
-
-  @@unique([referredWallet])  // Cada usuario solo puede ser referido una vez
-  @@index([referrerWallet])
-  @@index([referredPremium])
 }
 
 // ═══════════════════════════════════════════════════════════════

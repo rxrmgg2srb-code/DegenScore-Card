@@ -1,288 +1,353 @@
 import { useState } from 'react';
 import Link from 'next/link';
-import { motion } from 'framer-motion';
-import { LanguageSelector } from '../components/LanguageSelector';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ComparisonSkeleton } from '../components/LoadingSkeletons';
+import toast from 'react-hot-toast';
 
-interface ComparisonData {
-  wallet1: any;
-  wallet2: any;
-  differences: any;
-  winner: any;
+interface CardData {
+  walletAddress: string;
+  displayName: string | null;
+  degenScore: number;
+  tier: string;
+  isPaid: boolean;
+  createdAt: string;
 }
 
 export default function ComparePage() {
   const [wallet1, setWallet1] = useState('');
   const [wallet2, setWallet2] = useState('');
-  const [comparison, setComparison] = useState<ComparisonData | null>(null);
+  const [card1, setCard1] = useState<CardData | null>(null);
+  const [card2, setCard2] = useState<CardData | null>(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [overallWinner, setOverallWinner] = useState('');
+  const [error, setError] = useState<string | null>(null);
+
+  const getTier = (score: number) => {
+    if (score >= 86) return { name: 'Whale', emoji: '🐋', color: 'text-pink-400' };
+    if (score >= 71) return { name: 'Shark', emoji: '🦈', color: 'text-yellow-400' };
+    if (score >= 51) return { name: 'Dolphin', emoji: '🐬', color: 'text-green-400' };
+    if (score >= 31) return { name: 'Fish', emoji: '🐟', color: 'text-blue-400' };
+    return { name: 'Plankton', emoji: '🦐', color: 'text-gray-400' };
+  };
+
+  const fetchCard = async (wallet: string): Promise<CardData | null> => {
+    try {
+      const response = await fetch(`/api/card?wallet=${wallet}`);
+      if (!response.ok) return null;
+      const data = await response.json();
+      return data.card || null;
+    } catch (error) {
+      return null;
+    }
+  };
 
   const handleCompare = async () => {
     if (!wallet1 || !wallet2) {
-      setError('Please enter both wallet addresses');
+      toast.error('Please enter both wallet addresses');
       return;
     }
 
     if (wallet1 === wallet2) {
-      setError('Please enter different wallet addresses');
+      toast.error('Please enter different wallet addresses');
       return;
     }
 
     setLoading(true);
-    setError('');
-    setComparison(null);
+    setError(null);
 
     try {
-      const res = await fetch(
-        `/api/compare-cards?wallet1=${encodeURIComponent(wallet1)}&wallet2=${encodeURIComponent(wallet2)}`
-      );
+      const [data1, data2] = await Promise.all([
+        fetchCard(wallet1),
+        fetchCard(wallet2),
+      ]);
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || 'Failed to compare cards');
+      if (!data1 && !data2) {
+        setError('Both wallet addresses not found');
+      } else if (!data1) {
+        setError('First wallet address not found');
+      } else if (!data2) {
+        setError('Second wallet address not found');
+      } else {
+        setCard1(data1);
+        setCard2(data2);
       }
-
-      setComparison(data.comparison);
-      setOverallWinner(data.overallWinner);
-    } catch (err: any) {
-      setError(err.message || 'Failed to compare cards');
+    } catch (err) {
+      setError('Failed to fetch cards');
+      toast.error('Failed to fetch cards');
     } finally {
       setLoading(false);
     }
   };
 
-  const formatNumber = (num: number, decimals: number = 2) => {
-    if (num >= 1e9) return `${(num / 1e9).toFixed(decimals)}B`;
-    if (num >= 1e6) return `${(num / 1e6).toFixed(decimals)}M`;
-    if (num >= 1e3) return `${(num / 1e3).toFixed(decimals)}K`;
-    return num.toFixed(decimals);
+  const getScoreDifference = () => {
+    if (!card1 || !card2) return null;
+    return card1.degenScore - card2.degenScore;
   };
 
-  const getWinnerIcon = (winner: string) => {
-    if (winner === 'wallet1') return '🥇';
-    if (winner === 'wallet2') return '🥈';
-    return '🤝';
+  const getWinner = (): 1 | 2 | null => {
+    const diff = getScoreDifference();
+    if (diff === null || diff === 0) return null;
+    return diff > 0 ? 1 : 2;
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 py-12 px-4">
-      <div className="container mx-auto max-w-6xl">
-        {/* Language Selector - Top Right */}
-        <div className="flex justify-end mb-4">
-          <LanguageSelector />
-        </div>
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 relative overflow-hidden">
+      {/* Animated background */}
+      <div className="neon-streak"></div>
 
-        {/* Header */}
-        <div className="text-center mb-12">
+      {/* Header */}
+      <div className="container mx-auto px-4 py-6">
+        <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-8">
           <Link href="/">
-            <button className="mb-4 text-gray-400 hover:text-white transition">
+            <button className="px-4 py-2 bg-gray-800/50 hover:bg-gray-700/50 text-white rounded-lg font-medium transition flex items-center gap-2">
               ← Back to Home
             </button>
           </Link>
-          <h1 className="text-5xl font-bold gradient-text-gold mb-4">
-            ⚔️ Card Comparison
+        </div>
+
+        {/* Page Title */}
+        <div className="text-center mb-8">
+          <h1 className="text-4xl sm:text-5xl font-bold gradient-text-gold mb-2">
+            ⚔️ Compare Cards
           </h1>
-          <p className="text-gray-400 text-lg">
-            Compare two trading cards side by side
+          <p className="text-gray-300 text-lg">
+            Compare two DegenScore cards side by side
           </p>
         </div>
 
-        {/* Input Section */}
-        <div className="bg-gray-800 rounded-lg p-8 mb-8 shadow-xl">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <div>
-              <label className="block text-gray-300 font-medium mb-2">
-                Wallet Address 1
-              </label>
-              <input
-                type="text"
-                value={wallet1}
-                onChange={(e) => setWallet1(e.target.value)}
-                placeholder="Enter first wallet address..."
-                className="w-full px-4 py-3 bg-gray-700 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-              />
+        {/* Search Form */}
+        <div className="max-w-4xl mx-auto mb-8">
+          <div className="bg-gray-800/50 backdrop-blur-lg rounded-2xl border border-gray-700 p-6">
+            <div className="grid md:grid-cols-2 gap-4 mb-4">
+              <div>
+                <label className="block text-gray-400 text-sm mb-2">
+                  First Wallet Address
+                </label>
+                <input
+                  type="text"
+                  value={wallet1}
+                  onChange={(e) => setWallet1(e.target.value)}
+                  placeholder="Enter wallet address..."
+                  className="w-full bg-gray-700 text-white px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 font-mono text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-gray-400 text-sm mb-2">
+                  Second Wallet Address
+                </label>
+                <input
+                  type="text"
+                  value={wallet2}
+                  onChange={(e) => setWallet2(e.target.value)}
+                  placeholder="Enter wallet address..."
+                  className="w-full bg-gray-700 text-white px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 font-mono text-sm"
+                />
+              </div>
             </div>
-            <div>
-              <label className="block text-gray-300 font-medium mb-2">
-                Wallet Address 2
-              </label>
-              <input
-                type="text"
-                value={wallet2}
-                onChange={(e) => setWallet2(e.target.value)}
-                placeholder="Enter second wallet address..."
-                className="w-full px-4 py-3 bg-gray-700 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
+
+            <button
+              onClick={handleCompare}
+              disabled={loading}
+              className="w-full bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-600 hover:to-purple-600 text-white font-bold py-4 px-8 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all transform hover:scale-105"
+            >
+              {loading ? 'Loading...' : 'Compare Cards ⚔️'}
+            </button>
+
+            {error && (
+              <div className="mt-4 p-4 bg-red-500/20 border border-red-500 rounded-lg">
+                <p className="text-red-400 text-sm">{error}</p>
+              </div>
+            )}
           </div>
-
-          <button
-            onClick={handleCompare}
-            disabled={loading}
-            className="w-full py-4 bg-gradient-to-r from-green-500 via-purple-500 to-blue-500 hover:from-green-600 hover:via-purple-600 hover:to-blue-600 text-white font-bold rounded-lg transition disabled:opacity-50"
-          >
-            {loading ? 'Comparing...' : '⚔️ Compare Cards'}
-          </button>
-
-          {error && (
-            <div className="mt-4 p-4 bg-red-900/50 border border-red-500 rounded-lg text-red-200">
-              {error}
-            </div>
-          )}
         </div>
 
-        {/* Comparison Results */}
-        {comparison && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="space-y-8"
-          >
-            {/* Overall Winner Banner */}
-            <div className="bg-gradient-to-r from-yellow-600 to-orange-600 rounded-lg p-6 text-center">
-              <h2 className="text-3xl font-bold text-white mb-2">
-                {getWinnerIcon(overallWinner)} Overall Winner
-              </h2>
-              <p className="text-2xl font-bold text-white">
-                {overallWinner === 'wallet1'
-                  ? comparison.wallet1.displayName || 'Wallet 1'
-                  : overallWinner === 'wallet2'
-                  ? comparison.wallet2.displayName || 'Wallet 2'
-                  : "It's a Tie!"}
-              </p>
-            </div>
+        {/* Results */}
+        <div className="max-w-7xl mx-auto">
+          {loading && <ComparisonSkeleton />}
 
-            {/* Metrics Comparison Table */}
-            <div className="bg-gray-800 rounded-lg overflow-hidden shadow-xl">
-              <div className="grid grid-cols-3 bg-gray-900">
-                <div className="p-4 text-center border-r border-gray-700">
-                  <p className="text-sm text-gray-400">Wallet 1</p>
-                  <p className="font-bold text-green-400 truncate">
-                    {comparison.wallet1.displayName || comparison.wallet1.address.slice(0, 8)}
-                  </p>
+          {!loading && card1 && card2 && (
+            <AnimatePresence>
+              <div className="space-y-6">
+                {/* Winner Banner */}
+                {getWinner() && (
+                  <motion.div
+                    initial={{ scale: 0.9, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    className="bg-gradient-to-r from-yellow-500/20 to-orange-500/20 border-2 border-yellow-500 rounded-2xl p-6 text-center"
+                  >
+                    <div className="text-5xl mb-3">👑</div>
+                    <h2 className="text-2xl font-bold text-yellow-400 mb-2">
+                      Winner: {getWinner() === 1 ? (card1.displayName || 'Player 1') : (card2.displayName || 'Player 2')}
+                    </h2>
+                    <p className="text-gray-300">
+                      {Math.abs(getScoreDifference() || 0)} points difference
+                    </p>
+                  </motion.div>
+                )}
+
+                {/* Comparison Grid */}
+                <div className="grid md:grid-cols-2 gap-8">
+                  {/* Card 1 */}
+                  <motion.div
+                    initial={{ x: -50, opacity: 0 }}
+                    animate={{ x: 0, opacity: 1 }}
+                    className={`bg-gray-800/50 backdrop-blur-lg rounded-2xl border-2 p-6 ${
+                      getWinner() === 1 ? 'border-yellow-500' : 'border-gray-700'
+                    }`}
+                  >
+                    <CardComparison card={card1} isWinner={getWinner() === 1} />
+                  </motion.div>
+
+                  {/* Card 2 */}
+                  <motion.div
+                    initial={{ x: 50, opacity: 0 }}
+                    animate={{ x: 0, opacity: 1 }}
+                    className={`bg-gray-800/50 backdrop-blur-lg rounded-2xl border-2 p-6 ${
+                      getWinner() === 2 ? 'border-yellow-500' : 'border-gray-700'
+                    }`}
+                  >
+                    <CardComparison card={card2} isWinner={getWinner() === 2} />
+                  </motion.div>
                 </div>
-                <div className="p-4 text-center border-r border-gray-700">
-                  <p className="text-sm text-gray-400">Metric</p>
-                </div>
-                <div className="p-4 text-center">
-                  <p className="text-sm text-gray-400">Wallet 2</p>
-                  <p className="font-bold text-blue-400 truncate">
-                    {comparison.wallet2.displayName || comparison.wallet2.address.slice(0, 8)}
-                  </p>
-                </div>
+
+                {/* Stats Comparison */}
+                <motion.div
+                  initial={{ y: 50, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  className="bg-gray-800/50 backdrop-blur-lg rounded-2xl border border-gray-700 p-6"
+                >
+                  <h3 className="text-2xl font-bold text-white mb-6 text-center">
+                    📊 Detailed Comparison
+                  </h3>
+                  <div className="space-y-4">
+                    <ComparisonRow
+                      label="DegenScore"
+                      value1={card1.degenScore}
+                      value2={card2.degenScore}
+                      higher="better"
+                    />
+                    <ComparisonRow
+                      label="Tier"
+                      value1={getTier(card1.degenScore).name}
+                      value2={getTier(card2.degenScore).name}
+                    />
+                    <ComparisonRow
+                      label="Premium Status"
+                      value1={card1.isPaid ? 'Premium 💎' : 'Free'}
+                      value2={card2.isPaid ? 'Premium 💎' : 'Free'}
+                    />
+                  </div>
+                </motion.div>
               </div>
-
-              {/* Degen Score */}
-              <ComparisonRow
-                label="Degen Score"
-                value1={comparison.wallet1.degenScore}
-                value2={comparison.wallet2.degenScore}
-                winner={comparison.winner.degenScore}
-                formatter={(v) => `${v}/100`}
-              />
-
-              {/* Total Trades */}
-              <ComparisonRow
-                label="Total Trades"
-                value1={comparison.wallet1.totalTrades}
-                value2={comparison.wallet2.totalTrades}
-                winner={comparison.winner.totalTrades}
-              />
-
-              {/* Total Volume */}
-              <ComparisonRow
-                label="Total Volume"
-                value1={comparison.wallet1.totalVolume}
-                value2={comparison.wallet2.totalVolume}
-                winner={comparison.winner.totalVolume}
-                formatter={(v) => `${formatNumber(v)} SOL`}
-              />
-
-              {/* Profit/Loss */}
-              <ComparisonRow
-                label="Profit/Loss"
-                value1={comparison.wallet1.profitLoss}
-                value2={comparison.wallet2.profitLoss}
-                winner={comparison.winner.profitLoss}
-                formatter={(v) => `${v >= 0 ? '+' : ''}${formatNumber(v)} SOL`}
-              />
-
-              {/* Win Rate */}
-              <ComparisonRow
-                label="Win Rate"
-                value1={comparison.wallet1.winRate}
-                value2={comparison.wallet2.winRate}
-                winner={comparison.winner.winRate}
-                formatter={(v) => `${v.toFixed(1)}%`}
-              />
-
-              {/* Best Trade */}
-              <ComparisonRow
-                label="Best Trade"
-                value1={comparison.wallet1.bestTrade}
-                value2={comparison.wallet2.bestTrade}
-                winner={comparison.winner.bestTrade}
-                formatter={(v) => `${formatNumber(v)} SOL`}
-              />
-
-              {/* Badges */}
-              <ComparisonRow
-                label="Badges"
-                value1={comparison.wallet1.badges}
-                value2={comparison.wallet2.badges}
-                winner={comparison.winner.badges}
-              />
-
-              {/* Likes */}
-              <ComparisonRow
-                label="Likes"
-                value1={comparison.wallet1.likes}
-                value2={comparison.wallet2.likes}
-                winner={comparison.winner.likes}
-              />
-            </div>
-          </motion.div>
-        )}
+            </AnimatePresence>
+          )}
+        </div>
       </div>
     </div>
   );
 }
 
-interface ComparisonRowProps {
-  label: string;
-  value1: number;
-  value2: number;
-  winner: 'wallet1' | 'wallet2' | 'tie';
-  formatter?: (val: number) => string;
-}
-
-function ComparisonRow({ label, value1, value2, winner, formatter }: ComparisonRowProps) {
-  const format = formatter || ((v: number) => v.toString());
+function CardComparison({ card, isWinner }: { card: CardData; isWinner: boolean }) {
+  const tier = getTier(card.degenScore);
 
   return (
-    <div className="grid grid-cols-3 border-t border-gray-700 hover:bg-gray-750 transition">
-      <div className="p-4 text-center border-r border-gray-700">
-        <p className={`text-xl font-bold ${winner === 'wallet1' ? 'text-green-400' : 'text-gray-400'}`}>
-          {format(value1)} {winner === 'wallet1' && '🏆'}
+    <div className="space-y-4">
+      {/* Winner Badge */}
+      {isWinner && (
+        <div className="flex justify-center">
+          <div className="bg-yellow-500/20 border border-yellow-500 rounded-full px-4 py-2">
+            <span className="text-yellow-400 font-bold">👑 Winner</span>
+          </div>
+        </div>
+      )}
+
+      {/* Display Name */}
+      <div className="text-center">
+        <h3 className="text-2xl font-bold text-white mb-1">
+          {card.displayName || 'Anon Degen'}
+        </h3>
+        <p className="text-gray-400 font-mono text-sm">
+          {card.walletAddress.slice(0, 6)}...{card.walletAddress.slice(-4)}
         </p>
       </div>
-      <div className="p-4 text-center border-r border-gray-700">
-        <p className="text-gray-300 font-medium">{label}</p>
+
+      {/* Score */}
+      <div className="text-center bg-gray-900/50 rounded-xl p-6">
+        <div className="text-gray-400 text-sm mb-2">DegenScore</div>
+        <div className={`text-6xl font-bold ${tier.color}`}>
+          {card.degenScore}
+        </div>
+        <div className="text-gray-500 text-sm mt-2">/ 100</div>
       </div>
-      <div className="p-4 text-center">
-        <p className={`text-xl font-bold ${winner === 'wallet2' ? 'text-blue-400' : 'text-gray-400'}`}>
-          {format(value2)} {winner === 'wallet2' && '🏆'}
-        </p>
+
+      {/* Tier */}
+      <div className="text-center bg-gray-900/50 rounded-xl p-4">
+        <div className={`text-4xl mb-2`}>{tier.emoji}</div>
+        <div className={`text-xl font-bold ${tier.color}`}>{tier.name}</div>
       </div>
+
+      {/* Premium Badge */}
+      {card.isPaid && (
+        <div className="text-center">
+          <div className="inline-flex items-center gap-2 bg-purple-500/20 border border-purple-500 rounded-lg px-4 py-2">
+            <span>💎</span>
+            <span className="text-purple-400 font-bold">Premium</span>
+          </div>
+        </div>
+      )}
+
+      {/* View Card Link */}
+      <Link href={`/card/${card.walletAddress}`}>
+        <button className="w-full bg-gray-700 hover:bg-gray-600 text-white font-medium py-3 rounded-lg transition">
+          View Full Card →
+        </button>
+      </Link>
     </div>
   );
 }
 
-// Force Server-Side Rendering (no static generation at build time)
-export async function getServerSideProps() {
-  return {
-    props: {},
-  };
+function ComparisonRow({
+  label,
+  value1,
+  value2,
+  higher,
+}: {
+  label: string;
+  value1: any;
+  value2: any;
+  higher?: 'better' | 'worse';
+}) {
+  const isNumber = typeof value1 === 'number' && typeof value2 === 'number';
+  const winner = isNumber
+    ? value1 > value2
+      ? 1
+      : value1 < value2
+      ? 2
+      : null
+    : null;
+
+  return (
+    <div className="grid grid-cols-3 gap-4 items-center">
+      <div
+        className={`text-center p-3 rounded-lg ${
+          winner === 1 && higher === 'better'
+            ? 'bg-green-500/20 border border-green-500'
+            : 'bg-gray-700/50'
+        }`}
+      >
+        <div className="text-white font-bold">{value1}</div>
+      </div>
+
+      <div className="text-center text-gray-400 font-medium">{label}</div>
+
+      <div
+        className={`text-center p-3 rounded-lg ${
+          winner === 2 && higher === 'better'
+            ? 'bg-green-500/20 border border-green-500'
+            : 'bg-gray-700/50'
+        }`}
+      >
+        <div className="text-white font-bold">{value2}</div>
+      </div>
+    </div>
+  );
 }

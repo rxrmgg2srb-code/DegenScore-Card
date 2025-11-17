@@ -1,12 +1,11 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { prisma } from '../../lib/prisma';
 import { Connection, PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js';
-import { paymentRateLimit } from '../../lib/rateLimitRedis';
+import { paymentRateLimit } from '../../lib/rateLimit';
 import { retry } from '../../lib/retryLogic';
+import { PAYMENT_CONFIG } from '../../lib/config';
+import { isValidSolanaAddress } from '../../lib/validation';
 import { logger } from '@/lib/logger';
-
-const TREASURY_WALLET = process.env.TREASURY_WALLET!;
-const MINT_PRICE_SOL = 1; // Premium tier price
 
 export default async function handler(
   req: NextApiRequest,
@@ -17,38 +16,46 @@ export default async function handler(
   }
 
   // Apply payment rate limiting to prevent abuse
-  if (!(await paymentRateLimit(req, res))) {
+  if (!paymentRateLimit(req, res)) {
     return;
   }
 
   try {
     const { walletAddress, paymentSignature } = req.body;
 
-    if (!walletAddress || !paymentSignature) {
-      return res.status(400).json({
-        error: 'Missing walletAddress or paymentSignature'
-      });
+    // Validate inputs
+    if (!walletAddress || typeof walletAddress !== 'string') {
+      return res.status(400).json({ error: 'Invalid wallet address' });
+    }
+
+    if (!paymentSignature || typeof paymentSignature !== 'string') {
+      return res.status(400).json({ error: 'Invalid payment signature' });
+    }
+
+    if (!isValidSolanaAddress(walletAddress)) {
+      return res.status(400).json({ error: 'Invalid Solana address format' });
     }
 
     logger.info(`💰 Verifying payment for: ${walletAddress}`);
     logger.info(`📝 Payment signature: ${paymentSignature}`);
 
-    const connection = new Connection(
-      process.env.HELIUS_RPC_URL || 'https://api.mainnet-beta.solana.com',
-      'confirmed'
-    );
+    // Use configured RPC URL with fallback
+    const rpcUrl = process.env.HELIUS_RPC_URL ||
+                   process.env.NEXT_PUBLIC_HELIUS_RPC_URL ||
+                   PAYMENT_CONFIG.SOLANA_NETWORK;
+
+    const connection = new Connection(rpcUrl, 'confirmed');
+    logger.info(`🌐 Using RPC: ${rpcUrl.substring(0, 30)}...`);
 
     // Retry transaction fetching to handle network issues
-    // SEGURIDAD: Soportar todas las versiones de transacción (legacy y versioned)
     const txInfo = await retry(
       () => connection.getTransaction(paymentSignature, {
-        maxSupportedTransactionVersion: undefined, // Acepta cualquier versión
-        commitment: 'confirmed',
+        maxSupportedTransactionVersion: 0,
       }),
       {
         maxRetries: 3,
         onRetry: (attempt, error) => {
-          logger.warn(`[Payment] Retrying transaction fetch (attempt ${attempt}):`, { error: error.message });
+          console.warn(`[Payment] Retrying transaction fetch (attempt ${attempt}):`, error.message);
         }
       }
     );
@@ -59,84 +66,59 @@ export default async function handler(
       });
     }
 
+    // Verify transaction was successful
+    if (txInfo.meta?.err) {
+      logger.error('❌ Transaction failed on-chain:', txInfo.meta.err);
+      return res.status(400).json({
+        error: 'Transaction failed on-chain'
+      });
+    }
+
     const message = txInfo.transaction.message;
     const accountKeys = message.getAccountKeys();
 
-    const treasuryPubkey = new PublicKey(TREASURY_WALLET);
+    const treasuryPubkey = new PublicKey(PAYMENT_CONFIG.TREASURY_WALLET);
     const senderPubkey = new PublicKey(walletAddress);
 
-    // SECURITY: Verify sender is in the transaction
-    let senderIndex = -1;
-    let treasuryIndex = -1;
+    let validPayment = false;
+    let paidAmount = 0;
+    let senderVerified = false;
 
-    for (let i = 0; i < accountKeys.length; i++) {
-      const account = accountKeys.get(i);
-      if (account && account.equals(senderPubkey)) {
-        senderIndex = i;
+    if (txInfo.meta?.preBalances && txInfo.meta?.postBalances) {
+      for (let i = 0; i < accountKeys.length; i++) {
+        const account = accountKeys[i];
+
+        // Verify this is from the claimed sender
+        if (account.equals(senderPubkey)) {
+          senderVerified = true;
+        }
+
+        // Check payment to treasury
+        if (account.equals(treasuryPubkey)) {
+          const balanceChange =
+            (txInfo.meta.postBalances[i] - txInfo.meta.preBalances[i]) / LAMPORTS_PER_SOL;
+
+          if (balanceChange >= PAYMENT_CONFIG.MINT_PRICE_SOL) {
+            validPayment = true;
+            paidAmount = balanceChange;
+          }
+        }
       }
-      if (account && account.equals(treasuryPubkey)) {
-        treasuryIndex = i;
-      }
     }
 
-    if (senderIndex === -1) {
+    if (!senderVerified) {
+      logger.error('❌ Sender mismatch: transaction not from claimed wallet');
       return res.status(400).json({
-        error: 'Wallet address not found in transaction. Possible fraud attempt.'
+        error: 'Transaction sender does not match wallet address'
       });
     }
 
-    if (treasuryIndex === -1) {
+    if (!validPayment) {
+      logger.error(`❌ Invalid payment amount: ${paidAmount.toFixed(4)} SOL (expected ${PAYMENT_CONFIG.MINT_PRICE_SOL} SOL)`);
       return res.status(400).json({
-        error: 'Treasury wallet not found in transaction.'
+        error: `Invalid payment. Expected ${PAYMENT_CONFIG.MINT_PRICE_SOL} SOL to treasury. Received: ${paidAmount.toFixed(4)} SOL.`
       });
     }
-
-    // SECURITY: Verify that the sender LOST SOL (sent payment)
-    // and treasury GAINED SOL (received payment)
-    if (!txInfo.meta?.preBalances || !txInfo.meta?.postBalances) {
-      return res.status(400).json({
-        error: 'Transaction metadata incomplete. Cannot verify payment.'
-      });
-    }
-
-    const senderBalanceChange =
-      (txInfo.meta!.postBalances[senderIndex]! - txInfo.meta!.preBalances[senderIndex]!) / LAMPORTS_PER_SOL;
-
-    const treasuryBalanceChange =
-      (txInfo.meta!.postBalances[treasuryIndex]! - txInfo.meta!.preBalances[treasuryIndex]!) / LAMPORTS_PER_SOL;
-
-    // Sender should have LOST at least MINT_PRICE_SOL (negative change)
-    // Treasury should have GAINED at least MINT_PRICE_SOL (positive change)
-    const senderPaidAmount = Math.abs(senderBalanceChange);
-    const treasuryReceivedAmount = treasuryBalanceChange;
-
-    logger.info(`💰 Payment verification:`);
-    logger.info(`   Sender (${walletAddress}) balance change: ${senderBalanceChange.toFixed(4)} SOL`);
-    logger.info(`   Treasury balance change: ${treasuryBalanceChange.toFixed(4)} SOL`);
-
-    // CRITICAL VALIDATION: Sender must have sent money (negative balance change)
-    if (senderBalanceChange >= 0) {
-      return res.status(400).json({
-        error: 'Invalid payment. Sender did not send any SOL in this transaction.'
-      });
-    }
-
-    // CRITICAL VALIDATION: Treasury must have received money (positive balance change)
-    if (treasuryBalanceChange < MINT_PRICE_SOL) {
-      return res.status(400).json({
-        error: `Invalid payment. Treasury received ${treasuryBalanceChange.toFixed(4)} SOL, expected at least ${MINT_PRICE_SOL} SOL.`
-      });
-    }
-
-    // CRITICAL VALIDATION: Sender must have sent at least MINT_PRICE_SOL
-    // (accounting for transaction fees, they might have sent slightly more)
-    if (senderPaidAmount < MINT_PRICE_SOL) {
-      return res.status(400).json({
-        error: `Invalid payment amount. Sender paid ${senderPaidAmount.toFixed(4)} SOL, expected at least ${MINT_PRICE_SOL} SOL.`
-      });
-    }
-
-    const paidAmount = treasuryReceivedAmount;
 
     logger.info(`✅ Valid payment received: ${paidAmount} SOL`);
 
@@ -163,6 +145,16 @@ export default async function handler(
 
       logger.info(`✅ Payment saved: ${paymentSignature}`);
 
+      // Get card before update to check referral
+      const cardBeforeUpdate = await tx.degenCard.findUnique({
+        where: { walletAddress },
+        select: { referredBy: true, isPaid: true },
+      });
+
+      if (!cardBeforeUpdate) {
+        throw new Error('Card not found');
+      }
+
       // Update card as paid
       const updatedCard = await tx.degenCard.update({
         where: { walletAddress },
@@ -174,6 +166,19 @@ export default async function handler(
       });
 
       logger.info(`✅ Card marked as paid for wallet: ${walletAddress}`);
+
+      // Update referrer's paid referrals count (only if wasn't paid before)
+      if (cardBeforeUpdate.referredBy && !cardBeforeUpdate.isPaid) {
+        await tx.degenCard.update({
+          where: { walletAddress: cardBeforeUpdate.referredBy },
+          data: {
+            paidReferrals: {
+              increment: 1,
+            },
+          },
+        });
+        logger.info(`✅ Updated referrer ${cardBeforeUpdate.referredBy} paid referrals count`);
+      }
 
       // Create or update subscription with 30-day PRO trial
       const trialEndDate = new Date();
@@ -211,9 +216,7 @@ export default async function handler(
     });
 
   } catch (error) {
-    logger.error('❌ Error verifying payment:', error instanceof Error ? error : undefined, {
-      error: String(error),
-    });
+    logger.error('❌ Error verifying payment:', error);
 
     // Handle specific error cases
     if (error instanceof Error && error.message === 'Payment signature already used') {

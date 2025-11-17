@@ -1,8 +1,6 @@
 import { useState } from 'react';
 import Image from 'next/image';
-import { useWallet } from '@solana/wallet-adapter-react';
-import { Connection, PublicKey, Transaction, SystemProgram, LAMPORTS_PER_SOL } from '@solana/web3.js';
-import { PAYMENT_CONFIG } from '../lib/config';
+import toast from 'react-hot-toast';
 import { logger } from '@/lib/logger';
 
 interface ProfileFormModalProps {
@@ -10,8 +8,6 @@ interface ProfileFormModalProps {
   onClose: () => void;
   onSubmit: (data: ProfileData) => void;
   walletAddress: string;
-  hasPromoCode?: boolean; // Si ya aplicó un código promocional
-  promoCodeApplied?: string; // El código que se aplicó
 }
 
 export interface ProfileData {
@@ -21,8 +17,7 @@ export interface ProfileData {
   profileImage: string | null;
 }
 
-export default function ProfileFormModal({ isOpen, onClose, onSubmit, walletAddress, hasPromoCode = false, promoCodeApplied }: ProfileFormModalProps) {
-  const { publicKey, sendTransaction } = useWallet();
+export default function ProfileFormModal({ isOpen, onClose, onSubmit, walletAddress }: ProfileFormModalProps) {
   const [formData, setFormData] = useState<ProfileData>({
     displayName: '',
     twitter: '',
@@ -31,8 +26,6 @@ export default function ProfileFormModal({ isOpen, onClose, onSubmit, walletAddr
   });
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
-  const [isPaying, setIsPaying] = useState(false);
-  const [paymentError, setPaymentError] = useState<string | null>(null);
 
   if (!isOpen) return null;
 
@@ -42,13 +35,13 @@ export default function ProfileFormModal({ isOpen, onClose, onSubmit, walletAddr
 
     // Validar tamaño (máx 2MB)
     if (file.size > 2 * 1024 * 1024) {
-      alert('Image must be less than 2MB');
+      toast.error('Image must be less than 2MB');
       return;
     }
 
     // Validar tipo
     if (!file.type.startsWith('image/')) {
-      alert('File must be an image');
+      toast.error('File must be an image');
       return;
     }
 
@@ -76,118 +69,41 @@ export default function ProfileFormModal({ isOpen, onClose, onSubmit, walletAddr
 
       if (data.success) {
         setFormData({ ...formData, profileImage: data.imageUrl });
+        toast.success('Profile image uploaded successfully!');
       } else {
-        alert('Failed to upload image');
+        toast.error('Failed to upload image');
       }
     } catch (error) {
       logger.error('Error uploading image', error instanceof Error ? error : undefined, {
         error: String(error),
       });
-      alert('Error uploading image');
+      toast.error('Error uploading image');
     } finally {
       setIsUploading(false);
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
     // Validaciones básicas
     if (!formData.displayName.trim()) {
-      alert('Please enter your name');
+      toast.error('Please enter your name');
       return;
     }
 
-    // Si tiene código promocional, no necesita pagar
-    if (hasPromoCode) {
-      // Guardar perfil y activar premium gratis
-      try {
-        const response = await fetch('/api/update-profile', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            walletAddress,
-            ...formData,
-          }),
-        });
-
-        if (!response.ok) throw new Error('Failed to save profile');
-
-        onSubmit(formData);
-      } catch (error: any) {
-        alert('Error saving profile: ' + error.message);
-      }
-      return;
-    }
-
-    // Si NO tiene promo code, necesita pagar primero
-    if (!publicKey) {
-      alert('Please connect your wallet first');
-      return;
-    }
-
-    setIsPaying(true);
-    setPaymentError(null);
-
-    try {
-      // 1. Crear transacción de pago
-      const connection = new Connection(PAYMENT_CONFIG.SOLANA_NETWORK, 'confirmed');
-      const lamports = PAYMENT_CONFIG.MINT_PRICE_SOL * LAMPORTS_PER_SOL;
-
-      const transaction = new Transaction().add(
-        SystemProgram.transfer({
-          fromPubkey: publicKey,
-          toPubkey: new PublicKey(PAYMENT_CONFIG.TREASURY_WALLET),
-          lamports,
-        })
-      );
-
-      // 2. Enviar transacción
-      const signature = await sendTransaction(transaction, connection);
-      await connection.confirmTransaction(signature, 'confirmed');
-
-      // 3. Guardar perfil
-      const profileResponse = await fetch('/api/update-profile', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          walletAddress,
-          ...formData,
-        }),
-      });
-
-      if (!profileResponse.ok) throw new Error('Failed to save profile');
-
-      // 4. Verificar pago en backend
-      const paymentResponse = await fetch('/api/verify-payment', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          signature,
-          walletAddress: publicKey.toString(),
-        }),
-      });
-
-      const paymentData = await paymentResponse.json();
-
-      if (!paymentResponse.ok) {
-        throw new Error(paymentData.error || 'Failed to verify payment');
-      }
-
-      // ✅ Éxito total
-      onSubmit(formData);
-
-    } catch (error: any) {
-      console.error('Payment error:', error);
-      setPaymentError(error.message || 'Payment failed');
-    } finally {
-      setIsPaying(false);
-    }
+    onSubmit(formData);
   };
 
   return (
-    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl border-2 border-cyan-500/50 shadow-2xl shadow-cyan-500/20 max-w-md w-full p-8 relative">
+    <div
+      className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+      onClick={onClose}
+    >
+      <div
+        className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl border-2 border-cyan-500/50 shadow-2xl shadow-cyan-500/20 max-w-md w-full p-4 sm:p-6 md:p-8 relative max-h-[90vh] overflow-y-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Close button */}
         <button
           onClick={onClose}
@@ -197,25 +113,25 @@ export default function ProfileFormModal({ isOpen, onClose, onSubmit, walletAddr
         </button>
 
         {/* Header */}
-        <div className="text-center mb-6">
-          <h2 className="text-3xl font-bold text-white mb-2">
+        <div className="text-center mb-4 sm:mb-6">
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-white mb-2">
             🎨 Customize Your Card
           </h2>
-          <p className="text-gray-400 text-sm">
+          <p className="text-gray-400 text-xs sm:text-sm">
             Add your info to make your card unique
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
           {/* Profile Image Upload */}
           <div className="flex flex-col items-center">
-            <label className="text-gray-300 text-sm font-medium mb-3">
+            <label className="text-gray-300 text-xs sm:text-sm font-medium mb-2 sm:mb-3">
               Profile Picture
             </label>
-            
+
             <div className="relative">
               {/* Preview circle */}
-              <div className="w-32 h-32 rounded-full border-4 border-cyan-500/50 overflow-hidden bg-gray-800 flex items-center justify-center">
+              <div className="w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 rounded-full border-4 border-cyan-500/50 overflow-hidden bg-gray-800 flex items-center justify-center">
                 {imagePreview ? (
                   <img
                     src={imagePreview}
@@ -256,7 +172,7 @@ export default function ProfileFormModal({ isOpen, onClose, onSubmit, walletAddr
 
           {/* Display Name */}
           <div>
-            <label className="text-gray-300 text-sm font-medium mb-2 block">
+            <label className="text-gray-300 text-xs sm:text-sm font-medium mb-2 block">
               Display Name *
             </label>
             <input
@@ -264,7 +180,7 @@ export default function ProfileFormModal({ isOpen, onClose, onSubmit, walletAddr
               placeholder="Your name or nickname"
               value={formData.displayName}
               onChange={(e) => setFormData({ ...formData, displayName: e.target.value })}
-              className="w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500 transition"
+              className="w-full px-3 sm:px-4 py-2 sm:py-3 bg-gray-800/50 border border-gray-700 rounded-lg text-white text-sm sm:text-base placeholder-gray-500 focus:outline-none focus:border-cyan-500 transition"
               maxLength={30}
               required
             />
@@ -272,11 +188,11 @@ export default function ProfileFormModal({ isOpen, onClose, onSubmit, walletAddr
 
           {/* Twitter */}
           <div>
-            <label className="text-gray-300 text-sm font-medium mb-2 block">
+            <label className="text-gray-300 text-xs sm:text-sm font-medium mb-2 block">
               Twitter (optional)
             </label>
             <div className="relative">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">
+              <span className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-gray-500 text-sm sm:text-base">
                 @
               </span>
               <input
@@ -284,19 +200,19 @@ export default function ProfileFormModal({ isOpen, onClose, onSubmit, walletAddr
                 placeholder="username"
                 value={formData.twitter}
                 onChange={(e) => setFormData({ ...formData, twitter: e.target.value.replace('@', '') })}
-                className="w-full pl-8 pr-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500 transition"
-                maxLength={200}
+                className="w-full pl-7 sm:pl-8 pr-3 sm:pr-4 py-2 sm:py-3 bg-gray-800/50 border border-gray-700 rounded-lg text-white text-sm sm:text-base placeholder-gray-500 focus:outline-none focus:border-cyan-500 transition"
+                maxLength={50}
               />
             </div>
           </div>
 
           {/* Telegram */}
           <div>
-            <label className="text-gray-300 text-sm font-medium mb-2 block">
+            <label className="text-gray-300 text-xs sm:text-sm font-medium mb-2 block">
               Telegram (optional)
             </label>
             <div className="relative">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">
+              <span className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-gray-500 text-sm sm:text-base">
                 @
               </span>
               <input
@@ -304,62 +220,33 @@ export default function ProfileFormModal({ isOpen, onClose, onSubmit, walletAddr
                 placeholder="username"
                 value={formData.telegram}
                 onChange={(e) => setFormData({ ...formData, telegram: e.target.value.replace('@', '') })}
-                className="w-full pl-8 pr-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500 transition"
-                maxLength={200}
+                className="w-full pl-7 sm:pl-8 pr-3 sm:pr-4 py-2 sm:py-3 bg-gray-800/50 border border-gray-700 rounded-lg text-white text-sm sm:text-base placeholder-gray-500 focus:outline-none focus:border-cyan-500 transition"
+                maxLength={50}
               />
             </div>
           </div>
 
-          {/* Payment Error */}
-          {paymentError && (
-            <div className="p-3 bg-red-500/10 border border-red-500/50 rounded-lg">
-              <p className="text-red-400 text-sm">{paymentError}</p>
-            </div>
-          )}
-
-          {/* Promo Code Badge */}
-          {hasPromoCode && promoCodeApplied && (
-            <div className="p-3 bg-green-500/10 border border-green-500/50 rounded-lg">
-              <p className="text-green-400 text-sm flex items-center gap-2">
-                <span>✅</span>
-                <span>Promo code <strong>{promoCodeApplied}</strong> applied - Premium FREE!</span>
-              </p>
-            </div>
-          )}
-
           {/* Buttons */}
-          <div className="flex gap-3 pt-4">
+          <div className="flex gap-2 sm:gap-3 pt-3 sm:pt-4">
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-6 py-3 bg-gray-700 hover:bg-gray-600 text-white rounded-lg font-medium transition"
+              className="flex-1 px-4 sm:px-6 py-2 sm:py-3 bg-gray-700 hover:bg-gray-600 text-white text-sm sm:text-base rounded-lg font-medium transition"
             >
               Skip
             </button>
             <button
               type="submit"
-              disabled={isUploading || isPaying}
-              className="flex-1 px-6 py-3 bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-400 hover:to-purple-400 text-white rounded-lg font-bold transition disabled:opacity-50"
+              disabled={isUploading}
+              className="flex-1 px-4 sm:px-6 py-2 sm:py-3 bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-400 hover:to-purple-400 text-white text-sm sm:text-base rounded-lg font-bold transition disabled:opacity-50"
             >
-              {isPaying ? (
-                <span className="flex items-center justify-center">
-                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  Paying...
-                </span>
-              ) : hasPromoCode ? (
-                'Save (FREE)'
-              ) : (
-                `Save & Pay ${PAYMENT_CONFIG.MINT_PRICE_SOL} SOL`
-              )}
+              Save & Continue
             </button>
           </div>
         </form>
 
         {/* Info note */}
-        <p className="text-gray-500 text-xs text-center mt-4">
+        <p className="text-gray-500 text-xs text-center mt-3 sm:mt-4">
           This info will appear on your card and leaderboard
         </p>
       </div>

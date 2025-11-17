@@ -1,4 +1,6 @@
 import { PublicKey } from '@solana/web3.js';
+import validator from 'validator';
+import xss from 'xss';
 
 export const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -30,12 +32,59 @@ export function sanitizeHandle(handle: string): string {
 }
 
 /**
- * Sanitizes display name
+ * Sanitizes display name with XSS protection
  */
 export function sanitizeDisplayName(name: string): string {
   if (!name) return '';
+  // First sanitize with XSS filter
+  const cleaned = xss(validator.trim(name));
   // Allow letters, numbers, spaces, and common punctuation
-  return name.replace(/[^\w\s\-_.]/g, '').slice(0, 50);
+  return cleaned.replace(/[^\w\s\-_.]/g, '').slice(0, 50);
+}
+
+/**
+ * Validates and sanitizes profile data
+ */
+export function validateProfileData(data: {
+  displayName?: string;
+  twitter?: string;
+  telegram?: string;
+}): { isValid: boolean; errors: string[]; sanitized: typeof data } {
+  const errors: string[] = [];
+  const sanitized = { ...data };
+
+  // Validate displayName
+  if (data.displayName) {
+    sanitized.displayName = sanitizeDisplayName(data.displayName);
+    if (!sanitized.displayName || sanitized.displayName.length < 1) {
+      errors.push('Display name must be at least 1 character');
+    }
+    if (sanitized.displayName && sanitized.displayName.length > 30) {
+      errors.push('Display name must be less than 30 characters');
+    }
+  }
+
+  // Validate twitter handle
+  if (data.twitter) {
+    sanitized.twitter = sanitizeHandle(data.twitter);
+    if (sanitized.twitter.length > 50) {
+      errors.push('Twitter handle must be less than 50 characters');
+    }
+  }
+
+  // Validate telegram handle
+  if (data.telegram) {
+    sanitized.telegram = sanitizeHandle(data.telegram);
+    if (sanitized.telegram.length > 50) {
+      errors.push('Telegram handle must be less than 50 characters');
+    }
+  }
+
+  return {
+    isValid: errors.length === 0,
+    errors,
+    sanitized,
+  };
 }
 
 /**

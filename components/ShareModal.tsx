@@ -1,6 +1,7 @@
 import { useState } from 'react';
 
 interface ShareModalProps {
+import { logger } from '@/lib/logger';
   isOpen: boolean;
   walletAddress: string;
   degenScore: number;
@@ -8,7 +9,7 @@ interface ShareModalProps {
   onSkip?: () => void;
 }
 
-export default function ShareModal({ isOpen, onShared, onSkip, walletAddress: _walletAddress, degenScore }: ShareModalProps) {
+export default function ShareModal({ isOpen, onShared, onSkip, walletAddress, degenScore }: ShareModalProps) {
   const [hasShared, setHasShared] = useState(false);
 
   if (!isOpen) return null;
@@ -32,13 +33,16 @@ export default function ShareModal({ isOpen, onShared, onSkip, walletAddress: _w
   };
 
   const generateTweet = () => {
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://degenscore.com';
+    const baseUrl = typeof window !== 'undefined' ? window.location.origin : (process.env.NEXT_PUBLIC_BASE_URL || 'https://degenscore.com');
+    const cardUrl = `${baseUrl}/card/${walletAddress}`;
     const tierEmoji = getTierEmoji(degenScore);
     const tierName = getTierName(degenScore);
 
     const tweetText = `${tierEmoji} Just got my DegenScore: ${degenScore}/100 (${tierName})!
 
-Check your Solana trading score at ${appUrl}
+Check out my card: ${cardUrl}
+
+Get your own at ${baseUrl}
 
 #DegenScore #Solana #SolanaTrading`;
 
@@ -65,8 +69,14 @@ Check your Solana trading score at ${appUrl}
   };
 
   return (
-    <div className="fixed inset-0 bg-black/95 backdrop-blur-md flex items-center justify-center z-50 p-4">
-      <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl border-2 border-cyan-500/50 shadow-2xl shadow-cyan-500/20 max-w-md w-full p-8 relative">
+    <div
+      className="fixed inset-0 bg-black/95 backdrop-blur-md flex items-center justify-center z-50 p-4"
+      onClick={onSkip ? onSkip : undefined}
+    >
+      <div
+        className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl border-2 border-cyan-500/50 shadow-2xl shadow-cyan-500/20 max-w-md w-full p-4 sm:p-6 md:p-8 relative max-h-[90vh] overflow-y-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Close button only if skip is available */}
         {onSkip && (
           <button
@@ -77,19 +87,19 @@ Check your Solana trading score at ${appUrl}
           </button>
         )}
 
-        <div className="text-center mb-6">
-          <div className="text-6xl mb-4 animate-bounce">🚀</div>
-          <h2 className="text-3xl font-bold text-white mb-2">
+        <div className="text-center mb-4 sm:mb-6">
+          <div className="text-4xl sm:text-5xl md:text-6xl mb-3 sm:mb-4 animate-bounce">🚀</div>
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-white mb-2">
             Share Your Score!
           </h2>
-          <p className="text-gray-400">
+          <p className="text-sm sm:text-base text-gray-400">
             Unlock your premium card by sharing on Twitter
           </p>
         </div>
 
-        <div className="bg-gradient-to-r from-cyan-500/10 to-blue-500/10 border border-cyan-500/30 rounded-xl p-4 mb-6">
-          <div className="text-cyan-400 font-bold mb-2">Why share?</div>
-          <ul className="text-gray-300 text-sm space-y-2">
+        <div className="bg-gradient-to-r from-cyan-500/10 to-blue-500/10 border border-cyan-500/30 rounded-xl p-3 sm:p-4 mb-4 sm:mb-6">
+          <div className="text-cyan-400 font-bold mb-2 text-sm sm:text-base">Why share?</div>
+          <ul className="text-gray-300 text-xs sm:text-sm space-y-2">
             <li className="flex items-center gap-2">
               <span className="text-green-400">✓</span>
               <span>Unlock instant download</span>
@@ -100,7 +110,7 @@ Check your Solana trading score at ${appUrl}
             </li>
             <li className="flex items-center gap-2">
               <span className="text-green-400">✓</span>
-              <span>Enter weekly contest (1 SOL prize!)</span>
+              <span>Enter weekly contest (3 SOL prize!)</span>
             </li>
             <li className="flex items-center gap-2">
               <span className="text-green-400">✓</span>
@@ -110,7 +120,7 @@ Check your Solana trading score at ${appUrl}
         </div>
 
         {/* Preview of tweet */}
-        <div className="bg-gray-800/50 rounded-xl p-4 mb-6 border border-gray-700">
+        <div className="bg-gray-800/50 rounded-xl p-3 sm:p-4 mb-4 sm:mb-6 border border-gray-700">
           <div className="text-gray-400 text-xs mb-2">Preview:</div>
           <div className="text-white text-sm">
             {getTierEmoji(degenScore)} Just got my DegenScore: <span className="font-bold text-cyan-400">{degenScore}/100</span> ({getTierName(degenScore)})!
@@ -124,7 +134,7 @@ Check your Solana trading score at ${appUrl}
         <button
           onClick={handleShareOnTwitter}
           disabled={hasShared}
-          className="w-full py-4 px-6 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 disabled:from-green-600 disabled:to-green-700 text-white font-bold rounded-lg transition-all shadow-lg hover:shadow-xl mb-3 relative overflow-hidden group"
+          className="w-full py-3 sm:py-4 px-4 sm:px-6 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 disabled:from-green-600 disabled:to-green-700 text-white text-sm sm:text-base font-bold rounded-lg transition-all shadow-lg hover:shadow-xl mb-3 relative overflow-hidden group"
         >
           {hasShared ? (
             <span className="flex items-center justify-center gap-2">
@@ -144,7 +154,7 @@ Check your Solana trading score at ${appUrl}
         {hasShared && (
           <button
             onClick={handleContinue}
-            className="w-full py-3 px-6 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white font-bold rounded-lg transition-all animate-pulse"
+            className="w-full py-2 sm:py-3 px-4 sm:px-6 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white text-sm sm:text-base font-bold rounded-lg transition-all animate-pulse"
           >
             ✓ Continue to Download
           </button>
@@ -153,14 +163,14 @@ Check your Solana trading score at ${appUrl}
         {!hasShared && onSkip && (
           <button
             onClick={onSkip}
-            className="w-full py-2 text-gray-500 hover:text-gray-300 text-sm transition"
+            className="w-full py-2 text-gray-500 hover:text-gray-300 text-xs sm:text-sm transition"
           >
             Skip for now
           </button>
         )}
 
         <p className="text-gray-600 text-xs text-center mt-4">
-          💡 Sharing increases your chances to win the weekly 1 SOL prize!
+          💡 Sharing increases your chances to win the 1 SOL prize at 100 cards!
         </p>
       </div>
     </div>

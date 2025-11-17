@@ -77,12 +77,17 @@ export default function Home() {
           {/* Navigation Buttons */}
           <div className="flex flex-wrap gap-3 justify-center sm:justify-end">
             <Link href="/compare">
-              <button className="px-4 py-2 bg-blue-700 hover:bg-blue-600 text-white rounded-lg font-medium transition">
+              <button className="px-6 py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-lg font-bold hover:scale-105 transition shadow-lg hover:shadow-orange-500/50">
                 ⚔️ Compare
               </button>
             </Link>
+            <Link href="/referrals">
+              <button className="px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-lg font-bold hover:scale-105 transition shadow-lg hover:shadow-green-500/50">
+                🎁 Referrals
+              </button>
+            </Link>
             <Link href="/documentation">
-              <button className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg font-medium transition">
+              <button className="px-6 py-3 bg-gray-700 hover:bg-gray-600 text-white rounded-lg font-bold hover:scale-105 transition shadow-lg">
                 📚 Docs
               </button>
             </Link>

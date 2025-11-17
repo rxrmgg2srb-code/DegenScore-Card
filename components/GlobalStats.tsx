@@ -8,39 +8,41 @@ interface GlobalStatsProps {
 
 export function GlobalStats({ className = '' }: GlobalStatsProps) {
   const [stats, setStats] = useState({
-    onlineUsers: 0,
-    cardsGenerated: 0,
-    totalVolume: 0,
+    totalCards: 0,
     cardsToday: 0,
+    totalPremiumCards: 0,
+    totalVolume: 0,
   });
 
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Fetch real stats from API
+    // Fetch REAL stats from API - NO FAKE DATA EVER
     const fetchStats = async () => {
       try {
-        const response = await fetch('/api/leaderboard?limit=1000');
+        const response = await fetch('/api/stats');
         const data = await response.json();
 
-        if (data.success) {
+        if (data.success && data.stats) {
+          // Use ONLY real data from database
+          // If stats are 0, that's OK - we show 0 (better than lying)
           setStats({
-            onlineUsers: Math.floor(Math.random() * 50) + 80, // Simulated online users
-            cardsGenerated: data.stats.totalCards || 0,
+            totalCards: data.stats.totalCards || 0,
+            cardsToday: data.stats.cardsToday || 0,
+            totalPremiumCards: data.stats.totalPremiumCards || 0,
             totalVolume: data.stats.totalVolume || 0,
-            cardsToday: Math.floor(Math.random() * 30) + 10, // Simulated daily cards
           });
         }
       } catch (error) {
         logger.error('Error fetching stats', error instanceof Error ? error : undefined, {
           error: String(error),
         });
-        // Fallback values
+        // If error, show 0 (honest, not fake)
         setStats({
-          onlineUsers: 127,
-          cardsGenerated: 1234,
-          totalVolume: 5678,
-          cardsToday: 23,
+          totalCards: 0,
+          cardsToday: 0,
+          totalPremiumCards: 0,
+          totalVolume: 0,
         });
       } finally {
         setIsLoading(false);
@@ -49,13 +51,8 @@ export function GlobalStats({ className = '' }: GlobalStatsProps) {
 
     fetchStats();
 
-    // Update online users count every 30 seconds
-    const interval = setInterval(() => {
-      setStats((prev) => ({
-        ...prev,
-        onlineUsers: Math.floor(Math.random() * 50) + 80,
-      }));
-    }, 30000);
+    // Refresh stats every 60 seconds with real data
+    const interval = setInterval(fetchStats, 60000);
 
     return () => clearInterval(interval);
   }, []);
@@ -78,33 +75,39 @@ export function GlobalStats({ className = '' }: GlobalStatsProps) {
 
   return (
     <div className={`grid grid-cols-2 md:grid-cols-4 gap-4 ${className}`}>
-      {/* Online Users */}
-      <div className="group relative bg-gradient-to-br from-green-500/10 to-emerald-500/5 backdrop-blur-sm rounded-xl p-4 border border-green-500/30 hover:border-green-500/50 transition-all hover:scale-105">
-        <div className="absolute inset-0 bg-gradient-to-br from-green-500/0 to-green-500/10 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl"></div>
-        <div className="relative">
-          <div className="flex items-center gap-2 text-green-400 text-sm font-medium mb-1">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
-            </span>
-            Online Now
-          </div>
-          <div className="text-3xl font-bold text-white">
-            <CountUp end={stats.onlineUsers} duration={1} />
-          </div>
-          <div className="text-xs text-gray-400 mt-1">degens active</div>
-        </div>
-      </div>
-
-      {/* Cards Generated */}
+      {/* Total Cards */}
       <div className="group relative bg-gradient-to-br from-purple-500/10 to-pink-500/5 backdrop-blur-sm rounded-xl p-4 border border-purple-500/30 hover:border-purple-500/50 transition-all hover:scale-105">
         <div className="absolute inset-0 bg-gradient-to-br from-purple-500/0 to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl"></div>
         <div className="relative">
           <div className="text-purple-400 text-sm font-medium mb-1">📊 Total Cards</div>
           <div className="text-3xl font-bold text-white">
-            <CountUp end={stats.cardsGenerated} duration={2} separator="," />
+            <CountUp end={stats.totalCards} duration={2} separator="," />
           </div>
           <div className="text-xs text-gray-400 mt-1">all time</div>
+        </div>
+      </div>
+
+      {/* Cards Today */}
+      <div className="group relative bg-gradient-to-br from-orange-500/10 to-red-500/5 backdrop-blur-sm rounded-xl p-4 border border-orange-500/30 hover:border-orange-500/50 transition-all hover:scale-105">
+        <div className="absolute inset-0 bg-gradient-to-br from-orange-500/0 to-orange-500/10 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl"></div>
+        <div className="relative">
+          <div className="text-orange-400 text-sm font-medium mb-1">⚡ Today</div>
+          <div className="text-3xl font-bold text-white">
+            <CountUp end={stats.cardsToday} duration={1.5} />
+          </div>
+          <div className="text-xs text-gray-400 mt-1">cards created</div>
+        </div>
+      </div>
+
+      {/* Premium Cards */}
+      <div className="group relative bg-gradient-to-br from-yellow-500/10 to-amber-500/5 backdrop-blur-sm rounded-xl p-4 border border-yellow-500/30 hover:border-yellow-500/50 transition-all hover:scale-105">
+        <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/0 to-yellow-500/10 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl"></div>
+        <div className="relative">
+          <div className="text-yellow-400 text-sm font-medium mb-1">💎 Premium</div>
+          <div className="text-3xl font-bold text-white">
+            <CountUp end={stats.totalPremiumCards} duration={2} separator="," />
+          </div>
+          <div className="text-xs text-gray-400 mt-1">paid cards</div>
         </div>
       </div>
 
@@ -118,23 +121,11 @@ export function GlobalStats({ className = '' }: GlobalStatsProps) {
               end={stats.totalVolume}
               duration={2}
               separator=","
-              decimals={0}
+              decimals={stats.totalVolume < 1 ? 2 : 0}
               suffix=" SOL"
             />
           </div>
-          <div className="text-xs text-gray-400 mt-1">total tracked</div>
-        </div>
-      </div>
-
-      {/* Cards Today */}
-      <div className="group relative bg-gradient-to-br from-orange-500/10 to-red-500/5 backdrop-blur-sm rounded-xl p-4 border border-orange-500/30 hover:border-orange-500/50 transition-all hover:scale-105">
-        <div className="absolute inset-0 bg-gradient-to-br from-orange-500/0 to-orange-500/10 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl"></div>
-        <div className="relative">
-          <div className="text-orange-400 text-sm font-medium mb-1">⚡ Today</div>
-          <div className="text-3xl font-bold text-white">
-            <CountUp end={stats.cardsToday} duration={1.5} />
-          </div>
-          <div className="text-xs text-gray-400 mt-1">cards generated</div>
+          <div className="text-xs text-gray-400 mt-1">total revenue</div>
         </div>
       </div>
     </div>
