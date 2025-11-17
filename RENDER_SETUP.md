@@ -85,11 +85,13 @@ TREASURY_WALLET=[tu-wallet]
 ### **Problema 1: "No open HTTP ports detected"**
 
 **Causas:**
+
 - ❌ `NODE_ENV` no configurada
 - ❌ `DATABASE_URL` faltante o incorrecta
 - ❌ Puerto no bindeado correctamente
 
 **Solución:**
+
 ```bash
 # En Render Dashboard > Environment, agregar:
 NODE_ENV=production
@@ -101,10 +103,12 @@ NODE_ENV=production
 ### **Problema 2: "Build succeeded but deploy failed"**
 
 **Causas:**
+
 - ❌ Variables de entorno faltantes
 - ❌ Prisma no puede conectarse a la base de datos
 
 **Solución:**
+
 ```bash
 # 1. Verificar DATABASE_URL en Environment
 # 2. Asegurarse que la DB de Render esté en la misma región
@@ -114,11 +118,13 @@ NODE_ENV=production
 ### **Problema 3: "Health check timeout"**
 
 **Causas:**
+
 - ❌ Endpoint `/api/health` no existe o falla
 - ❌ Next.js no inicia correctamente
 - ❌ Variables de entorno causan error en startup
 
 **Solución:**
+
 ```bash
 # 1. Verificar logs en Render Dashboard
 # 2. Buscar errores de variables faltantes
@@ -215,10 +221,12 @@ curl https://www.solanamillondollar.com/api/analyze
 ## 📊 **Monitoreo**
 
 ### **Ver Logs en Tiempo Real:**
+
 1. Render Dashboard → Tu servicio → "Logs"
 2. Busca errores relacionados con variables de entorno
 
 ### **Métricas:**
+
 1. Render Dashboard → Tu servicio → "Metrics"
 2. Verifica:
    - CPU usage
@@ -246,6 +254,7 @@ curl https://www.solanamillondollar.com/api/analyze
 ### **Contacto de Soporte:**
 
 Si todo falla:
+
 1. Ve a Render Dashboard
 2. Click en "?" (bottom right)
 3. "Contact Support"
@@ -256,6 +265,7 @@ Si todo falla:
 ## 💡 **Tips de Optimización**
 
 ### **1. Reducir Cold Starts:**
+
 ```bash
 # En Render Settings:
 ✅ Health Check Path: /api/health
@@ -263,6 +273,7 @@ Si todo falla:
 ```
 
 ### **2. Mejorar Performance:**
+
 ```bash
 # Agregar Redis (Upstash gratis):
 UPSTASH_REDIS_REST_URL=https://...
@@ -270,6 +281,7 @@ UPSTASH_REDIS_REST_TOKEN=...
 ```
 
 ### **3. Habilitar Auto-Deploy:**
+
 ```bash
 # En Settings:
 ✅ Auto-Deploy: Yes

@@ -15,7 +15,7 @@ console.log(`🚀 Starting Next.js server on ${host}:${port}...`);
 // Start Next.js with proper port configuration
 const nextProcess = spawn('next', ['start', '-H', host, '-p', port.toString()], {
   stdio: 'inherit',
-  env: process.env
+  env: process.env,
 });
 
 // Handle process termination
@@ -30,7 +30,7 @@ nextProcess.on('exit', (code) => {
 });
 
 // Forward signals
-['SIGINT', 'SIGTERM', 'SIGQUIT'].forEach(signal => {
+['SIGINT', 'SIGTERM', 'SIGQUIT'].forEach((signal) => {
   process.on(signal, () => {
     nextProcess.kill(signal);
   });
