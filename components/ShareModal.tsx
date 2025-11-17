@@ -1,7 +1,7 @@
 import { useState } from 'react';
+import { logger } from '@/lib/logger';
 
 interface ShareModalProps {
-import { logger } from '@/lib/logger';
   isOpen: boolean;
   walletAddress: string;
   degenScore: number;
