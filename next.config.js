@@ -90,9 +90,9 @@ const nextConfig = {
   // Performance optimizations
   compress: true,
 
-  // Disable SWC minification to reduce memory usage during build
-  // This increases build output size slightly but significantly reduces memory consumption
-  swcMinify: false,
+  // Enable SWC minification for better performance and smaller bundle size
+  // SWC is required in Next.js 15+ and provides faster builds
+  swcMinify: true,
 
   // Disable x-powered-by header
   poweredByHeader: false,
