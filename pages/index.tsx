@@ -1,11 +1,21 @@
 import DegenCard from '../components/DegenCard';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 
 /**
- * MINIMAL VERSION FOR DEBUGGING
- * Esta es una versión ultra-simplificada sin componentes dinámicos
- * que pueden causar problemas
+ * TESTING VERSION - Adding components one by one
+ * Test 1: GlobalStats
  */
+
+// GlobalStats - TEST 1
+const GlobalStats = dynamic(() => import('../components/GlobalStats').then(mod => ({ default: mod.GlobalStats })).catch(() => {
+  console.error('❌ Failed to load GlobalStats');
+  return { default: () => <div className="h-32 bg-red-500/20 rounded-lg p-4 text-red-400 text-center">GlobalStats failed to load</div> };
+}), {
+  loading: () => <div className="h-32 bg-gray-800/30 animate-pulse rounded-lg" />,
+  ssr: false,
+});
+
 export default function Home() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 relative overflow-hidden">
@@ -29,6 +39,9 @@ export default function Home() {
             </Link>
           </div>
         </div>
+
+        {/* TEST 1: GlobalStats */}
+        <GlobalStats className="mb-8" />
       </div>
 
       {/* Card Generator ONLY */}
@@ -38,7 +51,7 @@ export default function Home() {
 
       <div className="mt-8 text-center text-gray-400 text-sm">
         <p>Powered by Helius RPC × Solana</p>
-        <p className="mt-2">💡 Minimal mode for debugging</p>
+        <p className="mt-2">🧪 TEST 1: GlobalStats active</p>
       </div>
     </div>
   );
