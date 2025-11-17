@@ -1,27 +1,46 @@
-import DOMPurify from 'isomorphic-dompurify';
-
 /**
  * Sanitization utilities to prevent XSS attacks
+ * Simple server-side implementation without DOMPurify/jsdom
  */
 
 /**
  * Sanitize HTML content to prevent XSS
  */
 export function sanitizeHtml(dirty: string): string {
-  return DOMPurify.sanitize(dirty, {
-    ALLOWED_TAGS: ['b', 'i', 'em', 'strong', 'a'],
-    ALLOWED_ATTR: ['href'],
-  });
+  if (!dirty || typeof dirty !== 'string') {
+    return '';
+  }
+
+  // Simple HTML sanitization - remove all tags except allowed ones
+  let sanitized = dirty;
+
+  // Remove script tags and content
+  sanitized = sanitized.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
+
+  // Remove event handlers
+  sanitized = sanitized.replace(/on\w+\s*=\s*["'][^"']*["']/gi, '');
+  sanitized = sanitized.replace(/on\w+\s*=\s*[^\s>]*/gi, '');
+
+  // Only keep safe tags: b, i, em, strong, a with href
+  sanitized = sanitized.replace(/<(?!\/?(?:b|i|em|strong|a)\b)[^>]+>/gi, '');
+
+  // Remove javascript: and data: from href
+  sanitized = sanitized.replace(/href\s*=\s*["']?javascript:/gi, 'href="blocked:');
+  sanitized = sanitized.replace(/href\s*=\s*["']?data:/gi, 'href="blocked:');
+
+  return sanitized;
 }
 
 /**
  * Sanitize plain text (removes all HTML)
  */
 export function sanitizeText(dirty: string): string {
-  return DOMPurify.sanitize(dirty, {
-    ALLOWED_TAGS: [],
-    ALLOWED_ATTR: [],
-  });
+  if (!dirty || typeof dirty !== 'string') {
+    return '';
+  }
+
+  // Remove all HTML tags
+  return dirty.replace(/<[^>]*>/g, '').trim();
 }
 
 /**
