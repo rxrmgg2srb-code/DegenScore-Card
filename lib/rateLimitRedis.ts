@@ -10,18 +10,19 @@
  * - Automatic cleanup of expired keys
  */
 
-import { Redis } from '@upstash/redis';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { logger } from './logger';
+import redisClient from './cache/redis';
 
 // ============================================================================
 // CONFIGURATION
 // ============================================================================
 
-const redis = new Redis({
-  url: process.env.UPSTASH_REDIS_REST_URL || '',
-  token: process.env.UPSTASH_REDIS_REST_TOKEN || '',
-});
+// Use the properly configured Redis client from cache/redis.ts
+const redis = redisClient;
+
+// Check if Redis is enabled
+const isRedisEnabled = redis !== null;
 
 // Rate limit configuration per endpoint
 export const RATE_LIMITS = {
@@ -82,6 +83,18 @@ export async function checkRateLimit(
     // Get rate limit configuration
     const config = getEndpointConfig(endpoint, isPremium);
     const { requests: limit, window } = config;
+
+    // If Redis is not available, fail open (allow request)
+    if (!isRedisEnabled || !redis) {
+      logger.warn('Redis not available, rate limiting disabled');
+      return {
+        success: true,
+        limit,
+        remaining: limit,
+        reset: Date.now() + window * 1000,
+        error: 'Rate limiting temporarily unavailable',
+      };
+    }
 
     // Create Redis key
     const key = `ratelimit:${endpoint}:${identifier}`;
@@ -241,12 +254,14 @@ async function checkPremiumStatus(req: NextApiRequest): Promise<boolean> {
       return false;
     }
 
-    // Check Redis cache first
-    const cacheKey = `premium:${walletAddress}`;
-    const cached = await redis.get(cacheKey);
+    // Check Redis cache first (if available)
+    if (isRedisEnabled && redis) {
+      const cacheKey = `premium:${walletAddress}`;
+      const cached = await redis.get(cacheKey);
 
-    if (cached !== null) {
-      return cached === '1';
+      if (cached !== null) {
+        return cached === '1';
+      }
     }
 
     // TODO: Query database for premium status
@@ -265,6 +280,11 @@ export async function resetRateLimit(
   identifier: string,
   endpoint?: string
 ): Promise<void> {
+  if (!isRedisEnabled || !redis) {
+    logger.warn('Redis not available, cannot reset rate limit');
+    return;
+  }
+
   try {
     const key = endpoint
       ? `ratelimit:${endpoint}:${identifier}`
@@ -294,6 +314,16 @@ export async function getRateLimitStatus(
   endpoint: string,
   isPremium: boolean = false
 ): Promise<RateLimitResult> {
+  if (!isRedisEnabled || !redis) {
+    const config = getEndpointConfig(endpoint, isPremium);
+    return {
+      success: true,
+      limit: config.requests,
+      remaining: config.requests,
+      reset: Date.now() + config.window * 1000,
+    };
+  }
+
   try {
     const config = getEndpointConfig(endpoint, isPremium);
     const { requests: limit, window } = config;
@@ -331,6 +361,11 @@ export async function getRateLimitStatus(
  * Clean up expired rate limit keys (run periodically)
  */
 export async function cleanupExpiredKeys(): Promise<number> {
+  if (!isRedisEnabled || !redis) {
+    logger.warn('Redis not available, cannot cleanup keys');
+    return 0;
+  }
+
   try {
     const pattern = 'ratelimit:*';
     const keys = await redis.keys(pattern);
