@@ -79,6 +79,12 @@ export function LiveActivityFeed() {
           message: `achieved ${activity.score}+ degen score!`,
           color: 'text-orange-400',
         };
+      default:
+        return {
+          icon: '🎴',
+          message: 'did something cool!',
+          color: 'text-gray-400',
+        };
     }
   };
 

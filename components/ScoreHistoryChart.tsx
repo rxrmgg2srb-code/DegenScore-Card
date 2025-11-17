@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Area, AreaChart } from 'recharts';
-import { useTranslation } from 'react-i18next';
+import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart } from 'recharts';
 import { logger } from '../lib/logger';
 
 interface ScoreHistoryData {
@@ -46,7 +45,6 @@ const PERIODS = [
 ];
 
 export default function ScoreHistoryChart({ walletAddress, className = '' }: ScoreHistoryChartProps) {
-  const { t } = useTranslation();
   const [selectedPeriod, setSelectedPeriod] = useState(30);
   const [data, setData] = useState<ScoreHistoryResponse | null>(null);
   const [loading, setLoading] = useState(true);

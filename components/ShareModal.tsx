@@ -8,7 +8,7 @@ interface ShareModalProps {
   onSkip?: () => void;
 }
 
-export default function ShareModal({ isOpen, onShared, onSkip, walletAddress, degenScore }: ShareModalProps) {
+export default function ShareModal({ isOpen, onShared, onSkip, walletAddress: _walletAddress, degenScore }: ShareModalProps) {
   const [hasShared, setHasShared] = useState(false);
 
   if (!isOpen) return null;

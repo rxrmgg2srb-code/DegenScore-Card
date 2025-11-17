@@ -1,12 +1,10 @@
 import { useTranslation } from 'react-i18next';
-import { useWallet } from '@solana/wallet-adapter-react';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import { LanguageSelector } from './LanguageSelector';
 import Link from 'next/link';
 
 export const Header = () => {
   const { t } = useTranslation();
-  const { connected } = useWallet();
 
   return (
     <header className="bg-black/50 backdrop-blur-lg sticky top-0 z-40 border-b border-purple-500/30">

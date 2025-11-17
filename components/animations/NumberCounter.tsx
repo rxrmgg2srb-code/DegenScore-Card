@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { motion, useSpring, useTransform } from 'framer-motion';
+import { useSpring, useTransform } from 'framer-motion';
 
 interface NumberCounterProps {
   value: number;
