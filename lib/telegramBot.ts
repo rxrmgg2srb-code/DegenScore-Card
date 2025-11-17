@@ -56,8 +56,8 @@ export async function getOrCreateTelegramUser(telegramId: number, username?: str
       user = await prisma.telegramUser.update({
         where: { telegramId: String(telegramId) },
         data: {
-          lastInteraction: new Date(),
-          totalInteractions: { increment: 1 },
+          lastActiveAt: new Date(),
+          commandsUsed: { increment: 1 },
         },
       });
     }
@@ -116,11 +116,11 @@ Usa /link para conectar tu wallet de Solana
  */
 export async function getScoreMessage(walletAddress: string): Promise<string> {
   try {
-    const scoreCard = await prisma.scoreCard.findUnique({
+    const degenCard = await prisma.degenCard.findUnique({
       where: { walletAddress },
     });
 
-    if (!scoreCard) {
+    if (!degenCard) {
       return '❌ No se encontró tu score card.\n\nPrimero vincula tu wallet con /link';
     }
 
@@ -128,21 +128,19 @@ export async function getScoreMessage(walletAddress: string): Promise<string> {
       where: { walletAddress },
     });
 
-    const level = analytics?.level || 1;
-    const xp = analytics?.totalXP || 0;
+    const level = analytics?.level || degenCard.level || 1;
+    const xp = analytics?.totalXP || degenCard.xp || 0;
 
     return `📊 **Tu DegenScore**
 
-🎯 Score: **${scoreCard.score}/100**
+🎯 Score: **${degenCard.degenScore}**
 ⭐ Nivel: **${level}** (${xp} XP)
 
 📈 Trading Stats:
-• Total Trades: ${scoreCard.totalTrades}
-• Win Rate: ${scoreCard.winRate.toFixed(1)}%
-• ROI: ${scoreCard.roi > 0 ? '+' : ''}${scoreCard.roi.toFixed(1)}%
-• Volumen: $${scoreCard.volumeTraded.toLocaleString()}
-
-🏆 Ranking: #${scoreCard.ranking || '---'}
+• Total Trades: ${degenCard.totalTrades}
+• Win Rate: ${degenCard.winRate.toFixed(1)}%
+• P&L: ${degenCard.profitLoss > 0 ? '+' : ''}${degenCard.profitLoss.toFixed(2)} SOL
+• Volumen: ${degenCard.totalVolume.toFixed(2)} SOL
 
 🌐 Ver card completa: https://www.solanamillondollar.com/${walletAddress}`;
   } catch (error: any) {
@@ -209,24 +207,34 @@ export async function getWhaleMessage(walletAddress?: string): Promise<string> {
     // Get recent whale alerts for followed whales
     const follows = await prisma.whaleFollower.findMany({
       where: { walletAddress },
-      select: { whaleWalletId: true },
+      select: { whaleAddress: true },
     });
 
     if (follows.length === 0) {
       return '🐋 No sigues ninguna whale.\n\n🌐 Descubre whales en: https://www.solanamillondollar.com';
     }
 
-    const whaleIds = follows.map(f => f.whaleWalletId);
+    const whaleAddresses = follows.map(f => f.whaleAddress);
+
+    // Get whale wallets to get their IDs
+    const whaleWallets = await prisma.whaleWallet.findMany({
+      where: {
+        walletAddress: { in: whaleAddresses },
+      },
+      select: { id: true },
+    });
+
+    const whaleIds = whaleWallets.map(w => w.id);
 
     const alerts = await prisma.whaleAlert.findMany({
       where: {
-        whaleWalletId: { in: whaleIds },
+        whaleId: { in: whaleIds },
         timestamp: {
           gte: new Date(Date.now() - 24 * 60 * 60 * 1000), // Last 24h
         },
       },
       include: {
-        whaleWallet: true,
+        whale: true,
       },
       orderBy: { timestamp: 'desc' },
       take: 5,
@@ -239,13 +247,14 @@ export async function getWhaleMessage(walletAddress?: string): Promise<string> {
     let message = '🐋 **Actividad de Whales (últimas 24h)**\n\n';
 
     alerts.forEach((alert, idx) => {
-      const emoji = alert.action === 'buy' ? '💰' : '💸';
-      const whale = alert.whaleWallet;
+      const isBuy = alert.alertType === 'large_buy';
+      const emoji = isBuy ? '💰' : '💸';
+      const whale = alert.whale;
       const walletShort = `${whale.walletAddress.slice(0, 4)}...${whale.walletAddress.slice(-4)}`;
 
-      message += `${idx + 1}. ${emoji} ${whale.nickname || walletShort}\n`;
-      message += `   ${alert.action === 'buy' ? 'Compró' : 'Vendió'} ${alert.tokenSymbol}\n`;
-      message += `   💵 ${alert.amountSOL.toFixed(2)} SOL\n\n`;
+      message += `${idx + 1}. ${emoji} ${whale.label || walletShort}\n`;
+      message += `   ${isBuy ? 'Compró' : 'Vendió'} ${alert.tokenSymbol || 'token'}\n`;
+      message += `   💵 ${alert.amount.toFixed(2)} SOL\n\n`;
     });
 
     return message + '🌐 Ver más: https://www.solanamillondollar.com';
@@ -268,7 +277,7 @@ export async function getAlertsMessage(walletAddress: string): Promise<string> {
       return '❌ Primero vincula tu wallet con /link';
     }
 
-    const notificationsStatus = user.notificationsEnabled ? '✅ Activadas' : '❌ Desactivadas';
+    const notificationsStatus = user.notifications ? '✅ Activadas' : '❌ Desactivadas';
 
     return `🔔 **Tus Notificaciones**
 
@@ -335,17 +344,14 @@ export async function sendTelegramNotification(
  * Notify whale followers about new alert
  */
 export async function notifyWhaleFollowers(
-  whaleWalletId: string,
+  whaleAddress: string,
   alertMessage: string
 ): Promise<number> {
   try {
     const followers = await prisma.whaleFollower.findMany({
       where: {
-        whaleWalletId,
-        notificationsEnabled: true,
-      },
-      include: {
-        telegramUser: true,
+        whaleAddress,
+        alertOnTrades: true,
       },
     });
 
@@ -356,7 +362,7 @@ export async function notifyWhaleFollowers(
       const telegramUser = await prisma.telegramUser.findFirst({
         where: {
           walletAddress: follower.walletAddress,
-          notificationsEnabled: true,
+          notifications: true,
         },
       });
 

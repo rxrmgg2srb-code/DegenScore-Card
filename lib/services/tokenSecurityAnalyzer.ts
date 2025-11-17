@@ -929,7 +929,7 @@ async function detectBundleWallets(_tokenAddress: string): Promise<number> {
   return 0;
 }
 
-async function fetchLiquidityPools(tokenAddress: string): Promise<any[]> {
+async function fetchLiquidityPools(_tokenAddress: string): Promise<any[]> {
   // This would query Raydium/Orca/Jupiter for liquidity pools
   // Simplified for now
   return [];
@@ -949,8 +949,9 @@ function detectBundleBots(transactions: any[]): number {
     if (!slotGroups[tx.slot]) {
       slotGroups[tx.slot] = new Set();
     }
-    if (tx.feePayer) {
-      slotGroups[tx.slot].add(tx.feePayer);
+    const slotGroup = slotGroups[tx.slot];
+    if (tx.feePayer && slotGroup) {
+      slotGroup.add(tx.feePayer);
     }
   });
 
