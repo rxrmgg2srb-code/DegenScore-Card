@@ -43,7 +43,7 @@ export default function FollowButton({
       const token = generateSessionToken(publicKey.toBase58());
       setSessionToken(token);
     } catch (error) {
-      logger.error('Failed to generate session token:', error);
+      logger.error('Failed to generate session token:', error as Error);
     }
   };
 
@@ -64,7 +64,7 @@ export default function FollowButton({
         setFollowingCount(data.counts.following);
       }
     } catch (error) {
-      logger.error('Error checking follow status:', error);
+      logger.error('Error checking follow status:', error as Error);
     }
   };
 
@@ -127,9 +127,9 @@ export default function FollowButton({
         setFollowersCount((prev) => prev + 1);
         toast.success('Following successfully');
       }
-    } catch (error: any) {
-      logger.error('Error toggling follow:', error);
-      toast.error(error.message);
+    } catch (error) {
+      logger.error('Error toggling follow:', error as Error);
+      toast.error(error instanceof Error ? error.message : 'An error occurred');
     } finally {
       setLoading(false);
     }

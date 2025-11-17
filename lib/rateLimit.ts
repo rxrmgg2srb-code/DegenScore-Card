@@ -19,7 +19,7 @@ setInterval(() => {
   if (keys.length > 500) {
     let cleaned = 0;
     keys.forEach((key) => {
-      if (store[key].resetTime < now) {
+      if (store[key] && store[key].resetTime < now) {
         delete store[key];
         cleaned++;
       }
@@ -37,11 +37,12 @@ function getClientIdentifier(req: NextApiRequest): string {
 
   if (forwarded) {
     const ip = typeof forwarded === 'string' ? forwarded.split(',')[0] : forwarded[0];
-    return ip.trim();
+    return ip ? ip.trim() : 'unknown';
   }
 
   if (realIp) {
-    return typeof realIp === 'string' ? realIp : realIp[0];
+    const ip = typeof realIp === 'string' ? realIp : realIp[0];
+    return ip || 'unknown';
   }
 
   // Fallback to socket address

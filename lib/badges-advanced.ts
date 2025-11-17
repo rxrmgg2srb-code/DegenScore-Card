@@ -1,4 +1,4 @@
-import { WalletMetrics } from './metrics-advanced';
+import { WalletMetrics } from './metricsEngine';
 
 export interface Badge {
   name: string;

@@ -55,7 +55,7 @@ async function sendDiscordNotification(
 
     return response.ok;
   } catch (error) {
-    logger.error('Failed to send Discord notification:', error);
+    logger.error('Failed to send Discord notification:', error as Error);
     return false;
   }
 }
@@ -105,7 +105,7 @@ async function sendTelegramNotification(
     const result = await response.json();
     return result.ok;
   } catch (error) {
-    logger.error('Failed to send Telegram notification:', error);
+    logger.error('Failed to send Telegram notification:', error as Error);
     return false;
   }
 }
@@ -147,7 +147,7 @@ async function sendEmailNotification(
     });
     return true;
   } catch (error) {
-    logger.error('Failed to send email:', error);
+    logger.error('Failed to send email:', error as Error);
     return false;
   }
   */
@@ -169,7 +169,7 @@ export async function notifyWallet(
     });
 
     if (!preferences) {
-      logger.debug('No notification preferences found for wallet:', walletAddress);
+      logger.debug('No notification preferences found for wallet:', { walletAddress });
       return;
     }
 
@@ -202,7 +202,7 @@ export async function notifyWallet(
     }
 
     if (promises.length === 0) {
-      logger.debug('No notification channels enabled for wallet:', walletAddress);
+      logger.debug('No notification channels enabled for wallet:', { walletAddress });
       return;
     }
 
@@ -216,7 +216,7 @@ export async function notifyWallet(
       total: promises.length,
     });
   } catch (error) {
-    logger.error('Error sending notifications:', error);
+    logger.error('Error sending notifications:', error as Error);
   }
 }
 
@@ -246,10 +246,10 @@ export async function notifyFollowersOfTrade(
     // Get wallet profile for better notification
     const card = await prisma.degenCard.findUnique({
       where: { walletAddress },
-      select: { profileName: true, degenScore: true },
+      select: { displayName: true, degenScore: true },
     });
 
-    const walletName = card?.profileName || `${walletAddress.slice(0, 8)}...`;
+    const walletName = card?.displayName || `${walletAddress.slice(0, 8)}...`;
     const action = tradeData.type === 'buy' ? 'compró' : 'vendió';
     const profitInfo = tradeData.profitLoss
       ? ` (${tradeData.profitLoss > 0 ? '+' : ''}${tradeData.profitLoss.toFixed(2)} SOL)`
@@ -273,7 +273,7 @@ export async function notifyFollowersOfTrade(
       followers: followers.length,
     });
   } catch (error) {
-    logger.error('Error notifying followers:', error);
+    logger.error('Error notifying followers:', error as Error);
   }
 }
 
@@ -306,10 +306,10 @@ export async function notifyNewFollower(
 ): Promise<void> {
   const followerCard = await prisma.degenCard.findUnique({
     where: { walletAddress: followerAddress },
-    select: { profileName: true, degenScore: true },
+    select: { displayName: true, degenScore: true },
   });
 
-  const followerName = followerCard?.profileName || `${followerAddress.slice(0, 8)}...`;
+  const followerName = followerCard?.displayName || `${followerAddress.slice(0, 8)}...`;
 
   await notifyWallet(walletAddress, {
     title: '👥 Nuevo Seguidor',

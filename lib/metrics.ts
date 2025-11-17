@@ -5,9 +5,5 @@
  * All components that import from this file will automatically use the new engine.
  */
 
-export {
-  calculateAdvancedMetrics,
-  WalletMetrics,
-  Position,
-  Trade
-} from './metricsEngine';
+export { calculateAdvancedMetrics } from './metricsEngine';
+export type { WalletMetrics, Position, Trade } from './metricsEngine';
