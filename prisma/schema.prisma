@@ -219,16 +219,24 @@ model Referral {
   id                String   @id @default(cuid())
   referrerAddress   String   // Quien refiere
   referredAddress   String   // Quien fue referido
+
+  // Payment tracking
   hasPaid           Boolean  @default(false) // Si el referido pagó
   paidAt            DateTime? // Cuándo pagó
-  rewardPaid        Boolean  @default(false) // Si se pagó reward (para futuro)
-  rewardAmount      Float?   // Cuánto se pagó (para futuro)
+  referredPremium   Boolean  @default(false) // ¿El referido compró premium?
+
+  // Reward tracking
+  rewardPaid        Boolean  @default(false) // Si se pagó reward
+  rewardAmount      Float?   // Cuánto se pagó
+  rewardTxSignature String?  // Signature del pago
 
   createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 
   @@index([referrerAddress])
   @@index([referredAddress])
   @@index([hasPaid])
+  @@index([referredPremium])
   @@unique([referrerAddress, referredAddress]) // No duplicar referidos
 }
 
@@ -635,26 +643,6 @@ model AchievementUnlock {
   @@unique([achievementId, walletAddress])
   @@index([walletAddress])
   @@index([unlockedAt])
-}
-
-// Referral System
-model Referral {
-  id               String   @id @default(cuid())
-  referrerWallet   String   // Quien refiere
-  referredWallet   String   // Quien fue referido
-
-  // Tracking
-  referredPremium  Boolean  @default(false)  // ¿El referido compró premium?
-  rewardPaid       Boolean  @default(false)   // ¿Se pagó reward al referrer?
-  rewardAmount     Float?   // Cantidad pagada
-  rewardTxSignature String? // Signature del pago
-
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
-
-  @@unique([referredWallet])  // Cada usuario solo puede ser referido una vez
-  @@index([referrerWallet])
-  @@index([referredPremium])
 }
 
 // ═══════════════════════════════════════════════════════════════
