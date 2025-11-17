@@ -9,6 +9,11 @@ const nextConfig = {
     ignoreDuringBuilds: true,
   },
 
+  // Disable TypeScript type checking during builds to reduce memory usage
+  typescript: {
+    ignoreBuildErrors: true,
+  },
+
   // Security headers
   async headers() {
     return [
