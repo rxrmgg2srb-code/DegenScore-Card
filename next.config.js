@@ -17,49 +17,50 @@ const nextConfig = {
         headers: [
           {
             key: 'X-DNS-Prefetch-Control',
-            value: 'on'
+            value: 'on',
           },
           {
             key: 'Strict-Transport-Security',
-            value: 'max-age=63072000; includeSubDomains; preload'
+            value: 'max-age=63072000; includeSubDomains; preload',
           },
           {
             key: 'X-Frame-Options',
-            value: 'SAMEORIGIN'
+            value: 'SAMEORIGIN',
           },
           {
             key: 'X-Content-Type-Options',
-            value: 'nosniff'
+            value: 'nosniff',
           },
           {
             key: 'X-XSS-Protection',
-            value: '1; mode=block'
+            value: '1; mode=block',
           },
           {
             key: 'Referrer-Policy',
-            value: 'strict-origin-when-cross-origin'
+            value: 'strict-origin-when-cross-origin',
           },
           {
             key: 'Permissions-Policy',
-            value: 'camera=(), microphone=(), geolocation=()'
+            value: 'camera=(), microphone=(), geolocation=()',
           },
-          {
-            key: 'Content-Security-Policy',
-            value: [
-              "default-src 'self'",
-              "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://cdn.jsdelivr.net https://js.sentry-cdn.com https://browser.sentry-cdn.com",
-              "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-              "font-src 'self' https://fonts.gstatic.com data:",
-              "img-src 'self' data: blob: https:",
-              "connect-src 'self' https://api.mainnet-beta.solana.com https://*.helius-rpc.com wss://*.helius-rpc.com https://twitter.com https://t.me https://*.ingest.sentry.io https://pusher.com wss://ws-*.pusher.com",
-              "frame-src 'self'",
-              "object-src 'none'",
-              "base-uri 'self'",
-              "form-action 'self'",
-              "frame-ancestors 'self'",
-              "upgrade-insecure-requests"
-            ].join('; ')
-          }
+          // CSP desactivado temporalmente para debugging en Render
+          // TODO: Re-habilitar después de confirmar que el deploy funciona
+          // {
+          //   key: 'Content-Security-Policy',
+          //   value: [
+          //     "default-src 'self'",
+          //     "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://cdn.jsdelivr.net https://js.sentry-cdn.com https://browser.sentry-cdn.com",
+          //     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+          //     "font-src 'self' https://fonts.gstatic.com data:",
+          //     "img-src 'self' data: blob: https:",
+          //     "connect-src 'self' https://api.mainnet-beta.solana.com https://*.helius-rpc.com wss://*.helius-rpc.com https://twitter.com https://t.me https://*.ingest.sentry.io https://pusher.com wss://ws-*.pusher.com",
+          //     "frame-src 'self'",
+          //     "object-src 'none'",
+          //     "base-uri 'self'",
+          //     "form-action 'self'"
+          //     // "upgrade-insecure-requests" REMOVED - causaba problemas en Render
+          //   ].join('; ')
+          // }
         ],
       },
     ];
