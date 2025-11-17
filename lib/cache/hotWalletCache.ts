@@ -11,7 +11,7 @@
  * - Cache hit/miss metrics
  */
 
-import { redis } from './redis';
+import redis from './redis';
 
 interface CachedWalletData {
   metrics: any;

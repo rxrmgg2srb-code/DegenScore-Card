@@ -1,6 +1,6 @@
 import TelegramBot from 'node-telegram-bot-api';
 import { logger } from './logger';
-import prisma from './prisma';
+import { prisma } from './prisma';
 
 // Bot commands and responses
 export const TELEGRAM_COMMANDS = {
