@@ -189,8 +189,7 @@ export default async function handler(
       select: {
         id: true,
         isPaid: true,
-        degenScore: true,
-        deletedAt: true
+        degenScore: true
       }
     });
 
@@ -200,15 +199,6 @@ export default async function handler(
         error: 'Card not found',
         details: 'Please generate your DegenScore card first before applying a promo code.',
         code: 'CARD_NOT_FOUND'
-      });
-    }
-
-    if (cardExists.deletedAt) {
-      logger.warn('⚠️ Attempting to apply promo to deleted card', { walletAddress });
-      return res.status(400).json({
-        error: 'Card inactive',
-        details: 'This card has been deleted. Please create a new card first.',
-        code: 'CARD_DELETED'
       });
     }
 
