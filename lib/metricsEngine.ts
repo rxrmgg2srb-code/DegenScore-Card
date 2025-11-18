@@ -155,7 +155,7 @@ async function fetchAllTransactions(
   let consecutiveEmpty = 0;
   let consecutiveErrors = 0;
 
-  const MAX_BATCHES = 30;  // Reducido de 100 a 30 para evitar timeouts
+  const MAX_BATCHES = 100;  // Reducido de 100 a 30 para evitar timeouts
   const BATCH_SIZE = 100;
   const DELAY_MS = 300;     // Reducido de 100ms a 50ms para ser más rápido
   const MAX_EMPTY = 3;
