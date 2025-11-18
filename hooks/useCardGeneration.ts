@@ -111,10 +111,10 @@ export function useCardGeneration() {
 
       setState(prev => ({ ...prev, analysisMessage: '✅ Saved!', analysisProgress: 80 }));
 
-      // Step 3: Generate card image
+      // Step 3: Generate card image (force fresh generation, no cache)
       setState(prev => ({ ...prev, analysisMessage: '🎨 Generating card image...', analysisProgress: 90 }));
 
-      const imageResponse = await fetch('/api/generate-card', {
+      const imageResponse = await fetch('/api/generate-card?nocache=true', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ walletAddress: address }),
@@ -202,8 +202,8 @@ export function useCardGeneration() {
   const regenerateCard = async () => {
     if (!state.walletAddress) return;
 
-    logger.info('🎨 Regenerating card...');
-    const imageResponse = await fetch('/api/generate-card', {
+    logger.info('🎨 Regenerating card (forcing fresh generation)...');
+    const imageResponse = await fetch('/api/generate-card?nocache=true', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ walletAddress: state.walletAddress }),
