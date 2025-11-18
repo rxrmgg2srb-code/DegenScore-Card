@@ -33,8 +33,10 @@ else
 
   # Try to run migrations with timeout, but don't fail the build if they error
   echo "⏱️  Running migrations (60s timeout)..."
+  set +e  # Temporarily disable exit on error
   MIGRATION_OUTPUT=$(timeout 60 npx prisma migrate deploy 2>&1)
   EXIT_CODE=$?
+  set -e  # Re-enable exit on error
 
   if [ $EXIT_CODE -eq 0 ]; then
     echo "✅ Migrations applied successfully"
@@ -64,7 +66,11 @@ else
     echo "⚠️  Database schema already exists (P3005)"
     echo "Syncing schema with db push..."
     echo ""
-    if timeout 60 npx prisma db push --skip-generate --accept-data-loss; then
+    set +e  # Temporarily disable exit on error for db push
+    timeout 60 npx prisma db push --skip-generate --accept-data-loss
+    PUSH_EXIT_CODE=$?
+    set -e  # Re-enable exit on error
+    if [ $PUSH_EXIT_CODE -eq 0 ]; then
       echo "✅ Schema synced successfully"
       echo ""
     else
