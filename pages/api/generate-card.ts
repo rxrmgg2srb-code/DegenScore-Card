@@ -379,7 +379,7 @@ async function generatePremiumCardImage(
       ctx.stroke();
       
       ctx.fillStyle = tier.borderColor;
-      ctx.font = 'bold 80px Arial';
+      ctx.font = 'bold 80px sans-serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText('👤', imgX, currentY);
