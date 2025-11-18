@@ -52,7 +52,23 @@ export default async function handler(
       throw error;
     }
 
-    logger.info('Analysis complete for wallet:', { walletAddress });
+    logger.info('✅ Analysis complete for wallet:', { walletAddress });
+
+    // Validar que tenemos datos reales
+    if (!metrics || metrics.degenScore === 0 && metrics.totalTrades === 0) {
+      logger.warn('⚠️ Wallet has no trading activity or analysis returned default values:', {
+        walletAddress,
+        degenScore: metrics?.degenScore,
+        totalTrades: metrics?.totalTrades
+      });
+    } else {
+      logger.info('📊 Metrics summary:', {
+        degenScore: metrics.degenScore,
+        totalTrades: metrics.totalTrades,
+        profitLoss: metrics.profitLoss,
+        winRate: metrics.winRate
+      });
+    }
 
     // 2. Generar badges usando la función encapsulada (MÁS LIMPIO)
     const badges = generateBadges(metrics); // <--- LÓGICA EXTRAÍDA AQUÍ
