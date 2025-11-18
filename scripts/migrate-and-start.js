@@ -25,17 +25,46 @@ console.log('========================================\n');
 // Step 1: Apply Prisma migrations (production)
 if (process.env.NODE_ENV === 'production') {
   console.log('📊 [1/3] Applying Prisma migrations...');
+
+  // Check if DATABASE_URL is set
+  if (!process.env.DATABASE_URL) {
+    console.error('❌ ERROR: DATABASE_URL is not set!');
+    console.error('Cannot apply migrations without database connection.');
+    console.error('Please set DATABASE_URL environment variable.\n');
+    process.exit(1);
+  }
+
   try {
     execSync('npx prisma migrate deploy', {
       stdio: 'inherit',
       env: process.env,
       cwd: process.cwd(),
     });
-    console.log('✅ Prisma migrations applied successfully\n');
-  } catch (error) {
-    console.error('⚠️  Warning: Prisma migration failed, but continuing...');
-    console.error('Error:', error.message);
+    console.log('✅ Prisma migrations applied successfully');
+
+    // Verify migration status
+    console.log('\n📋 Verifying migration status...');
+    execSync('npx prisma migrate status', {
+      stdio: 'inherit',
+      env: process.env,
+      cwd: process.cwd(),
+    });
     console.log('');
+  } catch (error) {
+    console.error('\n========================================');
+    console.error('⚠️  WARNING: Prisma migration encountered an issue!');
+    console.error('========================================');
+    console.error('Error:', error.message);
+    console.error('\nThis may cause runtime errors if schema is out of sync.');
+    console.error('Please check:');
+    console.error('1. DATABASE_URL is correct and accessible');
+    console.error('2. Database server is running');
+    console.error('3. Database user has proper permissions (CREATE, ALTER, INDEX)');
+    console.error('4. Migration files are not corrupted');
+    console.error('\nServer will attempt to start anyway...\n');
+
+    // Sleep for 3 seconds to ensure error is visible
+    execSync('sleep 3');
   }
 } else {
   console.log('⏭️  [1/3] Skipping migrations (not in production)\n');
