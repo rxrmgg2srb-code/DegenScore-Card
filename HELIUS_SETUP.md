@@ -121,6 +121,17 @@ The Helius API key is used throughout the application for:
 3. **Checking wallet balances** - `lib/services/helius.ts:getWalletBalance()`
 4. **RPC connections** - Solana Web3.js connections
 
+## API Limits and Constraints
+
+The Helius Enhanced Transactions API has the following limits:
+
+- **Maximum limit per request**: 100 transactions
+- **Minimum limit per request**: 1 transaction
+- **Default batch size**: The application uses 100 transactions per batch (maximum allowed)
+- **Total transactions fetched**: Up to 10,000 transactions (100 batches × 100 transactions)
+
+If you need to analyze wallets with more than 10,000 transactions, the application will use the most recent 10,000 transactions for analysis. This is sufficient for calculating accurate DegenScore metrics while staying within API rate limits.
+
 ## Production Deployment
 
 When deploying to Vercel/Render/other platforms:
