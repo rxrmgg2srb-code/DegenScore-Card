@@ -72,15 +72,12 @@ export default function UpgradeModal({ isOpen, onClose, onUpgrade, onSkip, onPro
       setPromoSuccess(data.message);
 
       // Notify parent component about promo code
+      // Parent will handle showing ShareModal and then ProfileFormModal
       if (onPromoCodeApplied) {
-        onPromoCodeApplied(promoCode.trim().toUpperCase());
+        setTimeout(() => {
+          onPromoCodeApplied(promoCode.trim().toUpperCase());
+        }, 1000);
       }
-
-      // Close modal and go to profile form
-      setTimeout(() => {
-        onClose();
-        onUpgrade(); // Opens ProfileFormModal with promo applied
-      }, 1000);
 
     } catch (error: any) {
       logger.error('Promo code error:', error);
