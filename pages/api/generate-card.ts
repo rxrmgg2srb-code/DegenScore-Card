@@ -741,7 +741,7 @@ async function generateBasicCardImage(
   currentY += 50;
 
   // FOOTER
-  const rating = getRating(safeMetrics.degenScore);
+  const rating = getRating(metrics.degenScore);
   ctx.fillStyle = '#ffffff';
   ctx.font = 'bold 26px Arial';
   ctx.textAlign = 'center';
