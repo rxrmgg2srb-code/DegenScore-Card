@@ -628,30 +628,6 @@ async function generateBasicCardImage(
   walletAddress: string,
   metrics: any
 ): Promise<Buffer> {
-  // Validar y proveer valores por defecto
-  const safeMetrics = {
-    degenScore: Number(metrics?.degenScore) || 0,
-    totalTrades: Number(metrics?.totalTrades) || 0,
-    totalVolume: Number(metrics?.totalVolume) || 0,
-    profitLoss: Number(metrics?.profitLoss) || 0,
-    winRate: Number(metrics?.winRate) || 0,
-    bestTrade: Number(metrics?.bestTrade) || 0,
-    worstTrade: Number(metrics?.worstTrade) || 0,
-    avgTradeSize: Number(metrics?.avgTradeSize) || 0,
-    tradingDays: Number(metrics?.tradingDays) || 0,
-  };
-
-  logger.info('📝 Generating BASIC card with data:', safeMetrics);
-
-  // VALIDACIÓN CRÍTICA: Verificar que tenemos datos reales
-  if (safeMetrics.degenScore === 0 && safeMetrics.totalTrades === 0) {
-    logger.error('❌ CRITICAL: BASIC card has NO DATA (all zeros)!', {
-      originalMetrics: metrics,
-      safeMetrics: safeMetrics,
-      walletAddress: walletAddress
-    });
-  }
-
   const width = 600;
   const height = 950;
   const canvas = createCanvas(width, height);
@@ -689,7 +665,7 @@ async function generateBasicCardImage(
   currentY += 60;
 
   // DEGEN SCORE
-  const scoreColor = getScoreColor(safeMetrics.degenScore);
+  const scoreColor = getScoreColor(metrics.degenScore);
   ctx.fillStyle = scoreColor;
   ctx.font = 'bold 110px Arial';
   ctx.textAlign = 'center';
@@ -697,7 +673,7 @@ async function generateBasicCardImage(
 
   ctx.shadowColor = scoreColor;
   ctx.shadowBlur = 30;
-  ctx.fillText(safeMetrics.degenScore.toString(), width / 2, currentY);
+  ctx.fillText(metrics.degenScore.toString(), width / 2, currentY);
   ctx.shadowColor = 'transparent';
   ctx.shadowBlur = 0;
 
@@ -705,16 +681,17 @@ async function generateBasicCardImage(
 
   ctx.fillStyle = '#aaaaaa';
   ctx.font = 'bold 20px Arial';
+  ctx.letterSpacing = '2px';
   ctx.fillText('DEGEN SCORE', width / 2, currentY);
   currentY += 40;
 
   // FRASE FOMO
-  const fomoPhrase = getFOMOPhrase(safeMetrics.degenScore);
-  
+  const fomoPhrase = getFOMOPhrase(metrics.degenScore);
+
   ctx.fillStyle = 'rgba(255, 215, 0, 0.15)';
   const textWidth = ctx.measureText(fomoPhrase).width;
   ctx.fillRect(width / 2 - textWidth / 2 - 20, currentY - 18, textWidth + 40, 36);
-  
+
   ctx.fillStyle = '#FFD700';
   ctx.font = 'bold 17px Arial';
   ctx.textAlign = 'center';
@@ -737,21 +714,21 @@ async function generateBasicCardImage(
 
   ctx.textAlign = 'left';
 
-  drawMetric(ctx, 'TOTAL TRADES', safeMetrics.totalTrades.toString(), leftX, currentY, true);
-  drawMetric(ctx, 'WIN RATE', `${safeMetrics.winRate.toFixed(1)}%`, rightX, currentY, false);
+  drawMetric(ctx, 'TOTAL TRADES', metrics.totalTrades.toString(), leftX, currentY, true);
+  drawMetric(ctx, 'WIN RATE', `${metrics.winRate.toFixed(1)}%`, rightX, currentY, false);
   currentY += rowHeight;
 
-  drawMetric(ctx, 'VOLUME', `${formatSOL(safeMetrics.totalVolume, 1)} SOL`, leftX, currentY, true);
-  const pnlColor = safeMetrics.profitLoss >= 0 ? '#00ff88' : '#ff4444';
-  drawMetric(ctx, 'P&L', `${formatSOL(safeMetrics.profitLoss, 2)} SOL`, rightX, currentY, false, pnlColor);
+  drawMetric(ctx, 'VOLUME', `${formatSOL(metrics.totalVolume, 1)} SOL`, leftX, currentY, true);
+  const pnlColor = metrics.profitLoss >= 0 ? '#00ff88' : '#ff4444';
+  drawMetric(ctx, 'P&L', `${formatSOL(metrics.profitLoss, 2)} SOL`, rightX, currentY, false, pnlColor);
   currentY += rowHeight;
 
-  drawMetric(ctx, 'BEST TRADE', `${formatSOL(safeMetrics.bestTrade, 2)} SOL`, leftX, currentY, true);
-  drawMetric(ctx, 'WORST TRADE', `${formatSOL(safeMetrics.worstTrade, 2)} SOL`, rightX, currentY, false);
+  drawMetric(ctx, 'BEST TRADE', `${formatSOL(metrics.bestTrade, 2)} SOL`, leftX, currentY, true);
+  drawMetric(ctx, 'WORST TRADE', `${formatSOL(metrics.worstTrade, 2)} SOL`, rightX, currentY, false);
   currentY += rowHeight;
 
-  drawMetric(ctx, 'AVG TRADE', `${formatSOL(safeMetrics.avgTradeSize, 2)} SOL`, leftX, currentY, true);
-  drawMetric(ctx, 'ACTIVE DAYS', safeMetrics.tradingDays.toString(), rightX, currentY, false);
+  drawMetric(ctx, 'AVG TRADE', `${formatSOL(metrics.avgTradeSize, 2)} SOL`, leftX, currentY, true);
+  drawMetric(ctx, 'ACTIVE DAYS', metrics.tradingDays.toString(), rightX, currentY, false);
   currentY += 60;
 
   // LINEA DIVISORIA
@@ -798,6 +775,7 @@ function drawMetric(
   ctx.textAlign = alignment;
   ctx.fillStyle = '#999999';
   ctx.font = 'bold 13px Arial';
+  ctx.letterSpacing = '1px';
   ctx.fillText(label, x, y);
 
   ctx.fillStyle = valueColor;
