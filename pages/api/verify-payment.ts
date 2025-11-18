@@ -6,7 +6,7 @@ import { retry } from '../../lib/retryLogic';
 import { logger } from '@/lib/logger';
 
 const TREASURY_WALLET = process.env.TREASURY_WALLET!;
-const MINT_PRICE_SOL = 1; // Premium tier price
+const MINT_PRICE_SOL = 0.2; // Premium tier price ($20 USD at ~$100/SOL)
 
 export default async function handler(
   req: NextApiRequest,
