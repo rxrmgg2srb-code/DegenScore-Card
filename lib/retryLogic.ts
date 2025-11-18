@@ -146,7 +146,7 @@ export class CircuitBreaker {
       this.onSuccess();
       return result;
     } catch (error) {
-      this.onFailure();
+      this.onFailure(error);
       throw error;
     }
   }
@@ -159,7 +159,22 @@ export class CircuitBreaker {
     }
   }
 
-  private onFailure() {
+  private onFailure(error: any) {
+    // Only count server errors (5xx) and network errors as failures
+    // Client errors (4xx) should not open the circuit breaker
+    const isServerError = error?.status >= 500 && error?.status < 600;
+    const isNetworkError = error?.code === 'ECONNRESET' ||
+                          error?.code === 'ETIMEDOUT' ||
+                          error?.code === 'ENOTFOUND' ||
+                          error?.message?.includes('timeout') ||
+                          error?.message?.includes('network');
+
+    if (!isServerError && !isNetworkError) {
+      // Don't count client errors (4xx) as circuit breaker failures
+      logger.warn(`[CircuitBreaker] Client error ignored (${error?.status || error?.message})`);
+      return;
+    }
+
     this.failures++;
     this.lastFailureTime = Date.now();
 
