@@ -1,9 +1,21 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { createCanvas, loadImage } from '@napi-rs/canvas';
+import { createCanvas, loadImage, GlobalFonts } from '@napi-rs/canvas';
 import { isValidSolanaAddress } from '../../lib/services/helius';
 import { prisma } from '../../lib/prisma';
 import { cacheGet, cacheSet, CacheKeys } from '../../lib/cache/redis';
 import { logger } from '@/lib/logger';
+import path from 'path';
+
+// 🔥 SOLUCIÓN DEFINITIVA: Registrar fonts para Vercel
+// Vercel NO tiene fonts del sistema, hay que registrarlas manualmente
+try {
+  const fontPath = path.join(process.cwd(), 'public', 'fonts');
+  GlobalFonts.registerFromPath(path.join(fontPath, 'NotoSans-Regular.ttf'), 'Noto Sans');
+  GlobalFonts.registerFromPath(path.join(fontPath, 'NotoSans-Bold.ttf'), 'Noto Sans Bold');
+  logger.info('✅ Fonts registered successfully for Vercel');
+} catch (error) {
+  logger.error('⚠️ Failed to register fonts (will use system fonts):', error instanceof Error ? error : undefined);
+}
 
 // Función auxiliar para formatear SOL
 function formatSOL(amount: number, decimals: number = 2): string {
@@ -616,18 +628,34 @@ async function generateBasicCardImage(
   walletAddress: string,
   metrics: any
 ): Promise<Buffer> {
-  logger.info('🎨 Generating BASIC card with metrics:', {
-    degenScore: metrics.degenScore,
-    totalTrades: metrics.totalTrades,
-    totalVolume: metrics.totalVolume,
-    profitLoss: metrics.profitLoss,
-    winRate: metrics.winRate
-  });
+  try {
+    logger.info('🎨 Generating BASIC card with metrics:', {
+      degenScore: metrics.degenScore,
+      totalTrades: metrics.totalTrades,
+      totalVolume: metrics.totalVolume,
+      profitLoss: metrics.profitLoss,
+      winRate: metrics.winRate
+    });
 
-  const width = 600;
-  const height = 950;
-  const canvas = createCanvas(width, height);
-  const ctx = canvas.getContext('2d');
+    const width = 600;
+    const height = 950;
+    const canvas = createCanvas(width, height);
+    const ctx = canvas.getContext('2d');
+
+    // Asegurar que tenemos valores numéricos válidos
+    const safeMetrics = {
+      degenScore: Number(metrics.degenScore) || 0,
+      totalTrades: Number(metrics.totalTrades) || 0,
+      totalVolume: Number(metrics.totalVolume) || 0,
+      profitLoss: Number(metrics.profitLoss) || 0,
+      winRate: Number(metrics.winRate) || 0,
+      bestTrade: Number(metrics.bestTrade) || 0,
+      worstTrade: Number(metrics.worstTrade) || 0,
+      avgTradeSize: Number(metrics.avgTradeSize) || 0,
+      tradingDays: Number(metrics.tradingDays) || 0
+    };
+
+    logger.info('📊 Safe metrics:', safeMetrics);
 
   // FONDO DEGRADADO BÁSICO
   const gradient = ctx.createLinearGradient(0, 0, 0, height);
@@ -644,9 +672,9 @@ async function generateBasicCardImage(
 
   let currentY = 90;
 
-  // TÍTULO - ✅ FIXED
+  // TÍTULO - ✅ FIXED con Noto Sans
   ctx.fillStyle = '#00d4ff';
-  ctx.font = 'bold 44px sans-serif';  // ← CAMBIADO de Arial a sans-serif
+  ctx.font = '700 44px "Noto Sans Bold", sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText('DEGEN CARD', width / 2, currentY);
@@ -660,36 +688,36 @@ async function generateBasicCardImage(
   ctx.fillText(shortAddress, width / 2, currentY);
   currentY += 60;
 
-  // DEGEN SCORE - ✅ FIXED
-  const scoreColor = getScoreColor(metrics.degenScore);
+  // DEGEN SCORE - ✅ FIXED con Noto Sans
+  const scoreColor = getScoreColor(safeMetrics.degenScore);
   ctx.fillStyle = scoreColor;
-  ctx.font = 'bold 110px sans-serif';  // ← CAMBIADO de Arial a sans-serif
+  ctx.font = '700 110px "Noto Sans Bold", sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
 
   ctx.shadowColor = scoreColor;
   ctx.shadowBlur = 30;
-  ctx.fillText(metrics.degenScore.toString(), width / 2, currentY);
+  ctx.fillText(String(safeMetrics.degenScore), width / 2, currentY);
   ctx.shadowColor = 'transparent';
   ctx.shadowBlur = 0;
 
   currentY += 75;
 
-  // LABEL DEGEN SCORE - ✅ FIXED
+  // LABEL DEGEN SCORE - ✅ FIXED con Noto Sans
   ctx.fillStyle = '#aaaaaa';
-  ctx.font = 'bold 20px sans-serif';  // ← CAMBIADO de Arial a sans-serif
+  ctx.font = '700 20px "Noto Sans Bold", sans-serif';
   ctx.fillText('DEGEN SCORE', width / 2, currentY);
   currentY += 40;
 
   // FRASE FOMO - ✅ FIXED
-  const fomoPhrase = getFOMOPhrase(metrics.degenScore);
+  const fomoPhrase = getFOMOPhrase(safeMetrics.degenScore);
 
   ctx.fillStyle = 'rgba(255, 215, 0, 0.15)';
   const textWidth = ctx.measureText(fomoPhrase).width;
   ctx.fillRect(width / 2 - textWidth / 2 - 20, currentY - 18, textWidth + 40, 36);
 
   ctx.fillStyle = '#FFD700';
-  ctx.font = 'bold 17px sans-serif';  // ← CAMBIADO de Arial a sans-serif
+  ctx.font = '700 17px "Noto Sans Bold", sans-serif';
   ctx.textAlign = 'center';
   ctx.fillText(fomoPhrase, width / 2, currentY);
   currentY += 50;
@@ -710,21 +738,21 @@ async function generateBasicCardImage(
 
   ctx.textAlign = 'left';
 
-  drawMetric(ctx, 'TOTAL TRADES', metrics.totalTrades.toString(), leftX, currentY, true);
-  drawMetric(ctx, 'WIN RATE', `${metrics.winRate.toFixed(1)}%`, rightX, currentY, false);
+  drawMetric(ctx, 'TOTAL TRADES', String(safeMetrics.totalTrades), leftX, currentY, true);
+  drawMetric(ctx, 'WIN RATE', `${safeMetrics.winRate.toFixed(1)}%`, rightX, currentY, false);
   currentY += rowHeight;
 
-  drawMetric(ctx, 'VOLUME', `${formatSOL(metrics.totalVolume, 1)} SOL`, leftX, currentY, true);
-  const pnlColor = metrics.profitLoss >= 0 ? '#00ff88' : '#ff4444';
-  drawMetric(ctx, 'P&L', `${formatSOL(metrics.profitLoss, 2)} SOL`, rightX, currentY, false, pnlColor);
+  drawMetric(ctx, 'VOLUME', `${formatSOL(safeMetrics.totalVolume, 1)} SOL`, leftX, currentY, true);
+  const pnlColor = safeMetrics.profitLoss >= 0 ? '#00ff88' : '#ff4444';
+  drawMetric(ctx, 'P&L', `${formatSOL(safeMetrics.profitLoss, 2)} SOL`, rightX, currentY, false, pnlColor);
   currentY += rowHeight;
 
-  drawMetric(ctx, 'BEST TRADE', `${formatSOL(metrics.bestTrade, 2)} SOL`, leftX, currentY, true);
-  drawMetric(ctx, 'WORST TRADE', `${formatSOL(metrics.worstTrade, 2)} SOL`, rightX, currentY, false);
+  drawMetric(ctx, 'BEST TRADE', `${formatSOL(safeMetrics.bestTrade, 2)} SOL`, leftX, currentY, true);
+  drawMetric(ctx, 'WORST TRADE', `${formatSOL(safeMetrics.worstTrade, 2)} SOL`, rightX, currentY, false);
   currentY += rowHeight;
 
-  drawMetric(ctx, 'AVG TRADE', `${formatSOL(metrics.avgTradeSize, 2)} SOL`, leftX, currentY, true);
-  drawMetric(ctx, 'ACTIVE DAYS', metrics.tradingDays.toString(), rightX, currentY, false);
+  drawMetric(ctx, 'AVG TRADE', `${formatSOL(safeMetrics.avgTradeSize, 2)} SOL`, leftX, currentY, true);
+  drawMetric(ctx, 'ACTIVE DAYS', String(safeMetrics.tradingDays), rightX, currentY, false);
   currentY += 60;
 
   // LINEA DIVISORIA
@@ -736,25 +764,37 @@ async function generateBasicCardImage(
   ctx.stroke();
   currentY += 50;
 
-  // FOOTER - ✅ FIXED
-  const rating = getRating(metrics.degenScore);
+  // FOOTER - ✅ FIXED con Noto Sans
+  const rating = getRating(safeMetrics.degenScore);
   ctx.fillStyle = '#ffffff';
-  ctx.font = 'bold 26px sans-serif';  // ← CAMBIADO de Arial a sans-serif
+  ctx.font = '700 26px "Noto Sans Bold", sans-serif';
   ctx.textAlign = 'center';
   ctx.fillText(rating, width / 2, currentY);
   currentY += 50;
 
   ctx.fillStyle = '#777777';
-  ctx.font = '15px sans-serif';  // ← CAMBIADO de Arial a sans-serif
+  ctx.font = '400 15px "Noto Sans", sans-serif';
   ctx.fillText('Powered by Helius × Solana', width / 2, currentY);
 
   // Convert to buffer and clear canvas reference to help GC
   const buffer = canvas.toBuffer('image/png');
 
+  logger.info('✅ BASIC card buffer generated:', {
+    bufferSize: buffer.length,
+    walletAddress: walletAddress.slice(0, 8)
+  });
+
   // Clear canvas context to free memory
   ctx.clearRect(0, 0, width, height);
 
   return buffer;
+  } catch (error) {
+    logger.error('❌ Error in generateBasicCardImage:', error instanceof Error ? error : undefined, {
+      error: String(error),
+      stack: error instanceof Error ? error.stack : undefined
+    });
+    throw error;
+  }
 }
 
 // ✅ FIXED: drawMetric usando sans-serif
@@ -771,11 +811,11 @@ function drawMetric(
 
   ctx.textAlign = alignment;
   ctx.fillStyle = '#999999';
-  ctx.font = 'bold 13px sans-serif';  // ← CAMBIADO de Arial a sans-serif
+  ctx.font = '700 13px "Noto Sans Bold", sans-serif';
   ctx.fillText(label, x, y);
 
   ctx.fillStyle = valueColor;
-  ctx.font = 'bold 26px sans-serif';  // ← CAMBIADO de Arial a sans-serif
+  ctx.font = '700 26px "Noto Sans Bold", sans-serif';
   ctx.fillText(value, x, y + 32);
 }
 
