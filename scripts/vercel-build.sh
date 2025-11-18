@@ -18,20 +18,45 @@ if [ -z "$DATABASE_URL" ]; then
   echo "Skipping migrations - this may cause runtime errors!"
   echo ""
 else
-  # Try to run migrations, but don't fail the build if they error
-  if npx prisma migrate deploy; then
+  echo "🔍 Checking DATABASE_URL configuration..."
+  if [[ "$DATABASE_URL" == *"pgbouncer=true"* ]]; then
+    echo "✅ PgBouncer parameter detected"
+  else
+    echo "⚠️  WARNING: DATABASE_URL missing pgbouncer=true parameter"
+    echo "For Supabase, use: ?pgbouncer=true&connection_limit=1"
+  fi
+  echo ""
+
+  # Try to run migrations with timeout, but don't fail the build if they error
+  echo "⏱️  Running migrations (60s timeout)..."
+  if timeout 60 npx prisma migrate deploy; then
     echo "✅ Migrations applied successfully"
     echo ""
 
     # Verify migration status
     echo "📋 Verifying migration status..."
-    npx prisma migrate status || true
+    timeout 30 npx prisma migrate status || true
     echo ""
   else
-    echo "⚠️  WARNING: Migration failed, but continuing build..."
-    echo "This may cause runtime errors if database schema is out of sync."
-    echo "Please check DATABASE_URL and database permissions."
-    echo ""
+    EXIT_CODE=$?
+    if [ $EXIT_CODE -eq 124 ]; then
+      echo "❌ ERROR: Migration timed out after 60 seconds"
+      echo ""
+      echo "This usually means:"
+      echo "1. DATABASE_URL is missing pgbouncer=true parameter"
+      echo "2. Database credentials are incorrect"
+      echo "3. Database is unreachable from Vercel"
+      echo ""
+      echo "Please check your Vercel environment variables:"
+      echo "👉 https://vercel.com/[your-team]/[your-project]/settings/environment-variables"
+      echo ""
+      exit 1
+    else
+      echo "⚠️  WARNING: Migration failed (exit code: $EXIT_CODE), but continuing build..."
+      echo "This may cause runtime errors if database schema is out of sync."
+      echo "Please check DATABASE_URL and database permissions."
+      echo ""
+    fi
   fi
 fi
 
