@@ -5,6 +5,13 @@ import { logger } from '@/lib/logger';
 const HELIUS_API_KEY = process.env.HELIUS_API_KEY || '';
 const HELIUS_RPC_URL = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_API_KEY}`;
 
+// Validate Helius API key on module load
+if (!HELIUS_API_KEY) {
+  logger.error('HELIUS_API_KEY is not configured', undefined, {
+    message: 'Please set HELIUS_API_KEY in your .env.local file. Get a free API key from https://www.helius.dev',
+  });
+}
+
 // Circuit breaker for Helius API (prevents cascading failures in high concurrency)
 const heliusCircuitBreaker = new CircuitBreaker(5, 60000);
 
@@ -73,6 +80,14 @@ export async function getWalletTransactions(
   limit: number = 100,
   before?: string
 ): Promise<ParsedTransaction[]> {
+  // Early validation for missing API key
+  if (!HELIUS_API_KEY) {
+    const error: any = new Error('HELIUS_API_KEY is not configured. Please set it in your .env.local file. Get a free API key from https://www.helius.dev');
+    error.status = 500;
+    error.code = 'MISSING_API_KEY';
+    throw error;
+  }
+
   return heliusCircuitBreaker.execute(() =>
     retry(async () => {
       let url = `https://api.helius.xyz/v0/addresses/${walletAddress}/transactions?api-key=${HELIUS_API_KEY}&limit=${limit}`;
@@ -93,11 +108,23 @@ export async function getWalletTransactions(
         if (!response.ok) {
           // For 400 errors, try to get more details from response body
           let errorDetails = '';
+          let errorBody = '';
           try {
-            const errorBody = await response.text();
+            errorBody = await response.text();
             errorDetails = errorBody ? ` - ${errorBody.substring(0, 200)}` : '';
           } catch (e) {
             // Ignore if we can't read the error body
+          }
+
+          // Check for invalid API key error (code -32401)
+          if (errorBody && errorBody.includes('-32401')) {
+            const error: any = new Error('Invalid Helius API key. Please check your HELIUS_API_KEY in .env.local and ensure it\'s a valid key from https://www.helius.dev');
+            error.status = 401;
+            error.code = 'INVALID_API_KEY';
+            logger.error('[Helius] Invalid API key detected', undefined, {
+              message: 'The HELIUS_API_KEY in your environment is invalid. Get a valid key from https://www.helius.dev',
+            });
+            throw error;
           }
 
           const error: any = new Error(`Helius API error: ${response.status} ${response.statusText}${errorDetails}`);
@@ -150,6 +177,12 @@ export async function getWalletTransactions(
  */
 export async function getTokenMetadata(mintAddresses: string[]): Promise<Map<string, any>> {
   if (mintAddresses.length === 0) return new Map();
+
+  // Early validation for missing API key
+  if (!HELIUS_API_KEY) {
+    logger.error('[Helius] Cannot fetch token metadata - API key not configured');
+    return new Map(); // Return empty map as fallback
+  }
 
   return heliusCircuitBreaker.execute(() =>
     retry(async () => {
@@ -223,6 +256,12 @@ export async function getTokenMetadata(mintAddresses: string[]): Promise<Map<str
  * Obtiene el balance actual de SOL de una wallet
  */
 export async function getWalletBalance(walletAddress: string): Promise<number> {
+  // Early validation for missing API key
+  if (!HELIUS_API_KEY) {
+    logger.error('[Helius] Cannot fetch wallet balance - API key not configured');
+    return 0; // Return 0 as fallback
+  }
+
   return heliusCircuitBreaker.execute(() =>
     retry(async () => {
       const connection = new Connection(HELIUS_RPC_URL, 'confirmed');
