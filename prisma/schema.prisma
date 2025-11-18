@@ -64,6 +64,7 @@ model DegenCard {
   // Timestamps
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
+  deletedAt       DateTime? // Soft delete support
 
   // Sistema de Likes
   likes           Int       @default(0)
@@ -89,6 +90,11 @@ model DegenCard {
   @@index([isPaid, degenScore(sort: Desc), createdAt(sort: Desc)])
   @@index([createdAt(sort: Desc)])
   @@index([lastSeen(sort: Desc)])
+
+  // Índices para soft delete
+  @@index([deletedAt])
+  @@index([isPaid, deletedAt, degenScore(sort: Desc)])
+  @@index([deletedAt, isPaid, degenScore(sort: Desc)])
 }
 
 model Badge {

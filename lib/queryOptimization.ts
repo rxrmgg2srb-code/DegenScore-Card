@@ -40,7 +40,7 @@ export async function getOptimizedLeaderboard(
   // Use parallel queries for better performance
   const [data, total] = await Promise.all([
     prisma.degenCard.findMany({
-      where: { isPaid: true },
+      where: { isPaid: true, deletedAt: null },
       select: {
         walletAddress: true,
         degenScore: true,
@@ -55,7 +55,7 @@ export async function getOptimizedLeaderboard(
       skip,
       take: pageSize,
     }),
-    prisma.degenCard.count({ where: { isPaid: true } }),
+    prisma.degenCard.count({ where: { isPaid: true, deletedAt: null } }),
   ]);
 
   const totalPages = Math.ceil(total / pageSize);
@@ -109,6 +109,7 @@ export async function searchWallets(
         { displayName: { contains: query, mode: 'insensitive' } },
       ],
       isPaid: true,
+      deletedAt: null,
     },
     select: {
       walletAddress: true,
@@ -133,6 +134,7 @@ export async function getTrendingWallets(limit: number = 10) {
   const trending = await prisma.degenCard.findMany({
     where: {
       isPaid: true,
+      deletedAt: null,
       lastSeen: { gte: oneDayAgo },
     },
     select: {
