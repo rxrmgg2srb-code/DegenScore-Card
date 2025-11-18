@@ -132,8 +132,18 @@ export default async function handler(
       totalVolume: card.totalVolume,
       profitLoss: card.profitLoss,
       winRate: card.winRate,
+      bestTrade: card.bestTrade,
+      worstTrade: card.worstTrade,
+      avgTradeSize: card.avgTradeSize,
+      tradingDays: card.tradingDays,
       isPaid: card.isPaid,
     });
+
+    // Validar que tenemos datos reales
+    if (card.degenScore === 0 && card.totalTrades === 0) {
+      logger.warn('⚠️ Card has no data (all zeros). This means the wallet has no trading activity.');
+      logger.warn('⚠️ The basic card will display zeros. User should try a different wallet with trading history.');
+    }
 
     // 🚀 OPTIMIZACIÓN: Verificar cache de imagen
     const cacheKey = CacheKeys.cardImage(walletAddress);

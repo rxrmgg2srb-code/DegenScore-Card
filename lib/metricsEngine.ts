@@ -99,17 +99,25 @@ export async function calculateAdvancedMetrics(
     const allTransactions = await fetchAllTransactions(walletAddress, onProgress);
 
     if (!allTransactions || allTransactions.length === 0) {
-      logger.info('❌ No transactions found');
+      logger.warn('❌ No transactions found for wallet:', { walletAddress });
+      logger.warn('⚠️ Returning default metrics (all zeros)');
       return getDefaultMetrics();
     }
 
-    logger.info(`📊 Total transactions: ${allTransactions.length}`);
+    logger.info(`📊 Total transactions fetched: ${allTransactions.length}`);
 
     if (onProgress) onProgress(75, '💱 Analyzing trades...');
 
     // Extract all trades
     const trades = extractTrades(allTransactions, walletAddress);
-    logger.info(`✅ Extracted ${trades.length} valid trades`);
+    logger.info(`✅ Extracted ${trades.length} valid trades from ${allTransactions.length} transactions`);
+
+    if (trades.length === 0) {
+      logger.warn('⚠️ No valid SWAP trades found in transactions');
+      logger.warn('⚠️ This wallet may not have any trading activity, only transfers');
+      logger.warn('⚠️ Returning default metrics (all zeros)');
+      return getDefaultMetrics();
+    }
 
     if (onProgress) onProgress(85, '📈 Building positions...');
 
