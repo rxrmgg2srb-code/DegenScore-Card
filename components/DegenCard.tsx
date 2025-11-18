@@ -22,6 +22,7 @@ export default function DegenCard() {
   const [hasPaid, setHasPaid] = useState(false);
   const [hasPromoCode, setHasPromoCode] = useState(false);
   const [promoCodeApplied, setPromoCodeApplied] = useState<string | null>(null);
+  const [isFreeDownload, setIsFreeDownload] = useState(false); // Track if user is downloading free version
 
   const [analyzing, setAnalyzing] = useState(false);
   const [analysisProgress, setAnalysisProgress] = useState(0);
@@ -168,33 +169,56 @@ export default function DegenCard() {
     setShowCelebration(true);
     setCurrentAchievement(achievements.premiumUnlock);
 
-    // Show share modal FIRST (viralidad forzada!)
+    // Go directly to profile modal (paid users don't need to share on Twitter)
     setTimeout(() => {
-      setShowShareModal(true);
+      setShowProfileModal(true);
     }, 1500);
   };
 
   const handleShared = () => {
     setShowShareModal(false);
 
-    // After sharing, show profile modal
-    setTimeout(() => {
-      setShowProfileModal(true);
-    }, 500);
+    // If free download, just download the basic card
+    if (isFreeDownload) {
+      downloadBasicCard();
+      setIsFreeDownload(false);
+      return;
+    }
+
+    // If promo code user, continue to profile modal
+    if (hasPromoCode) {
+      setTimeout(() => {
+        setShowProfileModal(true);
+      }, 500);
+    }
   };
 
   const handleSkipShare = () => {
     setShowShareModal(false);
 
-    // If they skip sharing, still let them continue
-    setTimeout(() => {
-      setShowProfileModal(true);
-    }, 500);
+    // If free download, allow download even if they skip
+    if (isFreeDownload) {
+      downloadBasicCard();
+      setIsFreeDownload(false);
+      return;
+    }
+
+    // If promo code user, still let them continue
+    if (hasPromoCode) {
+      setTimeout(() => {
+        setShowProfileModal(true);
+      }, 500);
+    }
   };
 
   const handleSkip = () => {
     setShowUpgradeModal(false);
-    downloadBasicCard();
+    setIsFreeDownload(true); // Mark as free download
+
+    // Show ShareModal for free downloads (they must share on Twitter)
+    setTimeout(() => {
+      setShowShareModal(true);
+    }, 500);
   };
 
   const downloadBasicCard = () => {
@@ -451,6 +475,12 @@ export default function DegenCard() {
         onPromoCodeApplied={(code) => {
           setHasPromoCode(true);
           setPromoCodeApplied(code);
+          setShowUpgradeModal(false);
+
+          // Show ShareModal for promo code users (they must share on Twitter)
+          setTimeout(() => {
+            setShowShareModal(true);
+          }, 500);
         }}
       />
 
