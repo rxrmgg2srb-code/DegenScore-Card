@@ -1,12 +1,10 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { IncomingForm } from 'formidable';
 import fs from 'fs';
-import crypto from 'crypto';
 import { isValidSolanaAddress, isValidImageType } from '../../lib/validation';
 import { rateLimit } from '../../lib/rateLimitRedis';
 import { logger } from '../../lib/logger';
 import { UPLOAD_CONFIG } from '../../lib/config';
-import { uploadImage, isStorageEnabled } from '../../lib/storage/r2';
 
 export const config = {
   api: {
@@ -73,44 +71,24 @@ export default async function handler(
       return res.status(400).json({ error: 'File too large' });
     }
 
-    // Check if R2 storage is configured
-    if (!isStorageEnabled) {
-      fs.unlinkSync(file.filepath);
-      logger.error('R2 storage not configured');
-      return res.status(500).json({
-        error: 'Cloud storage not configured. Please contact administrator.'
-      });
-    }
-
-    // Generate cryptographically secure random filename
-    const ext = file.originalFilename?.split('.').pop() || 'jpg';
-    const randomName = crypto.randomBytes(16).toString('hex');
-    const filename = `${randomName}.${ext}`;
-    const key = `profiles/${filename}`;
-
-    // Upload to R2
-    const imageUrl = await uploadImage(key, fileBuffer, {
-      contentType: file.mimetype || 'image/jpeg',
-      cacheControl: 'public, max-age=31536000, immutable',
-      metadata: {
-        walletAddress: walletAddress,
-        uploadedAt: new Date().toISOString(),
-      },
-    });
+    // ✅ R2 DESHABILITADO - Guardar imagen como base64 data URI
+    // Esto permite almacenar la imagen directamente en la base de datos de forma segura
+    const base64Image = fileBuffer.toString('base64');
+    const mimeType = file.mimetype || 'image/jpeg';
+    const dataUri = `data:${mimeType};base64,${base64Image}`;
 
     // Delete temporary file
     fs.unlinkSync(file.filepath);
 
-    if (!imageUrl) {
-      logger.error('Failed to upload image to R2 for wallet:', { walletAddress });
-      return res.status(500).json({ error: 'Failed to upload image to storage' });
-    }
-
-    logger.info('Image uploaded successfully to R2 for wallet:', { walletAddress, imageUrl });
+    logger.info('✅ Image converted to base64 for wallet:', {
+      walletAddress,
+      size: fileBuffer.length,
+      mimeType
+    });
 
     res.status(200).json({
       success: true,
-      imageUrl,
+      imageUrl: dataUri,
     });
   } catch (error: any) {
     logger.error('Error uploading image:', error instanceof Error ? error : undefined, {

@@ -55,51 +55,16 @@ const worker = new Worker<CardGenerationJobData>(
 
       await job.updateProgress(70);
 
-      // Upload to R2 if enabled
-      let imageUrl: string | null = null;
-
-      if (process.env.R2_BUCKET_NAME && process.env.R2_PUBLIC_URL) {
-        try {
-          const { S3Client, PutObjectCommand } = await import('@aws-sdk/client-s3');
-
-          const s3Client = new S3Client({
-            region: 'auto',
-            endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-            credentials: {
-              accessKeyId: process.env.R2_ACCESS_KEY_ID!,
-              secretAccessKey: process.env.R2_SECRET_ACCESS_KEY!,
-            },
-          });
-
-          const key = `cards/${walletAddress}.png`;
-
-          await s3Client.send(
-            new PutObjectCommand({
-              Bucket: process.env.R2_BUCKET_NAME,
-              Key: key,
-              Body: imageBuffer,
-              ContentType: 'image/png',
-            })
-          );
-
-          imageUrl = `${process.env.R2_PUBLIC_URL}/${key}`;
-          logger.info('Uploaded to R2:', { walletAddress, url: imageUrl });
-        } catch (error) {
-          logger.error('R2 upload failed, falling back to cache', error instanceof Error ? error : undefined, {
-            error: String(error),
-          });
-        }
-      }
+      // ✅ R2 DESHABILITADO - Solo cachear la imagen
+      logger.info('✅ R2 disabled - caching image in memory');
+      const cacheKey = `card:${walletAddress}`;
+      const base64Buffer = imageBuffer.toString('base64');
+      await cacheSet(cacheKey, base64Buffer, { ttl: 86400 }); // 24 hours
+      logger.info('✅ Card image cached:', { walletAddress });
 
       await job.updateProgress(90);
 
-      // Cache the image buffer if R2 upload failed
-      if (!imageUrl) {
-        const cacheKey = `card:${walletAddress}`;
-        const base64Buffer = imageBuffer.toString('base64');
-        await cacheSet(cacheKey, base64Buffer, { ttl: 86400 }); // 24 hours
-        logger.info('Cached card image:', { walletAddress });
-      }
+      const imageUrl: string | null = null;
 
       await job.updateProgress(100);
 
