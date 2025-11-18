@@ -3,11 +3,6 @@ import { createCanvas, loadImage } from '@napi-rs/canvas';
 import { isValidSolanaAddress } from '../../lib/services/helius';
 import { prisma } from '../../lib/prisma';
 import { cacheGet, cacheSet, CacheKeys } from '../../lib/cache/redis';
-import {
-  uploadImage,
-  generateCardImageKey,
-  isStorageEnabled,
-} from '../../lib/storage/r2';
 import { logger } from '@/lib/logger';
 
 // Función auxiliar para formatear SOL
@@ -191,26 +186,10 @@ export default async function handler(
       isPaid: card.isPaid,
     });
 
-    // 🚀 OPTIMIZACIÓN: Subir a R2 si está habilitado
-    if (isStorageEnabled) {
-      const imageKey = generateCardImageKey(walletAddress);
-      const publicUrl = await uploadImage(imageKey, imageBuffer, {
-        contentType: 'image/png',
-        cacheControl: 'public, max-age=31536000, immutable', // 1 año
-      });
-
-      if (publicUrl) {
-        logger.info('☁️ Image uploaded to R2:', { publicUrl });
-        // Cachear la URL por 7 días
-        await cacheSet(cacheKey, publicUrl, { ttl: 604800 });
-        // Redirigir a R2
-        return res.redirect(302, publicUrl);
-      }
-    }
-
-    // Si R2 no está habilitado o falló, cachear el buffer
+    // ✅ R2 DESHABILITADO - Cachear el buffer directamente
+    logger.info('✅ Serving image from cache (R2 disabled)');
     const base64Buffer = imageBuffer.toString('base64');
-    await cacheSet(cacheKey, base64Buffer, { ttl: 86400 }); // 24 horas (optimización de performance)
+    await cacheSet(cacheKey, base64Buffer, { ttl: 86400 }); // 24 horas
 
     res.setHeader('Content-Type', 'image/png');
     res.setHeader('Cache-Control', 'public, max-age=86400'); // 24 horas
