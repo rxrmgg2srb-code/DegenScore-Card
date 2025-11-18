@@ -4,6 +4,22 @@ declare global {
   var prisma: PrismaClient | undefined;
 }
 
+// Build DATABASE_URL with pgbouncer flag if using connection pooler
+// This prevents "prepared statement already exists" errors
+const getDatabaseUrl = () => {
+  const url = process.env.DATABASE_URL;
+  if (!url) return undefined;
+
+  // If URL already has pgbouncer=true, return as is
+  if (url.includes('pgbouncer=true')) {
+    return url;
+  }
+
+  // Add pgbouncer=true to prevent prepared statement collisions
+  const separator = url.includes('?') ? '&' : '?';
+  return `${url}${separator}pgbouncer=true&connection_limit=1`;
+};
+
 // Optimized Prisma Client for high concurrency (100+ simultaneous users)
 // Always use singleton pattern to prevent prepared statement collisions in serverless
 export const prisma = global.prisma || new PrismaClient({
@@ -12,7 +28,7 @@ export const prisma = global.prisma || new PrismaClient({
   // Connection pool configuration for high load and serverless compatibility
   datasources: {
     db: {
-      url: process.env.DATABASE_URL,
+      url: getDatabaseUrl(),
     },
   },
 });
