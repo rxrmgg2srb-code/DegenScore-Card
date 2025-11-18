@@ -402,7 +402,7 @@ async function generatePremiumCardImage(
     ctx.stroke();
     
     ctx.fillStyle = tier.borderColor;
-    ctx.font = 'bold 80px Arial';
+    ctx.font = 'bold 80px sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText('👤', imgX, currentY);
@@ -413,7 +413,7 @@ async function generatePremiumCardImage(
   // NOMBRE
   if (metrics.displayName) {
     ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 32px Arial';
+    ctx.font = 'bold 32px sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(metrics.displayName, width / 2, currentY);
@@ -430,7 +430,7 @@ async function generatePremiumCardImage(
 
   // REDES SOCIALES
   if (metrics.twitter || metrics.telegram) {
-    ctx.font = '14px Arial';
+    ctx.font = '14px sans-serif';
     ctx.fillStyle = tier.borderColor;
     
     const socials = [];
@@ -455,7 +455,7 @@ async function generatePremiumCardImage(
   scoreGradient.addColorStop(1, tier.colors[2] as string);
 
   ctx.fillStyle = scoreGradient;
-  ctx.font = 'bold 130px Arial';
+  ctx.font = 'bold 130px sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
 
@@ -473,7 +473,7 @@ async function generatePremiumCardImage(
   currentY += 80;
 
   ctx.fillStyle = '#d1d5db';
-  ctx.font = 'bold 18px Arial';
+  ctx.font = 'bold 18px sans-serif';
   ctx.letterSpacing = '4px';
   ctx.fillText('DEGEN SCORE', width / 2, currentY);
   currentY += 40;
@@ -487,7 +487,7 @@ async function generatePremiumCardImage(
   fomoBgGradient.addColorStop(1, 'rgba(234, 179, 8, 0.15)');
   ctx.fillStyle = fomoBgGradient;
 
-  ctx.font = 'bold 16px Arial';
+  ctx.font = 'bold 16px sans-serif';
   const fomoTextWidth = ctx.measureText(fomoPhrase).width;
   const fomoBoxWidth = fomoTextWidth + 50;
   const fomoBoxHeight = 48;
@@ -555,7 +555,7 @@ async function generatePremiumCardImage(
   ctx.shadowBlur = 0;
 
   ctx.fillStyle = '#ffffff';
-  ctx.font = 'bold 24px Arial';
+  ctx.font = 'bold 24px sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText(`${tier.emoji} ${tier.name}`, width / 2, currentY);
@@ -598,7 +598,7 @@ async function generatePremiumCardImage(
 
   // FOOTER
   ctx.fillStyle = '#6b7280';
-  ctx.font = '13px Arial';
+  ctx.font = '13px sans-serif';
   ctx.textAlign = 'center';
   ctx.fillText('Powered by Helius × Solana', width / 2, currentY);
 
@@ -625,12 +625,12 @@ function drawPremiumMetric(
 
   ctx.textAlign = alignment;
   ctx.fillStyle = '#9ca3af';
-  ctx.font = 'bold 13px Arial';
+  ctx.font = 'bold 13px sans-serif';
   ctx.letterSpacing = '2px';
   ctx.fillText(label, x, y);
 
   ctx.fillStyle = valueColor;
-  ctx.font = 'bold 30px Arial';
+  ctx.font = 'bold 30px sans-serif';
   ctx.fillText(value, x, y + 38);
 }
 
