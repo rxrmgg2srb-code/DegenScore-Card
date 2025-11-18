@@ -64,7 +64,6 @@ model DegenCard {
   // Timestamps
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
-  deletedAt       DateTime? // Soft delete - NULL = activo, NOT NULL = eliminado
 
   // Sistema de Likes
   likes           Int       @default(0)
@@ -79,7 +78,6 @@ model DegenCard {
   @@index([isPaid])
   @@index([likes])
   @@index([mintedAt])
-  @@index([deletedAt])
 
   // Índices compuestos para leaderboard (ordenamiento)
   @@index([degenScore(sort: Desc), mintedAt(sort: Desc)])
@@ -89,8 +87,6 @@ model DegenCard {
 
   // PERFORMANCE: Índices adicionales para queries comunes
   @@index([isPaid, degenScore(sort: Desc), createdAt(sort: Desc)])
-  @@index([isPaid, deletedAt, degenScore(sort: Desc)]) // Para leaderboard con filtro de eliminados
-  @@index([deletedAt, isPaid, degenScore(sort: Desc)]) // Orden alternativo
   @@index([createdAt(sort: Desc)])
   @@index([lastSeen(sort: Desc)])
 }
