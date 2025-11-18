@@ -22,7 +22,16 @@ export const API_CONFIG = {
 export const UPLOAD_CONFIG = {
   MAX_FILE_SIZE: 2 * 1024 * 1024, // 2MB
   ALLOWED_MIME_TYPES: ['image/jpeg', 'image/png', 'image/gif', 'image/webp'],
-  UPLOAD_DIR: 'public/uploads/profiles',
+  UPLOAD_DIR: 'public/uploads/profiles', // Deprecated: Use R2 cloud storage instead
+} as const;
+
+// R2 Storage configuration (Cloudflare R2 - S3 compatible)
+export const R2_CONFIG = {
+  ACCOUNT_ID: process.env.R2_ACCOUNT_ID || '',
+  ACCESS_KEY_ID: process.env.R2_ACCESS_KEY_ID || '',
+  SECRET_ACCESS_KEY: process.env.R2_SECRET_ACCESS_KEY || '',
+  BUCKET_NAME: process.env.R2_BUCKET_NAME || 'degenscore-images',
+  PUBLIC_URL: process.env.R2_PUBLIC_URL || '',
 } as const;
 
 // Rate limiting configuration - Optimized for 100+ concurrent users
