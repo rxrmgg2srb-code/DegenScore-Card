@@ -126,7 +126,7 @@ export default async function handler(
 
     logger.info(`✅ Found card in database with score: ${card.degenScore}`);
     logger.info(`💎 Premium status: ${card.isPaid ? 'PREMIUM' : 'BASIC'}`);
-    logger.info(`📊 Card data:`, {
+    logger.info(`📊 Card data from DB:`, {
       degenScore: card.degenScore,
       totalTrades: card.totalTrades,
       totalVolume: card.totalVolume,
@@ -137,6 +137,8 @@ export default async function handler(
       avgTradeSize: card.avgTradeSize,
       tradingDays: card.tradingDays,
       isPaid: card.isPaid,
+      cardId: card.id,
+      updatedAt: card.updatedAt,
     });
 
     // Validar que tenemos datos reales
@@ -640,6 +642,15 @@ async function generateBasicCardImage(
   };
 
   logger.info('📝 Generating BASIC card with data:', safeMetrics);
+
+  // VALIDACIÓN CRÍTICA: Verificar que tenemos datos reales
+  if (safeMetrics.degenScore === 0 && safeMetrics.totalTrades === 0) {
+    logger.error('❌ CRITICAL: BASIC card has NO DATA (all zeros)!', {
+      originalMetrics: metrics,
+      safeMetrics: safeMetrics,
+      walletAddress: walletAddress
+    });
+  }
 
   const width = 600;
   const height = 950;

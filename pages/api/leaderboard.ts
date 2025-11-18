@@ -35,9 +35,10 @@ export default async function handler(
     const result = await cacheGetOrSet(
       cacheKey,
       async () => {
-        // Mostrar TODAS las cards (gratuitas y pagadas) que no estén eliminadas
+        // SOLO mostrar cards de quienes pagaron/descargaron (isPaid = true) y no eliminadas
         const cards = await prisma.degenCard.findMany({
           where: {
+            isPaid: true,
             deletedAt: null, // Exclude soft-deleted cards
           },
           orderBy: {
@@ -49,8 +50,8 @@ export default async function handler(
           },
         });
 
-        // Stats de todas las cards no eliminadas
-        const statsWhere = { deletedAt: null };
+        // Stats solo de cards pagadas y no eliminadas
+        const statsWhere = { isPaid: true, deletedAt: null };
 
         const totalCards = await prisma.degenCard.count({
           where: statsWhere,

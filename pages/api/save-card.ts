@@ -112,9 +112,12 @@ export default async function handler(
 
     // Invalidate cached card image so it regenerates with new data
     const cacheKey = CacheKeys.cardImage(walletAddress);
+    logger.info('🗑️ Attempting to clear cache for key:', { cacheKey });
     const cacheDeleted = await cacheDel(cacheKey);
     if (cacheDeleted) {
-      logger.info('🗑️ Cleared cached card image for wallet');
+      logger.info('✅ Successfully cleared cached card image for wallet');
+    } else {
+      logger.warn('⚠️ Cache key was not found or already cleared');
     }
 
     res.status(200).json({ success: true, card });
