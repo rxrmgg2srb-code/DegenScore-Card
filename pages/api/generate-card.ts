@@ -453,7 +453,6 @@ async function generatePremiumCardImage(
 
   ctx.fillStyle = '#d1d5db';
   ctx.font = 'bold 18px sans-serif';
-  ctx.letterSpacing = '4px';
   ctx.fillText('DEGEN SCORE', width / 2, currentY);
   currentY += 40;
 
@@ -605,7 +604,6 @@ function drawPremiumMetric(
   ctx.textAlign = alignment;
   ctx.fillStyle = '#9ca3af';
   ctx.font = 'bold 13px sans-serif';
-  ctx.letterSpacing = '2px';
   ctx.fillText(label, x, y);
 
   ctx.fillStyle = valueColor;
@@ -618,6 +616,14 @@ async function generateBasicCardImage(
   walletAddress: string,
   metrics: any
 ): Promise<Buffer> {
+  logger.info('🎨 Generating BASIC card with metrics:', {
+    degenScore: metrics.degenScore,
+    totalTrades: metrics.totalTrades,
+    totalVolume: metrics.totalVolume,
+    profitLoss: metrics.profitLoss,
+    winRate: metrics.winRate
+  });
+
   const width = 600;
   const height = 950;
   const canvas = createCanvas(width, height);
@@ -672,7 +678,6 @@ async function generateBasicCardImage(
   // LABEL DEGEN SCORE - ✅ FIXED
   ctx.fillStyle = '#aaaaaa';
   ctx.font = 'bold 20px sans-serif';  // ← CAMBIADO de Arial a sans-serif
-  ctx.letterSpacing = '2px';
   ctx.fillText('DEGEN SCORE', width / 2, currentY);
   currentY += 40;
 
@@ -767,7 +772,6 @@ function drawMetric(
   ctx.textAlign = alignment;
   ctx.fillStyle = '#999999';
   ctx.font = 'bold 13px sans-serif';  // ← CAMBIADO de Arial a sans-serif
-  ctx.letterSpacing = '1px';
   ctx.fillText(label, x, y);
 
   ctx.fillStyle = valueColor;
