@@ -254,6 +254,17 @@ async function generateCardImage(
 
   // Si NO está pagado, usar el estilo básico original
   logger.info('📝 Generating BASIC card...');
+  logger.info('📝 Generating BASIC card with data:', {
+    degenScore: metrics.degenScore,
+    totalTrades: metrics.totalTrades,
+    totalVolume: metrics.totalVolume,
+    profitLoss: metrics.profitLoss,
+    winRate: metrics.winRate,
+    bestTrade: metrics.bestTrade,
+    worstTrade: metrics.worstTrade,
+    avgTradeSize: metrics.avgTradeSize,
+    tradingDays: metrics.tradingDays,
+  });
   const buffer = await generateBasicCardImage(walletAddress, metrics);
   // Force garbage collection hint
   if (global.gc) global.gc();
@@ -623,7 +634,7 @@ function drawPremiumMetric(
   ctx.fillText(value, x, y + 38);
 }
 
-// ✅ ORIGINAL: BASIC CARD (SIN PAGAR)
+// ✅ ORIGINAL: BASIC CARD (SIN PAGAR) - ✅ FIXED: Usando sans-serif
 async function generateBasicCardImage(
   walletAddress: string,
   metrics: any
@@ -648,9 +659,9 @@ async function generateBasicCardImage(
 
   let currentY = 90;
 
-  // TÍTULO
+  // TÍTULO - ✅ FIXED
   ctx.fillStyle = '#00d4ff';
-  ctx.font = 'bold 44px Arial';
+  ctx.font = 'bold 44px sans-serif';  // ← CAMBIADO de Arial a sans-serif
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText('DEGEN CARD', width / 2, currentY);
@@ -664,10 +675,10 @@ async function generateBasicCardImage(
   ctx.fillText(shortAddress, width / 2, currentY);
   currentY += 60;
 
-  // DEGEN SCORE
+  // DEGEN SCORE - ✅ FIXED
   const scoreColor = getScoreColor(metrics.degenScore);
   ctx.fillStyle = scoreColor;
-  ctx.font = 'bold 110px Arial';
+  ctx.font = 'bold 110px sans-serif';  // ← CAMBIADO de Arial a sans-serif
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
 
@@ -679,13 +690,14 @@ async function generateBasicCardImage(
 
   currentY += 75;
 
+  // LABEL DEGEN SCORE - ✅ FIXED
   ctx.fillStyle = '#aaaaaa';
-  ctx.font = 'bold 20px Arial';
+  ctx.font = 'bold 20px sans-serif';  // ← CAMBIADO de Arial a sans-serif
   ctx.letterSpacing = '2px';
   ctx.fillText('DEGEN SCORE', width / 2, currentY);
   currentY += 40;
 
-  // FRASE FOMO
+  // FRASE FOMO - ✅ FIXED
   const fomoPhrase = getFOMOPhrase(metrics.degenScore);
 
   ctx.fillStyle = 'rgba(255, 215, 0, 0.15)';
@@ -693,7 +705,7 @@ async function generateBasicCardImage(
   ctx.fillRect(width / 2 - textWidth / 2 - 20, currentY - 18, textWidth + 40, 36);
 
   ctx.fillStyle = '#FFD700';
-  ctx.font = 'bold 17px Arial';
+  ctx.font = 'bold 17px sans-serif';  // ← CAMBIADO de Arial a sans-serif
   ctx.textAlign = 'center';
   ctx.fillText(fomoPhrase, width / 2, currentY);
   currentY += 50;
@@ -740,16 +752,16 @@ async function generateBasicCardImage(
   ctx.stroke();
   currentY += 50;
 
-  // FOOTER
+  // FOOTER - ✅ FIXED
   const rating = getRating(metrics.degenScore);
   ctx.fillStyle = '#ffffff';
-  ctx.font = 'bold 26px Arial';
+  ctx.font = 'bold 26px sans-serif';  // ← CAMBIADO de Arial a sans-serif
   ctx.textAlign = 'center';
   ctx.fillText(rating, width / 2, currentY);
   currentY += 50;
 
   ctx.fillStyle = '#777777';
-  ctx.font = '15px Arial';
+  ctx.font = '15px sans-serif';  // ← CAMBIADO de Arial a sans-serif
   ctx.fillText('Powered by Helius × Solana', width / 2, currentY);
 
   // Convert to buffer and clear canvas reference to help GC
@@ -761,6 +773,7 @@ async function generateBasicCardImage(
   return buffer;
 }
 
+// ✅ FIXED: drawMetric usando sans-serif
 function drawMetric(
   ctx: any,
   label: string,
@@ -774,12 +787,12 @@ function drawMetric(
 
   ctx.textAlign = alignment;
   ctx.fillStyle = '#999999';
-  ctx.font = 'bold 13px Arial';
+  ctx.font = 'bold 13px sans-serif';  // ← CAMBIADO de Arial a sans-serif
   ctx.letterSpacing = '1px';
   ctx.fillText(label, x, y);
 
   ctx.fillStyle = valueColor;
-  ctx.font = 'bold 26px Arial';
+  ctx.font = 'bold 26px sans-serif';  // ← CAMBIADO de Arial a sans-serif
   ctx.fillText(value, x, y + 32);
 }
 
