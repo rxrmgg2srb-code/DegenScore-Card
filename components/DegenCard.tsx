@@ -254,7 +254,7 @@ export default function DegenCard() {
       await new Promise(resolve => setTimeout(resolve, 1000));
 
       logger.info('🎨 Regenerating premium card...');
-      const imageResponse = await fetch('/api/generate-card', {
+      const imageResponse = await fetch('/api/generate-card?nocache=true', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ walletAddress: walletAddress }),
