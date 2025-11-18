@@ -31,12 +31,14 @@ DATABASE_URL
 
 **Value (CRITICAL - must include these parameters):**
 ```
-postgresql://postgres.XXXXX:[PASSWORD]@aws-1-eu-west-1.pooler.supabase.com:6543/postgres?pgbouncer=true&connection_limit=1
+postgresql://postgres.XXXXX:[PASSWORD]@aws-1-eu-west-1.pooler.supabase.com:6543/postgres?pgbouncer=true&connection_limit=1&connect_timeout=10&pool_timeout=10
 ```
 
 **⚠️ IMPORTANT:** Make sure to add at the end:
-- `?pgbouncer=true`
-- `&connection_limit=1`
+- `?pgbouncer=true` - Required for Supabase pooler
+- `&connection_limit=1` - Required for Prisma with PgBouncer
+- `&connect_timeout=10` - Prevents hanging (10 seconds max)
+- `&pool_timeout=10` - Connection pool timeout
 
 **Environment:** Select all (Production, Preview, Development)
 
@@ -122,18 +124,75 @@ TELEGRAM_BOT_TOKEN=""
 
 ## Troubleshooting
 
+### Build timing out after 60 seconds?
+
+If you see `❌ ERROR: Migration timed out after 60 seconds`, follow these steps:
+
+#### 1. **Verify Supabase Project is Active**
+- Go to: https://supabase.com/dashboard
+- Check if your project shows "PAUSED" or "ACTIVE"
+- If paused, click "Resume" to reactivate it
+- **Supabase pauses free projects after 7 days of inactivity**
+
+#### 2. **Verify Database Credentials**
+Test your connection string locally:
+```bash
+# In your local terminal with .env.local configured
+npx prisma db push
+```
+If this fails, your credentials are incorrect.
+
+**To get correct credentials:**
+1. Supabase Dashboard → Settings → Database
+2. Under "Connection String" select **"Connection Pooling"**
+3. Copy the full string (it includes your password)
+4. Make sure to copy from "Session" mode, not "Transaction"
+
+#### 3. **Add Timeout Parameters**
+Your DATABASE_URL should include:
+```
+?pgbouncer=true&connection_limit=1&connect_timeout=10&pool_timeout=10
+```
+
+Full example:
+```
+postgresql://postgres.PROJECT:PASSWORD@aws-1-eu-west-1.pooler.supabase.com:6543/postgres?pgbouncer=true&connection_limit=1&connect_timeout=10&pool_timeout=10
+```
+
+#### 4. **Try Direct Connection (Temporary)**
+If pooler keeps failing, try the **Direct Connection** temporarily:
+```
+postgresql://postgres:PASSWORD@db.PROJECT.supabase.co:5432/postgres?sslmode=require
+```
+⚠️ Note: Direct connection uses port 5432 and doesn't need pgbouncer=true
+
+#### 5. **Check Network/IP Restrictions**
+- Supabase → Settings → Database → Connection Pooling
+- Verify "Allow all IP addresses" is enabled
+- Or add Vercel's IP ranges if using allowlist
+
+#### 6. **Verify PostgreSQL Version Compatibility**
+- Check your Supabase Postgres version (should be 14+)
+- Prisma 6.19.0 requires PostgreSQL 12+
+
 ### Build still hanging?
 
 1. **Check DATABASE_URL format:**
-   - Must use port `6543` (not 5432)
-   - Must include `?pgbouncer=true&connection_limit=1`
+   - Must use port `6543` for pooler (or 5432 for direct)
+   - Must include `?pgbouncer=true&connection_limit=1` for pooler
+   - Add timeout parameters: `&connect_timeout=10&pool_timeout=10`
 
 2. **Verify Supabase project is active:**
    - Check https://supabase.com/dashboard
-   - Make sure project is not paused
+   - Make sure project is not paused (resume if needed)
+   - Free tier pauses after 7 days inactivity
 
-3. **Check Supabase password:**
-   - Reset if needed in Supabase Dashboard → Settings → Database
+3. **Test credentials locally first:**
+   ```bash
+   # Test with your .env.local
+   npx prisma db push
+   ```
+   If this works locally but fails on Vercel, it's a Vercel env var issue
 
 ### Build succeeds but runtime errors?
 

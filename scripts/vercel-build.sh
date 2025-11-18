@@ -19,11 +19,15 @@ if [ -z "$DATABASE_URL" ]; then
   echo ""
 else
   echo "🔍 Checking DATABASE_URL configuration..."
-  if [[ "$DATABASE_URL" == *"pgbouncer=true"* ]]; then
-    echo "✅ PgBouncer parameter detected"
+  if [[ "$DATABASE_URL" == *":5432"* ]]; then
+    echo "✅ Direct connection detected (port 5432)"
+  elif [[ "$DATABASE_URL" == *":6543"* ]] && [[ "$DATABASE_URL" == *"pgbouncer=true"* ]]; then
+    echo "✅ Connection pooling detected (port 6543)"
+  elif [[ "$DATABASE_URL" == *":6543"* ]]; then
+    echo "⚠️  WARNING: Port 6543 detected but missing pgbouncer=true"
+    echo "For pooler, add: ?pgbouncer=true&connection_limit=1"
   else
-    echo "⚠️  WARNING: DATABASE_URL missing pgbouncer=true parameter"
-    echo "For Supabase, use: ?pgbouncer=true&connection_limit=1"
+    echo "ℹ️  Using custom DATABASE_URL configuration"
   fi
   echo ""
 
@@ -43,9 +47,13 @@ else
       echo "❌ ERROR: Migration timed out after 60 seconds"
       echo ""
       echo "This usually means:"
-      echo "1. DATABASE_URL is missing pgbouncer=true parameter"
+      echo "1. Connection pooler (port 6543) is timing out from Vercel"
       echo "2. Database credentials are incorrect"
-      echo "3. Database is unreachable from Vercel"
+      echo "3. Database is unreachable or paused"
+      echo ""
+      echo "💡 SOLUTION: Use Direct Connection instead of pooler"
+      echo "   Format: postgresql://postgres:PASSWORD@db.PROJECT.supabase.co:5432/postgres?sslmode=require"
+      echo "   See SUPABASE_DIRECT_CONNECTION.md for details"
       echo ""
       echo "Please check your Vercel environment variables:"
       echo "👉 https://vercel.com/[your-team]/[your-project]/settings/environment-variables"
