@@ -29,7 +29,10 @@ else
 
   # Try to run migrations with timeout, but don't fail the build if they error
   echo "⏱️  Running migrations (60s timeout)..."
-  if timeout 60 npx prisma migrate deploy; then
+  MIGRATION_OUTPUT=$(timeout 60 npx prisma migrate deploy 2>&1)
+  EXIT_CODE=$?
+
+  if [ $EXIT_CODE -eq 0 ]; then
     echo "✅ Migrations applied successfully"
     echo ""
 
@@ -37,26 +40,37 @@ else
     echo "📋 Verifying migration status..."
     timeout 30 npx prisma migrate status || true
     echo ""
-  else
-    EXIT_CODE=$?
-    if [ $EXIT_CODE -eq 124 ]; then
-      echo "❌ ERROR: Migration timed out after 60 seconds"
+  elif [ $EXIT_CODE -eq 124 ]; then
+    echo "❌ ERROR: Migration timed out after 60 seconds"
+    echo ""
+    echo "This usually means:"
+    echo "1. DATABASE_URL is missing pgbouncer=true parameter"
+    echo "2. Database credentials are incorrect"
+    echo "3. Database is unreachable from Vercel"
+    echo ""
+    echo "Please check your Vercel environment variables:"
+    echo "👉 https://vercel.com/[your-team]/[your-project]/settings/environment-variables"
+    echo ""
+    exit 1
+  elif echo "$MIGRATION_OUTPUT" | grep -q "P3005"; then
+    echo "⚠️  Database schema already exists (P3005)"
+    echo "Syncing schema with db push..."
+    echo ""
+    if timeout 60 npx prisma db push --skip-generate --accept-data-loss; then
+      echo "✅ Schema synced successfully"
       echo ""
-      echo "This usually means:"
-      echo "1. DATABASE_URL is missing pgbouncer=true parameter"
-      echo "2. Database credentials are incorrect"
-      echo "3. Database is unreachable from Vercel"
-      echo ""
-      echo "Please check your Vercel environment variables:"
-      echo "👉 https://vercel.com/[your-team]/[your-project]/settings/environment-variables"
-      echo ""
-      exit 1
     else
-      echo "⚠️  WARNING: Migration failed (exit code: $EXIT_CODE), but continuing build..."
-      echo "This may cause runtime errors if database schema is out of sync."
-      echo "Please check DATABASE_URL and database permissions."
+      echo "⚠️  WARNING: Schema sync failed, but continuing build..."
+      echo "Database may already be up to date."
       echo ""
     fi
+  else
+    echo "$MIGRATION_OUTPUT"
+    echo ""
+    echo "⚠️  WARNING: Migration failed (exit code: $EXIT_CODE), but continuing build..."
+    echo "This may cause runtime errors if database schema is out of sync."
+    echo "Please check DATABASE_URL and database permissions."
+    echo ""
   fi
 fi
 
