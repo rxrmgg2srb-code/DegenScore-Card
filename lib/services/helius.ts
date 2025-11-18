@@ -91,8 +91,28 @@ export async function getWalletTransactions(
         clearTimeout(timeoutId);
 
         if (!response.ok) {
-          const error: any = new Error(`Helius API error: ${response.status} ${response.statusText}`);
+          // For 400 errors, try to get more details from response body
+          let errorDetails = '';
+          try {
+            const errorBody = await response.text();
+            errorDetails = errorBody ? ` - ${errorBody.substring(0, 200)}` : '';
+          } catch (e) {
+            // Ignore if we can't read the error body
+          }
+
+          const error: any = new Error(`Helius API error: ${response.status} ${response.statusText}${errorDetails}`);
           error.status = response.status;
+
+          // Log additional info for 400 errors to help debug
+          if (response.status === 400) {
+            logger.error('[Helius] Bad Request details:', undefined, {
+              walletAddress: walletAddress.substring(0, 10) + '...',
+              limit,
+              hasBefore: !!before,
+              beforeSignature: before ? before.substring(0, 20) + '...' : 'none',
+            });
+          }
+
           throw error;
         }
 

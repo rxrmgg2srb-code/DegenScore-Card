@@ -153,11 +153,13 @@ async function fetchAllTransactions(
   let before: string | undefined;
   let fetchCount = 0;
   let consecutiveEmpty = 0;
+  let consecutiveErrors = 0;
 
   const MAX_BATCHES = 30;  // Reducido de 100 a 30 para evitar timeouts
   const BATCH_SIZE = 1000;
   const DELAY_MS = 50;     // Reducido de 100ms a 50ms para ser más rápido
   const MAX_EMPTY = 3;
+  const MAX_CONSECUTIVE_ERRORS = 5; // Stop if we get 5 errors in a row
 
   logger.info(`🔄 Fetching up to ${MAX_BATCHES} batches (${BATCH_SIZE} each)`);
 
@@ -169,9 +171,11 @@ async function fetchAllTransactions(
         allTransactions.push(...batch);
         before = batch[batch.length - 1]?.signature;
         consecutiveEmpty = 0;
+        consecutiveErrors = 0; // Reset error counter on success
         logger.info(`  ✓ Batch ${fetchCount + 1}: ${batch.length} txs (Total: ${allTransactions.length})`);
       } else {
         consecutiveEmpty++;
+        consecutiveErrors = 0; // Reset error counter on successful empty response
         logger.info(`  ⚠️ Batch ${fetchCount + 1}: empty (${consecutiveEmpty}/${MAX_EMPTY})`);
 
         if (consecutiveEmpty >= MAX_EMPTY) {
@@ -188,10 +192,29 @@ async function fetchAllTransactions(
       }
 
       await new Promise(resolve => setTimeout(resolve, DELAY_MS));
-    } catch (error) {
+    } catch (error: any) {
+      consecutiveErrors++;
+
       logger.error(`  ❌ Error batch ${fetchCount + 1}`, error instanceof Error ? error : undefined, {
         error: String(error),
+        status: error?.status,
+        before: before ? `${before.substring(0, 20)}...` : 'none',
+        consecutiveErrors,
       });
+
+      // If we're getting too many consecutive errors, stop trying
+      if (consecutiveErrors >= MAX_CONSECUTIVE_ERRORS) {
+        logger.error(`  ⛔ Too many consecutive errors (${consecutiveErrors}), stopping fetch`);
+        // If we have some transactions, use what we have
+        if (allTransactions.length > 0) {
+          logger.warn(`  ⚠️ Using ${allTransactions.length} transactions fetched before errors`);
+          break;
+        }
+        // Otherwise, return empty to trigger default metrics
+        logger.error(`  ❌ No transactions fetched due to errors`);
+        return [];
+      }
+
       fetchCount++;
       await new Promise(resolve => setTimeout(resolve, 500));
       continue;

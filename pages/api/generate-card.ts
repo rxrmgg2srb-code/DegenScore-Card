@@ -694,7 +694,6 @@ async function generateBasicCardImage(
 
   ctx.fillStyle = '#aaaaaa';
   ctx.font = 'bold 20px Arial';
-  ctx.letterSpacing = '2px';
   ctx.fillText('DEGEN SCORE', width / 2, currentY);
   currentY += 40;
 
@@ -788,7 +787,6 @@ function drawMetric(
   ctx.textAlign = alignment;
   ctx.fillStyle = '#999999';
   ctx.font = 'bold 13px Arial';
-  ctx.letterSpacing = '1px';
   ctx.fillText(label, x, y);
 
   ctx.fillStyle = valueColor;
