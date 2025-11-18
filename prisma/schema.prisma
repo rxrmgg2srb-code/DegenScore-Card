@@ -4,10 +4,12 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
   // Optimización para alta concurrencia
-  // Configurar en DATABASE_URL: ?connection_limit=20&pool_timeout=20
+  // DATABASE_URL usa Transaction pooler para queries (pgbouncer=true)
+  // DIRECT_URL usa Direct connection para migraciones (sin pgbouncer)
 }
 
 model DegenCard {
