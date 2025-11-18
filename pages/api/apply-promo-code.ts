@@ -301,20 +301,6 @@ export default async function handler(
         expiresAt: subscription.expiresAt.toISOString()
       });
 
-      // Log activity for analytics
-      await tx.activityLog.create({
-        data: {
-          walletAddress,
-          action: 'promo_code_applied',
-          metadata: {
-            promoCode: sanitizedCode,
-            promoDescription: promo.description,
-            subscriptionTier: 'PRO',
-            trialDays: 30
-          }
-        }
-      });
-
       return {
         card: updatedCard,
         promo,
@@ -325,6 +311,30 @@ export default async function handler(
       timeout: 15000, // Maximum time for the transaction
       isolationLevel: 'Serializable' // Highest isolation level to prevent race conditions
     });
+
+    // ═══════════════════════════════════════════════════════════
+    // Log activity for analytics (OUTSIDE transaction - non-critical)
+    // ═══════════════════════════════════════════════════════════
+    try {
+      await prisma.activityLog.create({
+        data: {
+          walletAddress,
+          action: 'promo_code_applied',
+          metadata: {
+            promoCode: sanitizedCode,
+            promoDescription: result.promo.description,
+            subscriptionTier: 'PRO',
+            trialDays: 30
+          }
+        }
+      });
+      logger.info('✅ Activity logged successfully');
+    } catch (activityError) {
+      // If ActivityLog table doesn't exist or fails, just log the error but don't fail the request
+      logger.warn('⚠️ Failed to log activity (non-critical)', {
+        error: activityError instanceof Error ? activityError.message : String(activityError)
+      });
+    }
 
     // ═══════════════════════════════════════════════════════════
     // 6. CACHE INVALIDATION

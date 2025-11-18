@@ -143,19 +143,6 @@ export default async function handler(
         },
       });
 
-      // Log activity
-      await tx.activityLog.create({
-        data: {
-          walletAddress,
-          action: 'checkin',
-          metadata: {
-            streak: newStreak,
-            xpEarned: totalXpEarned,
-            badgesEarned: badgesEarned.map(b => b.name),
-          },
-        },
-      });
-
       logger.info('Daily check-in completed:', { walletAddress, streak: newStreak, xpEarned: totalXpEarned });
 
       return {
@@ -171,6 +158,28 @@ export default async function handler(
         nextMilestone: STREAK_MILESTONES.find(m => m.days > newStreak),
       };
     });
+
+    // Log activity (OUTSIDE transaction - non-critical)
+    if (!result.alreadyCheckedIn) {
+      try {
+        await prisma.activityLog.create({
+          data: {
+            walletAddress,
+            action: 'checkin',
+            metadata: {
+              streak: result.currentStreak,
+              xpEarned: result.xpEarned,
+              badgesEarned: result.badgesEarned?.map(b => b.name) || [],
+            },
+          },
+        });
+      } catch (activityError) {
+        // If ActivityLog table doesn't exist or fails, just log the error but don't fail the request
+        logger.warn('⚠️ Failed to log check-in activity (non-critical)', {
+          error: activityError instanceof Error ? activityError.message : String(activityError)
+        });
+      }
+    }
 
     if (result.alreadyCheckedIn) {
       return res.status(200).json({
