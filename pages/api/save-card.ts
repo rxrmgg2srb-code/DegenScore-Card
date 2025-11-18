@@ -4,6 +4,7 @@ import { isValidSolanaAddress } from '../../lib/validation';
 import { rateLimit } from '../../lib/rateLimitRedis';
 import { logger } from '../../lib/logger';
 import { sanitizeText } from '../../lib/sanitize';
+import { cacheDel, CacheKeys } from '../../lib/cache/redis';
 
 export default async function handler(
   req: NextApiRequest,
@@ -30,7 +31,14 @@ export default async function handler(
       return res.status(400).json({ error: 'Invalid wallet address' });
     }
 
-    logger.debug('Saving card for wallet:', { walletAddress });
+    logger.info('💾 Saving card for wallet:', { walletAddress });
+    logger.info('📊 Analysis data received:', {
+      degenScore: analysisData.degenScore,
+      totalTrades: analysisData.totalTrades,
+      totalVolume: analysisData.totalVolume,
+      profitLoss: analysisData.profitLoss,
+      winRate: analysisData.winRate,
+    });
 
     // Convert badges to correct format with XSS sanitization
     const badgesData = (analysisData.badges || []).map((badge: any) => ({
@@ -92,7 +100,22 @@ export default async function handler(
       },
     });
 
-    logger.info('Card saved successfully:', { cardId: card.id });
+    logger.info('✅ Card saved successfully:', { cardId: card.id });
+    logger.info('💾 Saved card data:', {
+      degenScore: card.degenScore,
+      totalTrades: card.totalTrades,
+      totalVolume: card.totalVolume,
+      profitLoss: card.profitLoss,
+      winRate: card.winRate,
+      isPaid: card.isPaid,
+    });
+
+    // Invalidate cached card image so it regenerates with new data
+    const cacheKey = CacheKeys.cardImage(walletAddress);
+    const cacheDeleted = await cacheDel(cacheKey);
+    if (cacheDeleted) {
+      logger.info('🗑️ Cleared cached card image for wallet');
+    }
 
     res.status(200).json({ success: true, card });
   } catch (error: any) {
