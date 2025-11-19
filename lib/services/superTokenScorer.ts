@@ -382,7 +382,7 @@ export async function analyzeSuperTokenScore(
 
     // PASO 9: Análisis del team
     if (onProgress) onProgress(75, 'Analizando tokens del equipo...');
-    const teamAnalysis = await analyzeTeam(tokenAddress);
+    const teamAnalysis = await analyzeTeam(tokenAddress, baseSecurityReport);
 
     // PASO 10: Análisis de patrones de precio
     if (onProgress) onProgress(80, 'Analizando patrones de precio...');
@@ -394,7 +394,12 @@ export async function analyzeSuperTokenScore(
 
     // PASO 12: Análisis de profundidad de liquidez
     if (onProgress) onProgress(90, 'Analizando profundidad de liquidez...');
-    const liquidityDepth = await analyzeLiquidityDepth(tokenAddress, jupiterLiquidity.status === 'fulfilled' ? jupiterLiquidity.value : undefined);
+    const liquidityDepth = await analyzeLiquidityDepth(
+      tokenAddress,
+      baseSecurityReport,
+      dexScreenerData.status === 'fulfilled' ? dexScreenerData.value : undefined,
+      jupiterLiquidity.status === 'fulfilled' ? jupiterLiquidity.value : undefined
+    );
 
     // PASO 13: Análisis cross-chain
     if (onProgress) onProgress(93, 'Verificando bridges cross-chain...');
@@ -726,7 +731,7 @@ async function analyzeNewWallets(tokenAddress: string): Promise<NewWalletAnalysi
 
           if (signatures.length > 0) {
             const oldestSig = signatures[signatures.length - 1];
-            const walletAge = (Date.now() / 1000 - (oldestSig.blockTime || 0)) / 86400; // días
+            const walletAge = (Date.now() / 1000 - (oldestSig?.blockTime || 0)) / 86400; // días
 
             totalAge += walletAge;
 
@@ -875,7 +880,7 @@ async function analyzeInsiders(tokenAddress: string): Promise<InsiderAnalysis> {
   }));
 }
 
-async function analyzeVolume(tokenAddress: string, dexData?: DexScreenerData): Promise<VolumeAnalysis> {
+async function analyzeVolume(_tokenAddress: string, dexData?: DexScreenerData): Promise<VolumeAnalysis> {
   try {
     const volume24h = dexData?.volume24h || 0;
     const volume7d = volume24h * 7; // Estimación
@@ -949,37 +954,44 @@ async function analyzeVolume(tokenAddress: string, dexData?: DexScreenerData): P
   }
 }
 
-async function analyzeSocials(tokenAddress: string, metadata: any): Promise<SocialAnalysis> {
+async function analyzeSocials(_tokenAddress: string, metadata: any): Promise<SocialAnalysis> {
   try {
-    const hasTwitter = !!metadata.hasWebsite; // Placeholder - necesitaríamos parsear metadata
-    const hasTelegram = !!metadata.hasSocials;
+    // Use REAL metadata from on-chain data
     const hasWebsite = !!metadata.hasWebsite;
+    const hasSocials = !!metadata.hasSocials;
 
-    // Datos mock - en producción se consultarían APIs de Twitter, etc.
-    const twitterFollowers = hasTwitter ? Math.floor(Math.random() * 10000) : 0;
-    const twitterVerified = false;
-    const twitterAge = hasTwitter ? Math.floor(Math.random() * 365) : 0;
-    const telegramMembers = hasTelegram ? Math.floor(Math.random() * 5000) : 0;
-    const hasDiscord = Math.random() > 0.5;
-    const discordMembers = hasDiscord ? Math.floor(Math.random() * 3000) : 0;
-    const websiteSSL = hasWebsite;
-    const websiteAge = hasWebsite ? Math.floor(Math.random() * 180) : 0;
+    // For now, we use conservative values for detailed metrics we don't have APIs for
+    // In the future, these could be fetched from Twitter API, Telegram API, etc.
+    // But we NEVER use random values - only real data or 0/false for unknown
+    const hasTwitter = hasSocials; // Assume if they have socials, they likely have Twitter
+    const twitterFollowers = 0; // Unknown - would need Twitter API
+    const twitterVerified = false; // Unknown
+    const twitterAge = 0; // Unknown
+
+    const hasTelegram = hasSocials;
+    const telegramMembers = 0; // Unknown - would need Telegram API
+
+    const hasDiscord = false; // Unknown - would need to parse metadata for Discord link
+    const discordMembers = 0;
+
+    const websiteSSL = hasWebsite; // Assume if they have website, it has SSL (most do nowadays)
+    const websiteAge = 0; // Unknown - would need domain age API
 
     let socialScore = 0;
 
-    if (twitterVerified) socialScore += 10;
-    if (twitterFollowers > 5000) socialScore += 5;
-    if (twitterFollowers > 1000) socialScore += 3;
-    if (telegramMembers > 1000) socialScore += 5;
-    if (hasDiscord && discordMembers > 500) socialScore += 3;
-    if (hasWebsite && websiteSSL) socialScore += 4;
+    // Score based on what we actually know
+    if (hasWebsite) socialScore += 8; // Having a website is a good sign
+    if (hasSocials) socialScore += 12; // Having social links is important
+    if (metadata.verified) socialScore += 10; // Verified metadata is valuable
 
-    const suspiciousSocials = (hasTwitter && twitterAge < 7) || (hasWebsite && websiteAge < 7);
-
-    let score = socialScore;
-    if (suspiciousSocials) {
-      score = Math.max(0, score - 10);
+    // Bonus if they have description (shows effort)
+    if (metadata.description && metadata.description.length > 50) {
+      socialScore += 5;
     }
+
+    // Since we don't have age data, we can't detect suspicious socials reliably
+    // So we set this to false unless we have evidence otherwise
+    const suspiciousSocials = false;
 
     return {
       hasTwitter,
@@ -995,7 +1007,7 @@ async function analyzeSocials(tokenAddress: string, metadata: any): Promise<Soci
       discordMembers,
       socialScore,
       suspiciousSocials,
-      score: Math.min(30, score),
+      score: Math.min(30, socialScore),
     };
   } catch (error) {
     return {
@@ -1107,33 +1119,26 @@ async function detectBotsAdvanced(tokenAddress: string): Promise<BotDetectionAdv
   }
 }
 
-async function analyzeSmartMoney(tokenAddress: string): Promise<SmartMoneyAnalysis> {
+async function analyzeSmartMoney(_tokenAddress: string): Promise<SmartMoneyAnalysis> {
   try {
-    // En producción, esto consultaría una DB de wallets conocidas de traders exitosos
-    // Por ahora, usamos heurísticas
+    // Smart money detection requires a database of known successful trader wallets
+    // This feature is not yet implemented with real data
+    // We return NEUTRAL values instead of random values to avoid misleading users
 
-    const smartMoneyWallets = Math.floor(Math.random() * 20);
-    const smartMoneyHoldings = Math.random() * 15;
-    const smartMoneyBuying = Math.random() > 0.5;
-    const smartMoneySelling = !smartMoneyBuying && Math.random() > 0.7;
-    const averageSmartMoneyProfit = Math.random() * 200 - 50;
+    // TODO: In the future, integrate with:
+    // - Known whale wallet tracking
+    // - Historical profitable trader identification
+    // - On-chain analysis of wallet behavior patterns
 
-    let signal: 'STRONG_BUY' | 'BUY' | 'NEUTRAL' | 'SELL' | 'STRONG_SELL' = 'NEUTRAL';
-    let score = 35;
+    const smartMoneyWallets = 0; // Unknown - needs smart money DB
+    const smartMoneyHoldings = 0; // Unknown
+    const smartMoneyBuying = false; // Unknown
+    const smartMoneySelling = false; // Unknown
+    const averageSmartMoneyProfit = 0; // Unknown
 
-    if (smartMoneyBuying && smartMoneyWallets > 10) {
-      signal = 'STRONG_BUY';
-      score = 70;
-    } else if (smartMoneyBuying) {
-      signal = 'BUY';
-      score = 55;
-    } else if (smartMoneySelling && smartMoneyWallets > 5) {
-      signal = 'STRONG_SELL';
-      score = 0;
-    } else if (smartMoneySelling) {
-      signal = 'SELL';
-      score = 15;
-    }
+    // Always return NEUTRAL since we don't have real data
+    const signal: 'STRONG_BUY' | 'BUY' | 'NEUTRAL' | 'SELL' | 'STRONG_SELL' = 'NEUTRAL';
+    const score = 35; // Neutral score - doesn't penalize or benefit
 
     return {
       smartMoneyWallets,
@@ -1157,31 +1162,55 @@ async function analyzeSmartMoney(tokenAddress: string): Promise<SmartMoneyAnalys
   }
 }
 
-async function analyzeTeam(tokenAddress: string): Promise<TeamAnalysis> {
+async function analyzeTeam(
+  _tokenAddress: string,
+  baseSecurityReport: TokenSecurityReport
+): Promise<TeamAnalysis> {
   try {
-    // Análisis simplificado del team
-    const teamTokensLocked = Math.random() > 0.6;
-    const teamAllocation = Math.random() * 30;
-    const vestingSchedule = teamTokensLocked;
-    const vestingDuration = vestingSchedule ? Math.floor(Math.random() * 24) + 6 : 0;
-    const teamSelling = !teamTokensLocked && Math.random() > 0.7;
-    const teamWallets = Math.floor(Math.random() * 10) + 1;
+    // Use REAL data from baseSecurityReport
+    const { tokenAuthorities, holderDistribution, liquidityAnalysis } = baseSecurityReport;
+
+    // Team allocation is the creator's percentage of total supply
+    const teamAllocation = holderDistribution.creatorPercent;
+
+    // Check if LP tokens are burned or locked (good sign for team commitment)
+    const teamTokensLocked = liquidityAnalysis.lpBurned || liquidityAnalysis.lpLocked;
+
+    // If tokens are locked, we can use the lock duration
+    const vestingSchedule = liquidityAnalysis.lpLocked;
+    const vestingDuration = liquidityAnalysis.lpLockEnd
+      ? Math.floor((liquidityAnalysis.lpLockEnd - Date.now()) / (1000 * 60 * 60 * 24 * 30)) // months
+      : 0;
+
+    // Estimate if team is selling based on concentration risk
+    // If creator has a lot but liquidity isn't locked, they might be selling
+    const teamSelling = teamAllocation > 10 && !teamTokensLocked;
+
+    // We can't directly know team wallets, but we can use bundle detection as a proxy
+    const teamWallets = holderDistribution.bundleDetected ? holderDistribution.bundleWallets : 1;
 
     let riskLevel: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL' = 'LOW';
     let score = 40;
 
+    // Risk assessment based on REAL data
     if (teamSelling || teamAllocation > 25) {
       riskLevel = 'CRITICAL';
       score = 0;
     } else if (teamAllocation > 15 && !teamTokensLocked) {
       riskLevel = 'HIGH';
       score = 10;
-    } else if (teamAllocation > 10) {
+    } else if (teamAllocation > 10 && !tokenAuthorities.isRevoked) {
+      // Authorities not revoked + high allocation = medium risk
       riskLevel = 'MEDIUM';
       score = 25;
-    } else if (teamTokensLocked) {
+    } else if (teamTokensLocked && tokenAuthorities.isRevoked) {
+      // Best case: tokens locked AND authorities revoked
       riskLevel = 'LOW';
       score = 40;
+    } else if (teamTokensLocked || tokenAuthorities.isRevoked) {
+      // One of the two safety measures
+      riskLevel = 'LOW';
+      score = 30;
     }
 
     return {
@@ -1208,7 +1237,7 @@ async function analyzeTeam(tokenAddress: string): Promise<TeamAnalysis> {
   }
 }
 
-async function analyzePricePattern(tokenAddress: string, dexData?: DexScreenerData): Promise<PricePatternAnalysis> {
+async function analyzePricePattern(_tokenAddress: string, dexData?: DexScreenerData): Promise<PricePatternAnalysis> {
   try {
     const priceChange24h = dexData?.priceChange24h || 0;
     const priceChange7d = dexData?.priceChange7d || 0;
@@ -1266,24 +1295,27 @@ async function analyzePricePattern(tokenAddress: string, dexData?: DexScreenerDa
   }
 }
 
-async function analyzeHistoricalHolders(tokenAddress: string): Promise<HistoricalHolderAnalysis> {
+async function analyzeHistoricalHolders(_tokenAddress: string): Promise<HistoricalHolderAnalysis> {
   try {
-    // Análisis simplificado
-    const holderGrowth7d = (Math.random() - 0.3) * 50;
-    const holderGrowth30d = (Math.random() - 0.2) * 100;
-    const holderChurn = Math.random() * 30;
-    const holderLoyalty = 100 - holderChurn;
-    const diamondHandsPercent = Math.random() * 40;
-    const paperHandsPercent = Math.random() * 20;
+    // Historical holder tracking requires storing snapshots over time
+    // This feature is not yet implemented with real data
+    // We return neutral/conservative values instead of random values
 
-    let score = 40;
-    if (holderGrowth7d > 20 && holderChurn < 15) {
-      score = 40;
-    } else if (holderGrowth7d < -10 || holderChurn > 30) {
-      score = 10;
-    } else {
-      score = 25;
-    }
+    // TODO: In the future, implement:
+    // - Daily holder count snapshots in database
+    // - Holder churn rate calculation from transaction history
+    // - Diamond hands detection (holders who haven't sold in 30+ days)
+    // - Paper hands detection (frequent sellers)
+
+    const holderGrowth7d = 0; // Unknown - needs historical snapshots
+    const holderGrowth30d = 0; // Unknown
+    const holderChurn = 50; // Unknown - assume moderate
+    const holderLoyalty = 50; // Unknown - neutral
+    const diamondHandsPercent = 0; // Unknown
+    const paperHandsPercent = 0; // Unknown
+
+    // Neutral score since we don't have historical data
+    const score = 25;
 
     return {
       holderGrowth7d,
@@ -1307,31 +1339,70 @@ async function analyzeHistoricalHolders(tokenAddress: string): Promise<Historica
   }
 }
 
-async function analyzeLiquidityDepth(tokenAddress: string, jupiterData?: JupiterLiquidityData): Promise<LiquidityDepthAnalysis> {
+async function analyzeLiquidityDepth(
+  _tokenAddress: string,
+  baseSecurityReport: TokenSecurityReport,
+  dexData?: DexScreenerData,
+  _jupiterData?: JupiterLiquidityData
+): Promise<LiquidityDepthAnalysis> {
   try {
-    // Análisis simplificado de profundidad de liquidez
-    const depthPositive2 = Math.random() * 50000;
-    const depthNegative2 = Math.random() * 50000;
-    const depthPositive5 = Math.random() * 100000;
-    const depthNegative5 = Math.random() * 100000;
+    // Use REAL liquidity data from baseSecurityReport and DEX data
+    const liquidityUSD = dexData?.liquidity || baseSecurityReport.liquidityAnalysis.liquidityUSD;
 
-    const slippage1SOL = Math.random() * 2;
-    const slippage10SOL = Math.random() * 8;
-    const slippage100SOL = Math.random() * 30;
+    // Calculate depth estimates based on real liquidity
+    // Typical market depth is ~20% of liquidity at 2% price impact, ~40% at 5%
+    const depthPositive2 = liquidityUSD * 0.2;
+    const depthNegative2 = liquidityUSD * 0.2;
+    const depthPositive5 = liquidityUSD * 0.4;
+    const depthNegative5 = liquidityUSD * 0.4;
+
+    // Estimate slippage based on liquidity depth
+    // Higher liquidity = lower slippage
+    let slippage1SOL = 0.1;
+    let slippage10SOL = 1.0;
+    let slippage100SOL = 10.0;
+
+    if (liquidityUSD > 1000000) {
+      // Excellent liquidity > $1M
+      slippage1SOL = 0.05;
+      slippage10SOL = 0.5;
+      slippage100SOL = 5;
+    } else if (liquidityUSD > 500000) {
+      // Good liquidity > $500k
+      slippage1SOL = 0.1;
+      slippage10SOL = 1;
+      slippage100SOL = 10;
+    } else if (liquidityUSD > 100000) {
+      // Fair liquidity > $100k
+      slippage1SOL = 0.3;
+      slippage10SOL = 3;
+      slippage100SOL = 25;
+    } else if (liquidityUSD > 50000) {
+      // Poor liquidity > $50k
+      slippage1SOL = 0.5;
+      slippage10SOL = 5;
+      slippage100SOL = 40;
+    } else {
+      // Critical liquidity < $50k
+      slippage1SOL = 1;
+      slippage10SOL = 15;
+      slippage100SOL = 80;
+    }
 
     let liquidityHealth: 'EXCELLENT' | 'GOOD' | 'FAIR' | 'POOR' | 'CRITICAL' = 'FAIR';
     let score = 50;
 
-    if (slippage10SOL < 2 && depthNegative5 > 50000) {
+    // Score based on real liquidity amount
+    if (liquidityUSD > 1000000 && slippage10SOL < 2) {
       liquidityHealth = 'EXCELLENT';
       score = 50;
-    } else if (slippage10SOL < 5) {
+    } else if (liquidityUSD > 500000 && slippage10SOL < 5) {
       liquidityHealth = 'GOOD';
       score = 40;
-    } else if (slippage10SOL < 10) {
+    } else if (liquidityUSD > 100000 && slippage10SOL < 10) {
       liquidityHealth = 'FAIR';
       score = 25;
-    } else if (slippage10SOL < 20) {
+    } else if (liquidityUSD > 50000) {
       liquidityHealth = 'POOR';
       score = 10;
     } else {
@@ -1365,21 +1436,27 @@ async function analyzeLiquidityDepth(tokenAddress: string, jupiterData?: Jupiter
   }
 }
 
-async function analyzeCrossChain(tokenAddress: string): Promise<CrossChainAnalysis> {
+async function analyzeCrossChain(_tokenAddress: string): Promise<CrossChainAnalysis> {
   try {
-    // Análisis simplificado
-    const isBridged = Math.random() > 0.9;
-    const originalChain = isBridged ? 'ethereum' : undefined;
-    const bridgeContract = isBridged ? '0x...' : undefined;
-    const bridgeLiquidity = isBridged ? Math.random() * 1000000 : 0;
-    const bridgeRisk: 'LOW' | 'MEDIUM' | 'HIGH' = isBridged ? 'MEDIUM' : 'LOW';
+    // Cross-chain bridge detection requires checking known bridge contracts
+    // This feature is not yet implemented with real data
+    // Most Solana tokens are native, so we default to not bridged
 
-    let score = 30;
-    if (isBridged && bridgeRisk === 'HIGH') {
-      score = 10;
-    } else if (isBridged) {
-      score = 20;
-    }
+    // TODO: In the future, implement:
+    // - Check against known Wormhole bridge addresses
+    // - Check against known Portal bridge addresses
+    // - Check token metadata for bridge indicators
+    // - Query bridge APIs for token origin
+
+    // For now, assume token is native to Solana (most common case)
+    const isBridged = false;
+    const originalChain = undefined;
+    const bridgeContract = undefined;
+    const bridgeLiquidity = 0;
+    const bridgeRisk: 'LOW' | 'MEDIUM' | 'HIGH' = 'LOW';
+
+    // Native tokens get neutral score
+    const score = 30;
 
     return {
       isBridged,
@@ -1393,30 +1470,30 @@ async function analyzeCrossChain(tokenAddress: string): Promise<CrossChainAnalys
     return {
       isBridged: false,
       bridgeRisk: 'LOW',
+      bridgeLiquidity: 0,
       score: 30,
     };
   }
 }
 
-async function analyzeCompetitors(tokenAddress: string, symbol: string): Promise<CompetitorAnalysis> {
+async function analyzeCompetitors(_tokenAddress: string, _symbol: string): Promise<CompetitorAnalysis> {
   try {
-    // Análisis simplificado de competencia
-    const similarTokens = [
-      { address: 'token1', symbol: 'COMP1', marketCap: 1000000, performance: 25 },
-      { address: 'token2', symbol: 'COMP2', marketCap: 500000, performance: -10 },
-    ];
+    // Competitor analysis requires a database of similar tokens and market intelligence
+    // This feature is not yet implemented with real data
 
-    const marketPosition = Math.floor(Math.random() * 100) + 1;
-    const competitiveAdvantage = 'Análisis de competencia en desarrollo';
+    // TODO: In the future, implement:
+    // - Find similar tokens by category/sector
+    // - Compare market caps, volumes, and performance
+    // - Analyze competitive positioning
+    // - Identify unique features and advantages
 
-    let score = 30;
-    if (marketPosition < 20) {
-      score = 30;
-    } else if (marketPosition < 50) {
-      score = 20;
-    } else {
-      score = 10;
-    }
+    const similarTokens: Array<{ address: string; symbol: string; marketCap: number; performance: number }> = [];
+
+    const marketPosition = 0; // Unknown - needs market intelligence
+    const competitiveAdvantage = 'Análisis de competencia no disponible';
+
+    // Neutral score since we don't have competitor data
+    let score = 20;
 
     return {
       similarTokens,
@@ -1541,12 +1618,12 @@ function consolidateRedFlags(
   newWallet: NewWalletAnalysis,
   insider: InsiderAnalysis,
   volume: VolumeAnalysis,
-  social: SocialAnalysis,
+  _social: SocialAnalysis,
   bot: BotDetectionAdvanced,
   smartMoney: SmartMoneyAnalysis,
   team: TeamAnalysis,
   price: PricePatternAnalysis,
-  holders: HistoricalHolderAnalysis,
+  _holders: HistoricalHolderAnalysis,
   liquidity: LiquidityDepthAnalysis,
   rugCheck?: RugCheckData
 ): SuperTokenScore['allRedFlags'] {
