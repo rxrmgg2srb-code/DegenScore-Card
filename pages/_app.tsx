@@ -10,11 +10,21 @@ import { I18nextProvider } from 'react-i18next';
 import i18n from '../lib/i18n';
 
 export default function App({ Component, pageProps }: AppProps) {
-  // Configure RPC endpoint
-  const endpoint = useMemo(
-    () => process.env.NEXT_PUBLIC_HELIUS_RPC_URL || 'https://api.mainnet-beta.solana.com',
-    []
-  );
+  // Configure RPC endpoint con validación robusta
+  const endpoint = useMemo(() => {
+    const rpcUrl = process.env.NEXT_PUBLIC_HELIUS_RPC_URL;
+
+    // Validar que la URL sea válida (no vacía y que empiece con http)
+    if (rpcUrl && rpcUrl.trim() && (rpcUrl.startsWith('http://') || rpcUrl.startsWith('https://'))) {
+      console.log('✅ Using configured RPC:', rpcUrl);
+      return rpcUrl;
+    }
+
+    // Fallback a RPC público de Solana
+    const fallbackUrl = 'https://api.mainnet-beta.solana.com';
+    console.warn('⚠️ NEXT_PUBLIC_HELIUS_RPC_URL not configured or invalid, using fallback:', fallbackUrl);
+    return fallbackUrl;
+  }, []);
 
   // Configure supported wallets
   const wallets = useMemo(
