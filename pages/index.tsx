@@ -21,6 +21,16 @@ export default function Home() {
 
           {/* Navigation Buttons */}
           <div className="flex flex-wrap gap-3 justify-center sm:justify-end">
+            <Link href="/super-token-scorer">
+              <button className="px-4 py-2 bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-500 hover:to-orange-500 text-white rounded-lg font-bold transition hover:scale-105 shadow-lg hover:shadow-yellow-500/50">
+                🚀 Super Scorer
+              </button>
+            </Link>
+            <Link href="/token-scanner">
+              <button className="px-4 py-2 bg-green-700 hover:bg-green-600 text-white rounded-lg font-medium transition">
+                🔒 Token Scanner
+              </button>
+            </Link>
             <Link href="/compare">
               <button className="px-4 py-2 bg-blue-700 hover:bg-blue-600 text-white rounded-lg font-medium transition">
                 ⚔️ Compare
