@@ -6,15 +6,32 @@ Las tarjetas no muestran datos porque están en caché desde cuando las fonts no
 ## ✅ Solución Rápida (3 pasos)
 
 ### 1. Limpiar el caché de Redis
-Hacer una petición a este endpoint:
+**Opción A - Desde el navegador (MÁS FÁCIL):**
 
-```bash
-curl -X POST https://tu-app.vercel.app/api/clear-card-cache
-```
-
-O visita directamente en el navegador:
+Simplemente abre esta URL:
 ```
 https://tu-app.vercel.app/api/clear-card-cache
+```
+
+Verás algo como:
+```json
+{
+  "success": true,
+  "message": "Cache cleared for 15 wallets. All cards will be regenerated on next request.",
+  "clearedCount": 15
+}
+```
+
+**Opción B - Con curl:**
+```bash
+curl https://tu-app.vercel.app/api/clear-card-cache
+```
+
+**Opción C - Para una wallet específica:**
+```bash
+curl -X POST https://tu-app.vercel.app/api/clear-card-cache \
+  -H "Content-Type: application/json" \
+  -d '{"walletAddress":"TU_WALLET"}'
 ```
 
 ### 2. Regenerar la tarjeta SIN caché
