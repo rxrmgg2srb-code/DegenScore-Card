@@ -22,7 +22,7 @@
 import { Connection, PublicKey } from '@solana/web3.js';
 import { logger } from '@/lib/logger';
 import { retry, CircuitBreaker } from '../retryLogic';
-import { analyzeTokenSecurity, TokenSecurityReport } from './tokenSecurityAnalyzer';
+import { analyzeTokenSecurity, TokenSecurityReport, ExternalTokenData } from './tokenSecurityAnalyzer';
 
 const HELIUS_API_KEY = process.env.HELIUS_API_KEY || '';
 const HELIUS_RPC_URL = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_API_KEY}`;
@@ -342,12 +342,8 @@ export async function analyzeSuperTokenScore(
     // Validar address
     new PublicKey(tokenAddress);
 
-    // PASO 1: Análisis base (reutilizamos el existente)
-    if (onProgress) onProgress(5, 'Ejecutando análisis de seguridad base...');
-    const baseSecurityReport = await analyzeTokenSecurity(tokenAddress);
-
-    // PASO 2: Fetch de datos de APIs externas (en paralelo para velocidad)
-    if (onProgress) onProgress(15, 'Consultando múltiples APIs externas...');
+    // PASO 1: Fetch de datos de APIs externas PRIMERO (en paralelo para velocidad)
+    if (onProgress) onProgress(5, 'Consultando múltiples APIs externas...');
     const [rugCheckData, dexScreenerData, birdeyeData, solscanData, jupiterLiquidity] = await Promise.allSettled([
       fetchRugCheckData(tokenAddress),
       fetchDexScreenerData(tokenAddress),
@@ -355,6 +351,72 @@ export async function analyzeSuperTokenScore(
       fetchSolscanData(tokenAddress),
       fetchJupiterLiquidity(tokenAddress),
     ]);
+
+    // PASO 2: Preparar datos externos para análisis base
+    // Parse RugCheck data for LP burn/lock status
+    let lpBurnedFromRugCheck: boolean | undefined = undefined;
+    let lpLockedFromRugCheck: boolean | undefined = undefined;
+
+    if (rugCheckData.status === 'fulfilled' && rugCheckData.value?.risks) {
+      const risks = rugCheckData.value.risks;
+
+      // Check for LP burned status in risks
+      const lpBurnRisk = risks.find(r =>
+        r.name?.toLowerCase().includes('lp') &&
+        (r.name.toLowerCase().includes('burn') || r.name.toLowerCase().includes('burnt'))
+      );
+
+      // Check for LP locked status in risks
+      const lpLockRisk = risks.find(r =>
+        r.name?.toLowerCase().includes('lp') &&
+        r.name.toLowerCase().includes('lock')
+      );
+
+      // If risk level is 'info' or 'warn', it usually means LP is burned/locked (good)
+      // If risk level is 'danger', it means LP is NOT burned/locked (bad)
+      if (lpBurnRisk) {
+        lpBurnedFromRugCheck = lpBurnRisk.level === 'info' || lpBurnRisk.level === 'warn';
+        logger.info('✅ LP Burned status from RugCheck', { lpBurnedFromRugCheck, risk: lpBurnRisk });
+      }
+
+      if (lpLockRisk) {
+        lpLockedFromRugCheck = lpLockRisk.level === 'info' || lpLockRisk.level === 'warn';
+        logger.info('✅ LP Locked status from RugCheck', { lpLockedFromRugCheck, risk: lpLockRisk });
+      }
+    }
+
+    const externalData: ExternalTokenData = {
+      dexScreener: dexScreenerData.status === 'fulfilled' && dexScreenerData.value ? {
+        liquidity: dexScreenerData.value.liquidity,
+        volume24h: dexScreenerData.value.volume24h,
+        priceUSD: dexScreenerData.value.priceUSD,
+        marketCap: dexScreenerData.value.marketCap,
+        priceChange24h: dexScreenerData.value.priceChange24h,
+        priceChange7d: dexScreenerData.value.priceChange7d,
+        txns24h: dexScreenerData.value.txns24h,
+      } : undefined,
+      birdeye: birdeyeData.status === 'fulfilled' && birdeyeData.value ? {
+        liquidity: birdeyeData.value.liquidity,
+        volume24h: birdeyeData.value.volume24h,
+        price: birdeyeData.value.price,
+        marketCap: birdeyeData.value.marketCap,
+        lastTradeUnixTime: birdeyeData.value.lastTradeUnixTime,
+      } : undefined,
+      jupiter: jupiterLiquidity.status === 'fulfilled' && jupiterLiquidity.value ? {
+        totalLiquiditySOL: jupiterLiquidity.value.totalLiquiditySOL,
+        totalLiquidityUSD: jupiterLiquidity.value.totalLiquidityUSD,
+        pools: jupiterLiquidity.value.pools,
+      } : undefined,
+      rugCheck: rugCheckData.status === 'fulfilled' && rugCheckData.value ? {
+        risks: rugCheckData.value.risks,
+        lpBurned: lpBurnedFromRugCheck,
+        lpLocked: lpLockedFromRugCheck,
+      } : undefined,
+    };
+
+    // PASO 3: Análisis base CON datos externos
+    if (onProgress) onProgress(15, 'Ejecutando análisis de seguridad base...');
+    const baseSecurityReport = await analyzeTokenSecurity(tokenAddress, onProgress, externalData);
 
     // PASO 3: Análisis de wallets nuevas
     if (onProgress) onProgress(25, 'Analizando edad de wallets holders...');
@@ -720,20 +782,27 @@ async function analyzeNewWallets(tokenAddress: string): Promise<NewWalletAnalysi
       let walletsUnder10Days = 0;
       let suspiciousNewWallets = 0;
       let totalAge = 0;
+      let successfulChecks = 0;
 
-      // Analizar edad de cada wallet
+      // OPTIMIZED: Analizar solo una muestra representativa (30 wallets)
+      // Usar limit=100 en signatures en vez de 1000 para velocidad
       const connection = new Connection(HELIUS_RPC_URL, 'confirmed');
+      const sampleSize = Math.min(30, holders.length); // Reducido de 100 a 30
 
-      for (const holder of holders.slice(0, 100)) { // Analizar primeros 100 para velocidad
+      logger.info('🔍 Analyzing wallet ages', { totalHolders: totalWallets, sampleSize });
+
+      for (const holder of holders.slice(0, sampleSize)) {
         try {
           const pubkey = new PublicKey(holder.owner);
-          const signatures = await connection.getSignaturesForAddress(pubkey, { limit: 1000 });
+          // OPTIMIZED: limit=100 instead of 1000 for speed
+          const signatures = await connection.getSignaturesForAddress(pubkey, { limit: 100 });
 
           if (signatures.length > 0) {
             const oldestSig = signatures[signatures.length - 1];
             const walletAge = (Date.now() / 1000 - (oldestSig?.blockTime || 0)) / 86400; // días
 
             totalAge += walletAge;
+            successfulChecks++;
 
             if (walletAge < 10) {
               walletsUnder10Days++;
@@ -746,12 +815,27 @@ async function analyzeNewWallets(tokenAddress: string): Promise<NewWalletAnalysi
             }
           }
         } catch (error) {
-          // Skip wallet on error
+          // Log errors for debugging but continue
+          logger.warn('⚠️ Failed to check wallet age', { error: String(error) });
         }
       }
 
-      const percentageNewWallets = (walletsUnder10Days / Math.min(100, totalWallets)) * 100;
-      const avgWalletAge = totalAge / Math.min(100, totalWallets);
+      // CRITICAL FIX: Calculate percentage based on SUCCESSFUL checks, not all holders
+      const percentageNewWallets = successfulChecks > 0
+        ? (walletsUnder10Days / successfulChecks) * 100
+        : 0;
+
+      const avgWalletAge = successfulChecks > 0
+        ? totalAge / successfulChecks
+        : 0;
+
+      logger.info('✅ Wallet age analysis complete', {
+        totalWallets,
+        walletsUnder10Days,
+        percentageNewWallets: percentageNewWallets.toFixed(1),
+        avgWalletAge: avgWalletAge.toFixed(1),
+        successfulChecks
+      });
 
       // Calcular risk level
       let riskLevel: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL' = 'LOW';
@@ -1244,9 +1328,10 @@ async function analyzeTeam(
       ? Math.floor((liquidityAnalysis.lpLockEnd - Date.now()) / (1000 * 60 * 60 * 24 * 30)) // months
       : 0;
 
-    // Estimate if team is selling based on concentration risk
-    // If creator has a lot but liquidity isn't locked, they might be selling
-    const teamSelling = teamAllocation > 10 && !teamTokensLocked;
+    // CRITICAL FIX: Don't assume team is selling just because they hold tokens!
+    // We need ACTUAL evidence of selling (recent transactions from creator wallet)
+    // For now, only flag if there's extreme risk: very high allocation + no safety measures
+    const teamSelling = teamAllocation > 50 && !teamTokensLocked && !tokenAuthorities.isRevoked;
 
     // We can't directly know team wallets, but we can use bundle detection as a proxy
     const teamWallets = holderDistribution.bundleDetected ? holderDistribution.bundleWallets : 1;
@@ -1254,15 +1339,20 @@ async function analyzeTeam(
     let riskLevel: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL' = 'LOW';
     let score = 40;
 
-    // Risk assessment based on REAL data
-    if (teamSelling || teamAllocation > 25) {
+    // Risk assessment based on REAL data - LESS AGGRESSIVE, MORE FAIR
+    if (teamSelling) {
+      // Only CRITICAL if we have ACTUAL evidence of team selling
       riskLevel = 'CRITICAL';
       score = 0;
-    } else if (teamAllocation > 15 && !teamTokensLocked) {
+    } else if (teamAllocation > 50 && !teamTokensLocked && !tokenAuthorities.isRevoked) {
+      // Very high allocation + no safety measures = HIGH risk
       riskLevel = 'HIGH';
-      score = 10;
-    } else if (teamAllocation > 10 && !tokenAuthorities.isRevoked) {
-      // Authorities not revoked + high allocation = medium risk
+      score = 5;
+    } else if (teamAllocation > 30 && !teamTokensLocked) {
+      riskLevel = 'MEDIUM';
+      score = 15;
+    } else if (teamAllocation > 20 && !tokenAuthorities.isRevoked) {
+      // Moderate allocation + authorities not revoked = low-medium risk
       riskLevel = 'MEDIUM';
       score = 25;
     } else if (teamTokensLocked && tokenAuthorities.isRevoked) {
@@ -1271,6 +1361,10 @@ async function analyzeTeam(
       score = 40;
     } else if (teamTokensLocked || tokenAuthorities.isRevoked) {
       // One of the two safety measures
+      riskLevel = 'LOW';
+      score = 35;
+    } else {
+      // Normal case - team has reasonable allocation
       riskLevel = 'LOW';
       score = 30;
     }

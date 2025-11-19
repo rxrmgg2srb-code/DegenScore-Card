@@ -137,9 +137,47 @@ export interface TokenSecurityReport {
 // MAIN ANALYSIS FUNCTION
 // ============================================================================
 
+// External API data interfaces (imported from superTokenScorer)
+export interface ExternalTokenData {
+  dexScreener?: {
+    liquidity: number;
+    volume24h: number;
+    priceUSD: number;
+    marketCap: number;
+    priceChange24h: number;
+    priceChange7d: number;
+    txns24h?: { buys: number; sells: number };
+  };
+  birdeye?: {
+    liquidity: number;
+    volume24h: number;
+    price: number;
+    marketCap: number;
+    lastTradeUnixTime: number;
+    priceChange24h?: number;
+    priceChange7d?: number;
+    priceChange30d?: number;
+  };
+  jupiter?: {
+    totalLiquiditySOL: number;
+    totalLiquidityUSD: number;
+    pools: Array<{
+      name: string;
+      liquiditySOL: number;
+      liquidityUSD: number;
+    }>;
+  };
+  rugCheck?: {
+    risks: Array<{ name: string; level: string }>;
+    lpBurned?: boolean;
+    lpLocked?: boolean;
+  };
+}
+
 export async function analyzeTokenSecurity(
   tokenAddress: string,
-  onProgress?: (progress: number, message: string) => void
+  onProgress?: (progress: number, message: string) => void,
+  externalData?: ExternalTokenData
 ): Promise<TokenSecurityReport> {
   try {
     logger.info('🔒 Token Security Analysis Started', { tokenAddress });
@@ -159,13 +197,13 @@ export async function analyzeTokenSecurity(
     const holderDist = await analyzeHolderDistribution(tokenAddress);
 
     if (onProgress) onProgress(55, 'Analyzing liquidity...');
-    const liquidity = await analyzeLiquidity(tokenAddress);
+    const liquidity = await analyzeLiquidity(tokenAddress, externalData);
 
     if (onProgress) onProgress(70, 'Detecting trading patterns...');
-    const tradingPatterns = await analyzeTradingPatterns(tokenAddress);
+    const tradingPatterns = await analyzeTradingPatterns(tokenAddress, externalData);
 
     if (onProgress) onProgress(85, 'Analyzing market metrics...');
-    const marketMetrics = await analyzeMarketMetrics(tokenAddress);
+    const marketMetrics = await analyzeMarketMetrics(tokenAddress, externalData);
 
     if (onProgress) onProgress(95, 'Calculating security score...');
 
@@ -394,23 +432,111 @@ async function analyzeHolderDistribution(tokenAddress: string): Promise<HolderDi
 // LIQUIDITY ANALYSIS
 // ============================================================================
 
-async function analyzeLiquidity(tokenAddress: string): Promise<LiquidityAnalysis> {
+async function analyzeLiquidity(
+  tokenAddress: string,
+  externalData?: ExternalTokenData
+): Promise<LiquidityAnalysis> {
   return securityCircuitBreaker.execute(() =>
     retry(async () => {
-      // Fetch liquidity pools from Jupiter/Raydium/Orca
-      const poolsData = await fetchLiquidityPools(tokenAddress);
+      logger.info('💧 Analyzing liquidity from ALL sources', { tokenAddress });
 
-      const totalLiquiditySOL = poolsData.reduce((sum, pool) => sum + pool.liquiditySOL, 0);
-      const liquidityUSD = totalLiquiditySOL * await getSOLPrice(); // Get SOL price
+      // PRIORITY 1: Get real SOL price first
+      const solPrice = await getSOLPrice(externalData);
 
-      // Check if LP tokens are burned or locked
-      const lpBurned = poolsData.some(pool => pool.lpBurned);
-      const lpLocked = poolsData.some(pool => pool.lpLocked);
-      const lpLockEnd = poolsData.find(pool => pool.lpLockEnd)?.lpLockEnd;
+      // PRIORITY 2: Use ALL external data sources for liquidity
+      let liquidityUSD = 0;
+      let totalLiquiditySOL = 0;
+      const majorPools: Array<{ dex: string; liquiditySOL: number; lpBurned: boolean }> = [];
 
-      // Calculate liquidity to market cap ratio (if available)
-      const liquidityToMarketCapRatio = 0.5; // Placeholder - would need market cap data
+      // Source 1: DexScreener (MOST RELIABLE for liquidity)
+      if (externalData?.dexScreener?.liquidity && externalData.dexScreener.liquidity > 0) {
+        liquidityUSD = externalData.dexScreener.liquidity;
+        totalLiquiditySOL = liquidityUSD / solPrice;
+        majorPools.push({
+          dex: 'DexScreener',
+          liquiditySOL: totalLiquiditySOL,
+          lpBurned: false,
+        });
+        logger.info('✅ Using DexScreener liquidity', { liquidityUSD, totalLiquiditySOL });
+      }
 
+      // Source 2: Birdeye (FALLBACK)
+      if (liquidityUSD === 0 && externalData?.birdeye?.liquidity && externalData.birdeye.liquidity > 0) {
+        liquidityUSD = externalData.birdeye.liquidity;
+        totalLiquiditySOL = liquidityUSD / solPrice;
+        majorPools.push({
+          dex: 'Birdeye',
+          liquiditySOL: totalLiquiditySOL,
+          lpBurned: false,
+        });
+        logger.info('✅ Using Birdeye liquidity', { liquidityUSD, totalLiquiditySOL });
+      }
+
+      // Source 3: Jupiter (FALLBACK)
+      if (liquidityUSD === 0 && externalData?.jupiter?.totalLiquidityUSD && externalData.jupiter.totalLiquidityUSD > 0) {
+        liquidityUSD = externalData.jupiter.totalLiquidityUSD;
+        totalLiquiditySOL = externalData.jupiter.totalLiquiditySOL || (liquidityUSD / solPrice);
+
+        if (externalData.jupiter.pools && externalData.jupiter.pools.length > 0) {
+          externalData.jupiter.pools.forEach(pool => {
+            majorPools.push({
+              dex: pool.name,
+              liquiditySOL: pool.liquiditySOL,
+              lpBurned: false,
+            });
+          });
+        }
+        logger.info('✅ Using Jupiter liquidity', { liquidityUSD, totalLiquiditySOL });
+      }
+
+      // CRITICAL: Check LP burned/locked status from RugCheck
+      let lpBurned = false;
+      let lpLocked = false;
+
+      if (externalData?.rugCheck) {
+        // Check RugCheck risks for LP burn/lock info
+        const lpRisks = externalData.rugCheck.risks?.filter(r =>
+          r.name.toLowerCase().includes('lp') ||
+          r.name.toLowerCase().includes('liquidity')
+        );
+
+        // If RugCheck explicitly provides these fields
+        if (externalData.rugCheck.lpBurned !== undefined) {
+          lpBurned = externalData.rugCheck.lpBurned;
+        }
+        if (externalData.rugCheck.lpLocked !== undefined) {
+          lpLocked = externalData.rugCheck.lpLocked;
+        }
+
+        // Infer from risk messages
+        lpRisks?.forEach(risk => {
+          if (risk.name.toLowerCase().includes('burned') || risk.name.toLowerCase().includes('burnt')) {
+            lpBurned = risk.level === 'info' || risk.level === 'warn'; // Good sign
+          }
+          if (risk.name.toLowerCase().includes('locked')) {
+            lpLocked = risk.level === 'info' || risk.level === 'warn'; // Good sign
+          }
+        });
+
+        logger.info('🔥 LP Burn/Lock Status from RugCheck', { lpBurned, lpLocked });
+      }
+
+      // Calculate liquidity to market cap ratio
+      const marketCap = externalData?.dexScreener?.marketCap || externalData?.birdeye?.marketCap || 0;
+      const liquidityToMarketCapRatio = marketCap > 0 ? liquidityUSD / marketCap : 0;
+
+      // CRITICAL LOGGING - Log final values
+      logger.info('💧 FINAL Liquidity Analysis', {
+        totalLiquiditySOL,
+        liquidityUSD,
+        lpBurned,
+        lpLocked,
+        liquidityToMarketCapRatio,
+        solPrice,
+        sources: majorPools.map(p => p.dex).join(', ')
+      });
+
+      // Calculate risk level and score based on REAL data
       let score = 20;
       let riskLevel: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL' = 'LOW';
 
@@ -436,13 +562,9 @@ async function analyzeLiquidity(tokenAddress: string): Promise<LiquidityAnalysis
         liquidityUSD,
         lpBurned,
         lpLocked,
-        lpLockEnd,
+        lpLockEnd: undefined,
         liquidityToMarketCapRatio,
-        majorPools: poolsData.map(pool => ({
-          dex: pool.dex,
-          liquiditySOL: pool.liquiditySOL,
-          lpBurned: pool.lpBurned,
-        })),
+        majorPools,
         riskLevel,
         score,
       };
@@ -450,27 +572,40 @@ async function analyzeLiquidity(tokenAddress: string): Promise<LiquidityAnalysis
       maxRetries: 3,
       retryableStatusCodes: [408, 429, 500, 502, 503, 504],
     })
-  ).catch(() => ({
-    // Fallback on error
-    totalLiquiditySOL: 0,
-    liquidityUSD: 0,
-    lpBurned: false,
-    lpLocked: false,
-    liquidityToMarketCapRatio: 0,
-    majorPools: [],
-    riskLevel: 'CRITICAL' as const,
-    score: 0,
-  }));
+  ).catch((error) => {
+    // CRITICAL: Log the error instead of silently failing
+    logger.error('❌ Liquidity Analysis FAILED - Using fallback', error instanceof Error ? error : undefined, {
+      tokenAddress,
+      error: String(error),
+    });
+
+    // Return fallback but log the failure
+    return {
+      totalLiquiditySOL: 0,
+      liquidityUSD: 0,
+      lpBurned: false,
+      lpLocked: false,
+      liquidityToMarketCapRatio: 0,
+      majorPools: [],
+      riskLevel: 'CRITICAL' as const,
+      score: 0,
+    };
+  });
 }
 
 // ============================================================================
 // TRADING PATTERNS ANALYSIS
 // ============================================================================
 
-async function analyzeTradingPatterns(tokenAddress: string): Promise<TradingPatterns> {
+async function analyzeTradingPatterns(
+  tokenAddress: string,
+  externalData?: ExternalTokenData
+): Promise<TradingPatterns> {
   return securityCircuitBreaker.execute(() =>
     retry(async () => {
-      // Analyze first 100 transactions to detect patterns
+      logger.info('🔍 Analyzing trading patterns with REAL data', { tokenAddress });
+
+      // Analyze transactions from Helius
       const url = `https://api.helius.xyz/v0/addresses/${tokenAddress}/transactions?api-key=${HELIUS_API_KEY}&limit=100`;
 
       const response = await fetch(url);
@@ -486,8 +621,31 @@ async function analyzeTradingPatterns(tokenAddress: string): Promise<TradingPatt
       // Detect snipers (bought in first 10 transactions)
       const snipers = Math.min(10, transactions.length);
 
-      // Detect wash trading
-      const washTrading = detectWashTrading(transactions);
+      // Enhanced wash trading detection using external data
+      let washTrading = detectWashTrading(transactions);
+
+      // Use external data to improve wash trading detection
+      if (externalData?.dexScreener?.txns24h) {
+        const { buys, sells } = externalData.dexScreener.txns24h;
+        const buysSellsRatio = sells > 0 ? buys / sells : buys;
+
+        // Extreme buy/sell imbalance suggests wash trading
+        if (buysSellsRatio > 10 || buysSellsRatio < 0.1) {
+          washTrading = true;
+          logger.info('⚠️ Wash trading detected from buy/sell ratio', { buysSellsRatio });
+        }
+
+        // Volume/Liquidity ratio check
+        const volume24h = externalData.dexScreener.volume24h || 0;
+        const liquidity = externalData.dexScreener.liquidity || 0;
+        if (liquidity > 0) {
+          const volumeToLiquidityRatio = volume24h / liquidity;
+          if (volumeToLiquidityRatio > 20) {
+            washTrading = true;
+            logger.info('⚠️ Wash trading detected from volume/liquidity ratio', { volumeToLiquidityRatio });
+          }
+        }
+      }
 
       // Detect honeypot (nobody can sell)
       const { canSell, honeypotDetected } = detectHoneypot(transactions);
@@ -498,6 +656,16 @@ async function analyzeTradingPatterns(tokenAddress: string): Promise<TradingPatt
 
       const suspiciousVolume = washTrading || bundleBots > 10;
 
+      logger.info('🔍 FINAL Trading Patterns', {
+        bundleBots,
+        snipers,
+        washTrading,
+        honeypotDetected,
+        canSell,
+        suspiciousVolume
+      });
+
+      // Calculate risk level and score
       let score = 15;
       let riskLevel: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL' = 'LOW';
 
@@ -531,19 +699,25 @@ async function analyzeTradingPatterns(tokenAddress: string): Promise<TradingPatt
       maxRetries: 3,
       retryableStatusCodes: [408, 429, 500, 502, 503, 504],
     })
-  ).catch(() => ({
-    // Fallback
-    bundleBots: 0,
-    snipers: 0,
-    washTrading: false,
-    suspiciousVolume: false,
-    honeypotDetected: false,
-    canSell: true,
-    avgBuyTax: 0,
-    avgSellTax: 0,
-    riskLevel: 'MEDIUM' as const,
-    score: 8,
-  }));
+  ).catch((error) => {
+    logger.error('❌ Trading Patterns Analysis FAILED', error instanceof Error ? error : undefined, {
+      tokenAddress,
+      error: String(error),
+    });
+
+    return {
+      bundleBots: 0,
+      snipers: 0,
+      washTrading: false,
+      suspiciousVolume: false,
+      honeypotDetected: false,
+      canSell: true,
+      avgBuyTax: 0,
+      avgSellTax: 0,
+      riskLevel: 'MEDIUM' as const,
+      score: 8,
+    };
+  });
 }
 
 // ============================================================================
@@ -625,35 +799,80 @@ async function getTokenMetadata(tokenAddress: string): Promise<TokenMetadata> {
 // MARKET METRICS ANALYSIS
 // ============================================================================
 
-async function analyzeMarketMetrics(tokenAddress: string): Promise<MarketMetrics> {
+async function analyzeMarketMetrics(
+  tokenAddress: string,
+  externalData?: ExternalTokenData
+): Promise<MarketMetrics> {
   return securityCircuitBreaker.execute(() =>
     retry(async () => {
-      // This would ideally fetch from CoinGecko/Jupiter/Birdeye
-      // For now, we'll use transaction history to estimate age
-      const url = `https://api.helius.xyz/v0/addresses/${tokenAddress}/transactions?api-key=${HELIUS_API_KEY}&limit=1000`;
+      logger.info('📊 Analyzing market metrics from REAL data', { tokenAddress });
 
-      const response = await fetch(url);
-      if (!response.ok) {
-        throw new Error('Failed to fetch market data');
+      // PRIORITY 1: Get REAL age from Birdeye (most accurate)
+      let ageInDays = 0;
+      let athDate: number | undefined;
+
+      if (externalData?.birdeye?.lastTradeUnixTime && externalData.birdeye.lastTradeUnixTime > 0) {
+        // Birdeye gives us creation/first trade time
+        const currentTime = Date.now() / 1000; // Convert to seconds
+        ageInDays = (currentTime - externalData.birdeye.lastTradeUnixTime) / 86400;
+        athDate = externalData.birdeye.lastTradeUnixTime;
+        logger.info('✅ Using Birdeye token age', { ageInDays, athDate });
       }
 
-      const transactions = await response.json();
+      // FALLBACK: Try to get age from Helius transaction history
+      if (ageInDays === 0) {
+        try {
+          const url = `https://api.helius.xyz/v0/addresses/${tokenAddress}/transactions?api-key=${HELIUS_API_KEY}&limit=1000`;
+          const response = await fetch(url);
 
-      // Calculate age from first transaction
-      const oldestTx = transactions[transactions.length - 1];
-      const ageInDays = oldestTx ? (Date.now() / 1000 - oldestTx.timestamp) / 86400 : 0;
+          if (response.ok) {
+            const transactions = await response.json();
+            const oldestTx = transactions[transactions.length - 1];
 
-      // Estimate volume (this is very rough, would need proper DEX data)
-      const volume24h = 0; // Placeholder
-      const volumeChange24h = 0;
-      const priceChange24h = 0;
-      const priceChange7d = 0;
-      const marketCap = 0;
-      const allTimeHigh = 0;
+            if (oldestTx?.timestamp) {
+              ageInDays = (Date.now() / 1000 - oldestTx.timestamp) / 86400;
+              athDate = oldestTx.timestamp;
+              logger.info('✅ Using Helius transaction age', { ageInDays, athDate });
+            }
+          }
+        } catch (error) {
+          logger.warn('⚠️ Failed to fetch transaction history for age', { error: String(error) });
+        }
+      }
 
-      // Detect pump and dump pattern
-      const isPumpAndDump = ageInDays < 1 && transactions.length > 500;
+      // Get REAL volume from DexScreener or Birdeye
+      const volume24h = externalData?.dexScreener?.volume24h || externalData?.birdeye?.volume24h || 0;
 
+      // Get REAL price changes from DexScreener or Birdeye
+      const priceChange24h = externalData?.dexScreener?.priceChange24h || externalData?.birdeye?.priceChange24h || 0;
+      const priceChange7d = externalData?.dexScreener?.priceChange7d || externalData?.birdeye?.priceChange7d || 0;
+
+      // Get REAL market cap
+      const marketCap = externalData?.dexScreener?.marketCap || externalData?.birdeye?.marketCap || 0;
+
+      // Calculate volumeChange24h (rough estimate from price changes)
+      const volumeChange24h = 0; // Would need historical volume data
+
+      // Estimate ATH (use current price if no history)
+      const currentPrice = externalData?.dexScreener?.priceUSD || externalData?.birdeye?.price || 0;
+      const allTimeHigh = currentPrice; // Conservative estimate
+
+      // Detect pump and dump pattern using REAL data
+      const isPumpAndDump =
+        ageInDays < 1 &&
+        volume24h > marketCap * 5 && // Extreme volume relative to market cap
+        priceChange24h > 100; // Over 100% price increase
+
+      logger.info('📊 FINAL Market Metrics', {
+        ageInDays,
+        volume24h,
+        priceChange24h,
+        priceChange7d,
+        marketCap,
+        isPumpAndDump
+      });
+
+      // Calculate score based on REAL data
       let score = 10;
       if (ageInDays > 30) score = 10;
       else if (ageInDays > 7) score = 7;
@@ -670,7 +889,7 @@ async function analyzeMarketMetrics(tokenAddress: string): Promise<MarketMetrics
         priceChange7d,
         marketCap,
         allTimeHigh,
-        athDate: oldestTx?.timestamp,
+        athDate,
         isPumpAndDump,
         score,
       };
@@ -678,17 +897,24 @@ async function analyzeMarketMetrics(tokenAddress: string): Promise<MarketMetrics
       maxRetries: 3,
       retryableStatusCodes: [408, 429, 500, 502, 503, 504],
     })
-  ).catch(() => ({
-    ageInDays: 0,
-    volume24h: 0,
-    volumeChange24h: 0,
-    priceChange24h: 0,
-    priceChange7d: 0,
-    marketCap: 0,
-    allTimeHigh: 0,
-    isPumpAndDump: false,
-    score: 0,
-  }));
+  ).catch((error) => {
+    logger.error('❌ Market Metrics Analysis FAILED', error instanceof Error ? error : undefined, {
+      tokenAddress,
+      error: String(error),
+    });
+
+    return {
+      ageInDays: 0,
+      volume24h: 0,
+      volumeChange24h: 0,
+      priceChange24h: 0,
+      priceChange7d: 0,
+      marketCap: 0,
+      allTimeHigh: 0,
+      isPumpAndDump: false,
+      score: 0,
+    };
+  });
 }
 
 // ============================================================================
@@ -929,16 +1155,59 @@ async function detectBundleWallets(_tokenAddress: string): Promise<number> {
   return 0;
 }
 
-async function fetchLiquidityPools(_tokenAddress: string): Promise<any[]> {
-  // This would query Raydium/Orca/Jupiter for liquidity pools
-  // Simplified for now
-  return [];
-}
+async function getSOLPrice(externalData?: ExternalTokenData): Promise<number> {
+  try {
+    // PRIORITY 1: Use price from DexScreener if available (most reliable)
+    if (externalData?.dexScreener?.priceUSD && externalData.dexScreener.priceUSD > 0) {
+      // DexScreener gives us token price, we need SOL price
+      // We can use a constant for now or fetch from Jupiter
+    }
 
-async function getSOLPrice(): Promise<number> {
-  // Fetch current SOL price from an oracle or API
-  // Placeholder
-  return 150;
+    // PRIORITY 2: Use price from Birdeye if available
+    if (externalData?.birdeye?.price && externalData.birdeye.price > 0) {
+      // Same issue - this is token price
+    }
+
+    // FALLBACK: Fetch real SOL price from Jupiter or CoinGecko
+    try {
+      const response = await fetch('https://price.jup.ag/v6/price?ids=SOL', {
+        headers: { 'Accept': 'application/json' }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const solPrice = data?.data?.SOL?.price;
+        if (solPrice && solPrice > 0) {
+          logger.info('✅ Using Jupiter SOL price', { solPrice });
+          return solPrice;
+        }
+      }
+    } catch (error) {
+      logger.warn('⚠️ Failed to fetch SOL price from Jupiter', { error: String(error) });
+    }
+
+    // FALLBACK 2: Try CoinGecko
+    try {
+      const response = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd');
+      if (response.ok) {
+        const data = await response.json();
+        const solPrice = data?.solana?.usd;
+        if (solPrice && solPrice > 0) {
+          logger.info('✅ Using CoinGecko SOL price', { solPrice });
+          return solPrice;
+        }
+      }
+    } catch (error) {
+      logger.warn('⚠️ Failed to fetch SOL price from CoinGecko', { error: String(error) });
+    }
+
+    // Last resort fallback - use reasonable estimate
+    logger.warn('⚠️ Using fallback SOL price estimate');
+    return 150;
+  } catch (error) {
+    logger.error('❌ Error fetching SOL price', error instanceof Error ? error : undefined);
+    return 150;
+  }
 }
 
 function detectBundleBots(transactions: any[]): number {
