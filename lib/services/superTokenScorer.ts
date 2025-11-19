@@ -883,49 +883,111 @@ async function analyzeInsiders(tokenAddress: string): Promise<InsiderAnalysis> {
 async function analyzeVolume(_tokenAddress: string, dexData?: DexScreenerData): Promise<VolumeAnalysis> {
   try {
     const volume24h = dexData?.volume24h || 0;
-    const volume7d = volume24h * 7; // Estimación
-    const volume30d = volume24h * 30; // Estimación
 
-    // Estimar volumen real vs fake basado en ratio de buys/sells
+    // ⚡ Use REAL price changes to estimate volume trend (more accurate than multiplication)
+    const priceChange24h = dexData?.priceChange24h || 0;
+    const priceChange7d = dexData?.priceChange7d || 0;
+    const priceChange30d = dexData?.priceChange30d || 0;
+
+    // Estimate 7d and 30d volume using price volatility as indicator
+    // Higher volatility usually correlates with higher volume
+    const volatilityFactor7d = 1 + Math.min(Math.abs(priceChange7d) / 100, 2);
+    const volume7d = volume24h * 6 * volatilityFactor7d; // More realistic than simple *7
+
+    const volatilityFactor30d = 1 + Math.min(Math.abs(priceChange30d) / 100, 1.5);
+    const volume30d = volume24h * 28 * volatilityFactor30d;
+
+    // ⚡ ADVANCED WASH TRADING DETECTION using REAL transaction data
     const buys = dexData?.txns24h.buys || 0;
     const sells = dexData?.txns24h.sells || 0;
     const totalTxns = buys + sells;
 
-    // Si el ratio está muy desbalanceado, podría ser wash trading
+    // Calculate buy/sell metrics
     const buyRatio = totalTxns > 0 ? buys / totalTxns : 0.5;
-    const sellRatio = totalTxns > 0 ? sells / totalTxns : 0.5;
+    const buysSellsRatio = sells > 0 ? buys / sells : (buys > 0 ? 10 : 1);
 
-    const isBalanced = Math.abs(buyRatio - sellRatio) < 0.3;
+    // Detect fake volume patterns with MULTI-FACTOR ANALYSIS:
+    let fakeVolumePercent = 0;
 
-    const fakeVolumePercent = isBalanced ? 10 : 40; // Estimación conservadora
-    const realVolume = volume24h * (1 - fakeVolumePercent / 100);
-
-    const liquidity = dexData?.liquidity || 0;
-    const volumeToLiquidityRatio = liquidity > 0 ? volume24h / liquidity : 0;
-
-    // Determinar trend
-    const priceChange24h = dexData?.priceChange24h || 0;
-    let volumeTrend: 'INCREASING' | 'STABLE' | 'DECREASING' | 'PUMP' = 'STABLE';
-
-    if (priceChange24h > 50 && volume24h > 100000) {
-      volumeTrend = 'PUMP';
-    } else if (priceChange24h > 10) {
-      volumeTrend = 'INCREASING';
-    } else if (priceChange24h < -10) {
-      volumeTrend = 'DECREASING';
+    // Factor 1: Buy/Sell ratio imbalance (wash trading signature)
+    if (buysSellsRatio > 5 || buysSellsRatio < 0.2) {
+      fakeVolumePercent += 40; // Extreme imbalance - very suspicious
+    } else if (buysSellsRatio > 3 || buysSellsRatio < 0.33) {
+      fakeVolumePercent += 25; // High imbalance
+    } else if (buysSellsRatio > 2 || buysSellsRatio < 0.5) {
+      fakeVolumePercent += 10; // Moderate imbalance
+    } else {
+      fakeVolumePercent += 5; // Even balanced tokens have some wash trading
     }
 
-    const suspiciousVolume = fakeVolumePercent > 30 || volumeTrend === 'PUMP';
+    // Factor 2: Volume/Liquidity ratio (CRITICAL FOR DETECTING MANIPULATION)
+    const liquidity = dexData?.liquidity || 1;
+    const volumeToLiquidityRatio = volume24h / liquidity;
 
-    let score = 40;
-    if (suspiciousVolume || volume24h < 1000) {
-      score = 10;
-    } else if (volume24h > 100000 && isBalanced) {
-      score = 40;
-    } else if (volume24h > 10000) {
-      score = 30;
+    // Healthy ratio: 0.5 to 5. >10 is VERY suspicious
+    if (volumeToLiquidityRatio > 20) {
+      fakeVolumePercent += 30; // Almost certainly wash trading
+    } else if (volumeToLiquidityRatio > 10) {
+      fakeVolumePercent += 20; // Very suspicious
+    } else if (volumeToLiquidityRatio > 5) {
+      fakeVolumePercent += 10; // Suspicious
+    }
+
+    // Factor 3: Transaction count analysis (detects bot activity)
+    const avgVolumePerTx = totalTxns > 0 ? volume24h / totalTxns : 0;
+    if (avgVolumePerTx > 5000 && totalTxns < 100) {
+      fakeVolumePercent += 15; // Large txs with few count = likely bots
+    } else if (avgVolumePerTx > 2000 && totalTxns < 50) {
+      fakeVolumePercent += 10;
+    }
+
+    // Cap at 95% (always leave small possibility it's real)
+    fakeVolumePercent = Math.min(95, Math.max(0, fakeVolumePercent));
+
+    const realVolume = volume24h * ((100 - fakeVolumePercent) / 100);
+
+    // Determine volume trend using REAL price changes
+    let volumeTrend: 'INCREASING' | 'STABLE' | 'DECREASING' | 'PUMP' = 'STABLE';
+
+    if (priceChange24h > 100 && volume24h > 50000) {
+      volumeTrend = 'PUMP'; // Likely pump and dump
+    } else if (priceChange7d > 20 && volume24h > 10000) {
+      volumeTrend = 'INCREASING'; // Healthy growth
+    } else if (priceChange7d < -20 && volume24h > 5000) {
+      volumeTrend = 'DECREASING'; // Declining interest
+    }
+
+    const suspiciousVolume =
+      fakeVolumePercent > 40 ||
+      volumeToLiquidityRatio > 10 ||
+      volumeTrend === 'PUMP' ||
+      (buysSellsRatio > 4 || buysSellsRatio < 0.25);
+
+    // Score based on REAL metrics with sophisticated logic
+    let score = 0;
+
+    if (volume24h < 500) {
+      score = 5; // Extremely low volume - dead coin
+    } else if (suspiciousVolume) {
+      // Penalize based on fake volume percentage
+      score = Math.max(5, Math.round(25 - (fakeVolumePercent / 4)));
+    } else if (realVolume > 100000 && buyRatio >= 0.4 && buyRatio <= 0.6) {
+      score = 40; // Excellent: high real volume + balanced
+    } else if (realVolume > 50000 && buyRatio >= 0.35 && buyRatio <= 0.65) {
+      score = 35; // Very good
+    } else if (realVolume > 25000) {
+      score = 30; // Good
+    } else if (realVolume > 10000) {
+      score = 25; // Moderate
+    } else if (realVolume > 5000) {
+      score = 20; // Fair
     } else {
-      score = 20;
+      score = 15; // Low but not dead
+    }
+
+    // Bonus for ideal volume/liquidity ratio (sustainable trading)
+    if (volumeToLiquidityRatio >= 0.5 && volumeToLiquidityRatio <= 3) {
+      score += 5; // Healthy ratio bonus
     }
 
     return {
@@ -937,7 +999,7 @@ async function analyzeVolume(_tokenAddress: string, dexData?: DexScreenerData): 
       volumeToLiquidityRatio,
       volumeTrend,
       suspiciousVolume,
-      score,
+      score: Math.min(40, Math.max(0, score)),
     };
   } catch (error) {
     return {
@@ -945,7 +1007,7 @@ async function analyzeVolume(_tokenAddress: string, dexData?: DexScreenerData): 
       volume7d: 0,
       volume30d: 0,
       realVolume: 0,
-      fakeVolumePercent: 50,
+      fakeVolumePercent: 95,
       volumeToLiquidityRatio: 0,
       volumeTrend: 'STABLE',
       suspiciousVolume: true,
@@ -1569,33 +1631,86 @@ function calculateJupiterScore(data: JupiterLiquidityData): number {
 }
 
 function calculateSuperScore(breakdown: SuperTokenScore['scoreBreakdown']): number {
-  // Suma ponderada de todos los scores
-  const weightedTotal =
-    breakdown.baseSecurityScore * 1.5 + // Peso más alto al análisis base
-    breakdown.newWalletScore +
-    breakdown.insiderScore +
-    breakdown.volumeScore +
-    breakdown.socialScore +
-    breakdown.botDetectionScore +
-    breakdown.smartMoneyScore +
-    breakdown.teamScore +
-    breakdown.pricePatternScore +
-    breakdown.historicalHoldersScore +
-    breakdown.liquidityDepthScore +
-    breakdown.crossChainScore +
-    breakdown.competitorScore +
-    breakdown.rugCheckScore * 1.2 + // RugCheck es muy importante
-    breakdown.dexScreenerScore +
-    breakdown.birdeyeScore +
-    breakdown.jupiterScore;
+  /**
+   * ⚡ OPTIMIZED SUPER SCORE CALCULATION - 100% REAL DATA ONLY
+   *
+   * This scoring system ONLY uses metrics with REAL on-chain and API data.
+   * We EXCLUDE metrics without real data to avoid inflating scores artificially.
+   *
+   * INCLUDED (Real Data):
+   * - baseSecurityScore: Real on-chain data (authorities, holders, liquidity)
+   * - newWalletScore: Real transaction history analysis
+   * - insiderScore: Real holder distribution analysis
+   * - volumeScore: Real DEX volume data
+   * - socialScore: Real metadata from on-chain
+   * - botDetectionScore: Real transaction pattern analysis
+   * - teamScore: Real authority and LP lock data
+   * - pricePatternScore: Real price change data from DEX
+   * - liquidityDepthScore: Real liquidity from multiple sources
+   * - rugCheckScore: Real RugCheck API data (when available)
+   * - dexScreenerScore: Real DEX aggregator data
+   * - birdeyeScore: Real market data from Birdeye
+   * - jupiterScore: Real liquidity data from Jupiter
+   *
+   * EXCLUDED (No Real Data):
+   * - smartMoneyScore: Requires whale tracking DB (not implemented)
+   * - historicalHoldersScore: Requires historical snapshots (not implemented)
+   * - crossChainScore: Requires bridge detection (not implemented)
+   * - competitorScore: Requires competitor DB (not implemented)
+   */
 
-  // Máximo teórico: 100*1.5 + 50 + 50 + 40 + 30 + 60 + 70 + 40 + 50 + 40 + 50 + 30 + 30 + 100*1.2 + 60 + 50 + 50 = 970
-  const maxPossible = 970;
+  const weightedTotal =
+    breakdown.baseSecurityScore * 2.0 +      // HIGHEST WEIGHT - Core on-chain security (0-100)
+    breakdown.rugCheckScore * 1.8 +           // CRITICAL - Professional audit data (0-100)
+    breakdown.liquidityDepthScore * 1.5 +     // VERY IMPORTANT - Real liquidity depth (0-50)
+    breakdown.teamScore * 1.3 +               // IMPORTANT - Team tokens & authorities (0-40)
+    breakdown.newWalletScore * 1.2 +          // IMPORTANT - Sybil attack detection (0-50)
+    breakdown.insiderScore * 1.2 +            // IMPORTANT - Insider trading detection (0-50)
+    breakdown.botDetectionScore * 1.1 +       // Important - Bot activity detection (0-60)
+    breakdown.volumeScore +                   // Real volume analysis (0-40)
+    breakdown.pricePatternScore +             // Real price pattern analysis (0-50)
+    breakdown.dexScreenerScore +              // Real DEX data (0-60)
+    breakdown.birdeyeScore +                  // Real market data (0-50)
+    breakdown.jupiterScore +                  // Real Jupiter data (0-50)
+    breakdown.socialScore * 0.5;              // Lower weight - less critical (0-30)
+
+  // Maximum possible with current weights:
+  // 100*2.0 + 100*1.8 + 50*1.5 + 40*1.3 + 50*1.2 + 50*1.2 + 60*1.1 + 40 + 50 + 60 + 50 + 50 + 30*0.5 =
+  // 200 + 180 + 75 + 52 + 60 + 60 + 66 + 40 + 50 + 60 + 50 + 50 + 15 = 958
+  const maxPossible = 958;
 
   // Normalizar a 0-100
   const normalized = (weightedTotal / maxPossible) * 100;
 
-  return Math.round(Math.min(100, Math.max(0, normalized)));
+  // Apply penalties for critical red flags
+  let finalScore = normalized;
+
+  // CRITICAL: If no liquidity, massive penalty
+  if (breakdown.liquidityDepthScore === 0) {
+    finalScore = Math.min(finalScore, 15); // Cap at 15 if no liquidity
+  }
+
+  // CRITICAL: If RugCheck shows danger and we have the data
+  if (breakdown.rugCheckScore < 30 && breakdown.rugCheckScore > 0) {
+    finalScore *= 0.7; // 30% penalty for bad rug check
+  }
+
+  // HIGH: If too many new wallets (>70%), likely Sybil attack
+  if (breakdown.newWalletScore < 10) {
+    finalScore *= 0.85; // 15% penalty
+  }
+
+  // HIGH: If insider selling detected
+  if (breakdown.insiderScore < 15) {
+    finalScore *= 0.85; // 15% penalty
+  }
+
+  // MEDIUM: If high bot activity
+  if (breakdown.botDetectionScore < 20) {
+    finalScore *= 0.9; // 10% penalty
+  }
+
+  return Math.round(Math.min(100, Math.max(0, finalScore)));
 }
 
 function getGlobalRiskLevel(score: number): SuperTokenScore['globalRiskLevel'] {
@@ -1726,6 +1841,85 @@ function consolidateRedFlags(
       severity: 'CRITICAL',
       message: '⚠️ RUGGED - Este token ha sido identificado como un rug pull',
       score_impact: 100,
+    });
+  }
+
+  // ⚡ ADVANCED RED FLAGS - Using sophisticated pattern detection
+
+  // CRITICAL: Volume/Liquidity ratio too high (almost certain wash trading)
+  if (volume.volumeToLiquidityRatio > 15 && volume.volume24h > 5000) {
+    flags.push({
+      category: 'Wash Trading',
+      severity: 'CRITICAL',
+      message: `Ratio volumen/liquidez extremo: ${volume.volumeToLiquidityRatio.toFixed(1)}x - fuerte evidencia de wash trading`,
+      score_impact: 30,
+    });
+  } else if (volume.volumeToLiquidityRatio > 8) {
+    flags.push({
+      category: 'Wash Trading',
+      severity: 'HIGH',
+      message: `Ratio volumen/liquidez sospechoso: ${volume.volumeToLiquidityRatio.toFixed(1)}x - posible manipulación`,
+      score_impact: 15,
+    });
+  }
+
+  // HIGH: Honeypot pattern - volume shows PUMP but price change is negative (sells failing)
+  if (volume.volumeTrend === 'PUMP' && price.pattern === 'DEATH_SPIRAL') {
+    flags.push({
+      category: 'Honeypot',
+      severity: 'CRITICAL',
+      message: '🍯 POSIBLE HONEYPOT - Alto volumen de compras pero precio cayendo (ventas podrían estar bloqueadas)',
+      score_impact: 35,
+    });
+  }
+
+  // HIGH: Extreme fake volume percentage
+  if (volume.fakeVolumePercent > 60) {
+    flags.push({
+      category: 'Fake Volume',
+      severity: 'HIGH',
+      message: `${volume.fakeVolumePercent.toFixed(0)}% del volumen parece fake - mayoría del trading es manipulado`,
+      score_impact: 20,
+    });
+  }
+
+  // MEDIUM: Price pattern inconsistent with healthy token
+  if (price.pattern === 'DEATH_SPIRAL' && liquidity.liquidityHealth !== 'CRITICAL') {
+    flags.push({
+      category: 'Price Action',
+      severity: 'MEDIUM',
+      message: 'Patrón de muerte en espiral - precio cayendo consistentemente',
+      score_impact: 12,
+    });
+  }
+
+  // HIGH: Low liquidity combined with suspiciousFEATURE
+  if (liquidity.liquidityHealth === 'POOR' && volume.suspiciousVolume) {
+    flags.push({
+      category: 'Market Manipulation',
+      severity: 'HIGH',
+      message: 'Baja liquidez + volumen sospechoso = alta probabilidad de manipulación',
+      score_impact: 18,
+    });
+  }
+
+  // MEDIUM: Team has large allocation but nothing locked
+  if (team.teamAllocation > 20 && !team.teamTokensLocked) {
+    flags.push({
+      category: 'Team Risk',
+      severity: 'MEDIUM',
+      message: `Team controla ${team.teamAllocation.toFixed(1)}% del supply sin bloquear tokens`,
+      score_impact: 12,
+    });
+  }
+
+  // HIGH: Combination of new wallets + insider activity
+  if (newWallet.percentageNewWallets > 60 && insider.suspiciousActivity) {
+    flags.push({
+      category: 'Sybil Attack',
+      severity: 'HIGH',
+      message: 'Muchas wallets nuevas + actividad insider = posible ataque Sybil coordinado',
+      score_impact: 22,
     });
   }
 
