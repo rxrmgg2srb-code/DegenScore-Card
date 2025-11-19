@@ -23,6 +23,13 @@ import { Connection, PublicKey } from '@solana/web3.js';
 import { logger } from '@/lib/logger';
 import { retry, CircuitBreaker } from '../retryLogic';
 import { analyzeTokenSecurity, TokenSecurityReport } from './tokenSecurityAnalyzer';
+import {
+  throttledRugCheckCall,
+  throttledDexScreenerCall,
+  throttledBirdeyeCall,
+  throttledSolscanCall,
+  throttledJupiterCall,
+} from '@/lib/externalApiThrottler';
 
 const HELIUS_API_KEY = process.env.HELIUS_API_KEY || '';
 const HELIUS_RPC_URL = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_API_KEY}`;
@@ -523,21 +530,34 @@ export async function analyzeSuperTokenScore(
 
 async function fetchRugCheckData(tokenAddress: string): Promise<RugCheckData | undefined> {
   try {
-    // RugCheck.xyz API
-    const response = await fetch(`https://api.rugcheck.xyz/v1/tokens/${tokenAddress}/report`);
+    // RugCheck.xyz API with throttling and retry
+    return await throttledRugCheckCall(
+      () => retry(async () => {
+        const response = await fetch(`https://api.rugcheck.xyz/v1/tokens/${tokenAddress}/report`);
 
-    if (!response.ok) {
-      throw new Error('RugCheck API error');
-    }
+        if (!response.ok) {
+          const error: any = new Error(`RugCheck API error: ${response.status}`);
+          error.status = response.status;
+          throw error;
+        }
 
-    const data = await response.json();
+        const data = await response.json();
 
-    return {
-      score: data.score || 0,
-      risks: data.risks || [],
-      rugged: data.rugged || false,
-      ruggedDetails: data.ruggedDetails,
-    };
+        return {
+          score: data.score || 0,
+          risks: data.risks || [],
+          rugged: data.rugged || false,
+          ruggedDetails: data.ruggedDetails,
+        };
+      }, {
+        maxRetries: 3,
+        retryableStatusCodes: [408, 429, 500, 502, 503, 504],
+        onRetry: (attempt, error) => {
+          logger.warn(`[RugCheck] Retrying (attempt ${attempt}):`, { message: error.message });
+        }
+      }),
+      { priority: 3, timeout: 15000 }
+    );
   } catch (error) {
     logger.warn('RugCheck API failed', { tokenAddress, error: String(error) });
     return undefined;
@@ -546,36 +566,49 @@ async function fetchRugCheckData(tokenAddress: string): Promise<RugCheckData | u
 
 async function fetchDexScreenerData(tokenAddress: string): Promise<DexScreenerData | undefined> {
   try {
-    const response = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${tokenAddress}`);
+    return await throttledDexScreenerCall(
+      () => retry(async () => {
+        const response = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${tokenAddress}`);
 
-    if (!response.ok) {
-      throw new Error('DexScreener API error');
-    }
+        if (!response.ok) {
+          const error: any = new Error(`DexScreener API error: ${response.status}`);
+          error.status = response.status;
+          throw error;
+        }
 
-    const data = await response.json();
-    const pair = data.pairs?.[0]; // Tomar el par principal
+        const data = await response.json();
+        const pair = data.pairs?.[0]; // Tomar el par principal
 
-    if (!pair) {
-      return undefined;
-    }
+        if (!pair) {
+          return undefined;
+        }
 
-    return {
-      pairAddress: pair.pairAddress,
-      dex: pair.dexId,
-      priceUSD: parseFloat(pair.priceUsd || 0),
-      volume24h: parseFloat(pair.volume?.h24 || 0),
-      liquidity: parseFloat(pair.liquidity?.usd || 0),
-      fdv: parseFloat(pair.fdv || 0),
-      priceChange24h: parseFloat(pair.priceChange?.h24 || 0),
-      priceChange7d: parseFloat(pair.priceChange?.h7 || 0),
-      priceChange30d: parseFloat(pair.priceChange?.h30 || 0),
-      txns24h: {
-        buys: pair.txns?.h24?.buys || 0,
-        sells: pair.txns?.h24?.sells || 0,
-      },
-      holders: pair.holders || 0,
-      marketCap: parseFloat(pair.marketCap || 0),
-    };
+        return {
+          pairAddress: pair.pairAddress,
+          dex: pair.dexId,
+          priceUSD: parseFloat(pair.priceUsd || 0),
+          volume24h: parseFloat(pair.volume?.h24 || 0),
+          liquidity: parseFloat(pair.liquidity?.usd || 0),
+          fdv: parseFloat(pair.fdv || 0),
+          priceChange24h: parseFloat(pair.priceChange?.h24 || 0),
+          priceChange7d: parseFloat(pair.priceChange?.h7 || 0),
+          priceChange30d: parseFloat(pair.priceChange?.h30 || 0),
+          txns24h: {
+            buys: pair.txns?.h24?.buys || 0,
+            sells: pair.txns?.h24?.sells || 0,
+          },
+          holders: pair.holders || 0,
+          marketCap: parseFloat(pair.marketCap || 0),
+        };
+      }, {
+        maxRetries: 3,
+        retryableStatusCodes: [408, 429, 500, 502, 503, 504],
+        onRetry: (attempt, error) => {
+          logger.warn(`[DexScreener] Retrying (attempt ${attempt}):`, { message: error.message });
+        }
+      }),
+      { priority: 2, timeout: 15000 }
+    );
   } catch (error) {
     logger.warn('DexScreener API failed', { tokenAddress, error: String(error) });
     return undefined;
@@ -587,37 +620,50 @@ async function fetchBirdeyeData(tokenAddress: string): Promise<BirdeyeData | und
     // Birdeye API requiere API key (opcional, pero mejora los límites)
     const apiKey = process.env.BIRDEYE_API_KEY || '';
 
-    const response = await fetch(`https://public-api.birdeye.so/defi/token_overview?address=${tokenAddress}`, {
-      headers: apiKey ? { 'X-API-KEY': apiKey } : {},
-    });
+    return await throttledBirdeyeCall(
+      () => retry(async () => {
+        const response = await fetch(`https://public-api.birdeye.so/defi/token_overview?address=${tokenAddress}`, {
+          headers: apiKey ? { 'X-API-KEY': apiKey } : {},
+        });
 
-    if (!response.ok) {
-      throw new Error('Birdeye API error');
-    }
+        if (!response.ok) {
+          const error: any = new Error(`Birdeye API error: ${response.status}`);
+          error.status = response.status;
+          throw error;
+        }
 
-    const data = await response.json();
-    const tokenData = data.data;
+        const data = await response.json();
+        const tokenData = data.data;
 
-    if (!tokenData) {
-      return undefined;
-    }
+        if (!tokenData) {
+          return undefined;
+        }
 
-    return {
-      address: tokenData.address,
-      symbol: tokenData.symbol,
-      price: tokenData.value,
-      liquidity: tokenData.liquidity,
-      volume24h: tokenData.v24hUSD,
-      priceChange24h: tokenData.priceChange24hPercent,
-      priceChange7d: tokenData.priceChange7dPercent,
-      priceChange30d: tokenData.priceChange30dPercent,
-      marketCap: tokenData.mc,
-      holder: tokenData.holder,
-      supply: tokenData.supply,
-      uniqueWallets24h: tokenData.uniqueWallet24h,
-      trade24h: tokenData.trade24h,
-      lastTradeUnixTime: tokenData.lastTradeUnixTime,
-    };
+        return {
+          address: tokenData.address,
+          symbol: tokenData.symbol,
+          price: tokenData.value,
+          liquidity: tokenData.liquidity,
+          volume24h: tokenData.v24hUSD,
+          priceChange24h: tokenData.priceChange24hPercent,
+          priceChange7d: tokenData.priceChange7dPercent,
+          priceChange30d: tokenData.priceChange30dPercent,
+          marketCap: tokenData.mc,
+          holder: tokenData.holder,
+          supply: tokenData.supply,
+          uniqueWallets24h: tokenData.uniqueWallet24h,
+          trade24h: tokenData.trade24h,
+          lastTradeUnixTime: tokenData.lastTradeUnixTime,
+        };
+      }, {
+        maxRetries: 3,
+        retryableStatusCodes: [408, 429, 500, 502, 503, 504],
+        onRetry: (attempt, error) => {
+          logger.warn(`[Birdeye] Retrying (attempt ${attempt}):`, { message: error.message });
+        }
+      }),
+      { priority: 3, timeout: 15000 }
+    );
   } catch (error) {
     logger.warn('Birdeye API failed', { tokenAddress, error: String(error) });
     return undefined;
@@ -626,28 +672,41 @@ async function fetchBirdeyeData(tokenAddress: string): Promise<BirdeyeData | und
 
 async function fetchSolscanData(tokenAddress: string): Promise<SolscanData | undefined> {
   try {
-    const response = await fetch(`https://public-api.solscan.io/token/meta?tokenAddress=${tokenAddress}`);
+    return await throttledSolscanCall(
+      () => retry(async () => {
+        const response = await fetch(`https://public-api.solscan.io/token/meta?tokenAddress=${tokenAddress}`);
 
-    if (!response.ok) {
-      throw new Error('Solscan API error');
-    }
+        if (!response.ok) {
+          const error: any = new Error(`Solscan API error: ${response.status}`);
+          error.status = response.status;
+          throw error;
+        }
 
-    const data = await response.json();
+        const data = await response.json();
 
-    return {
-      address: data.address,
-      symbol: data.symbol,
-      name: data.name,
-      decimals: data.decimals,
-      supply: data.supply,
-      holder: data.holder,
-      website: data.website,
-      twitter: data.twitter,
-      coingeckoId: data.coingeckoId,
-      priceUsdt: data.priceUsdt,
-      volumeUsdt: data.volumeUsdt,
-      marketCapUsdt: data.marketCapUsdt,
-    };
+        return {
+          address: data.address,
+          symbol: data.symbol,
+          name: data.name,
+          decimals: data.decimals,
+          supply: data.supply,
+          holder: data.holder,
+          website: data.website,
+          twitter: data.twitter,
+          coingeckoId: data.coingeckoId,
+          priceUsdt: data.priceUsdt,
+          volumeUsdt: data.volumeUsdt,
+          marketCapUsdt: data.marketCapUsdt,
+        };
+      }, {
+        maxRetries: 3,
+        retryableStatusCodes: [408, 429, 500, 502, 503, 504],
+        onRetry: (attempt, error) => {
+          logger.warn(`[Solscan] Retrying (attempt ${attempt}):`, { message: error.message });
+        }
+      }),
+      { priority: 4, timeout: 15000 }
+    );
   } catch (error) {
     logger.warn('Solscan API failed', { tokenAddress, error: String(error) });
     return undefined;
@@ -656,28 +715,41 @@ async function fetchSolscanData(tokenAddress: string): Promise<SolscanData | und
 
 async function fetchJupiterLiquidity(tokenAddress: string): Promise<JupiterLiquidityData | undefined> {
   try {
-    // Jupiter Quote API para obtener liquidez
-    const response = await fetch(`https://quote-api.jup.ag/v6/quote?inputMint=${tokenAddress}&outputMint=So11111111111111111111111111111111111111112&amount=1000000000`);
+    return await throttledJupiterCall(
+      () => retry(async () => {
+        // Jupiter Quote API para obtener liquidez
+        const response = await fetch(`https://quote-api.jup.ag/v6/quote?inputMint=${tokenAddress}&outputMint=So11111111111111111111111111111111111111112&amount=1000000000`);
 
-    if (!response.ok) {
-      throw new Error('Jupiter API error');
-    }
+        if (!response.ok) {
+          const error: any = new Error(`Jupiter API error: ${response.status}`);
+          error.status = response.status;
+          throw error;
+        }
 
-    const data = await response.json();
+        const data = await response.json();
 
-    // Calcular liquidez basada en las rutas disponibles
-    const pools = data.routePlan?.map((route: any) => ({
-      name: route.swapInfo?.label || 'Unknown',
-      liquiditySOL: 0, // Jupiter no expone esto directamente
-      liquidityUSD: 0,
-      volume24h: 0,
-    })) || [];
+        // Calcular liquidez basada en las rutas disponibles
+        const pools = data.routePlan?.map((route: any) => ({
+          name: route.swapInfo?.label || 'Unknown',
+          liquiditySOL: 0, // Jupiter no expone esto directamente
+          liquidityUSD: 0,
+          volume24h: 0,
+        })) || [];
 
-    return {
-      totalLiquiditySOL: 0, // Placeholder - necesitaríamos más llamadas
-      totalLiquidityUSD: 0,
-      pools,
-    };
+        return {
+          totalLiquiditySOL: 0, // Placeholder - necesitaríamos más llamadas
+          totalLiquidityUSD: 0,
+          pools,
+        };
+      }, {
+        maxRetries: 3,
+        retryableStatusCodes: [408, 429, 500, 502, 503, 504],
+        onRetry: (attempt, error) => {
+          logger.warn(`[Jupiter] Retrying (attempt ${attempt}):`, { message: error.message });
+        }
+      }),
+      { priority: 3, timeout: 15000 }
+    );
   } catch (error) {
     logger.warn('Jupiter API failed', { tokenAddress, error: String(error) });
     return undefined;
