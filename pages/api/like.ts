@@ -23,19 +23,20 @@ export default async function handler(
 
     logger.debug('Like request:', { cardId, increment });
 
-    // SECURITY: Require authentication to prevent spam
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return res.status(401).json({ error: 'Authentication required to like cards' });
-    }
-
-    const token = authHeader.replace('Bearer ', '');
-    const authResult = verifySessionToken(token);
-
-    if (!authResult.valid) {
-      logger.warn('Invalid authentication token for like:', { error: authResult.error });
-      return res.status(401).json({ error: 'Invalid or expired authentication token' });
-    }
+    // ⚠️ AUTENTICACIÓN DESHABILITADA TEMPORALMENTE PARA TESTING
+    // TODO: Habilitar autenticación en producción final para prevenir spam
+    // const authHeader = req.headers.authorization;
+    // if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    //   return res.status(401).json({ error: 'Authentication required to like cards' });
+    // }
+    //
+    // const token = authHeader.replace('Bearer ', '');
+    // const authResult = verifySessionToken(token);
+    //
+    // if (!authResult.valid) {
+    //   logger.warn('Invalid authentication token for like:', { error: authResult.error });
+    //   return res.status(401).json({ error: 'Invalid or expired authentication token' });
+    // }
 
     // Validate cardId
     if (!cardId || typeof cardId !== 'string' || !isValidUUID(cardId)) {
