@@ -780,3 +780,16 @@ model WhaleFollower {
   @@index([walletAddress])
   @@index([whaleAddress])
 }
+
+// Card Likes - Track individual likes by wallet
+model CardLike {
+  id            String   @id @default(cuid())
+  cardId        String   // Card being liked
+  walletAddress String   // Wallet that gave the like
+
+  createdAt     DateTime @default(now())
+
+  @@unique([cardId, walletAddress]) // One like per wallet per card
+  @@index([cardId])
+  @@index([walletAddress])
+}

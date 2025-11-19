@@ -1,9 +1,8 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { prisma } from '../../lib/prisma';
-import { isValidId } from '../../lib/validation';
+import { isValidId, isValidSolanaAddress } from '../../lib/validation';
 import { rateLimit } from '../../lib/rateLimitRedis';
 import { logger } from '../../lib/logger';
-import { verifySessionToken } from '../../lib/walletAuth';
 
 export default async function handler(
   req: NextApiRequest,
@@ -19,24 +18,15 @@ export default async function handler(
   }
 
   try {
-    const { cardId, increment } = req.body;
+    const { cardId, walletAddress } = req.body;
 
-    logger.info('🔵 Like request received:', { cardId, increment });
+    logger.info('🔵 Like request received:', { cardId, walletAddress });
 
-    // ⚠️ AUTENTICACIÓN DESHABILITADA TEMPORALMENTE PARA TESTING
-    // TODO: Habilitar autenticación en producción final para prevenir spam
-    // const authHeader = req.headers.authorization;
-    // if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    //   return res.status(401).json({ error: 'Authentication required to like cards' });
-    // }
-    //
-    // const token = authHeader.replace('Bearer ', '');
-    // const authResult = verifySessionToken(token);
-    //
-    // if (!authResult.valid) {
-    //   logger.warn('Invalid authentication token for like:', { error: authResult.error });
-    //   return res.status(401).json({ error: 'Invalid or expired authentication token' });
-    // }
+    // Validate walletAddress
+    if (!walletAddress || typeof walletAddress !== 'string' || !isValidSolanaAddress(walletAddress)) {
+      logger.error('🔴 Invalid wallet address:', { walletAddress });
+      return res.status(400).json({ error: 'Connect your wallet to like cards' });
+    }
 
     // Validate cardId (accepts both UUID and CUID formats)
     if (!cardId || typeof cardId !== 'string' || !isValidId(cardId)) {
@@ -44,10 +34,18 @@ export default async function handler(
       return res.status(400).json({ error: 'Invalid card ID' });
     }
 
-    // Validate increment
-    if (typeof increment !== 'boolean') {
-      logger.error('🔴 Invalid increment value:', { increment });
-      return res.status(400).json({ error: 'Invalid increment value' });
+    // ✅ VALIDACIÓN: Solo wallets que pagaron o usaron código promocional pueden dar like
+    const userCard = await prisma.degenCard.findUnique({
+      where: { walletAddress },
+      select: { isPaid: true }
+    });
+
+    if (!userCard || !userCard.isPaid) {
+      logger.warn('⚠️ Unauthorized like attempt - wallet not paid:', { walletAddress });
+      return res.status(403).json({
+        error: 'You need to create and pay for your card before liking others',
+        requiresPayment: true
+      });
     }
 
     // Check if card exists
@@ -63,25 +61,84 @@ export default async function handler(
 
     logger.info('🔵 Current card:', { cardId, currentLikes: currentCard.likes });
 
-    // Prevent negative likes
-    if (!increment && currentCard.likes <= 0) {
-      logger.warn('⚠️ Cannot decrement likes below 0:', { cardId, currentLikes: currentCard.likes });
-      return res.status(400).json({ error: 'Likes cannot be negative' });
-    }
-
-    // Update likes
-    const updatedCard = await prisma.degenCard.update({
-      where: { id: cardId },
-      data: {
-        likes: {
-          increment: increment ? 1 : -1
+    // Check if user already liked this card
+    const existingLike = await prisma.cardLike.findUnique({
+      where: {
+        cardId_walletAddress: {
+          cardId,
+          walletAddress
         }
       }
     });
 
-    logger.info('✅ Likes updated successfully:', { cardId, newCount: updatedCard.likes });
+    let updatedCard;
+    let hasLiked: boolean;
 
-    res.status(200).json({ success: true, likes: updatedCard.likes });
+    if (existingLike) {
+      // User already liked - REMOVE like (unlike)
+      await prisma.$transaction([
+        // Delete the like record
+        prisma.cardLike.delete({
+          where: {
+            cardId_walletAddress: {
+              cardId,
+              walletAddress
+            }
+          }
+        }),
+        // Decrement likes count
+        prisma.degenCard.update({
+          where: { id: cardId },
+          data: {
+            likes: {
+              decrement: 1
+            }
+          }
+        })
+      ]);
+
+      updatedCard = await prisma.degenCard.findUnique({
+        where: { id: cardId },
+        select: { likes: true }
+      });
+
+      hasLiked = false;
+      logger.info('✅ Like removed successfully:', { cardId, walletAddress, newCount: updatedCard?.likes });
+    } else {
+      // User hasn't liked - ADD like
+      await prisma.$transaction([
+        // Create the like record
+        prisma.cardLike.create({
+          data: {
+            cardId,
+            walletAddress
+          }
+        }),
+        // Increment likes count
+        prisma.degenCard.update({
+          where: { id: cardId },
+          data: {
+            likes: {
+              increment: 1
+            }
+          }
+        })
+      ]);
+
+      updatedCard = await prisma.degenCard.findUnique({
+        where: { id: cardId },
+        select: { likes: true }
+      });
+
+      hasLiked = true;
+      logger.info('✅ Like added successfully:', { cardId, walletAddress, newCount: updatedCard?.likes });
+    }
+
+    res.status(200).json({
+      success: true,
+      likes: updatedCard?.likes || 0,
+      hasLiked
+    });
   } catch (error: any) {
     logger.error('Error updating likes:', error instanceof Error ? error : undefined, {
       error: String(error),
