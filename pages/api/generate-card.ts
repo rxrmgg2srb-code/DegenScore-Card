@@ -5,16 +5,45 @@ import { prisma } from '../../lib/prisma';
 import { cacheGet, cacheSet, CacheKeys } from '../../lib/cache/redis';
 import { logger } from '@/lib/logger';
 import path from 'path';
+import fs from 'fs';
 
 // 🔥 SOLUCIÓN DEFINITIVA: Registrar fonts para Vercel
 // Vercel NO tiene fonts del sistema, hay que registrarlas manualmente
 try {
-  const fontPath = path.join(process.cwd(), 'public', 'fonts');
-  GlobalFonts.registerFromPath(path.join(fontPath, 'NotoSans-Regular.ttf'), 'Noto Sans');
-  GlobalFonts.registerFromPath(path.join(fontPath, 'NotoSans-Bold.ttf'), 'Noto Sans Bold');
-  logger.info('✅ Fonts registered successfully for Vercel');
+  // En Vercel, process.cwd() apunta a /var/task
+  // Las fonts deben estar en public/fonts/
+  const fontPathPublic = path.join(process.cwd(), 'public', 'fonts', 'NotoSans-Regular.ttf');
+  const fontPathBoldPublic = path.join(process.cwd(), 'public', 'fonts', 'NotoSans-Bold.ttf');
+
+  // Intentar con path relativo también (para Next.js estático)
+  const fontPathStatic = path.join(process.cwd(), '.next', 'static', 'fonts', 'NotoSans-Regular.ttf');
+  const fontPathBoldStatic = path.join(process.cwd(), '.next', 'static', 'fonts', 'NotoSans-Bold.ttf');
+
+  // Intentar registrar desde public primero
+  let registered = false;
+
+  if (require('fs').existsSync(fontPathPublic)) {
+    GlobalFonts.registerFromPath(fontPathPublic, 'Noto Sans');
+    GlobalFonts.registerFromPath(fontPathBoldPublic, 'Noto Sans Bold');
+    logger.info('✅ Fonts registered from public/fonts');
+    registered = true;
+  } else if (require('fs').existsSync(fontPathStatic)) {
+    GlobalFonts.registerFromPath(fontPathStatic, 'Noto Sans');
+    GlobalFonts.registerFromPath(fontPathBoldStatic, 'Noto Sans Bold');
+    logger.info('✅ Fonts registered from .next/static/fonts');
+    registered = true;
+  } else {
+    logger.warn('⚠️ Font files not found at:', { fontPathPublic, fontPathStatic });
+  }
+
+  if (!registered) {
+    logger.warn('⚠️ Using system fonts as fallback');
+  }
 } catch (error) {
-  logger.error('⚠️ Failed to register fonts (will use system fonts):', error instanceof Error ? error : undefined);
+  logger.error('⚠️ Failed to register fonts (will use system fonts):', error instanceof Error ? error : undefined, {
+    error: String(error),
+    stack: error instanceof Error ? error.stack : undefined
+  });
 }
 
 // Función auxiliar para formatear SOL

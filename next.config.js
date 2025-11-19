@@ -99,6 +99,21 @@ const nextConfig = {
 
   // Webpack optimizations with memory constraints
   webpack: (config, { dev, isServer }) => {
+    // 🔥 COPY FONTS to .next for serverless functions in Vercel
+    if (isServer) {
+      const CopyPlugin = require('copy-webpack-plugin');
+      config.plugins.push(
+        new CopyPlugin({
+          patterns: [
+            {
+              from: 'public/fonts',
+              to: '../public/fonts',
+            },
+          ],
+        })
+      );
+    }
+
     // Reduce memory usage during builds
     config.optimization = {
       ...config.optimization,
