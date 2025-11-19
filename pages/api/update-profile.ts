@@ -1,8 +1,8 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { prisma } from '../../lib/prisma';
-import { isValidSolanaAddress, sanitizeHandle, sanitizeDisplayName } from '../../lib/validation';
 import { rateLimit } from '../../lib/rateLimitRedis';
 import { logger } from '../../lib/logger';
+import { updateProfileSchema, formatValidationError } from '../../lib/validation/schemas';
 
 export default async function handler(
   req: NextApiRequest,
@@ -18,28 +18,28 @@ export default async function handler(
   }
 
   try {
+    // Validate request with Zod (includes sanitization via regex)
+    const validationResult = updateProfileSchema.safeParse(req.body);
+
+    if (!validationResult.success) {
+      return res.status(400).json(formatValidationError(validationResult.error));
+    }
+
     const {
       walletAddress,
       displayName,
       twitter,
       telegram,
       profileImage
-    } = req.body;
+    } = validationResult.data;
 
-    // Validate wallet address
-    if (!walletAddress || !isValidSolanaAddress(walletAddress)) {
-      return res.status(400).json({ error: 'Invalid wallet address' });
-    }
-
-    // ✅ AUTENTICACIÓN REMOVIDA - Simplificado para evitar errores 401
-    // En un entorno de producción, considera implementar autenticación adecuada
     logger.info('Updating profile for:', { walletAddress });
 
-    // Sanitize user inputs to prevent XSS
+    // Prepare sanitized data
     const sanitizedData = {
-      displayName: displayName ? sanitizeDisplayName(displayName) : null,
-      twitter: twitter ? sanitizeHandle(twitter) : null,
-      telegram: telegram ? sanitizeHandle(telegram) : null,
+      displayName: displayName || null,
+      twitter: twitter || null,
+      telegram: telegram || null,
       profileImage: profileImage || null,
     };
 

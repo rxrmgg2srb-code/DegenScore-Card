@@ -31,7 +31,8 @@ export const Header = () => {
             >
               {t('nav.leaderboard')}
             </Link>
-            <Link
+            {/* DISABLED: Token Scanner & Super Scorer - Oculto del público para conservar créditos Helius */}
+            {/* <Link
               href="/token-scanner"
               className="text-gray-300 hover:text-white transition-colors flex items-center gap-1"
             >
@@ -42,7 +43,7 @@ export const Header = () => {
               className="text-gray-300 hover:text-white transition-colors flex items-center gap-1"
             >
               🚀 Super Scorer
-            </Link>
+            </Link> */}
             <Link
               href="/documentation"
               className="text-gray-300 hover:text-white transition-colors"
@@ -75,7 +76,8 @@ export const Header = () => {
           >
             {t('nav.leaderboard')}
           </Link>
-          <Link
+          {/* DISABLED: Token Scanner & Super Scorer - Oculto del público */}
+          {/* <Link
             href="/token-scanner"
             className="text-sm text-gray-300 hover:text-white transition-colors whitespace-nowrap"
           >
@@ -86,7 +88,7 @@ export const Header = () => {
             className="text-sm text-gray-300 hover:text-white transition-colors whitespace-nowrap"
           >
             🚀 Super
-          </Link>
+          </Link> */}
           <Link
             href="/documentation"
             className="text-sm text-gray-300 hover:text-white transition-colors whitespace-nowrap"

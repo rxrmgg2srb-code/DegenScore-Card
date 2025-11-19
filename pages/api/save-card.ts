@@ -1,10 +1,10 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { prisma } from '../../lib/prisma';
-import { isValidSolanaAddress } from '../../lib/validation';
 import { rateLimit } from '../../lib/rateLimitRedis';
 import { logger } from '../../lib/logger';
 import { sanitizeText } from '../../lib/sanitize';
 import { cacheDel, CacheKeys } from '../../lib/cache/redis';
+import { saveCardSchema, formatValidationError } from '../../lib/validation/schemas';
 
 export default async function handler(
   req: NextApiRequest,
@@ -20,16 +20,14 @@ export default async function handler(
   }
 
   try {
-    const { walletAddress, analysisData } = req.body;
+    // Validate request with Zod
+    const validationResult = saveCardSchema.safeParse(req.body);
 
-    // Validate inputs
-    if (!walletAddress || !analysisData) {
-      return res.status(400).json({ error: 'Missing required fields' });
+    if (!validationResult.success) {
+      return res.status(400).json(formatValidationError(validationResult.error));
     }
 
-    if (!isValidSolanaAddress(walletAddress)) {
-      return res.status(400).json({ error: 'Invalid wallet address' });
-    }
+    const { walletAddress, analysisData } = validationResult.data;
 
     logger.info('💾 Saving card for wallet:', { walletAddress });
     logger.info('📊 Analysis data received:', {

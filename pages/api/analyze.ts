@@ -1,9 +1,9 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { calculateAdvancedMetrics } from '../../lib/metrics';
 import { generateBadges } from '../../lib/badges-generator';
-import { isValidSolanaAddress } from '../../lib/validation';
 import { strictRateLimit } from '../../lib/rateLimitRedis';
 import { logger } from '../../lib/logger';
+import { analyzeWalletSchema, formatValidationError } from '../../lib/validation/schemas';
 
 export default async function handler(
   req: NextApiRequest,
@@ -19,16 +19,14 @@ export default async function handler(
   }
 
   try {
-    const { walletAddress } = req.body;
+    // Validate request with Zod
+    const validationResult = analyzeWalletSchema.safeParse(req.body);
 
-    // Validate wallet address
-    if (!walletAddress || typeof walletAddress !== 'string') {
-      return res.status(400).json({ error: 'Wallet address is required' });
+    if (!validationResult.success) {
+      return res.status(400).json(formatValidationError(validationResult.error));
     }
 
-    if (!isValidSolanaAddress(walletAddress)) {
-      return res.status(400).json({ error: 'Invalid Solana wallet address' });
-    }
+    const { walletAddress } = validationResult.data;
 
     logger.info('Analyzing wallet:', { walletAddress });
 

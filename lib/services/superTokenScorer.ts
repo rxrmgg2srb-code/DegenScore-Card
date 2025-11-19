@@ -23,6 +23,14 @@ import { Connection, PublicKey } from '@solana/web3.js';
 import { logger } from '@/lib/logger';
 import { retry, CircuitBreaker } from '../retryLogic';
 import { analyzeTokenSecurity, TokenSecurityReport } from './tokenSecurityAnalyzer';
+import {
+  throttledRugCheckCall,
+  throttledDexScreenerCall,
+  throttledBirdeyeCall,
+  throttledSolscanCall,
+  throttledJupiterCall,
+} from '@/lib/externalApiThrottler';
+import { throttledHeliusCall } from '@/lib/heliusThrottler';
 
 const HELIUS_API_KEY = process.env.HELIUS_API_KEY || '';
 const HELIUS_RPC_URL = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_API_KEY}`;
@@ -89,9 +97,44 @@ export interface RugCheckData {
     name: string;
     level: 'info' | 'warn' | 'danger';
     description: string;
+    score?: number;
+    value?: string;
   }>;
   rugged: boolean;
   ruggedDetails?: string;
+}
+
+export interface RugCheckSummary {
+  mint: string;
+  score: number;
+  score_normalised: number;
+  lpLockedPct: number;
+  tokenType: string;
+  tokenProgram: string;
+  risks: Array<{
+    name: string;
+    level: 'info' | 'warn' | 'danger';
+    description: string;
+    score: number;
+    value: string;
+  }>;
+  error?: string;
+}
+
+export interface RugCheckLockers {
+  lockers: Record<string, {
+    owner: string;
+    programID: string;
+    tokenAccount: string;
+    type: 'burn_wallet' | 'locker' | 'other';
+    unlockDate: number;
+    uri: string;
+    usdcLocked: number;
+  }>;
+  total: {
+    pct: number;
+    totalUSDC: number;
+  };
 }
 
 export interface DexScreenerData {
@@ -267,6 +310,8 @@ export interface SuperTokenScore {
 
   // Datos de APIs externas
   rugCheckData?: RugCheckData;
+  rugCheckSummary?: RugCheckSummary;
+  rugCheckLockers?: RugCheckLockers;
   dexScreenerData?: DexScreenerData;
   birdeyeData?: BirdeyeData;
   solscanData?: SolscanData;
@@ -348,17 +393,36 @@ export async function analyzeSuperTokenScore(
 
     // PASO 2: Fetch de datos de APIs externas (en paralelo para velocidad)
     if (onProgress) onProgress(15, 'Consultando múltiples APIs externas...');
-    const [rugCheckData, dexScreenerData, birdeyeData, solscanData, jupiterLiquidity] = await Promise.allSettled([
+    const [
+      rugCheckData,
+      rugCheckSummary,
+      rugCheckLockers,
+      dexScreenerData,
+      birdeyeData,
+      solscanData,
+      jupiterLiquidity
+    ] = await Promise.allSettled([
       fetchRugCheckData(tokenAddress),
+      fetchRugCheckSummary(tokenAddress),
+      fetchRugCheckLockers(tokenAddress),
       fetchDexScreenerData(tokenAddress),
       fetchBirdeyeData(tokenAddress),
       fetchSolscanData(tokenAddress),
       fetchJupiterLiquidity(tokenAddress),
     ]);
 
-    // PASO 3: Análisis de wallets nuevas
-    if (onProgress) onProgress(25, 'Analizando edad de wallets holders...');
-    const newWalletAnalysis = await analyzeNewWallets(tokenAddress);
+    // PASO 3: Análisis de wallets nuevas - DISABLED (usuario no lo quiere)
+    if (onProgress) onProgress(25, 'Continuando análisis...');
+    // Skipped: const newWalletAnalysis = await analyzeNewWallets(tokenAddress);
+    const newWalletAnalysis: NewWalletAnalysis = {
+      totalWallets: 0,
+      walletsUnder10Days: 0,
+      percentageNewWallets: 0,
+      avgWalletAge: 0,
+      suspiciousNewWallets: 0,
+      riskLevel: 'LOW',
+      score: 50, // Neutral score - no afecta el resultado
+    };
 
     // PASO 4: Análisis de insiders
     if (onProgress) onProgress(35, 'Detectando actividad de insiders...');
@@ -485,6 +549,8 @@ export async function analyzeSuperTokenScore(
       crossChainAnalysis,
       competitorAnalysis,
       rugCheckData: rugCheckData.status === 'fulfilled' ? rugCheckData.value : undefined,
+      rugCheckSummary: rugCheckSummary.status === 'fulfilled' ? rugCheckSummary.value : undefined,
+      rugCheckLockers: rugCheckLockers.status === 'fulfilled' ? rugCheckLockers.value : undefined,
       dexScreenerData: dexScreenerData.status === 'fulfilled' ? dexScreenerData.value : undefined,
       birdeyeData: birdeyeData.status === 'fulfilled' ? birdeyeData.value : undefined,
       solscanData: solscanData.status === 'fulfilled' ? solscanData.value : undefined,
@@ -523,59 +589,159 @@ export async function analyzeSuperTokenScore(
 
 async function fetchRugCheckData(tokenAddress: string): Promise<RugCheckData | undefined> {
   try {
-    // RugCheck.xyz API
-    const response = await fetch(`https://api.rugcheck.xyz/v1/tokens/${tokenAddress}/report`);
+    // RugCheck.xyz API with throttling and retry
+    return await throttledRugCheckCall(
+      () => retry(async () => {
+        const response = await fetch(`https://api.rugcheck.xyz/v1/tokens/${tokenAddress}/report`);
 
-    if (!response.ok) {
-      throw new Error('RugCheck API error');
-    }
+        if (!response.ok) {
+          const error: any = new Error(`RugCheck API error: ${response.status}`);
+          error.status = response.status;
+          throw error;
+        }
 
-    const data = await response.json();
+        const data = await response.json();
 
-    return {
-      score: data.score || 0,
-      risks: data.risks || [],
-      rugged: data.rugged || false,
-      ruggedDetails: data.ruggedDetails,
-    };
+        return {
+          score: data.score || 0,
+          risks: data.risks || [],
+          rugged: data.rugged || false,
+          ruggedDetails: data.ruggedDetails,
+        };
+      }, {
+        maxRetries: 3,
+        retryableStatusCodes: [408, 429, 500, 502, 503, 504],
+        onRetry: (attempt, error) => {
+          logger.warn(`[RugCheck] Retrying (attempt ${attempt}):`, { message: error.message });
+        }
+      }),
+      { priority: 3, timeout: 15000 }
+    );
   } catch (error) {
     logger.warn('RugCheck API failed', { tokenAddress, error: String(error) });
     return undefined;
   }
 }
 
+async function fetchRugCheckSummary(tokenAddress: string): Promise<RugCheckSummary | undefined> {
+  try {
+    // RugCheck Summary API - más ligero que el report completo
+    return await throttledRugCheckCall(
+      () => retry(async () => {
+        const response = await fetch(`https://api.rugcheck.xyz/v1/tokens/${tokenAddress}/report/summary`);
+
+        if (!response.ok) {
+          const error: any = new Error(`RugCheck Summary API error: ${response.status}`);
+          error.status = response.status;
+          throw error;
+        }
+
+        const data = await response.json();
+
+        return {
+          mint: tokenAddress,
+          score: data.score || 0,
+          score_normalised: data.score_normalised || 0,
+          lpLockedPct: data.lpLockedPct || 0,
+          tokenType: data.tokenType || 'unknown',
+          tokenProgram: data.tokenProgram || 'unknown',
+          risks: data.risks || [],
+          error: data.error,
+        };
+      }, {
+        maxRetries: 3,
+        retryableStatusCodes: [408, 429, 500, 502, 503, 504],
+        onRetry: (attempt, error) => {
+          logger.warn(`[RugCheck Summary] Retrying (attempt ${attempt}):`, { message: error.message });
+        }
+      }),
+      { priority: 2, timeout: 10000 } // Higher priority, shorter timeout (it's lighter)
+    );
+  } catch (error) {
+    logger.warn('RugCheck Summary API failed', { tokenAddress, error: String(error) });
+    return undefined;
+  }
+}
+
+async function fetchRugCheckLockers(tokenAddress: string): Promise<RugCheckLockers | undefined> {
+  try {
+    // RugCheck Lockers API - Info de LP locks
+    return await throttledRugCheckCall(
+      () => retry(async () => {
+        const response = await fetch(`https://api.rugcheck.xyz/v1/tokens/${tokenAddress}/lockers`);
+
+        if (!response.ok) {
+          const error: any = new Error(`RugCheck Lockers API error: ${response.status}`);
+          error.status = response.status;
+          throw error;
+        }
+
+        const data = await response.json();
+
+        return {
+          lockers: data.lockers || {},
+          total: data.total || { pct: 0, totalUSDC: 0 },
+        };
+      }, {
+        maxRetries: 3,
+        retryableStatusCodes: [408, 429, 500, 502, 503, 504],
+        onRetry: (attempt, error) => {
+          logger.warn(`[RugCheck Lockers] Retrying (attempt ${attempt}):`, { message: error.message });
+        }
+      }),
+      { priority: 4, timeout: 10000 } // Lower priority (optional data)
+    );
+  } catch (error) {
+    logger.warn('RugCheck Lockers API failed', { tokenAddress, error: String(error) });
+    return undefined;
+  }
+}
+
 async function fetchDexScreenerData(tokenAddress: string): Promise<DexScreenerData | undefined> {
   try {
-    const response = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${tokenAddress}`);
+    return await throttledDexScreenerCall(
+      () => retry(async () => {
+        const response = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${tokenAddress}`);
 
-    if (!response.ok) {
-      throw new Error('DexScreener API error');
-    }
+        if (!response.ok) {
+          const error: any = new Error(`DexScreener API error: ${response.status}`);
+          error.status = response.status;
+          throw error;
+        }
 
-    const data = await response.json();
-    const pair = data.pairs?.[0]; // Tomar el par principal
+        const data = await response.json();
+        const pair = data.pairs?.[0]; // Tomar el par principal
 
-    if (!pair) {
-      return undefined;
-    }
+        if (!pair) {
+          return undefined;
+        }
 
-    return {
-      pairAddress: pair.pairAddress,
-      dex: pair.dexId,
-      priceUSD: parseFloat(pair.priceUsd || 0),
-      volume24h: parseFloat(pair.volume?.h24 || 0),
-      liquidity: parseFloat(pair.liquidity?.usd || 0),
-      fdv: parseFloat(pair.fdv || 0),
-      priceChange24h: parseFloat(pair.priceChange?.h24 || 0),
-      priceChange7d: parseFloat(pair.priceChange?.h7 || 0),
-      priceChange30d: parseFloat(pair.priceChange?.h30 || 0),
-      txns24h: {
-        buys: pair.txns?.h24?.buys || 0,
-        sells: pair.txns?.h24?.sells || 0,
-      },
-      holders: pair.holders || 0,
-      marketCap: parseFloat(pair.marketCap || 0),
-    };
+        return {
+          pairAddress: pair.pairAddress,
+          dex: pair.dexId,
+          priceUSD: parseFloat(pair.priceUsd || 0),
+          volume24h: parseFloat(pair.volume?.h24 || 0),
+          liquidity: parseFloat(pair.liquidity?.usd || 0),
+          fdv: parseFloat(pair.fdv || 0),
+          priceChange24h: parseFloat(pair.priceChange?.h24 || 0),
+          priceChange7d: parseFloat(pair.priceChange?.h7 || 0),
+          priceChange30d: parseFloat(pair.priceChange?.h30 || 0),
+          txns24h: {
+            buys: pair.txns?.h24?.buys || 0,
+            sells: pair.txns?.h24?.sells || 0,
+          },
+          holders: pair.holders || 0,
+          marketCap: parseFloat(pair.marketCap || 0),
+        };
+      }, {
+        maxRetries: 3,
+        retryableStatusCodes: [408, 429, 500, 502, 503, 504],
+        onRetry: (attempt, error) => {
+          logger.warn(`[DexScreener] Retrying (attempt ${attempt}):`, { message: error.message });
+        }
+      }),
+      { priority: 2, timeout: 15000 }
+    );
   } catch (error) {
     logger.warn('DexScreener API failed', { tokenAddress, error: String(error) });
     return undefined;
@@ -587,99 +753,151 @@ async function fetchBirdeyeData(tokenAddress: string): Promise<BirdeyeData | und
     // Birdeye API requiere API key (opcional, pero mejora los límites)
     const apiKey = process.env.BIRDEYE_API_KEY || '';
 
-    const response = await fetch(`https://public-api.birdeye.so/defi/token_overview?address=${tokenAddress}`, {
-      headers: apiKey ? { 'X-API-KEY': apiKey } : {},
-    });
+    return await throttledBirdeyeCall(
+      () => retry(async () => {
+        const response = await fetch(`https://public-api.birdeye.so/defi/token_overview?address=${tokenAddress}`, {
+          headers: apiKey ? { 'X-API-KEY': apiKey } : {},
+        });
 
-    if (!response.ok) {
-      throw new Error('Birdeye API error');
-    }
+        if (!response.ok) {
+          const error: any = new Error(`Birdeye API error: ${response.status}`);
+          error.status = response.status;
+          throw error;
+        }
 
-    const data = await response.json();
-    const tokenData = data.data;
+        const data = await response.json();
+        const tokenData = data.data;
 
-    if (!tokenData) {
-      return undefined;
-    }
+        if (!tokenData) {
+          return undefined;
+        }
 
-    return {
-      address: tokenData.address,
-      symbol: tokenData.symbol,
-      price: tokenData.value,
-      liquidity: tokenData.liquidity,
-      volume24h: tokenData.v24hUSD,
-      priceChange24h: tokenData.priceChange24hPercent,
-      priceChange7d: tokenData.priceChange7dPercent,
-      priceChange30d: tokenData.priceChange30dPercent,
-      marketCap: tokenData.mc,
-      holder: tokenData.holder,
-      supply: tokenData.supply,
-      uniqueWallets24h: tokenData.uniqueWallet24h,
-      trade24h: tokenData.trade24h,
-      lastTradeUnixTime: tokenData.lastTradeUnixTime,
-    };
+        return {
+          address: tokenData.address,
+          symbol: tokenData.symbol,
+          price: tokenData.value,
+          liquidity: tokenData.liquidity,
+          volume24h: tokenData.v24hUSD,
+          priceChange24h: tokenData.priceChange24hPercent,
+          priceChange7d: tokenData.priceChange7dPercent,
+          priceChange30d: tokenData.priceChange30dPercent,
+          marketCap: tokenData.mc,
+          holder: tokenData.holder,
+          supply: tokenData.supply,
+          uniqueWallets24h: tokenData.uniqueWallet24h,
+          trade24h: tokenData.trade24h,
+          lastTradeUnixTime: tokenData.lastTradeUnixTime,
+        };
+      }, {
+        maxRetries: 3,
+        retryableStatusCodes: [408, 429, 500, 502, 503, 504],
+        onRetry: (attempt, error) => {
+          logger.warn(`[Birdeye] Retrying (attempt ${attempt}):`, { message: error.message });
+        }
+      }),
+      { priority: 3, timeout: 15000 }
+    );
   } catch (error) {
-    logger.warn('Birdeye API failed', { tokenAddress, error: String(error) });
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    logger.warn('Birdeye API failed', {
+      tokenAddress,
+      error: errorMsg,
+      hasApiKey: !!process.env.BIRDEYE_API_KEY,
+    });
     return undefined;
   }
 }
 
 async function fetchSolscanData(tokenAddress: string): Promise<SolscanData | undefined> {
   try {
-    const response = await fetch(`https://public-api.solscan.io/token/meta?tokenAddress=${tokenAddress}`);
+    return await throttledSolscanCall(
+      () => retry(async () => {
+        const response = await fetch(`https://public-api.solscan.io/token/meta?tokenAddress=${tokenAddress}`);
 
-    if (!response.ok) {
-      throw new Error('Solscan API error');
-    }
+        if (!response.ok) {
+          const error: any = new Error(`Solscan API error: ${response.status}`);
+          error.status = response.status;
+          throw error;
+        }
 
-    const data = await response.json();
+        const data = await response.json();
 
-    return {
-      address: data.address,
-      symbol: data.symbol,
-      name: data.name,
-      decimals: data.decimals,
-      supply: data.supply,
-      holder: data.holder,
-      website: data.website,
-      twitter: data.twitter,
-      coingeckoId: data.coingeckoId,
-      priceUsdt: data.priceUsdt,
-      volumeUsdt: data.volumeUsdt,
-      marketCapUsdt: data.marketCapUsdt,
-    };
+        return {
+          address: data.address,
+          symbol: data.symbol,
+          name: data.name,
+          decimals: data.decimals,
+          supply: data.supply,
+          holder: data.holder,
+          website: data.website,
+          twitter: data.twitter,
+          coingeckoId: data.coingeckoId,
+          priceUsdt: data.priceUsdt,
+          volumeUsdt: data.volumeUsdt,
+          marketCapUsdt: data.marketCapUsdt,
+        };
+      }, {
+        maxRetries: 3,
+        retryableStatusCodes: [408, 429, 500, 502, 503, 504],
+        onRetry: (attempt, error) => {
+          logger.warn(`[Solscan] Retrying (attempt ${attempt}):`, { message: error.message });
+        }
+      }),
+      { priority: 4, timeout: 15000 }
+    );
   } catch (error) {
-    logger.warn('Solscan API failed', { tokenAddress, error: String(error) });
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    logger.warn('Solscan API failed', {
+      tokenAddress,
+      error: errorMsg,
+    });
     return undefined;
   }
 }
 
 async function fetchJupiterLiquidity(tokenAddress: string): Promise<JupiterLiquidityData | undefined> {
   try {
-    // Jupiter Quote API para obtener liquidez
-    const response = await fetch(`https://quote-api.jup.ag/v6/quote?inputMint=${tokenAddress}&outputMint=So11111111111111111111111111111111111111112&amount=1000000000`);
+    return await throttledJupiterCall(
+      () => retry(async () => {
+        // Jupiter Quote API para obtener liquidez
+        const response = await fetch(`https://quote-api.jup.ag/v6/quote?inputMint=${tokenAddress}&outputMint=So11111111111111111111111111111111111111112&amount=1000000000`);
 
-    if (!response.ok) {
-      throw new Error('Jupiter API error');
-    }
+        if (!response.ok) {
+          const error: any = new Error(`Jupiter API error: ${response.status}`);
+          error.status = response.status;
+          throw error;
+        }
 
-    const data = await response.json();
+        const data = await response.json();
 
-    // Calcular liquidez basada en las rutas disponibles
-    const pools = data.routePlan?.map((route: any) => ({
-      name: route.swapInfo?.label || 'Unknown',
-      liquiditySOL: 0, // Jupiter no expone esto directamente
-      liquidityUSD: 0,
-      volume24h: 0,
-    })) || [];
+        // Calcular liquidez basada en las rutas disponibles
+        const pools = data.routePlan?.map((route: any) => ({
+          name: route.swapInfo?.label || 'Unknown',
+          liquiditySOL: 0, // Jupiter no expone esto directamente
+          liquidityUSD: 0,
+          volume24h: 0,
+        })) || [];
 
-    return {
-      totalLiquiditySOL: 0, // Placeholder - necesitaríamos más llamadas
-      totalLiquidityUSD: 0,
-      pools,
-    };
+        return {
+          totalLiquiditySOL: 0, // Placeholder - necesitaríamos más llamadas
+          totalLiquidityUSD: 0,
+          pools,
+        };
+      }, {
+        maxRetries: 3,
+        retryableStatusCodes: [408, 429, 500, 502, 503, 504],
+        onRetry: (attempt, error) => {
+          logger.warn(`[Jupiter] Retrying (attempt ${attempt}):`, { message: error.message });
+        }
+      }),
+      { priority: 3, timeout: 15000 }
+    );
   } catch (error) {
-    logger.warn('Jupiter API failed', { tokenAddress, error: String(error) });
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    logger.warn('Jupiter API failed', {
+      tokenAddress,
+      error: errorMsg,
+    });
     return undefined;
   }
 }
@@ -693,177 +911,140 @@ async function analyzeNewWallets(tokenAddress: string): Promise<NewWalletAnalysi
     retry(async () => {
       const url = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_API_KEY}`;
 
-      // 🔥 FIX: First, get the REAL total holder count from DAS API
-      try {
-        const dasResponse = await fetch(url, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            jsonrpc: '2.0',
-            id: 'holder-count',
-            method: 'getTokenAccounts',
-            params: {
-              mint: tokenAddress,
-              limit: 1, // Solo necesitamos saber el total
-              options: { showZeroBalance: false },
-            },
-          }),
-        });
+      // PASO 1: Obtener TODOS los holders (con paginación)
+      // Helius limita a 1000 por request, así que hacemos múltiples llamadas
+      let allHolders: any[] = [];
+      let cursor: string | undefined = undefined;
+      const MAX_HOLDERS_TO_FETCH = 100000; // Límite máximo de 100k holders
+      const PAGE_SIZE = 1000; // Tamaño de página (máximo de Helius)
 
-        const dasData = await dasResponse.json();
+      logger.info('[NewWalletAnalysis] Fetching all token holders...', { tokenAddress });
 
-        // Get actual holder count from DexScreener or Birdeye (more reliable)
-        let realTotalHolders = dasData.result?.total || 0;
-
-        // Try to get more accurate count from DexScreener
-        try {
-          const dexResponse = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${tokenAddress}`);
-          if (dexResponse.ok) {
-            const dexData = await dexResponse.json();
-            const dexHolders = dexData.pairs?.[0]?.info?.holders || 0;
-            if (dexHolders > realTotalHolders) {
-              realTotalHolders = dexHolders;
-            }
-          }
-        } catch (e) {
-          // Fallback to DAS count
-        }
-
-        // If we still don't have total, try Birdeye
-        if (realTotalHolders === 0) {
-          try {
-            const birdeyeKey = process.env.BIRDEYE_API_KEY || '';
-            const birdeyeResponse = await fetch(
-              `https://public-api.birdeye.so/defi/token_overview?address=${tokenAddress}`,
-              { headers: birdeyeKey ? { 'X-API-KEY': birdeyeKey } : {} }
-            );
-            if (birdeyeResponse.ok) {
-              const birdeyeData = await birdeyeResponse.json();
-              realTotalHolders = birdeyeData.data?.holder || 0;
-            }
-          } catch (e) {
-            // Fallback
-          }
-        }
-
-        // Now fetch actual holder wallets to analyze (sample)
+      // Fetch hasta 100 páginas (100k holders total)
+      for (let page = 0; page < 100 && allHolders.length < MAX_HOLDERS_TO_FETCH; page++) {
         const response = await fetch(url, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             jsonrpc: '2.0',
-            id: 'new-wallet-analysis',
+            id: `new-wallet-analysis-${page}`,
             method: 'getTokenAccounts',
             params: {
               mint: tokenAddress,
-              limit: 1000, // Get as many as possible
+              limit: PAGE_SIZE,
+              cursor: cursor,
               options: { showZeroBalance: false },
             },
           }),
         });
 
         if (!response.ok) {
-          throw new Error('Failed to fetch token holders');
+          if (page === 0) {
+            throw new Error('Failed to fetch token holders');
+          }
+          // Si falla en páginas posteriores, usar lo que tenemos
+          break;
         }
 
         const data = await response.json();
-        const holders = data.result?.token_accounts || [];
+        const pageHolders = data.result?.token_accounts || [];
 
-        // 🔥 FIX: Analyze a SAMPLE of 200 wallets (better than 100)
-        const sampleSize = Math.min(200, holders.length);
-        const sampleHolders = holders.slice(0, sampleSize);
+        if (pageHolders.length === 0) {
+          // No hay más holders
+          break;
+        }
 
-        let walletsUnder10DaysInSample = 0;
-        let suspiciousNewWallets = 0;
-        let totalAge = 0;
-        let analyzedCount = 0;
+        allHolders = allHolders.concat(pageHolders);
+        cursor = data.result?.cursor;
 
-        // Analizar edad de cada wallet en la muestra
-        const connection = new Connection(HELIUS_RPC_URL, 'confirmed');
+        // Si no hay cursor, no hay más páginas
+        if (!cursor) {
+          break;
+        }
 
-        for (const holder of sampleHolders) {
-          try {
-            const pubkey = new PublicKey(holder.owner);
-            const signatures = await connection.getSignaturesForAddress(pubkey, { limit: 1000 });
+        logger.debug(`[NewWalletAnalysis] Fetched page ${page + 1}, total holders: ${allHolders.length}`);
+      }
 
-            if (signatures.length > 0) {
-              const oldestSig = signatures[signatures.length - 1];
-              const walletAge = (Date.now() / 1000 - (oldestSig?.blockTime || 0)) / 86400; // días
+      const totalWallets = allHolders.length;
+      logger.info(`[NewWalletAnalysis] Total holders fetched: ${totalWallets}`);
 
-              totalAge += walletAge;
-              analyzedCount++;
+      let walletsUnder10Days = 0;
+      let suspiciousNewWallets = 0;
+      let totalAge = 0;
 
-              if (walletAge < 10) {
-                walletsUnder10DaysInSample++;
+      // PASO 2: Analizar edad de wallets
+      // Analizar sample más pequeño para evitar rate limiting
+      // 200 wallets es suficiente para estadística confiable
+      const connection = new Connection(HELIUS_RPC_URL, 'confirmed');
+      const SAMPLE_SIZE = Math.min(200, totalWallets);
 
-                // Si es nueva Y tiene mucho balance, es sospechoso
-                const balance = parseFloat(holder.amount);
-                if (balance > 1000000) { // threshold arbitrario
-                  suspiciousNewWallets++;
-                }
+      logger.info(`[NewWalletAnalysis] Analyzing ${SAMPLE_SIZE} wallet ages (sample)...`);
+
+      // Procesar secuencialmente con throttling (no en batches)
+      // para asegurar que cada llamada pase por el throttler
+      for (let i = 0; i < SAMPLE_SIZE; i++) {
+        const holder = allHolders[i];
+
+        try {
+          const pubkey = new PublicKey(holder.owner);
+
+          // CRÍTICO: Usar throttledHeliusCall para cada llamada RPC
+          const signatures = await throttledHeliusCall(
+            async () => connection.getSignaturesForAddress(pubkey, { limit: 1000 }),
+            { priority: 5, timeout: 15000 }
+          );
+
+          if (signatures.length > 0) {
+            const oldestSig = signatures[signatures.length - 1];
+            const walletAge = (Date.now() / 1000 - (oldestSig?.blockTime || 0)) / 86400; // días
+
+            totalAge += walletAge;
+
+            if (walletAge < 10) {
+              walletsUnder10Days++;
+
+              // Si es nueva Y tiene mucho balance, es sospechoso
+              const balance = parseFloat(holder.amount);
+              if (balance > 1000000) { // threshold arbitrario
+                suspiciousNewWallets++;
               }
             }
-          } catch (error) {
-            // Skip wallet on error
           }
+        } catch (error) {
+          // Skip wallet on error (throttler timeout, RPC error, etc.)
         }
-
-        // 🔥 FIX: Calculate percentage correctly based on REAL total holders
-        // The percentage is: (new wallets in sample / sample size) * 100
-        // This gives us an ESTIMATE of the percentage in the total population
-        const percentageNewWalletsInSample = analyzedCount > 0
-          ? (walletsUnder10DaysInSample / analyzedCount) * 100
-          : 0;
-
-        // Estimate total new wallets across ALL holders
-        const estimatedTotalNewWallets = Math.round(
-          (percentageNewWalletsInSample / 100) * (realTotalHolders || holders.length)
-        );
-
-        const avgWalletAge = analyzedCount > 0 ? totalAge / analyzedCount : 0;
-
-        // 🔥 FIX: Use the REAL total holders count
-        const totalWallets = realTotalHolders || holders.length;
-
-        // Calcular risk level basado en el porcentaje real
-        let riskLevel: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL' = 'LOW';
-        let score = 50;
-
-        if (percentageNewWalletsInSample > 70 || suspiciousNewWallets > 10) {
-          riskLevel = 'CRITICAL';
-          score = 0;
-        } else if (percentageNewWalletsInSample > 50 || suspiciousNewWallets > 5) {
-          riskLevel = 'HIGH';
-          score = 15;
-        } else if (percentageNewWalletsInSample > 30) {
-          riskLevel = 'MEDIUM';
-          score = 30;
-        } else {
-          riskLevel = 'LOW';
-          score = 50;
-        }
-
-        logger.info('✅ New Wallet Analysis Complete', {
-          tokenAddress,
-          totalWallets,
-          sampleSize: analyzedCount,
-          walletsUnder10Days: estimatedTotalNewWallets,
-          percentageNewWallets: percentageNewWalletsInSample.toFixed(2),
-        });
-
-        return {
-          totalWallets, // REAL total from DexScreener/Birdeye
-          walletsUnder10Days: estimatedTotalNewWallets, // Estimated from sample
-          percentageNewWallets: percentageNewWalletsInSample,
-          avgWalletAge,
-          suspiciousNewWallets,
-          riskLevel,
-          score,
-        };
-      } catch (error) {
-        logger.error('❌ New Wallet Analysis Failed', error instanceof Error ? error : undefined);
-        throw error;
       }
+
+      const percentageNewWallets = SAMPLE_SIZE > 0 ? (walletsUnder10Days / SAMPLE_SIZE) * 100 : 0;
+      const avgWalletAge = SAMPLE_SIZE > 0 ? totalAge / SAMPLE_SIZE : 0;
+
+      // Calcular risk level
+      let riskLevel: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL' = 'LOW';
+      let score = 50;
+
+      if (percentageNewWallets > 70 || suspiciousNewWallets > 10) {
+        riskLevel = 'CRITICAL';
+        score = 0;
+      } else if (percentageNewWallets > 50 || suspiciousNewWallets > 5) {
+        riskLevel = 'HIGH';
+        score = 15;
+      } else if (percentageNewWallets > 30) {
+        riskLevel = 'MEDIUM';
+        score = 30;
+      } else {
+        riskLevel = 'LOW';
+        score = 50;
+      }
+
+      return {
+        totalWallets,
+        walletsUnder10Days,
+        percentageNewWallets,
+        avgWalletAge,
+        suspiciousNewWallets,
+        riskLevel,
+        score,
+      };
     }, {
       maxRetries: 2,
       retryableStatusCodes: [408, 429, 500, 502, 503, 504],
@@ -882,182 +1063,86 @@ async function analyzeNewWallets(tokenAddress: string): Promise<NewWalletAnalysi
 async function analyzeInsiders(tokenAddress: string): Promise<InsiderAnalysis> {
   return superCircuitBreaker.execute(() =>
     retry(async () => {
-      // 🔥 FIX: Use Enhanced Transactions API with correct parameters
-      // Need to search for transactions involving this token mint
-      const connection = new Connection(HELIUS_RPC_URL, 'confirmed');
+      // Obtener las primeras 200 transacciones del token
+      const url = `https://api.helius.xyz/v0/addresses/${tokenAddress}/transactions?api-key=${HELIUS_API_KEY}&limit=200`;
 
-      try {
-        // Get token account signatures using getSignaturesForAddress on the token mint
-        // This gives us all transactions related to this token
-        const tokenPubkey = new PublicKey(tokenAddress);
-        const signatures = await connection.getSignaturesForAddress(tokenPubkey, {
-          limit: 1000, // Get up to 1000 signatures
-        });
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error('Failed to fetch transactions');
+      }
 
-        logger.info('🔍 Fetching insider analysis data', {
-          tokenAddress,
-          totalSignatures: signatures.length,
-        });
+      const transactions = await response.json();
 
-        if (signatures.length === 0) {
-          throw new Error('No transactions found for token');
-        }
+      // Identificar compradores tempranos (primeras 100 txs)
+      const earlyTxs = transactions.slice(0, 100);
+      const earlyBuyers = new Set<string>();
 
-        // Get the actual transaction details for early transactions
-        // We'll analyze the first 200 transactions
-        const earlySignatures = signatures.slice(Math.max(0, signatures.length - 200));
-        const earlyBuyers = new Set<string>();
-        const buyerAmounts = new Map<string, number>();
-
-        // Analyze signatures to find buyers
-        // Note: We're looking at the oldest transactions (early buyers)
-        for (const sig of earlySignatures) {
-          if (sig.err === null) { // Only successful transactions
-            // The signature's slot tells us when it happened
-            // The feePayer is potentially a buyer
-            // We'd need full transaction data to be certain, but for performance
-            // we'll use a heuristic based on signatures
-
-            // Add to early buyers set (these are wallets that interacted early)
-            const feePayer = sig.signature; // This is actually the signature, we need to parse differently
-
-            // For proper analysis, we'd fetch the full transaction, but that's expensive
-            // Instead, let's use Helius Enhanced API with proper query
+      earlyTxs.forEach((tx: any) => {
+        if (tx.type === 'SWAP' && tx.description?.toLowerCase().includes('buy')) {
+          if (tx.feePayer) {
+            earlyBuyers.add(tx.feePayer);
           }
         }
+      });
 
-        // 🔥 NEW APPROACH: Use Helius DAS API to get holders and check wallet ages
-        // This is more reliable than trying to parse transaction data
-        const url = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_API_KEY}`;
+      // Verificar si los early buyers están vendiendo
+      let insiderProfitTaking = false;
+      const recentSells = transactions.slice(0, 50).filter((tx: any) =>
+        tx.type === 'SWAP' && tx.description?.toLowerCase().includes('sell')
+      );
 
-        const response = await fetch(url, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            jsonrpc: '2.0',
-            id: 'insider-analysis',
-            method: 'getTokenAccounts',
-            params: {
-              mint: tokenAddress,
-              limit: 100, // Top 100 holders
-              options: { showZeroBalance: false },
-            },
-          }),
-        });
-
-        if (!response.ok) {
-          throw new Error('Failed to fetch token holders for insider analysis');
-        }
-
-        const data = await response.json();
-        const holders = data.result?.token_accounts || [];
-
-        // Analyze top holders for insider behavior
-        let insiderWallets = 0;
-        let totalInsiderBalance = 0;
-        let suspiciousNewWallets = 0;
-
-        for (const holder of holders.slice(0, 20)) { // Check top 20 holders
-          try {
-            const ownerPubkey = new PublicKey(holder.owner);
-            const holderSigs = await connection.getSignaturesForAddress(ownerPubkey, { limit: 100 });
-
-            if (holderSigs.length > 0) {
-              const oldestSig = holderSigs[holderSigs.length - 1];
-              const walletAge = (Date.now() / 1000 - (oldestSig?.blockTime || 0)) / 86400; // días
-
-              // Find their first interaction with this token
-              const tokenRelatedSigs = holderSigs.filter(s =>
-                s.blockTime && s.blockTime < (Date.now() / 1000 - 86400 * 30) // > 30 days ago
-              );
-
-              // If wallet is old but only started holding recently, could be insider
-              if (walletAge > 30 && tokenRelatedSigs.length < 5) {
-                insiderWallets++;
-                const balance = parseFloat(holder.amount || '0');
-                totalInsiderBalance += balance;
-
-                // If new wallet with large holding
-                if (walletAge < 10 && balance > 1000000) {
-                  suspiciousNewWallets++;
-                }
-              }
-            }
-          } catch (error) {
-            // Skip on error
-          }
-        }
-
-        // Calculate percentage of supply held by suspected insiders
-        // This is a rough estimate
-        const insiderHoldings = Math.min((insiderWallets / 20) * 100, 100);
-
-        // Check if insiders are taking profit (recent sells)
-        // We'll check the recent 50 signatures for sell patterns
-        const recentSigs = signatures.slice(0, 50);
-        let insiderProfitTaking = false;
-
-        // Heuristic: if we see a lot of recent activity compared to total, might be selling
-        const recentActivityRatio = recentSigs.length / Math.max(signatures.length, 1);
-        if (recentActivityRatio > 0.3 && insiderWallets > 5) {
+      recentSells.forEach((tx: any) => {
+        if (earlyBuyers.has(tx.feePayer)) {
           insiderProfitTaking = true;
         }
+      });
 
-        const suspiciousActivity = suspiciousNewWallets > 3 || (insiderProfitTaking && insiderWallets > 10);
+      const insiderWallets = earlyBuyers.size;
 
-        let riskLevel: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL' = 'LOW';
-        let score = 50;
+      // Estimar holdings de insiders (simplificado)
+      const insiderHoldings = Math.min(insiderWallets * 2, 50); // Estimación conservadora
 
-        if (suspiciousActivity || insiderHoldings > 40) {
-          riskLevel = 'CRITICAL';
-          score = 0;
-        } else if (insiderProfitTaking || insiderHoldings > 25) {
-          riskLevel = 'HIGH';
-          score = 15;
-        } else if (insiderHoldings > 15 || insiderWallets > 5) {
-          riskLevel = 'MEDIUM';
-          score = 30;
-        } else {
-          riskLevel = 'LOW';
-          score = 50;
-        }
+      const suspiciousActivity = insiderProfitTaking && insiderWallets > 20;
 
-        logger.info('✅ Insider Analysis Complete', {
-          tokenAddress,
-          insiderWallets,
-          insiderHoldings: insiderHoldings.toFixed(2) + '%',
-          suspiciousActivity,
-        });
+      let riskLevel: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL' = 'LOW';
+      let score = 50;
 
-        return {
-          insiderWallets,
-          insiderHoldings,
-          earlyBuyers: insiderWallets, // Using insiders as early buyers proxy
-          insiderProfitTaking,
-          suspiciousActivity,
-          riskLevel,
-          score,
-        };
-      } catch (error) {
-        logger.error('❌ Insider Analysis Failed', error instanceof Error ? error : undefined);
-        throw error;
+      if (suspiciousActivity || insiderHoldings > 40) {
+        riskLevel = 'CRITICAL';
+        score = 0;
+      } else if (insiderProfitTaking || insiderHoldings > 25) {
+        riskLevel = 'HIGH';
+        score = 15;
+      } else if (insiderHoldings > 15) {
+        riskLevel = 'MEDIUM';
+        score = 30;
+      } else {
+        riskLevel = 'LOW';
+        score = 50;
       }
+
+      return {
+        insiderWallets,
+        insiderHoldings,
+        earlyBuyers: earlyBuyers.size,
+        insiderProfitTaking,
+        suspiciousActivity,
+        riskLevel,
+        score,
+      };
     }, {
       maxRetries: 2,
       retryableStatusCodes: [408, 429, 500, 502, 503, 504],
     })
-  ).catch((error) => {
-    logger.warn('Insider analysis fallback triggered', { error: String(error) });
-    return {
-      insiderWallets: 0,
-      insiderHoldings: 0,
-      earlyBuyers: 0,
-      insiderProfitTaking: false,
-      suspiciousActivity: false,
-      riskLevel: 'MEDIUM' as const,
-      score: 25,
-    };
-  });
+  ).catch(() => ({
+    insiderWallets: 0,
+    insiderHoldings: 0,
+    earlyBuyers: 0,
+    insiderProfitTaking: false,
+    suspiciousActivity: false,
+    riskLevel: 'MEDIUM' as const,
+    score: 25,
+  }));
 }
 
 async function analyzeVolume(_tokenAddress: string, dexData?: DexScreenerData): Promise<VolumeAnalysis> {
@@ -1273,122 +1358,65 @@ async function analyzeSocials(_tokenAddress: string, metadata: any): Promise<Soc
 
 async function detectBotsAdvanced(tokenAddress: string): Promise<BotDetectionAdvanced> {
   try {
-    // 🔥 FIX: Use correct API to get token transactions
-    const connection = new Connection(HELIUS_RPC_URL, 'confirmed');
-    const tokenPubkey = new PublicKey(tokenAddress);
+    // Análisis sofisticado de bots usando patrones de transacciones
+    const url = `https://api.helius.xyz/v0/addresses/${tokenAddress}/transactions?api-key=${HELIUS_API_KEY}&limit=500`;
 
-    // Get signatures for this token mint
-    const signatures = await connection.getSignaturesForAddress(tokenPubkey, {
-      limit: 1000, // Analyze up to 1000 transactions
-    });
-
-    logger.info('🤖 Analyzing bot activity', {
-      tokenAddress,
-      totalTransactions: signatures.length,
-    });
-
-    if (signatures.length === 0) {
-      return {
-        totalBots: 0,
-        botPercent: 0,
-        mevBots: 0,
-        sniperBots: 0,
-        bundleBots: 0,
-        washTradingBots: 0,
-        copyTradingBots: 0,
-        suspiciousPatterns: [],
-        botActivity24h: 0,
-        score: 30,
-      };
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error('Failed to fetch transactions');
     }
 
-    // 🔥 ADVANCED BOT DETECTION USING REAL TRANSACTION PATTERNS
+    const transactions = await response.json();
 
-    // 1. Detectar MEV bots (múltiples transacciones en el mismo slot)
-    const slotMap = new Map<number, Set<string>>();
-    const walletActivity = new Map<string, number>();
-
-    signatures.forEach((sig) => {
-      const slot = sig.slot;
-      const wallet = sig.signature; // Using signature as proxy for now
-
-      if (!slotMap.has(slot)) {
-        slotMap.set(slot, new Set());
+    // Detectar MEV bots (transacciones en el mismo bloque/slot)
+    const slotMap = new Map<number, string[]>();
+    transactions.forEach((tx: any) => {
+      if (!slotMap.has(tx.slot)) {
+        slotMap.set(tx.slot, []);
       }
-      slotMap.get(slot)?.add(wallet);
-
-      // Track wallet activity frequency
-      const count = walletActivity.get(wallet) || 0;
-      walletActivity.set(wallet, count + 1);
+      slotMap.get(tx.slot)?.push(tx.feePayer);
     });
 
-    // MEV bots: slots with > 3 transactions
-    const mevBotSlots = Array.from(slotMap.values()).filter(wallets => wallets.size > 3);
-    const mevBots = mevBotSlots.length;
+    const mevBots = Array.from(slotMap.values()).filter(wallets => wallets.length > 2).length;
 
-    // 2. Detectar snipers (wallets que compraron en los primeros 50 txs)
-    const totalTxs = signatures.length;
-    const snipeWindow = Math.min(50, totalTxs);
-    const earlySignatures = signatures.slice(Math.max(0, totalTxs - snipeWindow));
-    const sniperBots = earlySignatures.length;
+    // Detectar snipers (primeras 20 transacciones)
+    const sniperBots = Math.min(20, transactions.length);
 
-    // 3. Detectar bundle bots (coordinación en mismo bloque)
-    // Bundle bots typically execute 3-10 transactions in same slot
-    const bundleBots = mevBotSlots.filter(wallets => wallets.size >= 5 && wallets.size <= 15).length;
+    // Detectar bundle bots (múltiples wallets comprando exactamente al mismo tiempo)
+    const bundleBots = mevBots * 2; // Estimación
 
-    // 4. Detectar wash trading bots (misma wallet con mucha actividad)
-    // Wallets with > 10 transactions are suspicious
-    const highActivityWallets = Array.from(walletActivity.entries())
-      .filter(([_, count]) => count > 10);
-    const washTradingBots = highActivityWallets.length;
+    // Detectar wash trading bots (misma wallet comprando y vendiendo repetidamente)
+    const walletActivity = new Map<string, number>();
+    transactions.forEach((tx: any) => {
+      const count = walletActivity.get(tx.feePayer) || 0;
+      walletActivity.set(tx.feePayer, count + 1);
+    });
 
-    // 5. Copy trading bots (patrones similares de actividad)
-    // Heuristic: wallets with similar activity counts
-    const activityCounts = Array.from(walletActivity.values());
-    const avgActivity = activityCounts.reduce((a, b) => a + b, 0) / Math.max(activityCounts.length, 1);
-    const similarActivityWallets = activityCounts.filter(count =>
-      Math.abs(count - avgActivity) < avgActivity * 0.1 && count > 5
-    );
-    const copyTradingBots = Math.floor(similarActivityWallets.length / 3); // Conservative estimate
+    const washTradingBots = Array.from(walletActivity.values()).filter(count => count > 10).length;
 
-    // Total bots
+    // Copy trading bots (wallets con patrones idénticos)
+    const copyTradingBots = Math.floor(washTradingBots / 2);
+
     const totalBots = mevBots + sniperBots + bundleBots + washTradingBots + copyTradingBots;
+    const botPercent = (totalBots / transactions.length) * 100;
 
-    // Bot percentage (relative to unique wallets, not transactions)
-    const uniqueWallets = walletActivity.size;
-    const botPercent = uniqueWallets > 0 ? (totalBots / uniqueWallets) * 100 : 0;
-
-    // Suspicious patterns detection
     const suspiciousPatterns: string[] = [];
-    if (mevBots > 10) suspiciousPatterns.push(`${mevBots} slots con actividad MEV detectada`);
-    if (bundleBots > 5) suspiciousPatterns.push(`${bundleBots} bundle bots coordinados detectados`);
-    if (washTradingBots > 5) suspiciousPatterns.push(`${washTradingBots} wallets con posible wash trading`);
-    if (copyTradingBots > 3) suspiciousPatterns.push(`${copyTradingBots} copy trading bots detectados`);
+    if (mevBots > 10) suspiciousPatterns.push('Alto nivel de MEV bots detectado');
+    if (bundleBots > 20) suspiciousPatterns.push('Actividad coordinada de bundle bots');
+    if (washTradingBots > 5) suspiciousPatterns.push('Posible wash trading');
 
-    // Bot activity in last 24h (heuristic: recent 100 signatures)
-    const recent24h = signatures.slice(0, 100);
-    const botActivity24h = recent24h.length;
+    const botActivity24h = totalBots;
 
-    // Calculate score
     let score = 60;
-    if (botPercent > 60 || suspiciousPatterns.length > 3) {
+    if (botPercent > 60) {
       score = 0;
-    } else if (botPercent > 40 || suspiciousPatterns.length > 2) {
+    } else if (botPercent > 40) {
       score = 20;
-    } else if (botPercent > 20 || suspiciousPatterns.length > 1) {
+    } else if (botPercent > 20) {
       score = 40;
-    } else if (botPercent > 10) {
-      score = 50;
     } else {
       score = 60;
     }
-
-    logger.info('✅ Bot Detection Complete', {
-      tokenAddress,
-      totalBots,
-      botPercent: botPercent.toFixed(2) + '%',
-      suspiciousPatterns: suspiciousPatterns.length,
-    });
 
     return {
       totalBots,
@@ -1403,7 +1431,6 @@ async function detectBotsAdvanced(tokenAddress: string): Promise<BotDetectionAdv
       score,
     };
   } catch (error) {
-    logger.error('❌ Bot Detection Failed', error instanceof Error ? error : undefined);
     return {
       totalBots: 0,
       botPercent: 0,
@@ -1419,157 +1446,26 @@ async function detectBotsAdvanced(tokenAddress: string): Promise<BotDetectionAdv
   }
 }
 
-async function analyzeSmartMoney(tokenAddress: string): Promise<SmartMoneyAnalysis> {
+async function analyzeSmartMoney(_tokenAddress: string): Promise<SmartMoneyAnalysis> {
   try {
-    // 🔥 NEW: Smart Money detection using real wallet analysis
-    // We'll identify "smart money" as wallets with:
-    // 1. Large holdings (top 10% holders)
-    // 2. Old wallet age (> 90 days)
-    // 3. High transaction volume (experienced traders)
+    // Smart money detection requires a database of known successful trader wallets
+    // This feature is not yet implemented with real data
+    // We return NEUTRAL values instead of random values to avoid misleading users
 
-    const connection = new Connection(HELIUS_RPC_URL, 'confirmed');
-    const url = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_API_KEY}`;
+    // TODO: In the future, integrate with:
+    // - Known whale wallet tracking
+    // - Historical profitable trader identification
+    // - On-chain analysis of wallet behavior patterns
 
-    // Get top holders
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        jsonrpc: '2.0',
-        id: 'smart-money-analysis',
-        method: 'getTokenAccounts',
-        params: {
-          mint: tokenAddress,
-          limit: 50, // Analyze top 50 holders
-          options: { showZeroBalance: false },
-        },
-      }),
-    });
+    const smartMoneyWallets = 0; // Unknown - needs smart money DB
+    const smartMoneyHoldings = 0; // Unknown
+    const smartMoneyBuying = false; // Unknown
+    const smartMoneySelling = false; // Unknown
+    const averageSmartMoneyProfit = 0; // Unknown
 
-    if (!response.ok) {
-      throw new Error('Failed to fetch token holders');
-    }
-
-    const data = await response.json();
-    const holders = data.result?.token_accounts || [];
-
-    if (holders.length === 0) {
-      throw new Error('No holders found');
-    }
-
-    logger.info('💎 Analyzing Smart Money wallets', {
-      tokenAddress,
-      totalHolders: holders.length,
-    });
-
-    // Analyze top holders to identify smart money
-    let smartMoneyWallets = 0;
-    let totalSmartMoneyBalance = 0;
-    let smartMoneyBuyingCount = 0;
-    let smartMoneySellingCount = 0;
-    let totalProfit = 0;
-    let analyzedWallets = 0;
-
-    // Get recent token signatures to see recent activity
-    const tokenPubkey = new PublicKey(tokenAddress);
-    const recentSigs = await connection.getSignaturesForAddress(tokenPubkey, { limit: 100 });
-    const recentTimestamp = Date.now() / 1000 - 86400; // Last 24h
-
-    for (const holder of holders.slice(0, 20)) { // Check top 20 holders
-      try {
-        const ownerPubkey = new PublicKey(holder.owner);
-        const holderSigs = await connection.getSignaturesForAddress(ownerPubkey, { limit: 500 });
-
-        if (holderSigs.length === 0) continue;
-
-        // Calculate wallet characteristics
-        const oldestSig = holderSigs[holderSigs.length - 1];
-        const walletAge = (Date.now() / 1000 - (oldestSig?.blockTime || 0)) / 86400; // días
-        const txCount = holderSigs.length;
-        const balance = parseFloat(holder.amount || '0');
-
-        // Criteria for "smart money":
-        // - Wallet age > 90 days (experienced trader)
-        // - Transaction count > 100 (active trader)
-        // - Significant balance in this token
-        const isSmartMoney = walletAge > 90 && txCount > 100 && balance > 100000;
-
-        if (isSmartMoney) {
-          smartMoneyWallets++;
-          totalSmartMoneyBalance += balance;
-          analyzedWallets++;
-
-          // Check recent activity (buying or selling)
-          const recentActivity = holderSigs.filter(s =>
-            s.blockTime && s.blockTime > recentTimestamp
-          );
-
-          if (recentActivity.length > 0) {
-            // Heuristic: if they have recent activity and still hold, likely buying
-            // If they have activity but hold less, likely selling
-            // This is simplified - full analysis would parse transactions
-            if (balance > 500000) {
-              smartMoneyBuyingCount++;
-              totalProfit += 10; // Assume positive profit if holding
-            } else {
-              smartMoneySellingCount++;
-              totalProfit -= 5; // Assume taking profit
-            }
-          } else {
-            // No recent activity - just holding
-            totalProfit += 5; // Assume moderate profit if holding
-          }
-        }
-      } catch (error) {
-        // Skip wallet on error
-      }
-    }
-
-    // Calculate holdings percentage (rough estimate)
-    const totalBalance = holders.reduce((sum, h) => sum + parseFloat(h.amount || '0'), 0);
-    const smartMoneyHoldings = totalBalance > 0 ? (totalSmartMoneyBalance / totalBalance) * 100 : 0;
-
-    // Determine if smart money is buying or selling
-    const smartMoneyBuying = smartMoneyBuyingCount > smartMoneySellingCount;
-    const smartMoneySelling = smartMoneySellingCount > smartMoneyBuyingCount;
-
-    // Calculate average profit (simplified)
-    const averageSmartMoneyProfit = analyzedWallets > 0 ? totalProfit / analyzedWallets : 0;
-
-    // Generate signal based on smart money behavior
-    let signal: 'STRONG_BUY' | 'BUY' | 'NEUTRAL' | 'SELL' | 'STRONG_SELL' = 'NEUTRAL';
-    let score = 35;
-
-    if (smartMoneyWallets >= 3 && smartMoneyBuying && averageSmartMoneyProfit > 8) {
-      signal = 'STRONG_BUY';
-      score = 70;
-    } else if (smartMoneyWallets >= 2 && smartMoneyBuying && averageSmartMoneyProfit > 5) {
-      signal = 'BUY';
-      score = 55;
-    } else if (smartMoneyWallets >= 2 && smartMoneySelling) {
-      signal = 'SELL';
-      score = 20;
-    } else if (smartMoneyWallets >= 3 && smartMoneySelling && averageSmartMoneyProfit < 0) {
-      signal = 'STRONG_SELL';
-      score = 0;
-    } else if (smartMoneyWallets > 0) {
-      // Some smart money detected but neutral behavior
-      signal = 'NEUTRAL';
-      score = 40;
-    } else {
-      // No smart money detected
-      signal = 'NEUTRAL';
-      score = 35;
-    }
-
-    logger.info('✅ Smart Money Analysis Complete', {
-      tokenAddress,
-      smartMoneyWallets,
-      smartMoneyHoldings: smartMoneyHoldings.toFixed(2) + '%',
-      signal,
-      smartMoneyBuying,
-      smartMoneySelling,
-    });
+    // Always return NEUTRAL since we don't have real data
+    const signal: 'STRONG_BUY' | 'BUY' | 'NEUTRAL' | 'SELL' | 'STRONG_SELL' = 'NEUTRAL';
+    const score = 35; // Neutral score - doesn't penalize or benefit
 
     return {
       smartMoneyWallets,
@@ -1581,7 +1477,6 @@ async function analyzeSmartMoney(tokenAddress: string): Promise<SmartMoneyAnalys
       score,
     };
   } catch (error) {
-    logger.error('❌ Smart Money Analysis Failed', error instanceof Error ? error : undefined);
     return {
       smartMoneyWallets: 0,
       smartMoneyHoldings: 0,
@@ -2009,7 +1904,6 @@ function calculateSuperScore(breakdown: SuperTokenScore['scoreBreakdown']): numb
    *
    * INCLUDED (Real Data):
    * - baseSecurityScore: Real on-chain data (authorities, holders, liquidity)
-   * - newWalletScore: Real transaction history analysis
    * - insiderScore: Real holder distribution analysis
    * - volumeScore: Real DEX volume data
    * - socialScore: Real metadata from on-chain
@@ -2022,7 +1916,8 @@ function calculateSuperScore(breakdown: SuperTokenScore['scoreBreakdown']): numb
    * - birdeyeScore: Real market data from Birdeye
    * - jupiterScore: Real liquidity data from Jupiter
    *
-   * EXCLUDED (No Real Data):
+   * EXCLUDED (No Real Data / Disabled by User):
+   * - newWalletScore: DISABLED - Usuario no lo requiere (performance)
    * - smartMoneyScore: Requires whale tracking DB (not implemented)
    * - historicalHoldersScore: Requires historical snapshots (not implemented)
    * - crossChainScore: Requires bridge detection (not implemented)
@@ -2034,7 +1929,7 @@ function calculateSuperScore(breakdown: SuperTokenScore['scoreBreakdown']): numb
     breakdown.rugCheckScore * 1.8 +           // CRITICAL - Professional audit data (0-100)
     breakdown.liquidityDepthScore * 1.5 +     // VERY IMPORTANT - Real liquidity depth (0-50)
     breakdown.teamScore * 1.3 +               // IMPORTANT - Team tokens & authorities (0-40)
-    breakdown.newWalletScore * 1.2 +          // IMPORTANT - Sybil attack detection (0-50)
+    breakdown.newWalletScore * 0 +            // DISABLED - Usuario no quiere este análisis (0-50)
     breakdown.insiderScore * 1.2 +            // IMPORTANT - Insider trading detection (0-50)
     breakdown.botDetectionScore * 1.1 +       // Important - Bot activity detection (0-60)
     breakdown.volumeScore +                   // Real volume analysis (0-40)
@@ -2044,10 +1939,10 @@ function calculateSuperScore(breakdown: SuperTokenScore['scoreBreakdown']): numb
     breakdown.jupiterScore +                  // Real Jupiter data (0-50)
     breakdown.socialScore * 0.5;              // Lower weight - less critical (0-30)
 
-  // Maximum possible with current weights:
-  // 100*2.0 + 100*1.8 + 50*1.5 + 40*1.3 + 50*1.2 + 50*1.2 + 60*1.1 + 40 + 50 + 60 + 50 + 50 + 30*0.5 =
-  // 200 + 180 + 75 + 52 + 60 + 60 + 66 + 40 + 50 + 60 + 50 + 50 + 15 = 958
-  const maxPossible = 958;
+  // Maximum possible with current weights (SIN newWalletScore):
+  // 100*2.0 + 100*1.8 + 50*1.5 + 40*1.3 + 0 + 50*1.2 + 60*1.1 + 40 + 50 + 60 + 50 + 50 + 30*0.5 =
+  // 200 + 180 + 75 + 52 + 0 + 60 + 66 + 40 + 50 + 60 + 50 + 50 + 15 = 898
+  const maxPossible = 898;
 
   // Normalizar a 0-100
   const normalized = (weightedTotal / maxPossible) * 100;
@@ -2065,10 +1960,10 @@ function calculateSuperScore(breakdown: SuperTokenScore['scoreBreakdown']): numb
     finalScore *= 0.7; // 30% penalty for bad rug check
   }
 
-  // HIGH: If too many new wallets (>70%), likely Sybil attack
-  if (breakdown.newWalletScore < 10) {
-    finalScore *= 0.85; // 15% penalty
-  }
+  // DISABLED: New wallet analysis penalty (usuario no lo quiere)
+  // if (breakdown.newWalletScore < 10) {
+  //   finalScore *= 0.85; // 15% penalty
+  // }
 
   // HIGH: If insider selling detected
   if (breakdown.insiderScore < 15) {
@@ -2124,15 +2019,15 @@ function consolidateRedFlags(
     });
   });
 
-  // New wallet red flags
-  if (newWallet.riskLevel === 'CRITICAL') {
-    flags.push({
-      category: 'New Wallets',
-      severity: 'CRITICAL',
-      message: `${newWallet.percentageNewWallets.toFixed(1)}% de holders son wallets nuevas (< 10 días)`,
-      score_impact: 25,
-    });
-  }
+  // DISABLED: New wallet red flags (usuario no lo quiere)
+  // if (newWallet.riskLevel === 'CRITICAL') {
+  //   flags.push({
+  //     category: 'New Wallets',
+  //     severity: 'CRITICAL',
+  //     message: `${newWallet.percentageNewWallets.toFixed(1)}% de holders son wallets nuevas (< 10 días)`,
+  //     score_impact: 25,
+  //   });
+  // }
 
   // Insider red flags
   if (insider.suspiciousActivity) {

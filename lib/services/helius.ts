@@ -1,6 +1,7 @@
 import { Connection, PublicKey } from '@solana/web3.js';
 import { retry, CircuitBreaker } from '../retryLogic';
 import { logger } from '@/lib/logger';
+import { throttledHeliusCall } from '@/lib/heliusThrottler';
 
 const HELIUS_API_KEY = process.env.HELIUS_API_KEY || '';
 const HELIUS_RPC_URL = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_API_KEY}`;
@@ -73,21 +74,22 @@ export async function getWalletTransactions(
   limit: number = 100,
   before?: string
 ): Promise<ParsedTransaction[]> {
-  return heliusCircuitBreaker.execute(() =>
-    retry(async () => {
-      let url = `https://api.helius.xyz/v0/addresses/${walletAddress}/transactions?api-key=${HELIUS_API_KEY}&limit=${limit}`;
+  return throttledHeliusCall(() =>
+    heliusCircuitBreaker.execute(() =>
+      retry(async () => {
+        let url = `https://api.helius.xyz/v0/addresses/${walletAddress}/transactions?api-key=${HELIUS_API_KEY}&limit=${limit}`;
 
-      // Agregar parámetro de paginación si existe
-      if (before) {
-        url += `&before=${before}`;
-      }
+        // Agregar parámetro de paginación si existe
+        if (before) {
+          url += `&before=${before}`;
+        }
 
-      // Timeout de 30 segundos para prevenir hangs (aumentado porque Helius puede tardar)
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 30000);
+        // Timeout de 30 segundos para prevenir hangs (aumentado porque Helius puede tardar)
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 30000);
 
-      try {
-        const response = await fetch(url, { signal: controller.signal });
+        try {
+          const response = await fetch(url, { signal: controller.signal });
         clearTimeout(timeoutId);
 
         if (!response.ok) {
@@ -142,6 +144,8 @@ export async function getWalletTransactions(
         logger.warn(`[Helius] Retrying getWalletTransactions (attempt ${attempt}):`, { message: error.message });
       }
     })
+    ),
+    { priority: 3, timeout: 35000 }
   );
 }
 
@@ -151,28 +155,29 @@ export async function getWalletTransactions(
 export async function getTokenMetadata(mintAddresses: string[]): Promise<Map<string, any>> {
   if (mintAddresses.length === 0) return new Map();
 
-  return heliusCircuitBreaker.execute(() =>
-    retry(async () => {
-      const url = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_API_KEY}`;
+  return throttledHeliusCall(() =>
+    heliusCircuitBreaker.execute(() =>
+      retry(async () => {
+        const url = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_API_KEY}`;
 
-      const requests = mintAddresses.map(mint => ({
-        jsonrpc: '2.0',
-        id: mint,
-        method: 'getAsset',
-        params: { id: mint },
-      }));
+        const requests = mintAddresses.map(mint => ({
+          jsonrpc: '2.0',
+          id: mint,
+          method: 'getAsset',
+          params: { id: mint },
+        }));
 
-      // Timeout de 30 segundos para prevenir hangs (aumentado porque Helius puede tardar)
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 30000);
+        // Timeout de 30 segundos para prevenir hangs (aumentado porque Helius puede tardar)
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 30000);
 
-      try {
-        const response = await fetch(url, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(requests),
-          signal: controller.signal,
-        });
+        try {
+          const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(requests),
+            signal: controller.signal,
+          });
         clearTimeout(timeoutId);
 
         if (!response.ok) {
@@ -211,6 +216,8 @@ export async function getTokenMetadata(mintAddresses: string[]): Promise<Map<str
         logger.warn(`[Helius] Retrying getTokenMetadata (attempt ${attempt}):`, { message: error.message });
       }
     })
+    ),
+    { priority: 5, timeout: 35000 }
   ).catch((error) => {
     logger.error('Error fetching token metadata after retries', error instanceof Error ? error : undefined, {
       error: String(error),
@@ -223,20 +230,23 @@ export async function getTokenMetadata(mintAddresses: string[]): Promise<Map<str
  * Obtiene el balance actual de SOL de una wallet
  */
 export async function getWalletBalance(walletAddress: string): Promise<number> {
-  return heliusCircuitBreaker.execute(() =>
-    retry(async () => {
-      const connection = new Connection(HELIUS_RPC_URL, 'confirmed');
-      const publicKey = new PublicKey(walletAddress);
-      const balance = await connection.getBalance(publicKey);
+  return throttledHeliusCall(() =>
+    heliusCircuitBreaker.execute(() =>
+      retry(async () => {
+        const connection = new Connection(HELIUS_RPC_URL, 'confirmed');
+        const publicKey = new PublicKey(walletAddress);
+        const balance = await connection.getBalance(publicKey);
 
-      return balance / 1e9; // Convert lamports to SOL
-    }, {
-      maxRetries: 3,
-      retryableStatusCodes: [408, 429, 500, 502, 503, 504],
-      onRetry: (attempt, error) => {
-        logger.warn(`[Helius] Retrying getWalletBalance (attempt ${attempt}):`, { message: error.message });
-      }
-    })
+        return balance / 1e9; // Convert lamports to SOL
+      }, {
+        maxRetries: 3,
+        retryableStatusCodes: [408, 429, 500, 502, 503, 504],
+        onRetry: (attempt, error) => {
+          logger.warn(`[Helius] Retrying getWalletBalance (attempt ${attempt}):`, { message: error.message });
+        }
+      })
+    ),
+    { priority: 3, timeout: 35000 }
   ).catch((error) => {
     logger.error('Error fetching wallet balance after retries', error instanceof Error ? error : undefined, {
       error: String(error),

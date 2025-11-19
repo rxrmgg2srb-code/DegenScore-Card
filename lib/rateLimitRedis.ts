@@ -13,6 +13,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { logger } from './logger';
 import redisClient from './cache/redis';
+import { inMemoryRateLimiter } from './inMemoryRateLimiter';
 
 // ============================================================================
 // CONFIGURATION
@@ -23,6 +24,12 @@ const redis = redisClient;
 
 // Check if Redis is enabled
 const isRedisEnabled = redis !== null;
+
+// Log warning on startup if Redis is not available
+if (!isRedisEnabled) {
+  logger.warn('[RateLimiter] Redis is not configured - using in-memory fallback rate limiter');
+  logger.warn('[RateLimiter] For production use, configure UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN');
+}
 
 // Rate limit configuration per endpoint
 export const RATE_LIMITS = {
@@ -84,15 +91,28 @@ export async function checkRateLimit(
     const config = getEndpointConfig(endpoint, isPremium);
     const { requests: limit, window } = config;
 
-    // If Redis is not available, fail open (allow request)
+    // If Redis is not available, use in-memory fallback
     if (!isRedisEnabled || !redis) {
-      logger.warn('Redis not available, rate limiting disabled');
+      const windowMs = window * 1000;
+      const key = `ratelimit:${endpoint}:${identifier}`;
+      const result = inMemoryRateLimiter.check(key, limit, windowMs);
+
+      const success = result.allowed;
+
+      if (!success) {
+        logger.warn('Rate limit exceeded (in-memory)', {
+          identifier,
+          endpoint,
+          limit,
+        });
+      }
+
       return {
-        success: true,
+        success,
         limit,
-        remaining: limit,
-        reset: Date.now() + window * 1000,
-        error: 'Rate limiting temporarily unavailable',
+        remaining: result.remaining,
+        reset: result.reset,
+        error: success ? undefined : 'Rate limit exceeded',
       };
     }
 
@@ -281,7 +301,15 @@ export async function resetRateLimit(
   endpoint?: string
 ): Promise<void> {
   if (!isRedisEnabled || !redis) {
-    logger.warn('Redis not available, cannot reset rate limit');
+    // Use in-memory fallback
+    if (endpoint) {
+      const key = `ratelimit:${endpoint}:${identifier}`;
+      inMemoryRateLimiter.delete(key);
+      logger.info('Rate limit reset (in-memory)', { identifier, endpoint });
+    } else {
+      // Can't delete pattern in memory, just log
+      logger.warn('Cannot reset all rate limits in in-memory mode', { identifier });
+    }
     return;
   }
 
@@ -314,8 +342,11 @@ export async function getRateLimitStatus(
   endpoint: string,
   isPremium: boolean = false
 ): Promise<RateLimitResult> {
+  const config = getEndpointConfig(endpoint, isPremium);
+
   if (!isRedisEnabled || !redis) {
-    const config = getEndpointConfig(endpoint, isPremium);
+    // For in-memory, we can't get status without modifying it
+    // Return optimistic response
     return {
       success: true,
       limit: config.requests,
