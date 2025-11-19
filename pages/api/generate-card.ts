@@ -7,40 +7,10 @@ import { logger } from '@/lib/logger';
 import path from 'path';
 import fs from 'fs';
 
-// 🔥 SOLUCIÓN DEFINITIVA: Registrar fonts para Vercel
-// Vercel NO tiene fonts del sistema, hay que registrarlas manualmente
-try {
-  const cwd = process.cwd();
-  logger.info('🔍 CWD for fonts:', { cwd });
-
-  // Probar múltiples paths (Vercel serverless cambia ubicación)
-  const fontPaths = [
-    { regular: path.join(cwd, 'public', 'fonts', 'NotoSans-Regular.ttf'), bold: path.join(cwd, 'public', 'fonts', 'NotoSans-Bold.ttf'), name: 'public/fonts' },
-    { regular: path.join(cwd, '.next', 'server', 'chunks', 'public', 'fonts', 'NotoSans-Regular.ttf'), bold: path.join(cwd, '.next', 'server', 'chunks', 'public', 'fonts', 'NotoSans-Bold.ttf'), name: '.next/server/chunks' },
-    { regular: path.join(cwd, '.next', 'public', 'fonts', 'NotoSans-Regular.ttf'), bold: path.join(cwd, '.next', 'public', 'fonts', 'NotoSans-Bold.ttf'), name: '.next/public' },
-  ];
-
-  let registered = false;
-
-  for (const fp of fontPaths) {
-    if (fs.existsSync(fp.regular) && fs.existsSync(fp.bold)) {
-      GlobalFonts.registerFromPath(fp.regular, 'Noto Sans');
-      GlobalFonts.registerFromPath(fp.bold, 'Noto Sans Bold');
-      logger.info(`✅ Fonts registered from ${fp.name}`);
-      registered = true;
-      break;
-    }
-  }
-
-  if (!registered) {
-    logger.warn('⚠️ Fonts not found. Tried:', { paths: fontPaths.map(fp => fp.name) });
-  }
-} catch (error) {
-  logger.error('⚠️ Failed to register fonts:', error instanceof Error ? error : undefined, {
-    error: String(error),
-    stack: error instanceof Error ? error.stack : undefined
-  });
-}
+// 🔥 FONTS PARA VERCEL - Usar fonts del sistema disponibles
+// Vercel Linux serverless tiene DejaVu Sans instalado por defecto
+// NO necesitamos registrar fonts externas, usamos las del sistema
+logger.info('🎨 Using system fonts for canvas rendering in Vercel');
 
 // Función auxiliar para formatear SOL
 function formatSOL(amount: number, decimals: number = 2): string {
@@ -741,7 +711,7 @@ async function generateBasicCardImage(
 
   // TÍTULO - ✅ FIXED con Noto Sans
   ctx.fillStyle = '#00d4ff';
-  ctx.font = '700 44px "Noto Sans Bold", sans-serif';
+  ctx.font = '700 44px sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText('DEGEN CARD', width / 2, currentY);
@@ -758,7 +728,7 @@ async function generateBasicCardImage(
   // DEGEN SCORE - ✅ FIXED con Noto Sans
   const scoreColor = getScoreColor(safeMetrics.degenScore);
   ctx.fillStyle = scoreColor;
-  ctx.font = '700 110px "Noto Sans Bold", sans-serif';
+  ctx.font = '700 110px sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
 
@@ -772,7 +742,7 @@ async function generateBasicCardImage(
 
   // LABEL DEGEN SCORE - ✅ FIXED con Noto Sans
   ctx.fillStyle = '#aaaaaa';
-  ctx.font = '700 20px "Noto Sans Bold", sans-serif';
+  ctx.font = '700 20px sans-serif';
   ctx.fillText('DEGEN SCORE', width / 2, currentY);
   currentY += 40;
 
@@ -784,7 +754,7 @@ async function generateBasicCardImage(
   ctx.fillRect(width / 2 - textWidth / 2 - 20, currentY - 18, textWidth + 40, 36);
 
   ctx.fillStyle = '#FFD700';
-  ctx.font = '700 17px "Noto Sans Bold", sans-serif';
+  ctx.font = '700 17px sans-serif';
   ctx.textAlign = 'center';
   ctx.fillText(fomoPhrase, width / 2, currentY);
   currentY += 50;
@@ -834,13 +804,13 @@ async function generateBasicCardImage(
   // FOOTER - ✅ FIXED con Noto Sans
   const rating = getRating(safeMetrics.degenScore);
   ctx.fillStyle = '#ffffff';
-  ctx.font = '700 26px "Noto Sans Bold", sans-serif';
+  ctx.font = '700 26px sans-serif';
   ctx.textAlign = 'center';
   ctx.fillText(rating, width / 2, currentY);
   currentY += 50;
 
   ctx.fillStyle = '#777777';
-  ctx.font = '400 15px "Noto Sans", sans-serif';
+  ctx.font = '400 15px sans-serif';
   ctx.fillText('Powered by Helius × Solana', width / 2, currentY);
 
   // Convert to buffer and clear canvas reference to help GC
@@ -878,11 +848,11 @@ function drawMetric(
 
   ctx.textAlign = alignment;
   ctx.fillStyle = '#999999';
-  ctx.font = '700 13px "Noto Sans Bold", sans-serif';
+  ctx.font = '700 13px sans-serif';
   ctx.fillText(label, x, y);
 
   ctx.fillStyle = valueColor;
-  ctx.font = '700 26px "Noto Sans Bold", sans-serif';
+  ctx.font = '700 26px sans-serif';
   ctx.fillText(value, x, y + 32);
 }
 
