@@ -162,7 +162,7 @@ export default function ProfileFormModal({ isOpen, onClose, onSubmit, walletAddr
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          signature,
+          paymentSignature: signature,
           walletAddress: publicKey.toString(),
         }),
       });
