@@ -38,6 +38,12 @@ export const Header = () => {
               🔒 Token Scanner
             </Link>
             <Link
+              href="/super-token-scorer"
+              className="text-gray-300 hover:text-white transition-colors flex items-center gap-1"
+            >
+              🚀 Super Scorer
+            </Link>
+            <Link
               href="/documentation"
               className="text-gray-300 hover:text-white transition-colors"
             >
@@ -56,28 +62,34 @@ export const Header = () => {
         </div>
 
         {/* Mobile navigation */}
-        <nav className="md:hidden flex items-center gap-4 mt-4">
+        <nav className="md:hidden flex items-center gap-4 mt-4 overflow-x-auto">
           <Link
             href="/"
-            className="text-sm text-gray-300 hover:text-white transition-colors"
+            className="text-sm text-gray-300 hover:text-white transition-colors whitespace-nowrap"
           >
             {t('nav.home')}
           </Link>
           <Link
             href="/leaderboard"
-            className="text-sm text-gray-300 hover:text-white transition-colors"
+            className="text-sm text-gray-300 hover:text-white transition-colors whitespace-nowrap"
           >
             {t('nav.leaderboard')}
           </Link>
           <Link
             href="/token-scanner"
-            className="text-sm text-gray-300 hover:text-white transition-colors"
+            className="text-sm text-gray-300 hover:text-white transition-colors whitespace-nowrap"
           >
             🔒 Scanner
           </Link>
           <Link
+            href="/super-token-scorer"
+            className="text-sm text-gray-300 hover:text-white transition-colors whitespace-nowrap"
+          >
+            🚀 Super
+          </Link>
+          <Link
             href="/documentation"
-            className="text-sm text-gray-300 hover:text-white transition-colors"
+            className="text-sm text-gray-300 hover:text-white transition-colors whitespace-nowrap"
           >
             {t('nav.documentation')}
           </Link>
