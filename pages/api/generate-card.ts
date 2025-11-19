@@ -694,6 +694,10 @@ async function generateBasicCardImage(
 
     logger.info('📊 Safe metrics:', safeMetrics);
 
+  // VERIFICAR QUE CANVAS ESTÁ FUNCIONANDO
+  logger.info('🎨 Creating canvas:', { width, height });
+  logger.info('🎨 Canvas context type:', typeof ctx);
+
   // FONDO DEGRADADO BÁSICO
   const gradient = ctx.createLinearGradient(0, 0, 0, height);
   gradient.addColorStop(0, '#0a0e1a');
@@ -701,20 +705,24 @@ async function generateBasicCardImage(
   gradient.addColorStop(1, '#16213e');
   ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, width, height);
+  logger.info('✅ Background gradient drawn');
 
   // BORDER BÁSICO
   ctx.strokeStyle = '#00d4ff';
   ctx.lineWidth = 6;
   ctx.strokeRect(15, 15, width - 30, height - 30);
+  logger.info('✅ Border drawn');
 
   let currentY = 90;
 
-  // TÍTULO - ✅ FIXED con Noto Sans
+  // TÍTULO
   ctx.fillStyle = '#00d4ff';
   ctx.font = '700 44px sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
+  logger.info('🔤 Drawing title with font:', ctx.font);
   ctx.fillText('DEGEN CARD', width / 2, currentY);
+  logger.info('✅ Title drawn at y:', currentY);
   currentY += 55;
 
   // WALLET ADDRESS
@@ -722,28 +730,41 @@ async function generateBasicCardImage(
   ctx.font = '16px monospace';
   ctx.textAlign = 'center';
   const shortAddress = `${walletAddress.slice(0, 6)}...${walletAddress.slice(-6)}`;
+  logger.info('🔤 Drawing wallet address:', shortAddress);
   ctx.fillText(shortAddress, width / 2, currentY);
+  logger.info('✅ Wallet address drawn at y:', currentY);
   currentY += 60;
 
-  // DEGEN SCORE - ✅ FIXED con Noto Sans
+  // DEGEN SCORE
   const scoreColor = getScoreColor(safeMetrics.degenScore);
   ctx.fillStyle = scoreColor;
   ctx.font = '700 110px sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
 
+  const scoreText = String(safeMetrics.degenScore);
+  logger.info('🔢 Drawing SCORE:', {
+    score: scoreText,
+    color: scoreColor,
+    font: ctx.font,
+    position: { x: width / 2, y: currentY }
+  });
+
   ctx.shadowColor = scoreColor;
   ctx.shadowBlur = 30;
-  ctx.fillText(String(safeMetrics.degenScore), width / 2, currentY);
+  ctx.fillText(scoreText, width / 2, currentY);
+  logger.info('✅ Score drawn');
   ctx.shadowColor = 'transparent';
   ctx.shadowBlur = 0;
 
   currentY += 75;
 
-  // LABEL DEGEN SCORE - ✅ FIXED con Noto Sans
+  // LABEL DEGEN SCORE
   ctx.fillStyle = '#aaaaaa';
   ctx.font = '700 20px sans-serif';
+  logger.info('🔤 Drawing DEGEN SCORE label at y:', currentY);
   ctx.fillText('DEGEN SCORE', width / 2, currentY);
+  logger.info('✅ Label drawn');
   currentY += 40;
 
   // FRASE FOMO - ✅ FIXED
@@ -850,10 +871,12 @@ function drawMetric(
   ctx.fillStyle = '#999999';
   ctx.font = '700 13px sans-serif';
   ctx.fillText(label, x, y);
+  logger.info(`📊 Metric label drawn: ${label}`);
 
   ctx.fillStyle = valueColor;
   ctx.font = '700 26px sans-serif';
   ctx.fillText(value, x, y + 32);
+  logger.info(`📊 Metric value drawn: ${value}`);
 }
 
 function getScoreColor(score: number): string {
