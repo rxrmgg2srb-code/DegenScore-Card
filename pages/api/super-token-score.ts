@@ -58,24 +58,29 @@ export default async function handler(
 
     logger.info('🚀 Super Token Score analysis requested', { tokenAddress });
 
-    // Check Redis cache first (if not forcing refresh)
-    if (!forceRefresh) {
+    // Check Redis cache first (if not forcing refresh and Redis is available)
+    if (!forceRefresh && redis) {
       const cacheKey = `super-token-score:${tokenAddress}`;
-      const cached = await redis.get(cacheKey);
+      try {
+        const cached = await redis.get(cacheKey);
 
-      if (cached) {
-        logger.info('✅ Returning cached Super Token Score', { tokenAddress });
+        if (cached) {
+          logger.info('✅ Returning cached Super Token Score', { tokenAddress });
 
-        // Update view count asynchronously
-        updateViewCount(tokenAddress).catch((err) => {
-          logger.error('Failed to update view count', err instanceof Error ? err : undefined);
-        });
+          // Update view count asynchronously
+          updateViewCount(tokenAddress).catch((err) => {
+            logger.error('Failed to update view count', err instanceof Error ? err : undefined);
+          });
 
-        return res.status(200).json({
-          success: true,
-          data: JSON.parse(cached as string),
-          cached: true,
-        });
+          return res.status(200).json({
+            success: true,
+            data: JSON.parse(cached as string),
+            cached: true,
+          });
+        }
+      } catch (error) {
+        // Redis error, continue without cache
+        logger.warn('Redis cache check failed, continuing without cache', { error: String(error) });
       }
     }
 
@@ -100,11 +105,13 @@ export default async function handler(
 
           const data = existing.fullDataJson as SuperTokenScore;
 
-          // Cache in Redis
-          const cacheKey = `super-token-score:${tokenAddress}`;
-          await redis.set(cacheKey, JSON.stringify(data), { ex: CACHE_TTL }).catch(() => {
-            // Fail silently
-          });
+          // Cache in Redis if available
+          if (redis) {
+            const cacheKey = `super-token-score:${tokenAddress}`;
+            await redis.set(cacheKey, JSON.stringify(data), { ex: CACHE_TTL }).catch(() => {
+              // Fail silently
+            });
+          }
 
           return res.status(200).json({
             success: true,
@@ -125,11 +132,13 @@ export default async function handler(
     // Save to database
     await saveSuperScoreToDatabase(tokenAddress, result);
 
-    // Cache in Redis
-    const cacheKey = `super-token-score:${tokenAddress}`;
-    await redis.set(cacheKey, JSON.stringify(result), { ex: CACHE_TTL }).catch((err) => {
-      logger.error('Failed to cache Super Token Score in Redis', err instanceof Error ? err : undefined);
-    });
+    // Cache in Redis if available
+    if (redis) {
+      const cacheKey = `super-token-score:${tokenAddress}`;
+      await redis.set(cacheKey, JSON.stringify(result), { ex: CACHE_TTL }).catch((err) => {
+        logger.error('Failed to cache Super Token Score in Redis', err instanceof Error ? err : undefined);
+      });
+    }
 
     logger.info('✅ Super Token Score analysis complete', {
       tokenAddress,
