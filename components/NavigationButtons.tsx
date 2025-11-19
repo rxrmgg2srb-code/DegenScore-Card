@@ -25,7 +25,8 @@ export function NavigationButtons() {
         </button>
       </Link>
 
-      <Link href="/super-token-scorer">
+      {/* DISABLED: Super Token Scorer & Token Scanner - Ocultos del público para conservar créditos Helius */}
+      {/* <Link href="/super-token-scorer">
         <button
           className={`px-4 py-2 rounded-lg font-bold transition hover:scale-105 shadow-lg ${
             isActive('/super-token-scorer')
@@ -47,7 +48,7 @@ export function NavigationButtons() {
         >
           🔒 Token Scanner
         </button>
-      </Link>
+      </Link> */}
 
       <Link href="/compare">
         <button
