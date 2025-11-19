@@ -25,6 +25,7 @@ export function NavigationButtons() {
         </button>
       </Link>
 
+      {/* Temporalmente oculto - no usar de momento
       <Link href="/super-token-scorer">
         <button
           className={`px-4 py-2 rounded-lg font-bold transition hover:scale-105 shadow-lg ${
@@ -48,6 +49,7 @@ export function NavigationButtons() {
           🔒 Token Scanner
         </button>
       </Link>
+      */}
 
       <Link href="/compare">
         <button
