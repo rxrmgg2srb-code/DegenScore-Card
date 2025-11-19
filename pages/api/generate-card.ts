@@ -390,7 +390,8 @@ async function generatePremiumCardImage(
     try {
       let imageUrl = metrics.profileImage;
 
-      if (!imageUrl.startsWith('http')) {
+      // Si no es base64 ni URL http, agregar baseUrl
+      if (!imageUrl.startsWith('http') && !imageUrl.startsWith('data:')) {
         const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3001';
         imageUrl = `${baseUrl}${imageUrl}`;
       }
