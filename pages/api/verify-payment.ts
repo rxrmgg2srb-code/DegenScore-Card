@@ -4,9 +4,10 @@ import { Connection, PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { paymentRateLimit } from '../../lib/rateLimitRedis';
 import { retry } from '../../lib/retryLogic';
 import { logger } from '@/lib/logger';
+import { PAYMENT_CONFIG } from '../../lib/config';
 
-const TREASURY_WALLET = process.env.TREASURY_WALLET!;
-const MINT_PRICE_SOL = 0.2; // Premium tier price ($20 USD at ~$100/SOL)
+const TREASURY_WALLET = PAYMENT_CONFIG.TREASURY_WALLET;
+const MINT_PRICE_SOL = PAYMENT_CONFIG.MINT_PRICE_SOL;
 
 export default async function handler(
   req: NextApiRequest,
