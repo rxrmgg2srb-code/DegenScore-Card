@@ -20,9 +20,10 @@ export default function App({ Component, pageProps }: AppProps) {
       return rpcUrl;
     }
 
-    // Fallback a RPC público de Solana
-    const fallbackUrl = 'https://api.mainnet-beta.solana.com';
-    console.warn('⚠️ NEXT_PUBLIC_HELIUS_RPC_URL not configured or invalid, using fallback:', fallbackUrl);
+    // Fallback a RPC público alternativo (más confiable que api.mainnet-beta.solana.com)
+    // Ankr tiene mejores rate limits y no bloquea con 403
+    const fallbackUrl = 'https://rpc.ankr.com/solana';
+    console.warn('⚠️ NEXT_PUBLIC_HELIUS_RPC_URL not configured, using Ankr fallback:', fallbackUrl);
     return fallbackUrl;
   }, []);
 
