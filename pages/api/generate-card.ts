@@ -10,37 +10,33 @@ import fs from 'fs';
 // 🔥 SOLUCIÓN DEFINITIVA: Registrar fonts para Vercel
 // Vercel NO tiene fonts del sistema, hay que registrarlas manualmente
 try {
-  // En Vercel, process.cwd() apunta a /var/task
-  // Las fonts deben estar en public/fonts/
-  const fontPathPublic = path.join(process.cwd(), 'public', 'fonts', 'NotoSans-Regular.ttf');
-  const fontPathBoldPublic = path.join(process.cwd(), 'public', 'fonts', 'NotoSans-Bold.ttf');
+  const cwd = process.cwd();
+  logger.info('🔍 CWD for fonts:', { cwd });
 
-  // Intentar con path relativo también (para Next.js estático)
-  const fontPathStatic = path.join(process.cwd(), '.next', 'static', 'fonts', 'NotoSans-Regular.ttf');
-  const fontPathBoldStatic = path.join(process.cwd(), '.next', 'static', 'fonts', 'NotoSans-Bold.ttf');
+  // Probar múltiples paths (Vercel serverless cambia ubicación)
+  const fontPaths = [
+    { regular: path.join(cwd, 'public', 'fonts', 'NotoSans-Regular.ttf'), bold: path.join(cwd, 'public', 'fonts', 'NotoSans-Bold.ttf'), name: 'public/fonts' },
+    { regular: path.join(cwd, '.next', 'server', 'chunks', 'public', 'fonts', 'NotoSans-Regular.ttf'), bold: path.join(cwd, '.next', 'server', 'chunks', 'public', 'fonts', 'NotoSans-Bold.ttf'), name: '.next/server/chunks' },
+    { regular: path.join(cwd, '.next', 'public', 'fonts', 'NotoSans-Regular.ttf'), bold: path.join(cwd, '.next', 'public', 'fonts', 'NotoSans-Bold.ttf'), name: '.next/public' },
+  ];
 
-  // Intentar registrar desde public primero
   let registered = false;
 
-  if (require('fs').existsSync(fontPathPublic)) {
-    GlobalFonts.registerFromPath(fontPathPublic, 'Noto Sans');
-    GlobalFonts.registerFromPath(fontPathBoldPublic, 'Noto Sans Bold');
-    logger.info('✅ Fonts registered from public/fonts');
-    registered = true;
-  } else if (require('fs').existsSync(fontPathStatic)) {
-    GlobalFonts.registerFromPath(fontPathStatic, 'Noto Sans');
-    GlobalFonts.registerFromPath(fontPathBoldStatic, 'Noto Sans Bold');
-    logger.info('✅ Fonts registered from .next/static/fonts');
-    registered = true;
-  } else {
-    logger.warn('⚠️ Font files not found at:', { fontPathPublic, fontPathStatic });
+  for (const fp of fontPaths) {
+    if (fs.existsSync(fp.regular) && fs.existsSync(fp.bold)) {
+      GlobalFonts.registerFromPath(fp.regular, 'Noto Sans');
+      GlobalFonts.registerFromPath(fp.bold, 'Noto Sans Bold');
+      logger.info(`✅ Fonts registered from ${fp.name}`);
+      registered = true;
+      break;
+    }
   }
 
   if (!registered) {
-    logger.warn('⚠️ Using system fonts as fallback');
+    logger.warn('⚠️ Fonts not found. Tried:', { paths: fontPaths.map(fp => fp.name) });
   }
 } catch (error) {
-  logger.error('⚠️ Failed to register fonts (will use system fonts):', error instanceof Error ? error : undefined, {
+  logger.error('⚠️ Failed to register fonts:', error instanceof Error ? error : undefined, {
     error: String(error),
     stack: error instanceof Error ? error.stack : undefined
   });
