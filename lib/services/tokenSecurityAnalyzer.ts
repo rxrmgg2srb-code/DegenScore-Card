@@ -1195,6 +1195,7 @@ async function fetchLiquidityPools(tokenAddress: string): Promise<any[]> {
     liquidityUSD: final * solPrice,
     lpBurned,
     lpLocked,
+    lpLockEnd: undefined,
     sources: valid.map(v => v.source),
     sourceCount: valid.length,
   }];
