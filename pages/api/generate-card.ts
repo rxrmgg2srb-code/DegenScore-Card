@@ -182,15 +182,15 @@ export default async function handler(
     // 🔧 FIX: Registrar fonts antes de generar imágenes
     registerFonts();
 
-    const { walletAddress } = req.body;
+    // Validate request with Zod
+    const { generateCardSchema, formatValidationError } = await import('../../lib/validation/schemas');
+    const validationResult = generateCardSchema.safeParse(req.body);
 
-    if (!walletAddress) {
-      return res.status(400).json({ error: 'Wallet address is required' });
+    if (!validationResult.success) {
+      return res.status(400).json(formatValidationError(validationResult.error));
     }
 
-    if (!isValidSolanaAddress(walletAddress)) {
-      return res.status(400).json({ error: 'Invalid Solana wallet address' });
-    }
+    const { walletAddress } = validationResult.data;
 
     logger.info(`🎨 Generating card image for: ${walletAddress}`);
 
