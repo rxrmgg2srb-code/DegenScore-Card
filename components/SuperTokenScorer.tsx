@@ -134,7 +134,7 @@ export default function SuperTokenScorer() {
                   <span className={getScoreColor(result.superScore)}>
                     {result.superScore}
                   </span>
-                  <span className="text-3xl text-gray-400">/1000</span>
+                  <span className="text-3xl text-gray-400">/100</span>
                 </div>
                 <div className="text-2xl md:text-3xl font-bold mb-2">
                   {result.tokenSymbol} - {result.tokenName}
