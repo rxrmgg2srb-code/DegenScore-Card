@@ -411,9 +411,18 @@ export async function analyzeSuperTokenScore(
       fetchJupiterLiquidity(tokenAddress),
     ]);
 
-    // PASO 3: Análisis de wallets nuevas
-    if (onProgress) onProgress(25, 'Analizando edad de wallets holders...');
-    const newWalletAnalysis = await analyzeNewWallets(tokenAddress);
+    // PASO 3: Análisis de wallets nuevas - DISABLED (usuario no lo quiere)
+    if (onProgress) onProgress(25, 'Continuando análisis...');
+    // Skipped: const newWalletAnalysis = await analyzeNewWallets(tokenAddress);
+    const newWalletAnalysis: NewWalletAnalysis = {
+      totalWallets: 0,
+      walletsUnder10Days: 0,
+      percentageNewWallets: 0,
+      avgWalletAge: 0,
+      suspiciousNewWallets: 0,
+      riskLevel: 'LOW',
+      score: 50, // Neutral score - no afecta el resultado
+    };
 
     // PASO 4: Análisis de insiders
     if (onProgress) onProgress(35, 'Detectando actividad de insiders...');
@@ -1895,7 +1904,6 @@ function calculateSuperScore(breakdown: SuperTokenScore['scoreBreakdown']): numb
    *
    * INCLUDED (Real Data):
    * - baseSecurityScore: Real on-chain data (authorities, holders, liquidity)
-   * - newWalletScore: Real transaction history analysis
    * - insiderScore: Real holder distribution analysis
    * - volumeScore: Real DEX volume data
    * - socialScore: Real metadata from on-chain
@@ -1908,7 +1916,8 @@ function calculateSuperScore(breakdown: SuperTokenScore['scoreBreakdown']): numb
    * - birdeyeScore: Real market data from Birdeye
    * - jupiterScore: Real liquidity data from Jupiter
    *
-   * EXCLUDED (No Real Data):
+   * EXCLUDED (No Real Data / Disabled by User):
+   * - newWalletScore: DISABLED - Usuario no lo requiere (performance)
    * - smartMoneyScore: Requires whale tracking DB (not implemented)
    * - historicalHoldersScore: Requires historical snapshots (not implemented)
    * - crossChainScore: Requires bridge detection (not implemented)
@@ -1920,7 +1929,7 @@ function calculateSuperScore(breakdown: SuperTokenScore['scoreBreakdown']): numb
     breakdown.rugCheckScore * 1.8 +           // CRITICAL - Professional audit data (0-100)
     breakdown.liquidityDepthScore * 1.5 +     // VERY IMPORTANT - Real liquidity depth (0-50)
     breakdown.teamScore * 1.3 +               // IMPORTANT - Team tokens & authorities (0-40)
-    breakdown.newWalletScore * 1.2 +          // IMPORTANT - Sybil attack detection (0-50)
+    breakdown.newWalletScore * 0 +            // DISABLED - Usuario no quiere este análisis (0-50)
     breakdown.insiderScore * 1.2 +            // IMPORTANT - Insider trading detection (0-50)
     breakdown.botDetectionScore * 1.1 +       // Important - Bot activity detection (0-60)
     breakdown.volumeScore +                   // Real volume analysis (0-40)
@@ -1930,10 +1939,10 @@ function calculateSuperScore(breakdown: SuperTokenScore['scoreBreakdown']): numb
     breakdown.jupiterScore +                  // Real Jupiter data (0-50)
     breakdown.socialScore * 0.5;              // Lower weight - less critical (0-30)
 
-  // Maximum possible with current weights:
-  // 100*2.0 + 100*1.8 + 50*1.5 + 40*1.3 + 50*1.2 + 50*1.2 + 60*1.1 + 40 + 50 + 60 + 50 + 50 + 30*0.5 =
-  // 200 + 180 + 75 + 52 + 60 + 60 + 66 + 40 + 50 + 60 + 50 + 50 + 15 = 958
-  const maxPossible = 958;
+  // Maximum possible with current weights (SIN newWalletScore):
+  // 100*2.0 + 100*1.8 + 50*1.5 + 40*1.3 + 0 + 50*1.2 + 60*1.1 + 40 + 50 + 60 + 50 + 50 + 30*0.5 =
+  // 200 + 180 + 75 + 52 + 0 + 60 + 66 + 40 + 50 + 60 + 50 + 50 + 15 = 898
+  const maxPossible = 898;
 
   // Normalizar a 0-100
   const normalized = (weightedTotal / maxPossible) * 100;
@@ -1951,10 +1960,10 @@ function calculateSuperScore(breakdown: SuperTokenScore['scoreBreakdown']): numb
     finalScore *= 0.7; // 30% penalty for bad rug check
   }
 
-  // HIGH: If too many new wallets (>70%), likely Sybil attack
-  if (breakdown.newWalletScore < 10) {
-    finalScore *= 0.85; // 15% penalty
-  }
+  // DISABLED: New wallet analysis penalty (usuario no lo quiere)
+  // if (breakdown.newWalletScore < 10) {
+  //   finalScore *= 0.85; // 15% penalty
+  // }
 
   // HIGH: If insider selling detected
   if (breakdown.insiderScore < 15) {
@@ -2010,15 +2019,15 @@ function consolidateRedFlags(
     });
   });
 
-  // New wallet red flags
-  if (newWallet.riskLevel === 'CRITICAL') {
-    flags.push({
-      category: 'New Wallets',
-      severity: 'CRITICAL',
-      message: `${newWallet.percentageNewWallets.toFixed(1)}% de holders son wallets nuevas (< 10 días)`,
-      score_impact: 25,
-    });
-  }
+  // DISABLED: New wallet red flags (usuario no lo quiere)
+  // if (newWallet.riskLevel === 'CRITICAL') {
+  //   flags.push({
+  //     category: 'New Wallets',
+  //     severity: 'CRITICAL',
+  //     message: `${newWallet.percentageNewWallets.toFixed(1)}% de holders son wallets nuevas (< 10 días)`,
+  //     score_impact: 25,
+  //   });
+  // }
 
   // Insider red flags
   if (insider.suspiciousActivity) {
