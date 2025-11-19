@@ -47,7 +47,7 @@ else
     # Try to run migrations with timeout, but don't fail the build if they error
     echo "⏱️  Running migrations (60s timeout)..."
   set +e  # Temporarily disable exit on error
-  MIGRATION_OUTPUT=$(timeout 60 npx prisma migrate deploy 2>&1)
+  MIGRATION_OUTPUT=$(timeout 60 ./node_modules/.bin/prisma migrate deploy 2>&1)
   EXIT_CODE=$?
   set -e  # Re-enable exit on error
 
@@ -57,7 +57,7 @@ else
 
     # Verify migration status
     echo "📋 Verifying migration status..."
-    timeout 30 npx prisma migrate status || true
+    timeout 30 ./node_modules/.bin/prisma migrate status || true
     echo ""
   elif [ $EXIT_CODE -eq 124 ]; then
     echo "❌ ERROR: Migration timed out after 60 seconds"
@@ -80,7 +80,7 @@ else
     echo "Syncing schema with db push..."
     echo ""
     set +e  # Temporarily disable exit on error for db push
-    timeout 60 npx prisma db push --skip-generate --accept-data-loss
+    timeout 60 ./node_modules/.bin/prisma db push --skip-generate --accept-data-loss
     PUSH_EXIT_CODE=$?
     set -e  # Re-enable exit on error
     if [ $PUSH_EXIT_CODE -eq 0 ]; then
@@ -105,7 +105,8 @@ fi  # End of DATABASE_URL check
 # Step 2: Generate Prisma Client
 echo "🔧 [2/3] Generating Prisma Client..."
 echo ""
-npx prisma generate
+# Use local prisma binary instead of npx to respect package.json version
+./node_modules/.bin/prisma generate
 echo "✅ Prisma Client generated successfully"
 echo ""
 
