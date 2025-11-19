@@ -30,6 +30,7 @@ import {
   throttledSolscanCall,
   throttledJupiterCall,
 } from '@/lib/externalApiThrottler';
+import { throttledHeliusCall } from '@/lib/heliusThrottler';
 
 const HELIUS_API_KEY = process.env.HELIUS_API_KEY || '';
 const HELIUS_RPC_URL = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_API_KEY}`;
@@ -970,42 +971,38 @@ async function analyzeNewWallets(tokenAddress: string): Promise<NewWalletAnalysi
 
       logger.info(`[NewWalletAnalysis] Analyzing ${SAMPLE_SIZE} wallet ages (sample)...`);
 
-      // Analizar en batches pequeños para evitar 429s
-      const BATCH_SIZE = 5; // Solo 5 concurrentes
-      const DELAY_BETWEEN_BATCHES = 1000; // 1 segundo entre batches
+      // Procesar secuencialmente con throttling (no en batches)
+      // para asegurar que cada llamada pase por el throttler
+      for (let i = 0; i < SAMPLE_SIZE; i++) {
+        const holder = allHolders[i];
 
-      for (let i = 0; i < SAMPLE_SIZE; i += BATCH_SIZE) {
-        const batch = allHolders.slice(i, Math.min(i + BATCH_SIZE, SAMPLE_SIZE));
+        try {
+          const pubkey = new PublicKey(holder.owner);
 
-        await Promise.all(batch.map(async (holder) => {
-          try {
-            const pubkey = new PublicKey(holder.owner);
-            const signatures = await connection.getSignaturesForAddress(pubkey, { limit: 1000 });
+          // CRÍTICO: Usar throttledHeliusCall para cada llamada RPC
+          const signatures = await throttledHeliusCall(
+            async () => connection.getSignaturesForAddress(pubkey, { limit: 1000 }),
+            { priority: 5, timeout: 15000 }
+          );
 
-            if (signatures.length > 0) {
-              const oldestSig = signatures[signatures.length - 1];
-              const walletAge = (Date.now() / 1000 - (oldestSig?.blockTime || 0)) / 86400; // días
+          if (signatures.length > 0) {
+            const oldestSig = signatures[signatures.length - 1];
+            const walletAge = (Date.now() / 1000 - (oldestSig?.blockTime || 0)) / 86400; // días
 
-              totalAge += walletAge;
+            totalAge += walletAge;
 
-              if (walletAge < 10) {
-                walletsUnder10Days++;
+            if (walletAge < 10) {
+              walletsUnder10Days++;
 
-                // Si es nueva Y tiene mucho balance, es sospechoso
-                const balance = parseFloat(holder.amount);
-                if (balance > 1000000) { // threshold arbitrario
-                  suspiciousNewWallets++;
-                }
+              // Si es nueva Y tiene mucho balance, es sospechoso
+              const balance = parseFloat(holder.amount);
+              if (balance > 1000000) { // threshold arbitrario
+                suspiciousNewWallets++;
               }
             }
-          } catch (error) {
-            // Skip wallet on error
           }
-        }));
-
-        // Delay entre batches para evitar rate limiting
-        if (i + BATCH_SIZE < SAMPLE_SIZE) {
-          await new Promise(resolve => setTimeout(resolve, DELAY_BETWEEN_BATCHES));
+        } catch (error) {
+          // Skip wallet on error (throttler timeout, RPC error, etc.)
         }
       }
 
