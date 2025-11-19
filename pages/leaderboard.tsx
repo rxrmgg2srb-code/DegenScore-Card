@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
+import { useWallet } from '@solana/wallet-adapter-react';
+import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import HotFeedWidget from '../components/HotFeedWidget';
 import { LanguageSelector } from '../components/LanguageSelector';
 
@@ -461,6 +463,7 @@ const LeaderboardTable = ({ filteredLeaderboard, handleLike, userLikes }: Leader
 };
 
 export default function Leaderboard() {
+  const { publicKey } = useWallet();
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -472,6 +475,15 @@ export default function Leaderboard() {
   useEffect(() => {
     fetchLeaderboard();
   }, [sortBy]);
+
+  // Load user's likes when wallet connects
+  useEffect(() => {
+    if (publicKey) {
+      fetchUserLikes(publicKey.toString());
+    } else {
+      setUserLikes({});
+    }
+  }, [publicKey]);
 
   const fetchLeaderboard = async () => {
     try {
@@ -495,14 +507,40 @@ export default function Leaderboard() {
     }
   };
 
+  const fetchUserLikes = async (walletAddress: string) => {
+    try {
+      const response = await fetch(`/api/user-likes?walletAddress=${walletAddress}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch user likes');
+      }
+      const data = await response.json();
+      if (data.success) {
+        setUserLikes(data.likes);
+      }
+    } catch (error) {
+      console.error('Error fetching user likes:', error);
+    }
+  };
+
   const handleLike = async (cardId: string) => {
+    // Validate wallet connected
+    if (!publicKey) {
+      alert('❌ Connect your wallet to like cards!');
+      return;
+    }
+
+    const walletAddress = publicKey.toString();
     const hasLiked = userLikes[cardId];
-    
+
+    console.log('🔵 Like clicked:', { cardId, walletAddress, hasLiked });
+
+    // Optimistic update
     setUserLikes(prev => ({ ...prev, [cardId]: !hasLiked }));
-    setLeaderboard(prev => 
+    setLeaderboard(prev =>
       prev.map(entry => {
         if (entry.id === cardId) {
           const newLikes = (entry.likes || 0) + (hasLiked ? -1 : 1);
+          console.log('🔵 Optimistic update:', { oldLikes: entry.likes, newLikes });
           return { ...entry, likes: newLikes };
         }
         return entry;
@@ -510,31 +548,48 @@ export default function Leaderboard() {
     );
 
     try {
+      console.log('🔵 Sending request to /api/like...');
       const response = await fetch('/api/like', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ cardId, increment: !hasLiked }),
+        body: JSON.stringify({ cardId, walletAddress }),
       });
 
+      console.log('🔵 Response status:', response.status);
+
       if (!response.ok) {
-        throw new Error('Failed to update like');
+        const errorData = await response.json();
+        console.error('🔴 Backend error:', errorData);
+
+        // Special handling for payment requirement
+        if (errorData.requiresPayment) {
+          alert('⚠️ ' + errorData.error);
+        }
+
+        throw new Error(errorData.error || 'Failed to update like');
       }
 
       const data = await response.json();
-      
-      setLeaderboard(prev => 
-        prev.map(entry => 
-          entry.id === cardId 
+      console.log('✅ Backend response:', data);
+
+      // Update with server response
+      setUserLikes(prev => ({ ...prev, [cardId]: data.hasLiked }));
+      setLeaderboard(prev =>
+        prev.map(entry =>
+          entry.id === cardId
             ? { ...entry, likes: data.likes }
             : entry
         )
       );
     } catch (error) {
-      console.error('Error updating like:', error);
+      console.error('🔴 Error updating like:', error);
+      console.log('🔴 Rolling back changes...');
+
+      // Rollback optimistic update
       setUserLikes(prev => ({ ...prev, [cardId]: hasLiked } as { [key: string]: boolean }));
-      setLeaderboard(prev => 
-        prev.map(entry => 
-          entry.id === cardId 
+      setLeaderboard(prev =>
+        prev.map(entry =>
+          entry.id === cardId
             ? { ...entry, likes: (entry.likes || 0) + (hasLiked ? 1 : -1) }
             : entry
         )
@@ -575,12 +630,16 @@ export default function Leaderboard() {
 
       <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 py-8 px-4">
         <div className="max-w-7xl mx-auto">
-          {/* Header con selector de idiomas */}
-          <div className="flex justify-end mb-4">
-            <LanguageSelector />
+          {/* Header con selector de idiomas y wallet */}
+          <div className="flex justify-between items-center mb-4">
+            <div></div>
+            <div className="flex gap-4 items-center">
+              <LanguageSelector />
+              <WalletMultiButton />
+            </div>
           </div>
 
-          <div className="flex justify-between items-center mb-8">
+          <div className="flex justify-between items-center mb-4">
             <Link href="/">
               <button className="px-6 py-3 bg-gray-800 hover:bg-gray-700 text-white rounded-lg font-bold transition">
                 ← Back Home
@@ -591,6 +650,15 @@ export default function Leaderboard() {
             </h1>
             <div className="w-32"></div>
           </div>
+
+          {/* Wallet notice */}
+          {!publicKey && (
+            <div className="mb-6 p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
+              <p className="text-yellow-300 text-sm text-center">
+                💡 Connect your wallet to like cards! Only paid members can vote.
+              </p>
+            </div>
+          )}
 
           {stats && (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">

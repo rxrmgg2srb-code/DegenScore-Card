@@ -1,6 +1,7 @@
 import { PublicKey } from '@solana/web3.js';
 
 export const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+export const CUID_REGEX = /^c[a-z0-9]{24}$/i;
 
 /**
  * Validates if a string is a valid Solana wallet address
@@ -19,6 +20,20 @@ export function isValidSolanaAddress(address: string): boolean {
  */
 export function isValidUUID(uuid: string): boolean {
   return UUID_REGEX.test(uuid);
+}
+
+/**
+ * Validates if a string is a valid CUID (Prisma default ID format)
+ */
+export function isValidCUID(cuid: string): boolean {
+  return CUID_REGEX.test(cuid);
+}
+
+/**
+ * Validates if a string is a valid UUID or CUID
+ */
+export function isValidId(id: string): boolean {
+  return isValidUUID(id) || isValidCUID(id);
 }
 
 /**

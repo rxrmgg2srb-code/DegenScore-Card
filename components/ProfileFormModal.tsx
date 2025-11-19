@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { useWallet } from '@solana/wallet-adapter-react';
-import { Connection, PublicKey, Transaction, SystemProgram, LAMPORTS_PER_SOL } from '@solana/web3.js';
+import { useWallet, useConnection } from '@solana/wallet-adapter-react';
+import { PublicKey, Transaction, SystemProgram, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { PAYMENT_CONFIG } from '../lib/config';
 import { logger } from '@/lib/logger';
 
@@ -22,6 +22,7 @@ export interface ProfileData {
 
 export default function ProfileFormModal({ isOpen, onClose, onSubmit, walletAddress, hasPromoCode = false, promoCodeApplied }: ProfileFormModalProps) {
   const { publicKey, sendTransaction } = useWallet();
+  const { connection } = useConnection(); // ✅ Usar connection del Context Provider
   const [formData, setFormData] = useState<ProfileData>({
     displayName: '',
     twitter: '',
@@ -129,8 +130,7 @@ export default function ProfileFormModal({ isOpen, onClose, onSubmit, walletAddr
     setPaymentError(null);
 
     try {
-      // 1. Crear transacción de pago
-      const connection = new Connection(PAYMENT_CONFIG.SOLANA_NETWORK, 'confirmed');
+      // 1. Crear transacción de pago (usar connection del Context Provider)
       const lamports = PAYMENT_CONFIG.MINT_PRICE_SOL * LAMPORTS_PER_SOL;
 
       const transaction = new Transaction().add(
@@ -162,7 +162,7 @@ export default function ProfileFormModal({ isOpen, onClose, onSubmit, walletAddr
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          signature,
+          paymentSignature: signature,
           walletAddress: publicKey.toString(),
         }),
       });
