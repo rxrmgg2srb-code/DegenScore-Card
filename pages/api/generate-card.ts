@@ -5,16 +5,41 @@ import { prisma } from '../../lib/prisma';
 import { cacheGet, cacheSet, CacheKeys } from '../../lib/cache/redis';
 import { logger } from '@/lib/logger';
 import path from 'path';
+import fs from 'fs';
 
 // 🔥 SOLUCIÓN DEFINITIVA: Registrar fonts para Vercel
 // Vercel NO tiene fonts del sistema, hay que registrarlas manualmente
 try {
-  const fontPath = path.join(process.cwd(), 'public', 'fonts');
-  GlobalFonts.registerFromPath(path.join(fontPath, 'NotoSans-Regular.ttf'), 'Noto Sans');
-  GlobalFonts.registerFromPath(path.join(fontPath, 'NotoSans-Bold.ttf'), 'Noto Sans Bold');
-  logger.info('✅ Fonts registered successfully for Vercel');
+  const cwd = process.cwd();
+  logger.info('🔍 CWD for fonts:', { cwd });
+
+  // Probar múltiples paths (Vercel serverless cambia ubicación)
+  const fontPaths = [
+    { regular: path.join(cwd, 'public', 'fonts', 'NotoSans-Regular.ttf'), bold: path.join(cwd, 'public', 'fonts', 'NotoSans-Bold.ttf'), name: 'public/fonts' },
+    { regular: path.join(cwd, '.next', 'server', 'chunks', 'public', 'fonts', 'NotoSans-Regular.ttf'), bold: path.join(cwd, '.next', 'server', 'chunks', 'public', 'fonts', 'NotoSans-Bold.ttf'), name: '.next/server/chunks' },
+    { regular: path.join(cwd, '.next', 'public', 'fonts', 'NotoSans-Regular.ttf'), bold: path.join(cwd, '.next', 'public', 'fonts', 'NotoSans-Bold.ttf'), name: '.next/public' },
+  ];
+
+  let registered = false;
+
+  for (const fp of fontPaths) {
+    if (fs.existsSync(fp.regular) && fs.existsSync(fp.bold)) {
+      GlobalFonts.registerFromPath(fp.regular, 'Noto Sans');
+      GlobalFonts.registerFromPath(fp.bold, 'Noto Sans Bold');
+      logger.info(`✅ Fonts registered from ${fp.name}`);
+      registered = true;
+      break;
+    }
+  }
+
+  if (!registered) {
+    logger.warn('⚠️ Fonts not found. Tried:', { paths: fontPaths.map(fp => fp.name) });
+  }
 } catch (error) {
-  logger.error('⚠️ Failed to register fonts (will use system fonts):', error instanceof Error ? error : undefined);
+  logger.error('⚠️ Failed to register fonts:', error instanceof Error ? error : undefined, {
+    error: String(error),
+    stack: error instanceof Error ? error.stack : undefined
+  });
 }
 
 // Función auxiliar para formatear SOL
