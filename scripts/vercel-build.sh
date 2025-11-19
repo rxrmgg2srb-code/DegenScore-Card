@@ -19,20 +19,33 @@ if [ -z "$DATABASE_URL" ]; then
   echo ""
 else
   echo "🔍 Checking DATABASE_URL configuration..."
-  if [[ "$DATABASE_URL" == *":5432"* ]]; then
+
+  # Check if using connection pooler (port 6543)
+  if [[ "$DATABASE_URL" == *":6543"* ]]; then
+    echo "⚠️  Connection pooler detected (port 6543)"
+    echo "⏭️  SKIPPING migrations - poolers don't support Prisma migrate"
+    echo ""
+    echo "ℹ️  Migrations should be run manually with DIRECT connection:"
+    echo "   1. Use direct connection: postgresql://...@db.xxx.supabase.co:5432/postgres"
+    echo "   2. Run: npx prisma migrate deploy"
+    echo ""
+    echo "✅ Continuing build without migrations..."
+    echo ""
+    # Skip migrations entirely
+    SKIP_MIGRATIONS=true
+  elif [[ "$DATABASE_URL" == *":5432"* ]]; then
     echo "✅ Direct connection detected (port 5432)"
-  elif [[ "$DATABASE_URL" == *":6543"* ]] && [[ "$DATABASE_URL" == *"pgbouncer=true"* ]]; then
-    echo "✅ Connection pooling detected (port 6543)"
-  elif [[ "$DATABASE_URL" == *":6543"* ]]; then
-    echo "⚠️  WARNING: Port 6543 detected but missing pgbouncer=true"
-    echo "For pooler, add: ?pgbouncer=true&connection_limit=1"
+    SKIP_MIGRATIONS=false
   else
     echo "ℹ️  Using custom DATABASE_URL configuration"
+    SKIP_MIGRATIONS=false
   fi
   echo ""
 
-  # Try to run migrations with timeout, but don't fail the build if they error
-  echo "⏱️  Running migrations (60s timeout)..."
+  # Only run migrations if NOT using pooler
+  if [ "$SKIP_MIGRATIONS" = "false" ]; then
+    # Try to run migrations with timeout, but don't fail the build if they error
+    echo "⏱️  Running migrations (60s timeout)..."
   set +e  # Temporarily disable exit on error
   MIGRATION_OUTPUT=$(timeout 60 npx prisma migrate deploy 2>&1)
   EXIT_CODE=$?
@@ -86,7 +99,8 @@ else
     echo "Please check DATABASE_URL and database permissions."
     echo ""
   fi
-fi
+  fi  # End of SKIP_MIGRATIONS check
+fi  # End of DATABASE_URL check
 
 # Step 2: Generate Prisma Client
 echo "🔧 [2/3] Generating Prisma Client..."
