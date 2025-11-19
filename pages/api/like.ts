@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { prisma } from '../../lib/prisma';
-import { isValidUUID } from '../../lib/validation';
+import { isValidId } from '../../lib/validation';
 import { rateLimit } from '../../lib/rateLimitRedis';
 import { logger } from '../../lib/logger';
 import { verifySessionToken } from '../../lib/walletAuth';
@@ -38,8 +38,8 @@ export default async function handler(
     //   return res.status(401).json({ error: 'Invalid or expired authentication token' });
     // }
 
-    // Validate cardId
-    if (!cardId || typeof cardId !== 'string' || !isValidUUID(cardId)) {
+    // Validate cardId (accepts both UUID and CUID formats)
+    if (!cardId || typeof cardId !== 'string' || !isValidId(cardId)) {
       logger.error('🔴 Invalid card ID:', { cardId });
       return res.status(400).json({ error: 'Invalid card ID' });
     }
