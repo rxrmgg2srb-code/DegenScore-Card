@@ -7,9 +7,6 @@ datasource db {
   provider  = "postgresql"
   url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
-  // Optimización para alta concurrencia
-  // DATABASE_URL usa Transaction pooler para queries (pgbouncer=true)
-  // DIRECT_URL usa Direct connection para migraciones (sin pgbouncer)
 }
 
 model DegenCard {
@@ -465,7 +462,7 @@ model UserStreak {
 // Daily Challenges System
 model DailyChallenge {
   id               String   @id @default(cuid())
-  date             DateTime @db.Date  // Día del challenge
+  date             DateTime  // Día del challenge
   challengeType    String   // "trades", "winRate", "volume", "follows", "share"
 
   // Challenge parameters
@@ -659,10 +656,10 @@ model AICoachAnalysis {
 
   // AI-generated insights
   overallScore      Int      // 0-100 discipline score
-  strengths         String   @db.Text  // JSON array of strengths
-  weaknesses        String   @db.Text  // JSON array of weaknesses
-  recommendations   String   @db.Text  // JSON array of recommendations
-  patterns          String   @db.Text  // JSON array of detected patterns
+  strengths         String     // JSON array of strengths
+  weaknesses        String     // JSON array of weaknesses
+  recommendations   String     // JSON array of recommendations
+  patterns          String     // JSON array of detected patterns
 
   // Risk analysis
   riskProfile       String   // "conservative", "moderate", "aggressive", "degen"
@@ -673,7 +670,7 @@ model AICoachAnalysis {
   confidenceScore   Float?   // 0-1
 
   // Full AI response
-  fullAnalysis      String   @db.Text  // Complete AI response
+  fullAnalysis      String    // Complete AI response
 
   @@index([walletAddress])
   @@index([analyzedAt])
