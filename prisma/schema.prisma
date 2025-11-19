@@ -6,10 +6,11 @@ generator client {
 datasource db {
   provider  = "postgresql"
   url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
-  // Optimización para alta concurrencia
-  // DATABASE_URL usa Transaction pooler para queries (pgbouncer=true)
-  // DIRECT_URL usa Direct connection para migraciones (sin pgbouncer)
+  // NOTE: directUrl is commented out to avoid errors in CI/CD environments
+  // Uncomment if using Supabase with connection pooling:
+  // directUrl = env("DIRECT_URL")
+  // DATABASE_URL should use Transaction pooler for queries (pgbouncer=true)
+  // DIRECT_URL should use Direct connection for migrations (without pgbouncer)
 }
 
 model DegenCard {

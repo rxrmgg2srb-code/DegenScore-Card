@@ -44,28 +44,62 @@ try {
 
 // Función auxiliar para formatear SOL
 function formatSOL(amount: number, decimals: number = 2): string {
-  if (amount >= 1e9) return `${(amount / 1e9).toFixed(decimals)}B`;
-  if (amount >= 1e6) return `${(amount / 1e6).toFixed(decimals)}M`;
-  if (amount >= 1e3) return `${(amount / 1e3).toFixed(decimals)}K`;
+  if (amount >= 1e9) {
+    return `${(amount / 1e9).toFixed(decimals)}B`;
+  }
+  if (amount >= 1e6) {
+    return `${(amount / 1e6).toFixed(decimals)}M`;
+  }
+  if (amount >= 1e3) {
+    return `${(amount / 1e3).toFixed(decimals)}K`;
+  }
   return `${amount.toFixed(decimals)}`;
 }
 
 // 🔥 FRASES FOMO ÉPICAS
 function getFOMOPhrase(score: number): string {
-  if (score >= 95) return "🔥 GOD MODE - They Bow to You";
-  if (score >= 90) return "👑 APEX PREDATOR - Pure Domination";
-  if (score >= 85) return "💎 GENERATIONAL WEALTH - GG EZ";
-  if (score >= 80) return "⚡ MAIN CHARACTER - Eating Good";
-  if (score >= 75) return "🚀 MOON MISSION - Keep Stacking";
-  if (score >= 70) return "🔥 KILLING IT - Above Average Chad";
-  if (score >= 65) return "💪 SOLID - You'll Make It Anon";
-  if (score >= 60) return "📈 MID CURVE - Touch Grass King";
-  if (score >= 55) return "🎯 SLIGHTLY MID - Do Better";
-  if (score >= 50) return "😬 NGMI VIBES - Yikes";
-  if (score >= 40) return "📉 EXIT LIQUIDITY - That's You";
-  if (score >= 30) return "💀 ABSOLUTELY COOKED - RIP";
-  if (score >= 20) return "🤡 CIRCUS CLOWN - Everyone's Laughing";
-  if (score >= 10) return "⚰️ DELETE APP - Uninstall Now";
+  if (score >= 95) {
+    return "🔥 GOD MODE - They Bow to You";
+  }
+  if (score >= 90) {
+    return "👑 APEX PREDATOR - Pure Domination";
+  }
+  if (score >= 85) {
+    return "💎 GENERATIONAL WEALTH - GG EZ";
+  }
+  if (score >= 80) {
+    return "⚡ MAIN CHARACTER - Eating Good";
+  }
+  if (score >= 75) {
+    return "🚀 MOON MISSION - Keep Stacking";
+  }
+  if (score >= 70) {
+    return "🔥 KILLING IT - Above Average Chad";
+  }
+  if (score >= 65) {
+    return "💪 SOLID - You'll Make It Anon";
+  }
+  if (score >= 60) {
+    return "📈 MID CURVE - Touch Grass King";
+  }
+  if (score >= 55) {
+    return "🎯 SLIGHTLY MID - Do Better";
+  }
+  if (score >= 50) {
+    return "😬 NGMI VIBES - Yikes";
+  }
+  if (score >= 40) {
+    return "📉 EXIT LIQUIDITY - That's You";
+  }
+  if (score >= 30) {
+    return "💀 ABSOLUTELY COOKED - RIP";
+  }
+  if (score >= 20) {
+    return "🤡 CIRCUS CLOWN - Everyone's Laughing";
+  }
+  if (score >= 10) {
+    return "⚰️ DELETE APP - Uninstall Now";
+  }
   return "🪦 QUIT FOREVER - It's Over Bro";
 }
 
@@ -257,7 +291,9 @@ async function generateCardImage(
       const premiumBuffer = await generatePremiumCardImage(walletAddress, metrics);
       logger.info('✅ Premium card generated successfully');
       // Force garbage collection hint
-      if (global.gc) global.gc();
+      if (global.gc) {
+        global.gc();
+      }
       return premiumBuffer;
     } catch (error) {
       logger.error('❌ Error generating premium card:', error instanceof Error ? error : undefined, {
@@ -283,7 +319,9 @@ async function generateCardImage(
   });
   const buffer = await generateBasicCardImage(walletAddress, metrics);
   // Force garbage collection hint
-  if (global.gc) global.gc();
+  if (global.gc) {
+    global.gc();
+  }
   return buffer;
 }
 
@@ -450,9 +488,13 @@ async function generatePremiumCardImage(
     ctx.fillStyle = tier.borderColor;
     
     const socials = [];
-    if (metrics.twitter) socials.push(`🐦 @${metrics.twitter}`);
-    if (metrics.telegram) socials.push(`✈️ @${metrics.telegram}`);
-    
+    if (metrics.twitter) {
+      socials.push(`🐦 @${metrics.twitter}`);
+    }
+    if (metrics.telegram) {
+      socials.push(`✈️ @${metrics.telegram}`);
+    }
+
     ctx.fillText(socials.join('  •  '), width / 2, currentY);
     currentY += 45;
   } else {
@@ -845,20 +887,42 @@ function drawMetric(
 }
 
 function getScoreColor(score: number): string {
-  if (score >= 90) return '#FFD700';
-  if (score >= 80) return '#00ff88';
-  if (score >= 60) return '#00d4ff';
-  if (score >= 40) return '#ffaa00';
-  if (score >= 20) return '#ff6600';
+  if (score >= 90) {
+    return '#FFD700';
+  }
+  if (score >= 80) {
+    return '#00ff88';
+  }
+  if (score >= 60) {
+    return '#00d4ff';
+  }
+  if (score >= 40) {
+    return '#ffaa00';
+  }
+  if (score >= 20) {
+    return '#ff6600';
+  }
   return '#ff4444';
 }
 
 function getRating(score: number): string {
-  if (score >= 90) return '🔥 LEGENDARY DEGEN 🔥';
-  if (score >= 75) return '⭐ MASTER DEGEN ⭐';
-  if (score >= 60) return '💎 DIAMOND HANDS 💎';
-  if (score >= 45) return '📈 DEGEN IN TRAINING 📈';
-  if (score >= 30) return '🎲 CASUAL GAMBLER 🎲';
-  if (score >= 15) return '🐟 SMALL FRY 🐟';
+  if (score >= 90) {
+    return '🔥 LEGENDARY DEGEN 🔥';
+  }
+  if (score >= 75) {
+    return '⭐ MASTER DEGEN ⭐';
+  }
+  if (score >= 60) {
+    return '💎 DIAMOND HANDS 💎';
+  }
+  if (score >= 45) {
+    return '📈 DEGEN IN TRAINING 📈';
+  }
+  if (score >= 30) {
+    return '🎲 CASUAL GAMBLER 🎲';
+  }
+  if (score >= 15) {
+    return '🐟 SMALL FRY 🐟';
+  }
   return '😅 NGMI 😅';
 }
