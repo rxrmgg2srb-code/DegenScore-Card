@@ -2,6 +2,7 @@ import { useState } from 'react';
 import Head from 'next/head';
 import { motion } from 'framer-motion';
 import { LanguageSelector } from '../components/LanguageSelector';
+import { NavigationButtons } from '../components/NavigationButtons';
 
 interface Section {
   id: string;
@@ -47,19 +48,18 @@ export default function Documentation() {
         {/* Header */}
         <header className="bg-black/50 backdrop-blur-lg sticky top-0 z-40 border-b border-purple-500/30">
           <div className="container mx-auto px-4 py-4">
-            <div className="flex items-center justify-between">
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
-                📚 DegenScore Documentation
-              </h1>
-              <div className="flex items-center gap-4">
-                <LanguageSelector />
-                <a
-                  href="/"
-                  className="bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded-lg font-medium transition-colors"
-                >
-                  ← Volver al Inicio
-                </a>
+            <div className="flex flex-col gap-4">
+              <div className="flex items-center justify-between">
+                <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+                  📚 DegenScore Documentation
+                </h1>
+                <div className="flex items-center gap-4">
+                  <LanguageSelector />
+                </div>
               </div>
+
+              {/* Navigation Buttons */}
+              <NavigationButtons />
             </div>
           </div>
         </header>

@@ -6,6 +6,7 @@
 
 import React from 'react';
 import Head from 'next/head';
+import { Header } from '@/components/Header';
 import SuperTokenScorer from '@/components/SuperTokenScorer';
 
 export default function SuperTokenScorerPage() {
@@ -26,7 +27,17 @@ export default function SuperTokenScorerPage() {
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <SuperTokenScorer />
+      <div className="min-h-screen">
+        <Header />
+        <SuperTokenScorer />
+      </div>
     </>
   );
+}
+
+// Force this page to be server-side rendered
+export async function getServerSideProps() {
+  return {
+    props: {},
+  };
 }
