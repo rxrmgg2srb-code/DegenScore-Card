@@ -96,9 +96,44 @@ export interface RugCheckData {
     name: string;
     level: 'info' | 'warn' | 'danger';
     description: string;
+    score?: number;
+    value?: string;
   }>;
   rugged: boolean;
   ruggedDetails?: string;
+}
+
+export interface RugCheckSummary {
+  mint: string;
+  score: number;
+  score_normalised: number;
+  lpLockedPct: number;
+  tokenType: string;
+  tokenProgram: string;
+  risks: Array<{
+    name: string;
+    level: 'info' | 'warn' | 'danger';
+    description: string;
+    score: number;
+    value: string;
+  }>;
+  error?: string;
+}
+
+export interface RugCheckLockers {
+  lockers: Record<string, {
+    owner: string;
+    programID: string;
+    tokenAccount: string;
+    type: 'burn_wallet' | 'locker' | 'other';
+    unlockDate: number;
+    uri: string;
+    usdcLocked: number;
+  }>;
+  total: {
+    pct: number;
+    totalUSDC: number;
+  };
 }
 
 export interface DexScreenerData {
@@ -274,6 +309,8 @@ export interface SuperTokenScore {
 
   // Datos de APIs externas
   rugCheckData?: RugCheckData;
+  rugCheckSummary?: RugCheckSummary;
+  rugCheckLockers?: RugCheckLockers;
   dexScreenerData?: DexScreenerData;
   birdeyeData?: BirdeyeData;
   solscanData?: SolscanData;
@@ -355,8 +392,18 @@ export async function analyzeSuperTokenScore(
 
     // PASO 2: Fetch de datos de APIs externas (en paralelo para velocidad)
     if (onProgress) onProgress(15, 'Consultando múltiples APIs externas...');
-    const [rugCheckData, dexScreenerData, birdeyeData, solscanData, jupiterLiquidity] = await Promise.allSettled([
+    const [
+      rugCheckData,
+      rugCheckSummary,
+      rugCheckLockers,
+      dexScreenerData,
+      birdeyeData,
+      solscanData,
+      jupiterLiquidity
+    ] = await Promise.allSettled([
       fetchRugCheckData(tokenAddress),
+      fetchRugCheckSummary(tokenAddress),
+      fetchRugCheckLockers(tokenAddress),
       fetchDexScreenerData(tokenAddress),
       fetchBirdeyeData(tokenAddress),
       fetchSolscanData(tokenAddress),
@@ -492,6 +539,8 @@ export async function analyzeSuperTokenScore(
       crossChainAnalysis,
       competitorAnalysis,
       rugCheckData: rugCheckData.status === 'fulfilled' ? rugCheckData.value : undefined,
+      rugCheckSummary: rugCheckSummary.status === 'fulfilled' ? rugCheckSummary.value : undefined,
+      rugCheckLockers: rugCheckLockers.status === 'fulfilled' ? rugCheckLockers.value : undefined,
       dexScreenerData: dexScreenerData.status === 'fulfilled' ? dexScreenerData.value : undefined,
       birdeyeData: birdeyeData.status === 'fulfilled' ? birdeyeData.value : undefined,
       solscanData: solscanData.status === 'fulfilled' ? solscanData.value : undefined,
@@ -560,6 +609,80 @@ async function fetchRugCheckData(tokenAddress: string): Promise<RugCheckData | u
     );
   } catch (error) {
     logger.warn('RugCheck API failed', { tokenAddress, error: String(error) });
+    return undefined;
+  }
+}
+
+async function fetchRugCheckSummary(tokenAddress: string): Promise<RugCheckSummary | undefined> {
+  try {
+    // RugCheck Summary API - más ligero que el report completo
+    return await throttledRugCheckCall(
+      () => retry(async () => {
+        const response = await fetch(`https://api.rugcheck.xyz/v1/tokens/${tokenAddress}/report/summary`);
+
+        if (!response.ok) {
+          const error: any = new Error(`RugCheck Summary API error: ${response.status}`);
+          error.status = response.status;
+          throw error;
+        }
+
+        const data = await response.json();
+
+        return {
+          mint: tokenAddress,
+          score: data.score || 0,
+          score_normalised: data.score_normalised || 0,
+          lpLockedPct: data.lpLockedPct || 0,
+          tokenType: data.tokenType || 'unknown',
+          tokenProgram: data.tokenProgram || 'unknown',
+          risks: data.risks || [],
+          error: data.error,
+        };
+      }, {
+        maxRetries: 3,
+        retryableStatusCodes: [408, 429, 500, 502, 503, 504],
+        onRetry: (attempt, error) => {
+          logger.warn(`[RugCheck Summary] Retrying (attempt ${attempt}):`, { message: error.message });
+        }
+      }),
+      { priority: 2, timeout: 10000 } // Higher priority, shorter timeout (it's lighter)
+    );
+  } catch (error) {
+    logger.warn('RugCheck Summary API failed', { tokenAddress, error: String(error) });
+    return undefined;
+  }
+}
+
+async function fetchRugCheckLockers(tokenAddress: string): Promise<RugCheckLockers | undefined> {
+  try {
+    // RugCheck Lockers API - Info de LP locks
+    return await throttledRugCheckCall(
+      () => retry(async () => {
+        const response = await fetch(`https://api.rugcheck.xyz/v1/tokens/${tokenAddress}/lockers`);
+
+        if (!response.ok) {
+          const error: any = new Error(`RugCheck Lockers API error: ${response.status}`);
+          error.status = response.status;
+          throw error;
+        }
+
+        const data = await response.json();
+
+        return {
+          lockers: data.lockers || {},
+          total: data.total || { pct: 0, totalUSDC: 0 },
+        };
+      }, {
+        maxRetries: 3,
+        retryableStatusCodes: [408, 429, 500, 502, 503, 504],
+        onRetry: (attempt, error) => {
+          logger.warn(`[RugCheck Lockers] Retrying (attempt ${attempt}):`, { message: error.message });
+        }
+      }),
+      { priority: 4, timeout: 10000 } // Lower priority (optional data)
+    );
+  } catch (error) {
+    logger.warn('RugCheck Lockers API failed', { tokenAddress, error: String(error) });
     return undefined;
   }
 }
@@ -765,38 +888,75 @@ async function analyzeNewWallets(tokenAddress: string): Promise<NewWalletAnalysi
     retry(async () => {
       const url = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_API_KEY}`;
 
-      // Obtener holders
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          jsonrpc: '2.0',
-          id: 'new-wallet-analysis',
-          method: 'getTokenAccounts',
-          params: {
-            mint: tokenAddress,
-            limit: 1000,
-            options: { showZeroBalance: false },
-          },
-        }),
-      });
+      // PASO 1: Obtener TODOS los holders (con paginación)
+      // Helius limita a 1000 por request, así que hacemos múltiples llamadas
+      let allHolders: any[] = [];
+      let cursor: string | undefined = undefined;
+      const MAX_HOLDERS_TO_FETCH = 100000; // Límite máximo de 100k holders
+      const PAGE_SIZE = 1000; // Tamaño de página (máximo de Helius)
 
-      if (!response.ok) {
-        throw new Error('Failed to fetch token holders');
+      logger.info('[NewWalletAnalysis] Fetching all token holders...', { tokenAddress });
+
+      // Fetch hasta 100 páginas (100k holders total)
+      for (let page = 0; page < 100 && allHolders.length < MAX_HOLDERS_TO_FETCH; page++) {
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            jsonrpc: '2.0',
+            id: `new-wallet-analysis-${page}`,
+            method: 'getTokenAccounts',
+            params: {
+              mint: tokenAddress,
+              limit: PAGE_SIZE,
+              cursor: cursor,
+              options: { showZeroBalance: false },
+            },
+          }),
+        });
+
+        if (!response.ok) {
+          if (page === 0) {
+            throw new Error('Failed to fetch token holders');
+          }
+          // Si falla en páginas posteriores, usar lo que tenemos
+          break;
+        }
+
+        const data = await response.json();
+        const pageHolders = data.result?.token_accounts || [];
+
+        if (pageHolders.length === 0) {
+          // No hay más holders
+          break;
+        }
+
+        allHolders = allHolders.concat(pageHolders);
+        cursor = data.result?.cursor;
+
+        // Si no hay cursor, no hay más páginas
+        if (!cursor) {
+          break;
+        }
+
+        logger.debug(`[NewWalletAnalysis] Fetched page ${page + 1}, total holders: ${allHolders.length}`);
       }
 
-      const data = await response.json();
-      const holders = data.result?.token_accounts || [];
+      const totalWallets = allHolders.length;
+      logger.info(`[NewWalletAnalysis] Total holders fetched: ${totalWallets}`);
 
-      const totalWallets = holders.length;
       let walletsUnder10Days = 0;
       let suspiciousNewWallets = 0;
       let totalAge = 0;
 
-      // Analizar edad de cada wallet
+      // PASO 2: Analizar edad de wallets
+      // Analizar hasta 1000 wallets (sample representativo para tokens grandes)
       const connection = new Connection(HELIUS_RPC_URL, 'confirmed');
+      const SAMPLE_SIZE = Math.min(1000, totalWallets);
 
-      for (const holder of holders.slice(0, 100)) { // Analizar primeros 100 para velocidad
+      logger.info(`[NewWalletAnalysis] Analyzing ${SAMPLE_SIZE} wallet ages...`);
+
+      for (const holder of allHolders.slice(0, SAMPLE_SIZE)) {
         try {
           const pubkey = new PublicKey(holder.owner);
           const signatures = await connection.getSignaturesForAddress(pubkey, { limit: 1000 });
@@ -822,8 +982,8 @@ async function analyzeNewWallets(tokenAddress: string): Promise<NewWalletAnalysi
         }
       }
 
-      const percentageNewWallets = (walletsUnder10Days / Math.min(100, totalWallets)) * 100;
-      const avgWalletAge = totalAge / Math.min(100, totalWallets);
+      const percentageNewWallets = SAMPLE_SIZE > 0 ? (walletsUnder10Days / SAMPLE_SIZE) * 100 : 0;
+      const avgWalletAge = SAMPLE_SIZE > 0 ? totalAge / SAMPLE_SIZE : 0;
 
       // Calcular risk level
       let riskLevel: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL' = 'LOW';
