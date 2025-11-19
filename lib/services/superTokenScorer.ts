@@ -788,7 +788,12 @@ async function fetchBirdeyeData(tokenAddress: string): Promise<BirdeyeData | und
       { priority: 3, timeout: 15000 }
     );
   } catch (error) {
-    logger.warn('Birdeye API failed', { tokenAddress, error: String(error) });
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    logger.warn('Birdeye API failed', {
+      tokenAddress,
+      error: errorMsg,
+      hasApiKey: !!process.env.BIRDEYE_API_KEY,
+    });
     return undefined;
   }
 }
@@ -831,7 +836,11 @@ async function fetchSolscanData(tokenAddress: string): Promise<SolscanData | und
       { priority: 4, timeout: 15000 }
     );
   } catch (error) {
-    logger.warn('Solscan API failed', { tokenAddress, error: String(error) });
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    logger.warn('Solscan API failed', {
+      tokenAddress,
+      error: errorMsg,
+    });
     return undefined;
   }
 }
@@ -874,7 +883,11 @@ async function fetchJupiterLiquidity(tokenAddress: string): Promise<JupiterLiqui
       { priority: 3, timeout: 15000 }
     );
   } catch (error) {
-    logger.warn('Jupiter API failed', { tokenAddress, error: String(error) });
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    logger.warn('Jupiter API failed', {
+      tokenAddress,
+      error: errorMsg,
+    });
     return undefined;
   }
 }
@@ -950,35 +963,49 @@ async function analyzeNewWallets(tokenAddress: string): Promise<NewWalletAnalysi
       let totalAge = 0;
 
       // PASO 2: Analizar edad de wallets
-      // Analizar hasta 1000 wallets (sample representativo para tokens grandes)
+      // Analizar sample más pequeño para evitar rate limiting
+      // 200 wallets es suficiente para estadística confiable
       const connection = new Connection(HELIUS_RPC_URL, 'confirmed');
-      const SAMPLE_SIZE = Math.min(1000, totalWallets);
+      const SAMPLE_SIZE = Math.min(200, totalWallets);
 
-      logger.info(`[NewWalletAnalysis] Analyzing ${SAMPLE_SIZE} wallet ages...`);
+      logger.info(`[NewWalletAnalysis] Analyzing ${SAMPLE_SIZE} wallet ages (sample)...`);
 
-      for (const holder of allHolders.slice(0, SAMPLE_SIZE)) {
-        try {
-          const pubkey = new PublicKey(holder.owner);
-          const signatures = await connection.getSignaturesForAddress(pubkey, { limit: 1000 });
+      // Analizar en batches pequeños para evitar 429s
+      const BATCH_SIZE = 5; // Solo 5 concurrentes
+      const DELAY_BETWEEN_BATCHES = 1000; // 1 segundo entre batches
 
-          if (signatures.length > 0) {
-            const oldestSig = signatures[signatures.length - 1];
-            const walletAge = (Date.now() / 1000 - (oldestSig?.blockTime || 0)) / 86400; // días
+      for (let i = 0; i < SAMPLE_SIZE; i += BATCH_SIZE) {
+        const batch = allHolders.slice(i, Math.min(i + BATCH_SIZE, SAMPLE_SIZE));
 
-            totalAge += walletAge;
+        await Promise.all(batch.map(async (holder) => {
+          try {
+            const pubkey = new PublicKey(holder.owner);
+            const signatures = await connection.getSignaturesForAddress(pubkey, { limit: 1000 });
 
-            if (walletAge < 10) {
-              walletsUnder10Days++;
+            if (signatures.length > 0) {
+              const oldestSig = signatures[signatures.length - 1];
+              const walletAge = (Date.now() / 1000 - (oldestSig?.blockTime || 0)) / 86400; // días
 
-              // Si es nueva Y tiene mucho balance, es sospechoso
-              const balance = parseFloat(holder.amount);
-              if (balance > 1000000) { // threshold arbitrario
-                suspiciousNewWallets++;
+              totalAge += walletAge;
+
+              if (walletAge < 10) {
+                walletsUnder10Days++;
+
+                // Si es nueva Y tiene mucho balance, es sospechoso
+                const balance = parseFloat(holder.amount);
+                if (balance > 1000000) { // threshold arbitrario
+                  suspiciousNewWallets++;
+                }
               }
             }
+          } catch (error) {
+            // Skip wallet on error
           }
-        } catch (error) {
-          // Skip wallet on error
+        }));
+
+        // Delay entre batches para evitar rate limiting
+        if (i + BATCH_SIZE < SAMPLE_SIZE) {
+          await new Promise(resolve => setTimeout(resolve, DELAY_BETWEEN_BATCHES));
         }
       }
 
