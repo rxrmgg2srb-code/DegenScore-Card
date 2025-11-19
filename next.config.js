@@ -4,6 +4,9 @@ const { withSentryConfig } = require('@sentry/nextjs');
 const nextConfig = {
   reactStrictMode: true,
 
+  // Enable standalone output for better Docker/Render deployments
+  output: 'standalone',
+
   // Disable ESLint during production builds (errors can be fixed later)
   eslint: {
     ignoreDuringBuilds: true,
@@ -21,6 +24,8 @@ const nextConfig = {
   experimental: {
     workerThreads: false,
     cpus: 1,
+    // External packages that should not be bundled
+    serverComponentsExternalPackages: ['@napi-rs/canvas', 'bullmq', 'ioredis'],
   },
 
   // Security headers

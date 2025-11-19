@@ -37,10 +37,3 @@ export default function Home() {
     </div>
   );
 }
-
-// Force Server-Side Rendering
-export async function getServerSideProps() {
-  return {
-    props: {},
-  };
-}
