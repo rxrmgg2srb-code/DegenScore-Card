@@ -21,7 +21,7 @@ export default async function handler(
   try {
     const { cardId, increment } = req.body;
 
-    logger.debug('Like request:', { cardId, increment });
+    logger.info('🔵 Like request received:', { cardId, increment });
 
     // ⚠️ AUTENTICACIÓN DESHABILITADA TEMPORALMENTE PARA TESTING
     // TODO: Habilitar autenticación en producción final para prevenir spam
@@ -40,11 +40,13 @@ export default async function handler(
 
     // Validate cardId
     if (!cardId || typeof cardId !== 'string' || !isValidUUID(cardId)) {
+      logger.error('🔴 Invalid card ID:', { cardId });
       return res.status(400).json({ error: 'Invalid card ID' });
     }
 
     // Validate increment
     if (typeof increment !== 'boolean') {
+      logger.error('🔴 Invalid increment value:', { increment });
       return res.status(400).json({ error: 'Invalid increment value' });
     }
 
@@ -55,11 +57,15 @@ export default async function handler(
     });
 
     if (!currentCard) {
+      logger.error('🔴 Card not found:', { cardId });
       return res.status(404).json({ error: 'Card not found' });
     }
 
+    logger.info('🔵 Current card:', { cardId, currentLikes: currentCard.likes });
+
     // Prevent negative likes
     if (!increment && currentCard.likes <= 0) {
+      logger.warn('⚠️ Cannot decrement likes below 0:', { cardId, currentLikes: currentCard.likes });
       return res.status(400).json({ error: 'Likes cannot be negative' });
     }
 
@@ -73,7 +79,7 @@ export default async function handler(
       }
     });
 
-    logger.debug('Likes updated for card:', { cardId, newCount: updatedCard.likes });
+    logger.info('✅ Likes updated successfully:', { cardId, newCount: updatedCard.likes });
 
     res.status(200).json({ success: true, likes: updatedCard.likes });
   } catch (error: any) {

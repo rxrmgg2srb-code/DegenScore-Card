@@ -497,12 +497,15 @@ export default function Leaderboard() {
 
   const handleLike = async (cardId: string) => {
     const hasLiked = userLikes[cardId];
-    
+
+    console.log('🔵 Like clicked:', { cardId, hasLiked, increment: !hasLiked });
+
     setUserLikes(prev => ({ ...prev, [cardId]: !hasLiked }));
-    setLeaderboard(prev => 
+    setLeaderboard(prev =>
       prev.map(entry => {
         if (entry.id === cardId) {
           const newLikes = (entry.likes || 0) + (hasLiked ? -1 : 1);
+          console.log('🔵 Optimistic update:', { oldLikes: entry.likes, newLikes });
           return { ...entry, likes: newLikes };
         }
         return entry;
@@ -510,31 +513,38 @@ export default function Leaderboard() {
     );
 
     try {
+      console.log('🔵 Sending request to /api/like...');
       const response = await fetch('/api/like', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ cardId, increment: !hasLiked }),
       });
 
+      console.log('🔵 Response status:', response.status);
+
       if (!response.ok) {
-        throw new Error('Failed to update like');
+        const errorData = await response.json();
+        console.error('🔴 Backend error:', errorData);
+        throw new Error(errorData.error || 'Failed to update like');
       }
 
       const data = await response.json();
-      
-      setLeaderboard(prev => 
-        prev.map(entry => 
-          entry.id === cardId 
+      console.log('✅ Backend response:', data);
+
+      setLeaderboard(prev =>
+        prev.map(entry =>
+          entry.id === cardId
             ? { ...entry, likes: data.likes }
             : entry
         )
       );
     } catch (error) {
-      console.error('Error updating like:', error);
+      console.error('🔴 Error updating like:', error);
+      console.log('🔴 Rolling back changes...');
       setUserLikes(prev => ({ ...prev, [cardId]: hasLiked } as { [key: string]: boolean }));
-      setLeaderboard(prev => 
-        prev.map(entry => 
-          entry.id === cardId 
+      setLeaderboard(prev =>
+        prev.map(entry =>
+          entry.id === cardId
             ? { ...entry, likes: (entry.likes || 0) + (hasLiked ? 1 : -1) }
             : entry
         )
