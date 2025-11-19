@@ -983,175 +983,221 @@ async function checkLPStatus(pairAddress: string): Promise<{ lpBurned: boolean; 
   }
 }
 
-async function fetchLiquidityPools(tokenAddress: string): Promise<any[]> {
-  const pools: any[] = [];
-
-  // Try DexScreener first (aggregates Raydium, Orca, Meteora, etc.)
+/**
+ * Fetch liquidity from DexScreener (FREE - aggregates multiple DEXes)
+ */
+async function fetchFromDexScreener(tokenAddress: string, solPrice: number): Promise<{ liquiditySOL: number; source: string; confidence: number } | null> {
   try {
     const response = await fetch(
       `https://api.dexscreener.com/latest/dex/tokens/${tokenAddress}`,
-      {
-        signal: AbortSignal.timeout(10000),
-        headers: { 'Accept': 'application/json' }
-      }
+      { signal: AbortSignal.timeout(8000), headers: { 'Accept': 'application/json' } }
     );
-
     if (response.ok) {
       const data = await response.json();
-
-      if (data?.pairs && Array.isArray(data.pairs) && data.pairs.length > 0) {
-        logger.info('[Liquidity] DexScreener found pools', undefined, {
-          tokenAddress: tokenAddress.substring(0, 10) + '...',
-          poolCount: data.pairs.length
-        });
-
-        // Get current SOL price for conversion
-        const solPrice = await getSOLPrice();
-
+      if (data?.pairs && Array.isArray(data.pairs)) {
+        let total = 0;
         for (const pair of data.pairs) {
-          // Filter for SOL pairs only (most relevant)
-          const isSOLPair = pair.quoteToken?.symbol === 'SOL' ||
-                           pair.quoteToken?.symbol === 'WSOL' ||
-                           pair.baseToken?.symbol === 'SOL' ||
-                           pair.baseToken?.symbol === 'WSOL';
-
-          if (!isSOLPair) continue;
-
-          // Extract liquidity data
-          const liquidityUSD = pair.liquidity?.usd || 0;
-          const liquiditySOL = solPrice > 0 ? liquidityUSD / solPrice : 0;
-
-          // Check if LP is burned or locked using on-chain data
-          const lpStatus = pair.pairAddress
-            ? await checkLPStatus(pair.pairAddress)
-            : { lpBurned: false, lpLocked: false };
-
-          if (liquiditySOL > 0) {
-            pools.push({
-              dex: pair.dexId || 'unknown',
-              pairAddress: pair.pairAddress,
-              liquiditySOL,
-              liquidityUSD,
-              lpBurned: lpStatus.lpBurned,
-              lpLocked: lpStatus.lpLocked,
-              lpLockEnd: undefined,
-              // Additional useful data
-              priceUsd: pair.priceUsd,
-              volume24h: pair.volume?.h24 || 0,
-              txns24h: (pair.txns?.h24?.buys || 0) + (pair.txns?.h24?.sells || 0),
-            });
-          }
+          const isSOL = pair.quoteToken?.symbol === 'SOL' || pair.quoteToken?.symbol === 'WSOL' ||
+                       pair.baseToken?.symbol === 'SOL' || pair.baseToken?.symbol === 'WSOL';
+          if (isSOL && pair.liquidity?.usd) total += pair.liquidity.usd;
         }
-
-        if (pools.length > 0) {
-          const totalLiquiditySOL = pools.reduce((sum, p) => sum + p.liquiditySOL, 0);
-          logger.info('[Liquidity] Successfully retrieved pool data from DexScreener', undefined, {
-            poolCount: pools.length,
-            totalLiquiditySOL: totalLiquiditySOL.toFixed(2),
-            totalLiquidityUSD: (totalLiquiditySOL * solPrice).toFixed(2),
-          });
-          return pools;
+        const liq = solPrice > 0 ? total / solPrice : 0;
+        if (liq > 0) {
+          logger.info('[DexScreener] ✅', undefined, { liq: liq.toFixed(2) });
+          return { liquiditySOL: liq, source: 'DexScreener', confidence: 0.9 };
         }
       }
     }
-  } catch (error) {
-    logger.warn('[Liquidity] DexScreener failed', error instanceof Error ? error : undefined, {
-      tokenAddress: tokenAddress.substring(0, 10) + '...'
-    });
-  }
+  } catch (e) { logger.warn('[DexScreener] ❌', e instanceof Error ? e : undefined); }
+  return null;
+}
 
-  // Try Birdeye as fallback
-  try {
-    const BIRDEYE_API_KEY = process.env.BIRDEYE_API_KEY;
-
-    if (BIRDEYE_API_KEY) {
-      const response = await fetch(
-        `https://public-api.birdeye.so/defi/token_overview?address=${tokenAddress}`,
-        {
-          signal: AbortSignal.timeout(10000),
-          headers: {
-            'Accept': 'application/json',
-            'X-API-KEY': BIRDEYE_API_KEY
-          }
-        }
-      );
-
-      if (response.ok) {
-        const data = await response.json();
-
-        if (data?.data?.liquidity) {
-          const solPrice = await getSOLPrice();
-          const liquidityUSD = data.data.liquidity || 0;
-          const liquiditySOL = solPrice > 0 ? liquidityUSD / solPrice : 0;
-
-          if (liquiditySOL > 0) {
-            pools.push({
-              dex: 'birdeye-aggregated',
-              liquiditySOL,
-              liquidityUSD,
-              lpBurned: false,
-              lpLocked: false,
-            });
-
-            logger.info('[Liquidity] Retrieved from Birdeye', undefined, {
-              liquiditySOL: liquiditySOL.toFixed(2),
-              liquidityUSD: liquidityUSD.toFixed(2),
-            });
-            return pools;
-          }
-        }
-      }
-    }
-  } catch (error) {
-    logger.warn('[Liquidity] Birdeye failed', error instanceof Error ? error : undefined);
-  }
-
-  // Try Jupiter as last resort
+/**
+ * Fetch from GeckoTerminal (FREE - CoinGecko's DEX aggregator)
+ */
+async function fetchFromGeckoTerminal(tokenAddress: string, solPrice: number): Promise<{ liquiditySOL: number; source: string; confidence: number } | null> {
   try {
     const response = await fetch(
-      `https://quote-api.jup.ag/v6/quote?inputMint=${tokenAddress}&outputMint=So11111111111111111111111111111111111111112&amount=1000000`,
-      {
-        signal: AbortSignal.timeout(10000),
-        headers: { 'Accept': 'application/json' }
-      }
+      `https://api.geckoterminal.com/api/v2/networks/solana/tokens/${tokenAddress}`,
+      { signal: AbortSignal.timeout(8000), headers: { 'Accept': 'application/json' } }
     );
-
     if (response.ok) {
       const data = await response.json();
-
-      // If Jupiter can provide a quote, it means there's liquidity
-      // We can estimate liquidity from price impact
-      if (data?.routePlan && data.routePlan.length > 0) {
-        const solPrice = await getSOLPrice();
-
-        // Rough estimation: if quote exists, assume minimal liquidity
-        const estimatedLiquiditySOL = 10; // Conservative estimate
-
-        pools.push({
-          dex: 'jupiter-aggregated',
-          liquiditySOL: estimatedLiquiditySOL,
-          liquidityUSD: estimatedLiquiditySOL * solPrice,
-          lpBurned: false,
-          lpLocked: false,
-        });
-
-        logger.info('[Liquidity] Estimated from Jupiter', undefined, {
-          liquiditySOL: estimatedLiquiditySOL.toFixed(2),
-        });
-        return pools;
+      const usd = data?.data?.attributes?.reserve_in_usd;
+      if (usd) {
+        const liq = solPrice > 0 ? parseFloat(usd) / solPrice : 0;
+        if (liq > 0) {
+          logger.info('[GeckoTerminal] ✅', undefined, { liq: liq.toFixed(2) });
+          return { liquiditySOL: liq, source: 'GeckoTerminal', confidence: 0.85 };
+        }
       }
     }
-  } catch (error) {
-    logger.warn('[Liquidity] Jupiter failed', error instanceof Error ? error : undefined);
+  } catch (e) { logger.warn('[GeckoTerminal] ❌', e instanceof Error ? e : undefined); }
+  return null;
+}
+
+/**
+ * Fetch from Raydium (FREE - direct from largest Solana DEX)
+ */
+async function fetchFromRaydium(tokenAddress: string, solPrice: number): Promise<{ liquiditySOL: number; source: string; confidence: number } | null> {
+  try {
+    const response = await fetch(
+      `https://api-v3.raydium.io/pools/info/mint?mint1=${tokenAddress}&mint2=So11111111111111111111111111111111111111112&poolType=all&poolSortField=liquidity&sortType=desc&pageSize=10&page=1`,
+      { signal: AbortSignal.timeout(8000), headers: { 'Accept': 'application/json' } }
+    );
+    if (response.ok) {
+      const data = await response.json();
+      if (data?.data?.data && Array.isArray(data.data.data)) {
+        let total = 0;
+        for (const pool of data.data.data) {
+          if (pool.tvl) total += pool.tvl;
+        }
+        const liq = solPrice > 0 ? total / solPrice : 0;
+        if (liq > 0) {
+          logger.info('[Raydium] ✅', undefined, { liq: liq.toFixed(2) });
+          return { liquiditySOL: liq, source: 'Raydium', confidence: 0.95 };
+        }
+      }
+    }
+  } catch (e) { logger.warn('[Raydium] ❌', e instanceof Error ? e : undefined); }
+  return null;
+}
+
+/**
+ * Fetch from Jupiter (FREE - estimate via price impact)
+ */
+async function fetchFromJupiter(tokenAddress: string): Promise<{ liquiditySOL: number; source: string; confidence: number } | null> {
+  try {
+    const response = await fetch(
+      `https://quote-api.jup.ag/v6/quote?inputMint=${tokenAddress}&outputMint=So11111111111111111111111111111111111111112&amount=1000000000&slippageBps=50`,
+      { signal: AbortSignal.timeout(8000), headers: { 'Accept': 'application/json' } }
+    );
+    if (response.ok) {
+      const data = await response.json();
+      if (data?.priceImpactPct) {
+        const impact = Math.abs(parseFloat(data.priceImpactPct));
+        const liq = impact < 0.1 ? 1000 : impact < 1 ? 100 : impact < 5 ? 20 : 5;
+        logger.info('[Jupiter] ✅', undefined, { liq: liq.toFixed(2), impact });
+        return { liquiditySOL: liq, source: 'Jupiter', confidence: 0.5 };
+      }
+    }
+  } catch (e) { logger.warn('[Jupiter] ❌', e instanceof Error ? e : undefined); }
+  return null;
+}
+
+/**
+ * Fetch from Orca (FREE - major Solana AMM)
+ */
+async function fetchFromOrca(tokenAddress: string, solPrice: number): Promise<{ liquiditySOL: number; source: string; confidence: number } | null> {
+  try {
+    const response = await fetch(
+      `https://api.mainnet.orca.so/v1/token/list`,
+      { signal: AbortSignal.timeout(8000), headers: { 'Accept': 'application/json' } }
+    );
+    if (response.ok) {
+      const data = await response.json();
+      if (data?.tokens) {
+        const token = data.tokens.find((t: any) => t.mint === tokenAddress);
+        if (token?.liquidity) {
+          const liq = solPrice > 0 ? token.liquidity / solPrice : 0;
+          if (liq > 0) {
+            logger.info('[Orca] ✅', undefined, { liq: liq.toFixed(2) });
+            return { liquiditySOL: liq, source: 'Orca', confidence: 0.9 };
+          }
+        }
+      }
+    }
+  } catch (e) { logger.warn('[Orca] ❌', e instanceof Error ? e : undefined); }
+  return null;
+}
+
+/**
+ * MAIN: Fetch from ALL free sources in parallel, calculate weighted average
+ */
+async function fetchLiquidityPools(tokenAddress: string): Promise<any[]> {
+  logger.info('[Liquidity] 🚀 Fetching from ALL free sources in parallel...');
+
+  const solPrice = await getSOLPrice();
+
+  // Fetch from ALL sources in parallel
+  const results = await Promise.allSettled([
+    fetchFromDexScreener(tokenAddress, solPrice),
+    fetchFromGeckoTerminal(tokenAddress, solPrice),
+    fetchFromRaydium(tokenAddress, solPrice),
+    fetchFromJupiter(tokenAddress),
+    fetchFromOrca(tokenAddress, solPrice),
+  ]);
+
+  const valid: Array<{ liquiditySOL: number; source: string; confidence: number }> = [];
+  for (const r of results) {
+    if (r.status === 'fulfilled' && r.value) valid.push(r.value);
   }
 
-  // If all sources failed, log and return empty
-  logger.error('[Liquidity] All sources failed to retrieve liquidity data', undefined, {
-    tokenAddress: tokenAddress.substring(0, 10) + '...',
-    triedSources: ['DexScreener', 'Birdeye', 'Jupiter']
+  if (valid.length === 0) {
+    logger.error('[Liquidity] ❌ All sources failed');
+    return [];
+  }
+
+  // Weighted average
+  let totalWeighted = 0;
+  let totalConf = 0;
+  for (const v of valid) {
+    totalWeighted += v.liquiditySOL * v.confidence;
+    totalConf += v.confidence;
+  }
+  const avg = totalConf > 0 ? totalWeighted / totalConf : 0;
+
+  // Remove outliers (> 3x or < 0.33x avg)
+  const filtered = valid.filter(v => {
+    const ratio = v.liquiditySOL / avg;
+    return ratio >= 0.33 && ratio <= 3.0;
   });
 
-  return pools;
+  // Recalculate with filtered
+  let final = avg;
+  if (filtered.length > 0) {
+    totalWeighted = 0;
+    totalConf = 0;
+    for (const v of filtered) {
+      totalWeighted += v.liquiditySOL * v.confidence;
+      totalConf += v.confidence;
+    }
+    final = totalConf > 0 ? totalWeighted / totalConf : 0;
+  }
+
+  logger.info('[Liquidity] ✅ Calculated from multiple sources', undefined, {
+    sources: valid.map(v => v.source).join(', '),
+    values: valid.map(v => v.liquiditySOL.toFixed(2)).join(', '),
+    final: final.toFixed(2),
+    finalUSD: (final * solPrice).toFixed(2),
+    count: valid.length,
+    outlierFiltered: valid.length !== filtered.length
+  });
+
+  // Check LP status
+  let lpBurned = false, lpLocked = false;
+  try {
+    const res = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${tokenAddress}`,
+      { signal: AbortSignal.timeout(5000) });
+    if (res.ok) {
+      const d = await res.json();
+      if (d?.pairs?.[0]?.pairAddress) {
+        const lp = await checkLPStatus(d.pairs[0].pairAddress);
+        lpBurned = lp.lpBurned;
+        lpLocked = lp.lpLocked;
+      }
+    }
+  } catch (e) { logger.warn('[LP Status] Failed', e instanceof Error ? e : undefined); }
+
+  return [{
+    dex: 'multi-source-avg',
+    liquiditySOL: final,
+    liquidityUSD: final * solPrice,
+    lpBurned,
+    lpLocked,
+    sources: valid.map(v => v.source),
+    sourceCount: valid.length,
+  }];
 }
 
 async function getSOLPrice(): Promise<number> {
