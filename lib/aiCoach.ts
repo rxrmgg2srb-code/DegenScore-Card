@@ -1,6 +1,7 @@
 import OpenAI from 'openai';
 import { prisma } from './prisma';
 import { logger } from './logger';
+import { cacheIncr, cacheGet } from './cache/redis';
 
 /**
  * AI Trading Coach
@@ -10,6 +11,63 @@ import { logger } from './logger';
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
+
+// Cost protection: $10 USD daily budget for AI calls
+const DAILY_AI_BUDGET = parseFloat(process.env.AI_DAILY_BUDGET || '10');
+// GPT-4-turbo pricing: $0.01/1K input tokens, $0.03/1K output tokens
+const COST_PER_INPUT_TOKEN = 0.00001; // $0.01 / 1000
+const COST_PER_OUTPUT_TOKEN = 0.00003; // $0.03 / 1000
+
+/**
+ * Check if we're within daily AI budget
+ */
+async function checkAIBudget(estimatedInputTokens: number): Promise<void> {
+  const today = new Date().toISOString().split('T')[0];
+  const costKey = `ai:cost:${today}`;
+
+  // Get current daily spend
+  const currentCostStr = await cacheGet<string>(costKey);
+  const currentCost = currentCostStr ? parseFloat(currentCostStr) : 0;
+
+  // Estimate cost for this call (input + typical output of ~1500 tokens)
+  const estimatedCost =
+    estimatedInputTokens * COST_PER_INPUT_TOKEN +
+    1500 * COST_PER_OUTPUT_TOKEN; // Conservative estimate
+
+  if (currentCost + estimatedCost > DAILY_AI_BUDGET) {
+    logger.warn(`AI daily budget exceeded: $${currentCost.toFixed(2)} / $${DAILY_AI_BUDGET}`);
+    throw new Error(
+      `Daily AI budget exceeded. Current spend: $${currentCost.toFixed(2)}. Please try again tomorrow.`
+    );
+  }
+}
+
+/**
+ * Track actual cost after API call
+ */
+async function trackAICost(usage: OpenAI.CompletionUsage | undefined): Promise<void> {
+  if (!usage) return;
+
+  const today = new Date().toISOString().split('T')[0];
+  const costKey = `ai:cost:${today}`;
+
+  const actualCost =
+    usage.prompt_tokens * COST_PER_INPUT_TOKEN +
+    usage.completion_tokens * COST_PER_OUTPUT_TOKEN;
+
+  // Get current cost
+  const currentCostStr = await cacheGet<string>(costKey);
+  const currentCost = currentCostStr ? parseFloat(currentCostStr) : 0;
+  const newCost = currentCost + actualCost;
+
+  // Store new cost with 25-hour TTL (covers timezone shifts)
+  const redis = (await import('./cache/redis')).default;
+  if (redis) {
+    await redis.set(costKey, newCost.toString(), { ex: 25 * 60 * 60 });
+  }
+
+  logger.info(`AI cost tracked: $${actualCost.toFixed(4)} (daily total: $${newCost.toFixed(2)})`);
+}
 
 export interface CoachAnalysis {
   overallScore: number; // 0-100
@@ -55,7 +113,11 @@ export async function analyzeTraderWithAI(walletAddress: string): Promise<CoachA
     // 4. Prepare prompt for AI
     const prompt = buildAnalysisPrompt(card, recentTrades, tradingStats);
 
-    logger.debug('Sending to OpenAI:', { tradesCount: recentTrades.length });
+    // 4.5. Check AI budget before making expensive API call
+    const estimatedInputTokens = Math.ceil(prompt.length / 4); // Rough estimate: 1 token ≈ 4 chars
+    await checkAIBudget(estimatedInputTokens);
+
+    logger.debug('Sending to OpenAI:', { tradesCount: recentTrades.length, estimatedTokens: estimatedInputTokens });
 
     // 5. Call OpenAI API
     const completion = await openai.chat.completions.create({
@@ -77,6 +139,9 @@ export async function analyzeTraderWithAI(walletAddress: string): Promise<CoachA
       max_tokens: 2000,
       response_format: { type: 'json_object' },
     });
+
+    // 5.5. Track actual cost
+    await trackAICost(completion.usage);
 
     const aiResponse = completion.choices[0]?.message?.content;
     if (!aiResponse) {

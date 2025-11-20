@@ -1,4 +1,5 @@
 import DegenCard from '../components/DegenCard';
+import { NavigationButtons } from '../components/NavigationButtons';
 import Link from 'next/link';
 
 /**
@@ -20,23 +21,7 @@ export default function Home() {
           </div>
 
           {/* Navigation Buttons */}
-          <div className="flex flex-wrap gap-3 justify-center sm:justify-end">
-            <Link href="/compare">
-              <button className="px-4 py-2 bg-blue-700 hover:bg-blue-600 text-white rounded-lg font-medium transition">
-                ⚔️ Compare
-              </button>
-            </Link>
-            <Link href="/documentation">
-              <button className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg font-medium transition">
-                📚 Docs
-              </button>
-            </Link>
-            <Link href="/leaderboard">
-              <button className="btn-premium px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg font-bold hover:scale-105 transition shadow-lg hover:shadow-purple-500/50">
-                🏆 Leaderboard
-              </button>
-            </Link>
-          </div>
+          <NavigationButtons />
         </div>
       </div>
 
@@ -51,11 +36,4 @@ export default function Home() {
       </div>
     </div>
   );
-}
-
-// Force Server-Side Rendering
-export async function getServerSideProps() {
-  return {
-    props: {},
-  };
 }

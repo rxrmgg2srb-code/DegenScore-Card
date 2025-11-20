@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
-import HotFeedWidget from '../components/HotFeedWidget';
+import RankingsWidget from '../components/RankingsWidget';
+import { BadgesDisplay } from '../components/BadgesDisplay';
 import { LanguageSelector } from '../components/LanguageSelector';
 
 interface LeaderboardEntry {
@@ -24,6 +25,9 @@ interface LeaderboardEntry {
   profileImage?: string | null;
   isPaid?: boolean;
   likes: number;
+  badgePoints?: number;
+  referralCount?: number;
+  calculatedBadges?: any[]; // Badges desbloqueados con su info completa
 }
 
 interface Stats {
@@ -34,7 +38,7 @@ interface Stats {
 }
 
 type ViewMode = 'table' | 'cards';
-type SortBy = 'degenScore' | 'totalVolume' | 'winRate' | 'likes';
+type SortBy = 'likes' | 'referralCount' | 'badgePoints';
 
 const getTierConfig = (score: number) => {
   if (score >= 90) {
@@ -287,6 +291,37 @@ const LeaderboardCard = ({ entry, index, handleLike, userLikes }: LeaderboardCar
             </div>
           </div>
 
+          {/* Métricas de Categorías de Premios */}
+          <div className="grid grid-cols-3 gap-1 mb-3">
+            <div className="bg-red-900/20 rounded-lg p-2 border border-red-500/30">
+              <div className="text-[9px] text-red-300 uppercase mb-0.5 font-semibold text-center">❤️ Likes</div>
+              <div className="text-white font-bold text-sm text-center">{entry.likes || 0}</div>
+            </div>
+            <div className="bg-blue-900/20 rounded-lg p-2 border border-blue-500/30">
+              <div className="text-[9px] text-blue-300 uppercase mb-0.5 font-semibold text-center">👥 Refs</div>
+              <div className="text-white font-bold text-sm text-center">{entry.referralCount || 0}</div>
+            </div>
+            <div className="bg-yellow-900/20 rounded-lg p-2 border border-yellow-500/30">
+              <div className="text-[9px] text-yellow-300 uppercase mb-0.5 font-semibold text-center">⭐ Pts</div>
+              <div className="text-white font-bold text-sm text-center">{entry.badgePoints || 0}</div>
+            </div>
+          </div>
+
+          {/* Badges desbloqueados con tooltips */}
+          {entry.calculatedBadges && entry.calculatedBadges.length > 0 && (
+            <div className="mb-3 bg-black/30 rounded-lg p-2.5 border border-yellow-500/20">
+              <div className="text-[9px] text-yellow-300 uppercase mb-1.5 font-semibold text-center">
+                🏆 Logros Desbloqueados ({entry.calculatedBadges.length})
+              </div>
+              <BadgesDisplay
+                badges={entry.calculatedBadges}
+                totalPoints={entry.badgePoints || 0}
+                showPoints={false}
+                maxDisplay={8}
+              />
+            </div>
+          )}
+
           <div className="text-center space-y-1">
             <div className={`inline-block px-4 py-1.5 rounded-full bg-gradient-to-r ${tier.gradient} opacity-90 shadow-lg`}>
               <span className="text-white font-bold text-xs">LVL {entry.level}</span>
@@ -464,7 +499,7 @@ export default function Leaderboard() {
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
-  const [sortBy, setSortBy] = useState<SortBy>('degenScore');
+  const [sortBy, setSortBy] = useState<SortBy>('likes');
   const [searchWallet, setSearchWallet] = useState('');
   const [viewMode, setViewMode] = useState<ViewMode>('cards');
   const [userLikes, setUserLikes] = useState<{ [key: string]: boolean }>({});
@@ -618,36 +653,28 @@ export default function Leaderboard() {
               <div className="flex flex-col md:flex-row gap-4 mb-6">
                 <div className="flex gap-2">
                   <button
-                    onClick={() => setSortBy('degenScore')}
-                    className={`px-4 py-2 rounded-lg transition ${
-                      sortBy === 'degenScore' ? 'bg-cyan-500 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
-                    }`}
-                  >
-                    🏆 Score
-                  </button>
-                  <button
-                    onClick={() => setSortBy('totalVolume')}
-                    className={`px-4 py-2 rounded-lg transition ${
-                      sortBy === 'totalVolume' ? 'bg-cyan-500 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
-                    }`}
-                  >
-                    💰 Volume
-                  </button>
-                  <button
-                    onClick={() => setSortBy('winRate')}
-                    className={`px-4 py-2 rounded-lg transition ${
-                      sortBy === 'winRate' ? 'bg-cyan-500 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
-                    }`}
-                  >
-                    🎯 Win Rate
-                  </button>
-                  <button
                     onClick={() => setSortBy('likes')}
                     className={`px-4 py-2 rounded-lg transition ${
                       sortBy === 'likes' ? 'bg-cyan-500 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
                     }`}
                   >
                     ❤️ Likes
+                  </button>
+                  <button
+                    onClick={() => setSortBy('referralCount')}
+                    className={`px-4 py-2 rounded-lg transition ${
+                      sortBy === 'referralCount' ? 'bg-cyan-500 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                    }`}
+                  >
+                    👥 Referidos
+                  </button>
+                  <button
+                    onClick={() => setSortBy('badgePoints')}
+                    className={`px-4 py-2 rounded-lg transition ${
+                      sortBy === 'badgePoints' ? 'bg-cyan-500 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                    }`}
+                  >
+                    ⭐ Logros
                   </button>
                 </div>
 
@@ -722,7 +749,7 @@ export default function Leaderboard() {
             </div>
 
             <div className="lg:col-span-1">
-              <HotFeedWidget />
+              <RankingsWidget />
             </div>
           </div>
         </div>

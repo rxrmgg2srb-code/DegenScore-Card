@@ -3,17 +3,7 @@ if (process.env.SKIP_PRISMA_GENERATE === 'true') {
   console.log('SKIP_PRISMA_GENERATE=true -> saltando generate-prisma.js');
   process.exit(0);
 }
-// SKIP flag for CI: si SKIP_PRISMA_GENERATE=true saltamos este script
-if (process.env.SKIP_PRISMA_GENERATE === 'true') {
-  console.log('SKIP_PRISMA_GENERATE=true -> saltando generate-prisma.js');
-  process.exit(0);
-}
-// SKIP flag for CI: si SKIP_PRISMA_GENERATE=true saltamos este script
-if (process.env.SKIP_PRISMA_GENERATE === 'true') {
-  console.log('SKIP_PRISMA_GENERATE=true -> saltando generate-prisma.js');
-  process.exit(0);
-}
-#!/usr/bin/env node
+
 // Script to generate Prisma Client using the locally installed version
 const { execSync } = require('child_process');
 const path = require('path');
