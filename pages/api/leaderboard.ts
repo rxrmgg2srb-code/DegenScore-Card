@@ -20,7 +20,7 @@ export default async function handler(
   }
 
   try {
-    const { sortBy = 'likes', limit: limitParam } = req.query;
+    const { sortBy = 'likes', limit: limitParam, noCache } = req.query;
 
     // Validate and sanitize sort field - ahora aceptamos: likes, referralCount, badgePoints
     const validSortFields = ['likes', 'referralCount', 'badgePoints', 'degenScore', 'totalVolume', 'winRate'];
@@ -30,13 +30,10 @@ export default async function handler(
     const { limit } = validatePagination(undefined, limitParam);
     const safeLimit = Math.min(limit, 100); // Max 100 entries
 
-    logger.debug('Leaderboard request:', { sortBy: sortField, limit: safeLimit });
+    logger.debug('Leaderboard request:', { sortBy: sortField, limit: safeLimit, noCache: !!noCache });
 
-    // 🚀 OPTIMIZACIÓN: Cachear leaderboard por 5 minutos
-    const cacheKey = `${CacheKeys.leaderboard()}:${sortField}:${safeLimit}`;
-    const result = await cacheGetOrSet(
-      cacheKey,
-      async () => {
+    // Data fetching function
+    const fetchData = async () => {
         // SOLO mostrar cards de quienes pagaron/descargaron (isPaid = true) y no eliminadas
         const cards = await prisma.degenCard.findMany({
           where: {
@@ -137,11 +134,20 @@ export default async function handler(
             totalVolume: totalVolume._sum.totalVolume || 0,
           },
         };
-      },
-      { ttl: 300 } // 5 minutos
-    );
+    };
 
-    res.setHeader('Cache-Control', 'public, max-age=300'); // 5 minutos
+    // 🚀 Use cache unless noCache parameter is present
+    let result;
+    if (noCache) {
+      logger.info('Cache bypassed with noCache parameter');
+      result = await fetchData();
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    } else {
+      const cacheKey = `${CacheKeys.leaderboard()}:${sortField}:${safeLimit}`;
+      result = await cacheGetOrSet(cacheKey, fetchData, { ttl: 300 }); // 5 minutos
+      res.setHeader('Cache-Control', 'public, max-age=300'); // 5 minutos
+    }
+
     res.status(200).json(result);
   } catch (error: any) {
     logger.error('Error fetching leaderboard:', error instanceof Error ? error : undefined, {
