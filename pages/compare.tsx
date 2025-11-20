@@ -2,6 +2,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { LanguageSelector } from '../components/LanguageSelector';
+import { NavigationButtons } from '../components/NavigationButtons';
 
 interface ComparisonData {
   wallet1: any;
@@ -76,17 +77,15 @@ export default function ComparePage() {
 
         {/* Header */}
         <div className="text-center mb-12">
-          <Link href="/">
-            <button className="mb-4 text-gray-400 hover:text-white transition">
-              ← Back to Home
-            </button>
-          </Link>
           <h1 className="text-5xl font-bold gradient-text-gold mb-4">
             ⚔️ Card Comparison
           </h1>
-          <p className="text-gray-400 text-lg">
+          <p className="text-gray-400 text-lg mb-6">
             Compare two trading cards side by side
           </p>
+
+          {/* Navigation Buttons */}
+          <NavigationButtons />
         </div>
 
         {/* Input Section */}

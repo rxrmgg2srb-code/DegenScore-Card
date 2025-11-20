@@ -9,7 +9,8 @@ import { logger } from '@/lib/logger';
 export const PAYMENT_CONFIG = {
   MINT_PRICE_SOL: parseFloat(process.env.NEXT_PUBLIC_MINT_PRICE_SOL || '0.2'), // Premium tier price ($20 USD at ~$100/SOL)
   TREASURY_WALLET: process.env.NEXT_PUBLIC_TREASURY_WALLET || 'Pf9yHR1qmkY9geMLfMJs7JD4yXZURkiaxm5h7K61J7N',
-  SOLANA_NETWORK: process.env.NEXT_PUBLIC_SOLANA_NETWORK || 'https://api.devnet.solana.com',
+  // Use HELIUS_RPC_URL as primary, fallback to SOLANA_NETWORK for backwards compatibility
+  SOLANA_NETWORK: process.env.NEXT_PUBLIC_HELIUS_RPC_URL || process.env.NEXT_PUBLIC_SOLANA_NETWORK || 'https://api.mainnet-beta.solana.com',
 } as const;
 
 // API configuration
@@ -22,17 +23,17 @@ export const API_CONFIG = {
 export const UPLOAD_CONFIG = {
   MAX_FILE_SIZE: 2 * 1024 * 1024, // 2MB
   ALLOWED_MIME_TYPES: ['image/jpeg', 'image/png', 'image/gif', 'image/webp'],
-  UPLOAD_DIR: 'public/uploads/profiles', // Deprecated: Use R2 cloud storage instead
 } as const;
 
-// R2 Storage configuration (Cloudflare R2 - S3 compatible)
-export const R2_CONFIG = {
-  ACCOUNT_ID: process.env.R2_ACCOUNT_ID || '',
-  ACCESS_KEY_ID: process.env.R2_ACCESS_KEY_ID || '',
-  SECRET_ACCESS_KEY: process.env.R2_SECRET_ACCESS_KEY || '',
-  BUCKET_NAME: process.env.R2_BUCKET_NAME || 'degenscore-images',
-  PUBLIC_URL: process.env.R2_PUBLIC_URL || '',
-} as const;
+// ❌ R2 Storage DISABLED - Images stored as base64 in database
+// R2 Storage configuration (Cloudflare R2 - S3 compatible) - DISABLED
+// export const R2_CONFIG = {
+//   ACCOUNT_ID: process.env.R2_ACCOUNT_ID || '',
+//   ACCESS_KEY_ID: process.env.R2_ACCESS_KEY_ID || '',
+//   SECRET_ACCESS_KEY: process.env.R2_SECRET_ACCESS_KEY || '',
+//   BUCKET_NAME: process.env.R2_BUCKET_NAME || 'degenscore-images',
+//   PUBLIC_URL: process.env.R2_PUBLIC_URL || '',
+// } as const;
 
 // Rate limiting configuration - Optimized for 100+ concurrent users
 export const RATE_LIMIT_CONFIG = {

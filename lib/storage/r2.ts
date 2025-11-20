@@ -1,30 +1,7 @@
-import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
-import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { logger } from '@/lib/logger';
 
-// Cloudflare R2 es compatible con S3
-// Gratis: 10GB storage + 10M requests/mes
-// Si excede: Vercel Blob (100GB transfer gratis en Hobby)
-
-const isR2Enabled = !!(
-  process.env.R2_ACCOUNT_ID &&
-  process.env.R2_ACCESS_KEY_ID &&
-  process.env.R2_SECRET_ACCESS_KEY
-);
-
-const r2Client = isR2Enabled
-  ? new S3Client({
-      region: 'auto',
-      endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-      credentials: {
-        accessKeyId: process.env.R2_ACCESS_KEY_ID || '',
-        secretAccessKey: process.env.R2_SECRET_ACCESS_KEY || '',
-      },
-    })
-  : null;
-
-const BUCKET_NAME = process.env.R2_BUCKET_NAME || 'degenscore-images';
-const PUBLIC_URL = process.env.R2_PUBLIC_URL || '';
+// ✅ R2 CLOUDFLARE DESHABILITADO - Usando caché local en memoria/Redis
+// Las imágenes se generan on-demand y se cachean en Redis o en memoria
 
 export interface UploadOptions {
   contentType?: string;
@@ -33,102 +10,38 @@ export interface UploadOptions {
 }
 
 /**
- * Upload image to R2
+ * ❌ R2 Storage DISABLED - Images served from cache/on-demand
  */
 export async function uploadImage(
   key: string,
   buffer: Buffer,
   options: UploadOptions = {}
 ): Promise<string | null> {
-  if (!isR2Enabled || !r2Client) {
-    logger.warn('R2 not configured, skipping upload');
-    return null;
-  }
-
-  try {
-    const {
-      contentType = 'image/png',
-      cacheControl = 'public, max-age=31536000, immutable',
-      metadata = {},
-    } = options;
-
-    await r2Client.send(
-      new PutObjectCommand({
-        Bucket: BUCKET_NAME,
-        Key: key,
-        Body: buffer,
-        ContentType: contentType,
-        CacheControl: cacheControl,
-        Metadata: metadata,
-      })
-    );
-
-    // Retornar URL pública
-    return `${PUBLIC_URL}/${key}`;
-  } catch (error) {
-    logger.error('R2 upload error', error instanceof Error ? error : undefined, {
-      error: String(error),
-    });
-    return null;
-  }
+  logger.info('✅ R2 storage disabled - images served from cache');
+  return null;
 }
 
 /**
- * Get signed URL for private access (opcional)
+ * ❌ R2 Storage DISABLED
  */
 export async function getImageUrl(
   key: string,
   expiresIn: number = 3600
 ): Promise<string | null> {
-  if (!isR2Enabled || !r2Client) {
-    return null;
-  }
-
-  try {
-    const command = new GetObjectCommand({
-      Bucket: BUCKET_NAME,
-      Key: key,
-    });
-
-    const url = await getSignedUrl(r2Client, command, { expiresIn });
-    return url;
-  } catch (error) {
-    logger.error('R2 get URL error', error instanceof Error ? error : undefined, {
-      error: String(error),
-    });
-    return null;
-  }
+  return null;
 }
 
 /**
- * Delete image from R2
+ * ❌ R2 Storage DISABLED
  */
 export async function deleteImage(key: string): Promise<boolean> {
-  if (!isR2Enabled || !r2Client) {
-    return false;
-  }
-
-  try {
-    await r2Client.send(
-      new DeleteObjectCommand({
-        Bucket: BUCKET_NAME,
-        Key: key,
-      })
-    );
-    return true;
-  } catch (error) {
-    logger.error('R2 delete error', error instanceof Error ? error : undefined, {
-      error: String(error),
-    });
-    return false;
-  }
+  return false;
 }
 
 /**
- * Generate key for card image
+ * Generate key for card image (kept for compatibility)
  */
 export function generateCardImageKey(walletAddress: string): string {
-  // Usar primeros y últimos caracteres de wallet + timestamp para evitar colisiones
   const timestamp = Date.now();
   const prefix = walletAddress.slice(0, 8);
   const suffix = walletAddress.slice(-8);
@@ -136,10 +49,11 @@ export function generateCardImageKey(walletAddress: string): string {
 }
 
 /**
- * Get public URL for key
+ * ❌ R2 Storage DISABLED
  */
 export function getPublicUrl(key: string): string {
-  return `${PUBLIC_URL}/${key}`;
+  return '';
 }
 
-export const isStorageEnabled = isR2Enabled;
+// ✅ Storage is always DISABLED (no external storage)
+export const isStorageEnabled = false;

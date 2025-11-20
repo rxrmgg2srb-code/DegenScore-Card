@@ -127,7 +127,7 @@ model GlobalStats {
   totalVolume   Float    @default(0)
   avgDegenScore Float    @default(0)
   topScore      Int      @default(0)
-  updatedAt     DateTime @updatedAt
+  updatedAt     DateTime @default(now()) @updatedAt
 }
 
 model HotTrade {
@@ -775,4 +775,85 @@ model WhaleFollower {
   @@unique([walletAddress, whaleAddress])
   @@index([walletAddress])
   @@index([whaleAddress])
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SUPER TOKEN SCORE - EL ANÁLISIS MÁS COMPLETO DE WEB3
+// ═══════════════════════════════════════════════════════════════
+
+model SuperTokenAnalysis {
+  id                      String   @id @default(cuid())
+  tokenAddress            String   @unique
+
+  // Basic Token Info
+  tokenSymbol             String
+  tokenName               String
+
+  // Super Score (0-1000)
+  superScore              Int
+  globalRiskLevel         String   // ULTRA_SAFE | VERY_SAFE | SAFE | MODERATE | RISKY | VERY_RISKY | EXTREME_DANGER | SCAM
+  recommendation          String   @db.Text
+
+  // Score Breakdown (cada componente contribuye al score final)
+  baseSecurityScore       Int      // 0-100
+  newWalletScore          Int      // 0-50
+  insiderScore            Int      // 0-50
+  volumeScore             Int      // 0-40
+  socialScore             Int      // 0-30
+  botDetectionScore       Int      // 0-60
+  smartMoneyScore         Int      // 0-70
+  teamScore               Int      // 0-40
+  pricePatternScore       Int      // 0-50
+  historicalHoldersScore  Int      // 0-40
+  liquidityDepthScore     Int      // 0-50
+  crossChainScore         Int      // 0-30
+  competitorScore         Int      // 0-30
+  rugCheckScore           Int      // 0-100
+  dexScreenerScore        Int      // 0-60
+  birdeyeScore            Int      // 0-50
+  jupiterScore            Int      // 0-50
+
+  // Key Metrics (para queries rápidas)
+  walletsUnder10Days      Int      // Número de wallets nuevas
+  percentageNewWallets    Float    // % de wallets nuevas
+  insiderWallets          Int      // Wallets de insiders
+  insiderProfitTaking     Boolean  // ¿Insiders vendiendo?
+  realVolume24h           Float    // Volumen real (sin wash trading)
+  fakeVolumePercent       Float    // % de volumen fake
+  totalBots               Int      // Número de bots detectados
+  botPercent              Float    // % de actividad de bots
+  smartMoneySignal        String   // STRONG_BUY | BUY | NEUTRAL | SELL | STRONG_SELL
+  teamTokensLocked        Boolean  // ¿Tokens del team bloqueados?
+  pricePattern            String   // PUMP_AND_DUMP | ORGANIC_GROWTH | etc.
+  liquidityHealth         String   // EXCELLENT | GOOD | FAIR | POOR | CRITICAL
+
+  // Red Flags & Green Flags
+  totalRedFlags           Int      @default(0)
+  criticalRedFlags        Int      @default(0)
+  highRedFlags            Int      @default(0)
+  totalGreenFlags         Int      @default(0)
+
+  // Full Data (JSON completo con todos los detalles)
+  fullDataJson            Json     // SuperTokenScore completo
+  redFlagsJson            Json     // Array de red flags
+  greenFlagsJson          Json     // Array de green flags
+
+  // Timestamps & Performance
+  analyzedAt              DateTime @default(now())
+  analysisTimeMs          Int      // Tiempo que tomó el análisis
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+
+  // Analytics
+  viewCount               Int      @default(0)
+  lastViewedAt            DateTime?
+
+  // Indexes for performance
+  @@index([tokenAddress])
+  @@index([superScore(sort: Desc)])
+  @@index([globalRiskLevel])
+  @@index([analyzedAt(sort: Desc)])
+  @@index([createdAt(sort: Desc)])
+  @@index([viewCount(sort: Desc)])
+  @@index([superScore(sort: Desc), globalRiskLevel])
 }

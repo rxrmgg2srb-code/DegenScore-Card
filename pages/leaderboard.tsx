@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
-import HotFeedWidget from '../components/HotFeedWidget';
+import RankingsWidget from '../components/RankingsWidget';
+import { BadgesDisplay } from '../components/BadgesDisplay';
 import { LanguageSelector } from '../components/LanguageSelector';
 
 interface LeaderboardEntry {
@@ -24,6 +25,9 @@ interface LeaderboardEntry {
   profileImage?: string | null;
   isPaid?: boolean;
   likes: number;
+  badgePoints?: number;
+  referralCount?: number;
+  calculatedBadges?: any[]; // Badges desbloqueados con su info completa
 }
 
 interface Stats {
@@ -34,7 +38,7 @@ interface Stats {
 }
 
 type ViewMode = 'table' | 'cards';
-type SortBy = 'degenScore' | 'totalVolume' | 'winRate' | 'likes';
+type SortBy = 'likes' | 'referralCount' | 'badgePoints';
 
 const getTierConfig = (score: number) => {
   if (score >= 90) {
@@ -287,6 +291,68 @@ const LeaderboardCard = ({ entry, index, handleLike, userLikes }: LeaderboardCar
             </div>
           </div>
 
+          {/* Métricas de Categorías de Premios */}
+          <div className="grid grid-cols-3 gap-1 mb-3">
+            <div className="bg-red-900/20 rounded-lg p-2 border border-red-500/30">
+              <div className="text-[9px] text-red-300 uppercase mb-0.5 font-semibold text-center">❤️ Likes</div>
+              <div className="text-white font-bold text-sm text-center">{entry.likes || 0}</div>
+            </div>
+            <div className="bg-blue-900/20 rounded-lg p-2 border border-blue-500/30">
+              <div className="text-[9px] text-blue-300 uppercase mb-0.5 font-semibold text-center">👥 Refs</div>
+              <div className="text-white font-bold text-sm text-center">{entry.referralCount || 0}</div>
+            </div>
+            {/* Badge Points con tooltip detallado */}
+            <div className="relative group">
+              <div className="bg-yellow-900/20 rounded-lg p-2 border border-yellow-500/30 cursor-help hover:bg-yellow-900/30 transition">
+                <div className="text-[9px] text-yellow-300 uppercase mb-0.5 font-semibold text-center">⭐ Pts</div>
+                <div className="text-white font-bold text-sm text-center">{entry.badgePoints || 0}</div>
+              </div>
+              {/* Tooltip with points breakdown */}
+              {entry.calculatedBadges && entry.calculatedBadges.length > 0 && (
+                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10 pointer-events-none">
+                  <div className="bg-gray-900 border border-yellow-500/50 rounded-lg p-3 shadow-xl min-w-[180px]">
+                    <div className="text-yellow-300 font-bold text-[10px] mb-2 text-center uppercase">Points Breakdown</div>
+                    <div className="space-y-1">
+                      {entry.calculatedBadges.map((badge, idx) => (
+                        <div key={idx} className="flex items-center justify-between text-[10px] text-white">
+                          <span className="text-gray-300 truncate flex-1">{badge.name}</span>
+                          <span className="text-yellow-400 font-bold ml-2">+{badge.points}</span>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="border-t border-yellow-500/30 mt-2 pt-2 flex justify-between text-[10px]">
+                      <span className="text-yellow-300 font-bold">TOTAL:</span>
+                      <span className="text-yellow-400 font-bold">{entry.badgePoints || 0} pts</span>
+                    </div>
+                  </div>
+                  {/* Tooltip arrow */}
+                  <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1">
+                    <div className="border-8 border-transparent border-t-yellow-500/50"></div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Badges desbloqueados con tooltips - SIEMPRE VISIBLE */}
+          <div className="mb-3 bg-black/30 rounded-lg p-2.5 border border-yellow-500/20">
+            <div className="text-[9px] text-yellow-300 uppercase mb-1.5 font-semibold text-center">
+              🏆 Logros Desbloqueados ({entry.calculatedBadges?.length || 0})
+            </div>
+            {entry.calculatedBadges && entry.calculatedBadges.length > 0 ? (
+              <BadgesDisplay
+                badges={entry.calculatedBadges}
+                totalPoints={entry.badgePoints || 0}
+                showPoints={false}
+                maxDisplay={8}
+              />
+            ) : (
+              <div className="text-center text-gray-500 text-xs py-2">
+                Sin logros aún
+              </div>
+            )}
+          </div>
+
           <div className="text-center space-y-1">
             <div className={`inline-block px-4 py-1.5 rounded-full bg-gradient-to-r ${tier.gradient} opacity-90 shadow-lg`}>
               <span className="text-white font-bold text-xs">LVL {entry.level}</span>
@@ -464,7 +530,7 @@ export default function Leaderboard() {
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
-  const [sortBy, setSortBy] = useState<SortBy>('degenScore');
+  const [sortBy, setSortBy] = useState<SortBy>('likes');
   const [searchWallet, setSearchWallet] = useState('');
   const [viewMode, setViewMode] = useState<ViewMode>('cards');
   const [userLikes, setUserLikes] = useState<{ [key: string]: boolean }>({});
@@ -618,36 +684,28 @@ export default function Leaderboard() {
               <div className="flex flex-col md:flex-row gap-4 mb-6">
                 <div className="flex gap-2">
                   <button
-                    onClick={() => setSortBy('degenScore')}
-                    className={`px-4 py-2 rounded-lg transition ${
-                      sortBy === 'degenScore' ? 'bg-cyan-500 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
-                    }`}
-                  >
-                    🏆 Score
-                  </button>
-                  <button
-                    onClick={() => setSortBy('totalVolume')}
-                    className={`px-4 py-2 rounded-lg transition ${
-                      sortBy === 'totalVolume' ? 'bg-cyan-500 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
-                    }`}
-                  >
-                    💰 Volume
-                  </button>
-                  <button
-                    onClick={() => setSortBy('winRate')}
-                    className={`px-4 py-2 rounded-lg transition ${
-                      sortBy === 'winRate' ? 'bg-cyan-500 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
-                    }`}
-                  >
-                    🎯 Win Rate
-                  </button>
-                  <button
                     onClick={() => setSortBy('likes')}
                     className={`px-4 py-2 rounded-lg transition ${
                       sortBy === 'likes' ? 'bg-cyan-500 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
                     }`}
                   >
                     ❤️ Likes
+                  </button>
+                  <button
+                    onClick={() => setSortBy('referralCount')}
+                    className={`px-4 py-2 rounded-lg transition ${
+                      sortBy === 'referralCount' ? 'bg-cyan-500 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                    }`}
+                  >
+                    👥 Referidos
+                  </button>
+                  <button
+                    onClick={() => setSortBy('badgePoints')}
+                    className={`px-4 py-2 rounded-lg transition ${
+                      sortBy === 'badgePoints' ? 'bg-cyan-500 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                    }`}
+                  >
+                    ⭐ Logros
                   </button>
                 </div>
 
@@ -722,7 +780,7 @@ export default function Leaderboard() {
             </div>
 
             <div className="lg:col-span-1">
-              <HotFeedWidget />
+              <RankingsWidget />
             </div>
           </div>
         </div>

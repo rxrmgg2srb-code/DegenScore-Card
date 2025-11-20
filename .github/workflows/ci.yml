@@ -125,7 +125,7 @@ jobs:
       - name: Generate Prisma Client
         run: |
           if [ -f prisma/schema.prisma ]; then
-            npx prisma generate
+            node generate-prisma.js
           else
             echo "No prisma/schema.prisma found, skipping prisma generate"
           fi
@@ -162,7 +162,7 @@ jobs:
       - name: Generate Prisma Client
         run: |
           if [ -f prisma/schema.prisma ]; then
-            npx prisma generate
+            node generate-prisma.js
           fi
 
       - name: Run unit tests with coverage

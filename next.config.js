@@ -4,6 +4,9 @@ const { withSentryConfig } = require('@sentry/nextjs');
 const nextConfig = {
   reactStrictMode: true,
 
+  // Enable standalone output for better Docker/Render deployments
+  output: 'standalone',
+
   // Disable ESLint during production builds (errors can be fixed later)
   eslint: {
     ignoreDuringBuilds: true,
@@ -21,6 +24,8 @@ const nextConfig = {
   experimental: {
     workerThreads: false,
     cpus: 1,
+    // External packages that should not be bundled
+    serverComponentsExternalPackages: ['@napi-rs/canvas', 'bullmq', 'ioredis'],
   },
 
   // Security headers
@@ -99,6 +104,27 @@ const nextConfig = {
 
   // Webpack optimizations with memory constraints
   webpack: (config, { dev, isServer }) => {
+    // 🔥 COPY FONTS to .next for serverless functions in Vercel
+    if (isServer) {
+      try {
+        const CopyPlugin = require('copy-webpack-plugin');
+        config.plugins.push(
+          new CopyPlugin({
+            patterns: [
+              {
+                from: 'public/fonts',
+                to: '../public/fonts',
+              },
+            ],
+          })
+        );
+        console.log('✅ copy-webpack-plugin loaded - fonts will be copied to build');
+      } catch (error) {
+        console.warn('⚠️ copy-webpack-plugin not available - fonts will be loaded from public/fonts directly');
+        console.warn('   Run: npm install to fix this warning');
+      }
+    }
+
     // Reduce memory usage during builds
     config.optimization = {
       ...config.optimization,

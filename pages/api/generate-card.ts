@@ -1,39 +1,116 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { createCanvas, loadImage } from '@napi-rs/canvas';
+import { createCanvas, loadImage, GlobalFonts } from '@napi-rs/canvas';
 import { isValidSolanaAddress } from '../../lib/services/helius';
 import { prisma } from '../../lib/prisma';
 import { cacheGet, cacheSet, CacheKeys } from '../../lib/cache/redis';
-import {
-  uploadImage,
-  generateCardImageKey,
-  isStorageEnabled,
-} from '../../lib/storage/r2';
 import { logger } from '@/lib/logger';
+import path from 'path';
+import fs from 'fs';
+
+// ════════════════════════════════════════════════════════════════════════════
+// 🔧 FONT REGISTRATION FOR VERCEL - FIX PARA TEXTO NO VISIBLE
+// ════════════════════════════════════════════════════════════════════════════
+// PROBLEMA: En Vercel (Linux), @napi-rs/canvas NO tiene acceso a fonts del sistema
+// SOLUCIÓN: Registrar fonts manualmente antes de usar ctx.fillText()
+//
+// FONTS REQUERIDAS:
+// - public/fonts/NotoSans-Regular.ttf
+// - public/fonts/NotoSans-Bold.ttf
+// ════════════════════════════════════════════════════════════════════════════
+
+let fontsRegistered = false;
+
+function registerFonts() {
+  if (fontsRegistered) return;
+
+  try {
+    const fontsPath = path.join(process.cwd(), 'public', 'fonts');
+
+    // Registrar Noto Sans Regular
+    GlobalFonts.registerFromPath(
+      path.join(fontsPath, 'NotoSans-Regular.ttf'),
+      'Noto Sans'
+    );
+
+    // Registrar Noto Sans Bold
+    GlobalFonts.registerFromPath(
+      path.join(fontsPath, 'NotoSans-Bold.ttf'),
+      'Noto Sans Bold'
+    );
+
+    fontsRegistered = true;
+    logger.info('✅ Fonts registered successfully for Vercel canvas rendering');
+    logger.info('   - Noto Sans Regular');
+    logger.info('   - Noto Sans Bold');
+  } catch (error) {
+    logger.error('❌ ERROR: Failed to register fonts', error instanceof Error ? error : undefined, {
+      error: String(error),
+    });
+    logger.error('   SOLUCIÓN: Verifica que existan estos archivos:');
+    logger.error('   → public/fonts/NotoSans-Regular.ttf');
+    logger.error('   → public/fonts/NotoSans-Bold.ttf');
+    throw error;
+  }
+}
 
 // Función auxiliar para formatear SOL
 function formatSOL(amount: number, decimals: number = 2): string {
-  if (amount >= 1e9) return `${(amount / 1e9).toFixed(decimals)}B`;
-  if (amount >= 1e6) return `${(amount / 1e6).toFixed(decimals)}M`;
-  if (amount >= 1e3) return `${(amount / 1e3).toFixed(decimals)}K`;
+  if (amount >= 1e9) {
+    return `${(amount / 1e9).toFixed(decimals)}B`;
+  }
+  if (amount >= 1e6) {
+    return `${(amount / 1e6).toFixed(decimals)}M`;
+  }
+  if (amount >= 1e3) {
+    return `${(amount / 1e3).toFixed(decimals)}K`;
+  }
   return `${amount.toFixed(decimals)}`;
 }
 
 // 🔥 FRASES FOMO ÉPICAS
 function getFOMOPhrase(score: number): string {
-  if (score >= 95) return "🔥 GOD MODE - They Bow to You";
-  if (score >= 90) return "👑 APEX PREDATOR - Pure Domination";
-  if (score >= 85) return "💎 GENERATIONAL WEALTH - GG EZ";
-  if (score >= 80) return "⚡ MAIN CHARACTER - Eating Good";
-  if (score >= 75) return "🚀 MOON MISSION - Keep Stacking";
-  if (score >= 70) return "🔥 KILLING IT - Above Average Chad";
-  if (score >= 65) return "💪 SOLID - You'll Make It Anon";
-  if (score >= 60) return "📈 MID CURVE - Touch Grass King";
-  if (score >= 55) return "🎯 SLIGHTLY MID - Do Better";
-  if (score >= 50) return "😬 NGMI VIBES - Yikes";
-  if (score >= 40) return "📉 EXIT LIQUIDITY - That's You";
-  if (score >= 30) return "💀 ABSOLUTELY COOKED - RIP";
-  if (score >= 20) return "🤡 CIRCUS CLOWN - Everyone's Laughing";
-  if (score >= 10) return "⚰️ DELETE APP - Uninstall Now";
+  if (score >= 95) {
+    return "🔥 GOD MODE - They Bow to You";
+  }
+  if (score >= 90) {
+    return "👑 APEX PREDATOR - Pure Domination";
+  }
+  if (score >= 85) {
+    return "💎 GENERATIONAL WEALTH - GG EZ";
+  }
+  if (score >= 80) {
+    return "⚡ MAIN CHARACTER - Eating Good";
+  }
+  if (score >= 75) {
+    return "🚀 MOON MISSION - Keep Stacking";
+  }
+  if (score >= 70) {
+    return "🔥 KILLING IT - Above Average Chad";
+  }
+  if (score >= 65) {
+    return "💪 SOLID - You'll Make It Anon";
+  }
+  if (score >= 60) {
+    return "📈 MID CURVE - Touch Grass King";
+  }
+  if (score >= 55) {
+    return "🎯 SLIGHTLY MID - Do Better";
+  }
+  if (score >= 50) {
+    return "😬 NGMI VIBES - Yikes";
+  }
+  if (score >= 40) {
+    return "📉 EXIT LIQUIDITY - That's You";
+  }
+  if (score >= 30) {
+    return "💀 ABSOLUTELY COOKED - RIP";
+  }
+  if (score >= 20) {
+    return "🤡 CIRCUS CLOWN - Everyone's Laughing";
+  }
+  if (score >= 10) {
+    return "⚰️ DELETE APP - Uninstall Now";
+  }
   return "🪦 QUIT FOREVER - It's Over Bro";
 }
 
@@ -102,6 +179,9 @@ export default async function handler(
   }
 
   try {
+    // 🔧 FIX: Registrar fonts antes de generar imágenes
+    registerFonts();
+
     const { walletAddress } = req.body;
 
     if (!walletAddress) {
@@ -191,26 +271,10 @@ export default async function handler(
       isPaid: card.isPaid,
     });
 
-    // 🚀 OPTIMIZACIÓN: Subir a R2 si está habilitado
-    if (isStorageEnabled) {
-      const imageKey = generateCardImageKey(walletAddress);
-      const publicUrl = await uploadImage(imageKey, imageBuffer, {
-        contentType: 'image/png',
-        cacheControl: 'public, max-age=31536000, immutable', // 1 año
-      });
-
-      if (publicUrl) {
-        logger.info('☁️ Image uploaded to R2:', { publicUrl });
-        // Cachear la URL por 7 días
-        await cacheSet(cacheKey, publicUrl, { ttl: 604800 });
-        // Redirigir a R2
-        return res.redirect(302, publicUrl);
-      }
-    }
-
-    // Si R2 no está habilitado o falló, cachear el buffer
+    // ✅ R2 DESHABILITADO - Cachear el buffer directamente
+    logger.info('✅ Serving image from cache (R2 disabled)');
     const base64Buffer = imageBuffer.toString('base64');
-    await cacheSet(cacheKey, base64Buffer, { ttl: 86400 }); // 24 horas (optimización de performance)
+    await cacheSet(cacheKey, base64Buffer, { ttl: 86400 }); // 24 horas
 
     res.setHeader('Content-Type', 'image/png');
     res.setHeader('Cache-Control', 'public, max-age=86400'); // 24 horas
@@ -241,7 +305,9 @@ async function generateCardImage(
       const premiumBuffer = await generatePremiumCardImage(walletAddress, metrics);
       logger.info('✅ Premium card generated successfully');
       // Force garbage collection hint
-      if (global.gc) global.gc();
+      if (global.gc) {
+        global.gc();
+      }
       return premiumBuffer;
     } catch (error) {
       logger.error('❌ Error generating premium card:', error instanceof Error ? error : undefined, {
@@ -267,7 +333,9 @@ async function generateCardImage(
   });
   const buffer = await generateBasicCardImage(walletAddress, metrics);
   // Force garbage collection hint
-  if (global.gc) global.gc();
+  if (global.gc) {
+    global.gc();
+  }
   return buffer;
 }
 
@@ -379,7 +447,7 @@ async function generatePremiumCardImage(
       ctx.stroke();
       
       ctx.fillStyle = tier.borderColor;
-      ctx.font = 'bold 80px Arial';
+      ctx.font = 'bold 80px "Noto Sans Bold"';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText('👤', imgX, currentY);
@@ -402,7 +470,7 @@ async function generatePremiumCardImage(
     ctx.stroke();
     
     ctx.fillStyle = tier.borderColor;
-    ctx.font = 'bold 80px sans-serif';
+    ctx.font = 'bold 80px "Noto Sans Bold"';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText('👤', imgX, currentY);
@@ -413,7 +481,7 @@ async function generatePremiumCardImage(
   // NOMBRE
   if (metrics.displayName) {
     ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 32px sans-serif';
+    ctx.font = 'bold 32px "Noto Sans Bold"';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(metrics.displayName, width / 2, currentY);
@@ -422,7 +490,7 @@ async function generatePremiumCardImage(
 
   // WALLET ADDRESS
   ctx.fillStyle = '#9ca3af';
-  ctx.font = '16px monospace';
+  ctx.font = '16px "Noto Sans"';
   ctx.textAlign = 'center';
   const shortAddress = `${walletAddress.slice(0, 6)}...${walletAddress.slice(-6)}`;
   ctx.fillText(shortAddress, width / 2, currentY);
@@ -430,13 +498,17 @@ async function generatePremiumCardImage(
 
   // REDES SOCIALES
   if (metrics.twitter || metrics.telegram) {
-    ctx.font = '14px sans-serif';
+    ctx.font = '14px "Noto Sans"';
     ctx.fillStyle = tier.borderColor;
     
     const socials = [];
-    if (metrics.twitter) socials.push(`🐦 @${metrics.twitter}`);
-    if (metrics.telegram) socials.push(`✈️ @${metrics.telegram}`);
-    
+    if (metrics.twitter) {
+      socials.push(`🐦 @${metrics.twitter}`);
+    }
+    if (metrics.telegram) {
+      socials.push(`✈️ @${metrics.telegram}`);
+    }
+
     ctx.fillText(socials.join('  •  '), width / 2, currentY);
     currentY += 45;
   } else {
@@ -455,7 +527,7 @@ async function generatePremiumCardImage(
   scoreGradient.addColorStop(1, tier.colors[2] as string);
 
   ctx.fillStyle = scoreGradient;
-  ctx.font = 'bold 130px sans-serif';
+  ctx.font = 'bold 130px "Noto Sans Bold"';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
 
@@ -473,8 +545,7 @@ async function generatePremiumCardImage(
   currentY += 80;
 
   ctx.fillStyle = '#d1d5db';
-  ctx.font = 'bold 18px sans-serif';
-  ctx.letterSpacing = '4px';
+  ctx.font = 'bold 18px "Noto Sans Bold"';
   ctx.fillText('DEGEN SCORE', width / 2, currentY);
   currentY += 40;
 
@@ -487,7 +558,7 @@ async function generatePremiumCardImage(
   fomoBgGradient.addColorStop(1, 'rgba(234, 179, 8, 0.15)');
   ctx.fillStyle = fomoBgGradient;
 
-  ctx.font = 'bold 16px sans-serif';
+  ctx.font = 'bold 16px "Noto Sans Bold"';
   const fomoTextWidth = ctx.measureText(fomoPhrase).width;
   const fomoBoxWidth = fomoTextWidth + 50;
   const fomoBoxHeight = 48;
@@ -555,7 +626,7 @@ async function generatePremiumCardImage(
   ctx.shadowBlur = 0;
 
   ctx.fillStyle = '#ffffff';
-  ctx.font = 'bold 24px sans-serif';
+  ctx.font = 'bold 24px "Noto Sans Bold"';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText(`${tier.emoji} ${tier.name}`, width / 2, currentY);
@@ -598,7 +669,7 @@ async function generatePremiumCardImage(
 
   // FOOTER
   ctx.fillStyle = '#6b7280';
-  ctx.font = '13px sans-serif';
+  ctx.font = '13px "Noto Sans"';
   ctx.textAlign = 'center';
   ctx.fillText('Powered by Helius × Solana', width / 2, currentY);
 
@@ -625,12 +696,11 @@ function drawPremiumMetric(
 
   ctx.textAlign = alignment;
   ctx.fillStyle = '#9ca3af';
-  ctx.font = 'bold 13px sans-serif';
-  ctx.letterSpacing = '2px';
+  ctx.font = 'bold 13px "Noto Sans Bold"';
   ctx.fillText(label, x, y);
 
   ctx.fillStyle = valueColor;
-  ctx.font = 'bold 30px sans-serif';
+  ctx.font = 'bold 30px "Noto Sans Bold"';
   ctx.fillText(value, x, y + 38);
 }
 
@@ -639,10 +709,34 @@ async function generateBasicCardImage(
   walletAddress: string,
   metrics: any
 ): Promise<Buffer> {
-  const width = 600;
-  const height = 950;
-  const canvas = createCanvas(width, height);
-  const ctx = canvas.getContext('2d');
+  try {
+    logger.info('🎨 Generating BASIC card with metrics:', {
+      degenScore: metrics.degenScore,
+      totalTrades: metrics.totalTrades,
+      totalVolume: metrics.totalVolume,
+      profitLoss: metrics.profitLoss,
+      winRate: metrics.winRate
+    });
+
+    const width = 600;
+    const height = 950;
+    const canvas = createCanvas(width, height);
+    const ctx = canvas.getContext('2d');
+
+    // Asegurar que tenemos valores numéricos válidos
+    const safeMetrics = {
+      degenScore: Number(metrics.degenScore) || 0,
+      totalTrades: Number(metrics.totalTrades) || 0,
+      totalVolume: Number(metrics.totalVolume) || 0,
+      profitLoss: Number(metrics.profitLoss) || 0,
+      winRate: Number(metrics.winRate) || 0,
+      bestTrade: Number(metrics.bestTrade) || 0,
+      worstTrade: Number(metrics.worstTrade) || 0,
+      avgTradeSize: Number(metrics.avgTradeSize) || 0,
+      tradingDays: Number(metrics.tradingDays) || 0
+    };
+
+    logger.info('📊 Safe metrics:', safeMetrics);
 
   // FONDO DEGRADADO BÁSICO
   const gradient = ctx.createLinearGradient(0, 0, 0, height);
@@ -659,9 +753,9 @@ async function generateBasicCardImage(
 
   let currentY = 90;
 
-  // TÍTULO - ✅ FIXED
+  // TÍTULO - ✅ FIXED con Noto Sans
   ctx.fillStyle = '#00d4ff';
-  ctx.font = 'bold 44px sans-serif';  // ← CAMBIADO de Arial a sans-serif
+  ctx.font = '700 44px "Noto Sans Bold"';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText('DEGEN CARD', width / 2, currentY);
@@ -669,43 +763,42 @@ async function generateBasicCardImage(
 
   // WALLET ADDRESS
   ctx.fillStyle = '#aaaaaa';
-  ctx.font = '16px monospace';
+  ctx.font = '16px "Noto Sans"';
   ctx.textAlign = 'center';
   const shortAddress = `${walletAddress.slice(0, 6)}...${walletAddress.slice(-6)}`;
   ctx.fillText(shortAddress, width / 2, currentY);
   currentY += 60;
 
-  // DEGEN SCORE - ✅ FIXED
-  const scoreColor = getScoreColor(metrics.degenScore);
+  // DEGEN SCORE - ✅ FIXED con Noto Sans
+  const scoreColor = getScoreColor(safeMetrics.degenScore);
   ctx.fillStyle = scoreColor;
-  ctx.font = 'bold 110px sans-serif';  // ← CAMBIADO de Arial a sans-serif
+  ctx.font = '700 110px "Noto Sans Bold"';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
 
   ctx.shadowColor = scoreColor;
   ctx.shadowBlur = 30;
-  ctx.fillText(metrics.degenScore.toString(), width / 2, currentY);
+  ctx.fillText(String(safeMetrics.degenScore), width / 2, currentY);
   ctx.shadowColor = 'transparent';
   ctx.shadowBlur = 0;
 
   currentY += 75;
 
-  // LABEL DEGEN SCORE - ✅ FIXED
+  // LABEL DEGEN SCORE - ✅ FIXED con Noto Sans
   ctx.fillStyle = '#aaaaaa';
-  ctx.font = 'bold 20px sans-serif';  // ← CAMBIADO de Arial a sans-serif
-  ctx.letterSpacing = '2px';
+  ctx.font = '700 20px "Noto Sans Bold"';
   ctx.fillText('DEGEN SCORE', width / 2, currentY);
   currentY += 40;
 
   // FRASE FOMO - ✅ FIXED
-  const fomoPhrase = getFOMOPhrase(metrics.degenScore);
+  const fomoPhrase = getFOMOPhrase(safeMetrics.degenScore);
 
   ctx.fillStyle = 'rgba(255, 215, 0, 0.15)';
   const textWidth = ctx.measureText(fomoPhrase).width;
   ctx.fillRect(width / 2 - textWidth / 2 - 20, currentY - 18, textWidth + 40, 36);
 
   ctx.fillStyle = '#FFD700';
-  ctx.font = 'bold 17px sans-serif';  // ← CAMBIADO de Arial a sans-serif
+  ctx.font = '700 17px "Noto Sans Bold"';
   ctx.textAlign = 'center';
   ctx.fillText(fomoPhrase, width / 2, currentY);
   currentY += 50;
@@ -726,21 +819,21 @@ async function generateBasicCardImage(
 
   ctx.textAlign = 'left';
 
-  drawMetric(ctx, 'TOTAL TRADES', metrics.totalTrades.toString(), leftX, currentY, true);
-  drawMetric(ctx, 'WIN RATE', `${metrics.winRate.toFixed(1)}%`, rightX, currentY, false);
+  drawMetric(ctx, 'TOTAL TRADES', String(safeMetrics.totalTrades), leftX, currentY, true);
+  drawMetric(ctx, 'WIN RATE', `${safeMetrics.winRate.toFixed(1)}%`, rightX, currentY, false);
   currentY += rowHeight;
 
-  drawMetric(ctx, 'VOLUME', `${formatSOL(metrics.totalVolume, 1)} SOL`, leftX, currentY, true);
-  const pnlColor = metrics.profitLoss >= 0 ? '#00ff88' : '#ff4444';
-  drawMetric(ctx, 'P&L', `${formatSOL(metrics.profitLoss, 2)} SOL`, rightX, currentY, false, pnlColor);
+  drawMetric(ctx, 'VOLUME', `${formatSOL(safeMetrics.totalVolume, 1)} SOL`, leftX, currentY, true);
+  const pnlColor = safeMetrics.profitLoss >= 0 ? '#00ff88' : '#ff4444';
+  drawMetric(ctx, 'P&L', `${formatSOL(safeMetrics.profitLoss, 2)} SOL`, rightX, currentY, false, pnlColor);
   currentY += rowHeight;
 
-  drawMetric(ctx, 'BEST TRADE', `${formatSOL(metrics.bestTrade, 2)} SOL`, leftX, currentY, true);
-  drawMetric(ctx, 'WORST TRADE', `${formatSOL(metrics.worstTrade, 2)} SOL`, rightX, currentY, false);
+  drawMetric(ctx, 'BEST TRADE', `${formatSOL(safeMetrics.bestTrade, 2)} SOL`, leftX, currentY, true);
+  drawMetric(ctx, 'WORST TRADE', `${formatSOL(safeMetrics.worstTrade, 2)} SOL`, rightX, currentY, false);
   currentY += rowHeight;
 
-  drawMetric(ctx, 'AVG TRADE', `${formatSOL(metrics.avgTradeSize, 2)} SOL`, leftX, currentY, true);
-  drawMetric(ctx, 'ACTIVE DAYS', metrics.tradingDays.toString(), rightX, currentY, false);
+  drawMetric(ctx, 'AVG TRADE', `${formatSOL(safeMetrics.avgTradeSize, 2)} SOL`, leftX, currentY, true);
+  drawMetric(ctx, 'ACTIVE DAYS', String(safeMetrics.tradingDays), rightX, currentY, false);
   currentY += 60;
 
   // LINEA DIVISORIA
@@ -752,25 +845,37 @@ async function generateBasicCardImage(
   ctx.stroke();
   currentY += 50;
 
-  // FOOTER - ✅ FIXED
-  const rating = getRating(metrics.degenScore);
+  // FOOTER - ✅ FIXED con Noto Sans
+  const rating = getRating(safeMetrics.degenScore);
   ctx.fillStyle = '#ffffff';
-  ctx.font = 'bold 26px sans-serif';  // ← CAMBIADO de Arial a sans-serif
+  ctx.font = '700 26px "Noto Sans Bold"';
   ctx.textAlign = 'center';
   ctx.fillText(rating, width / 2, currentY);
   currentY += 50;
 
   ctx.fillStyle = '#777777';
-  ctx.font = '15px sans-serif';  // ← CAMBIADO de Arial a sans-serif
+  ctx.font = '400 15px "Noto Sans"';
   ctx.fillText('Powered by Helius × Solana', width / 2, currentY);
 
   // Convert to buffer and clear canvas reference to help GC
   const buffer = canvas.toBuffer('image/png');
 
+  logger.info('✅ BASIC card buffer generated:', {
+    bufferSize: buffer.length,
+    walletAddress: walletAddress.slice(0, 8)
+  });
+
   // Clear canvas context to free memory
   ctx.clearRect(0, 0, width, height);
 
   return buffer;
+  } catch (error) {
+    logger.error('❌ Error in generateBasicCardImage:', error instanceof Error ? error : undefined, {
+      error: String(error),
+      stack: error instanceof Error ? error.stack : undefined
+    });
+    throw error;
+  }
 }
 
 // ✅ FIXED: drawMetric usando sans-serif
@@ -787,30 +892,51 @@ function drawMetric(
 
   ctx.textAlign = alignment;
   ctx.fillStyle = '#999999';
-  ctx.font = 'bold 13px sans-serif';  // ← CAMBIADO de Arial a sans-serif
-  ctx.letterSpacing = '1px';
+  ctx.font = '700 13px "Noto Sans Bold"';
   ctx.fillText(label, x, y);
 
   ctx.fillStyle = valueColor;
-  ctx.font = 'bold 26px sans-serif';  // ← CAMBIADO de Arial a sans-serif
+  ctx.font = '700 26px "Noto Sans Bold"';
   ctx.fillText(value, x, y + 32);
 }
 
 function getScoreColor(score: number): string {
-  if (score >= 90) return '#FFD700';
-  if (score >= 80) return '#00ff88';
-  if (score >= 60) return '#00d4ff';
-  if (score >= 40) return '#ffaa00';
-  if (score >= 20) return '#ff6600';
+  if (score >= 90) {
+    return '#FFD700';
+  }
+  if (score >= 80) {
+    return '#00ff88';
+  }
+  if (score >= 60) {
+    return '#00d4ff';
+  }
+  if (score >= 40) {
+    return '#ffaa00';
+  }
+  if (score >= 20) {
+    return '#ff6600';
+  }
   return '#ff4444';
 }
 
 function getRating(score: number): string {
-  if (score >= 90) return '🔥 LEGENDARY DEGEN 🔥';
-  if (score >= 75) return '⭐ MASTER DEGEN ⭐';
-  if (score >= 60) return '💎 DIAMOND HANDS 💎';
-  if (score >= 45) return '📈 DEGEN IN TRAINING 📈';
-  if (score >= 30) return '🎲 CASUAL GAMBLER 🎲';
-  if (score >= 15) return '🐟 SMALL FRY 🐟';
+  if (score >= 90) {
+    return '🔥 LEGENDARY DEGEN 🔥';
+  }
+  if (score >= 75) {
+    return '⭐ MASTER DEGEN ⭐';
+  }
+  if (score >= 60) {
+    return '💎 DIAMOND HANDS 💎';
+  }
+  if (score >= 45) {
+    return '📈 DEGEN IN TRAINING 📈';
+  }
+  if (score >= 30) {
+    return '🎲 CASUAL GAMBLER 🎲';
+  }
+  if (score >= 15) {
+    return '🐟 SMALL FRY 🐟';
+  }
   return '😅 NGMI 😅';
 }
