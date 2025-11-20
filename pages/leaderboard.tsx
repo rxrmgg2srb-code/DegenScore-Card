@@ -307,20 +307,24 @@ const LeaderboardCard = ({ entry, index, handleLike, userLikes }: LeaderboardCar
             </div>
           </div>
 
-          {/* Badges desbloqueados con tooltips */}
-          {entry.calculatedBadges && entry.calculatedBadges.length > 0 && (
-            <div className="mb-3 bg-black/30 rounded-lg p-2.5 border border-yellow-500/20">
-              <div className="text-[9px] text-yellow-300 uppercase mb-1.5 font-semibold text-center">
-                🏆 Logros Desbloqueados ({entry.calculatedBadges.length})
-              </div>
+          {/* Badges desbloqueados con tooltips - SIEMPRE VISIBLE */}
+          <div className="mb-3 bg-black/30 rounded-lg p-2.5 border border-yellow-500/20">
+            <div className="text-[9px] text-yellow-300 uppercase mb-1.5 font-semibold text-center">
+              🏆 Logros Desbloqueados ({entry.calculatedBadges?.length || 0})
+            </div>
+            {entry.calculatedBadges && entry.calculatedBadges.length > 0 ? (
               <BadgesDisplay
                 badges={entry.calculatedBadges}
                 totalPoints={entry.badgePoints || 0}
                 showPoints={false}
                 maxDisplay={8}
               />
-            </div>
-          )}
+            ) : (
+              <div className="text-center text-gray-500 text-xs py-2">
+                Sin logros aún
+              </div>
+            )}
+          </div>
 
           <div className="text-center space-y-1">
             <div className={`inline-block px-4 py-1.5 rounded-full bg-gradient-to-r ${tier.gradient} opacity-90 shadow-lg`}>
