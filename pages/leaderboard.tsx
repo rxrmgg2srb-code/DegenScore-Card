@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
-import HotFeedWidget from '../components/HotFeedWidget';
+import RankingsWidget from '../components/RankingsWidget';
 import { LanguageSelector } from '../components/LanguageSelector';
 
 interface LeaderboardEntry {
@@ -286,6 +286,22 @@ const LeaderboardCard = ({ entry, index, handleLike, userLikes }: LeaderboardCar
               <div className={`font-bold text-sm ${entry.profitLoss >= 0 ? 'text-green-400' : 'text-red-400'}`}>
                 {entry.profitLoss >= 0 ? '+' : ''}{formatNumber(entry.profitLoss)}
               </div>
+            </div>
+          </div>
+
+          {/* Métricas de Categorías de Premios */}
+          <div className="grid grid-cols-3 gap-1 mb-3">
+            <div className="bg-red-900/20 rounded-lg p-2 border border-red-500/30">
+              <div className="text-[9px] text-red-300 uppercase mb-0.5 font-semibold text-center">❤️ Likes</div>
+              <div className="text-white font-bold text-sm text-center">{entry.likes || 0}</div>
+            </div>
+            <div className="bg-blue-900/20 rounded-lg p-2 border border-blue-500/30">
+              <div className="text-[9px] text-blue-300 uppercase mb-0.5 font-semibold text-center">👥 Refs</div>
+              <div className="text-white font-bold text-sm text-center">{entry.referralCount || 0}</div>
+            </div>
+            <div className="bg-yellow-900/20 rounded-lg p-2 border border-yellow-500/30">
+              <div className="text-[9px] text-yellow-300 uppercase mb-0.5 font-semibold text-center">⭐ Pts</div>
+              <div className="text-white font-bold text-sm text-center">{entry.badgePoints || 0}</div>
             </div>
           </div>
 
@@ -716,7 +732,7 @@ export default function Leaderboard() {
             </div>
 
             <div className="lg:col-span-1">
-              <HotFeedWidget />
+              <RankingsWidget />
             </div>
           </div>
         </div>
