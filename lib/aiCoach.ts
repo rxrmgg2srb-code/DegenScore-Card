@@ -6,11 +6,17 @@ import { cacheIncr, cacheGet } from './cache/redis';
 /**
  * AI Trading Coach
  * Uses OpenAI GPT-4 to analyze trading behavior and provide personalized insights
+ * 
+ * 🔧 TO ENABLE: Set OPENAI_API_KEY in .env.local
+ * 🔒 TO DISABLE: Remove or comment out OPENAI_API_KEY (saves $$$)
  */
 
-const openai = new OpenAI({
+// ⚠️ FEATURE FLAG: Check if AI Coach is enabled
+const AI_COACH_ENABLED = !!process.env.OPENAI_API_KEY;
+
+const openai = AI_COACH_ENABLED ? new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
-});
+}) : null;
 
 // Cost protection: $10 USD daily budget for AI calls
 const DAILY_AI_BUDGET = parseFloat(process.env.AI_DAILY_BUDGET || '10');
@@ -85,6 +91,14 @@ export interface CoachAnalysis {
  * Analyze a trader's performance using AI
  */
 export async function analyzeTraderWithAI(walletAddress: string): Promise<CoachAnalysis> {
+  // ⚠️ CHECK: AI Coach disabled (no OPENAI_API_KEY)
+  if (!AI_COACH_ENABLED || !openai) {
+    logger.warn('AI Coach feature is disabled (OPENAI_API_KEY not set)');
+    throw new Error(
+      'AI Trading Coach is currently unavailable. Please contact support or upgrade to premium when available.'
+    );
+  }
+
   try {
     logger.info('Starting AI analysis for:', { walletAddress });
 
@@ -254,14 +268,14 @@ RECENT ACTIVITY (Last 50 trades):
 
 TRADE HISTORY SAMPLE:
 ${trades
-  .slice(0, 10)
-  .map(
-    (t) =>
-      `- ${t.action.toUpperCase()} ${t.tokenSymbol} for ${t.solAmount.toFixed(2)} SOL (${new Date(
-        t.timestamp
-      ).toLocaleString()})`
-  )
-  .join('\n')}
+      .slice(0, 10)
+      .map(
+        (t) =>
+          `- ${t.action.toUpperCase()} ${t.tokenSymbol} for ${t.solAmount.toFixed(2)} SOL (${new Date(
+            t.timestamp
+          ).toLocaleString()})`
+      )
+      .join('\n')}
 
 Provide a detailed analysis in the following JSON format:
 {
