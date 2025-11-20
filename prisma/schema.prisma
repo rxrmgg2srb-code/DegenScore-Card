@@ -77,23 +77,12 @@ model DegenCard {
   @@index([winRate])
   @@index([isPaid])
   @@index([likes])
-  @@index([mintedAt])
 
   // Índices compuestos para leaderboard (ordenamiento)
   @@index([degenScore(sort: Desc), mintedAt(sort: Desc)])
-  @@index([totalVolume(sort: Desc), mintedAt(sort: Desc)])
-  @@index([winRate(sort: Desc), mintedAt(sort: Desc)])
-  @@index([likes(sort: Desc), mintedAt(sort: Desc)])
 
   // PERFORMANCE: Índices adicionales para queries comunes
   @@index([isPaid, degenScore(sort: Desc), createdAt(sort: Desc)])
-  @@index([createdAt(sort: Desc)])
-  @@index([lastSeen(sort: Desc)])
-
-  // Índices para soft delete
-  @@index([deletedAt])
-  @@index([isPaid, deletedAt, degenScore(sort: Desc)])
-  @@index([deletedAt, isPaid, degenScore(sort: Desc)])
 }
 
 model Badge {
@@ -143,9 +132,7 @@ model HotTrade {
   
   createdAt       DateTime @default(now())
 
-  @@index([timestamp])
   @@index([walletAddress])
-  @@index([createdAt])
 
   // PERFORMANCE: Índice compuesto para consultas por wallet y tiempo
   @@index([walletAddress, timestamp(sort: Desc)])
@@ -272,7 +259,6 @@ model ScoreHistory {
   badges        Int      // Cantidad de badges
 
   @@index([walletAddress, timestamp(sort: Desc)])
-  @@index([timestamp])
 }
 
 // NUEVO: Sistema de seguimiento de wallets
@@ -393,9 +379,6 @@ model TokenAnalysis {
   // Indexes for performance
   @@index([tokenAddress])
   @@index([securityScore(sort: Desc)])
-  @@index([riskLevel])
-  @@index([analyzedAt(sort: Desc)])
-  @@index([createdAt(sort: Desc)])
   @@index([verified, securityScore(sort: Desc)])
 }
 
@@ -456,7 +439,6 @@ model UserStreak {
   updatedAt        DateTime @updatedAt
 
   @@index([currentStreak])
-  @@index([lastLoginDate])
 }
 
 // Daily Challenges System
@@ -706,8 +688,6 @@ model WhaleWallet {
 
   @@index([tier])
   @@index([totalBalance])
-  @@index([isActive])
-  @@index([lastTradeAt])
 }
 
 model WhaleAlert {

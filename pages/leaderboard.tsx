@@ -149,7 +149,7 @@ const LeaderboardCard = ({ entry, index, handleLike, userLikes }: LeaderboardCar
   const tier = getTierConfig(entry.degenScore);
   const isTop3 = index < 3;
   const levelPhrase = getLevelPhrase(entry.level);
-  
+
   const getFOMOPhrase = (score: number): string => {
     if (score >= 95) return "🔥 GOD MODE - They Bow to You";
     if (score >= 90) return "👑 APEX PREDATOR - Pure Domination";
@@ -254,7 +254,7 @@ const LeaderboardCard = ({ entry, index, handleLike, userLikes }: LeaderboardCar
             <div className="text-gray-300 text-xs uppercase tracking-wider font-bold mb-2">
               DEGEN SCORE
             </div>
-            
+
             <div className="bg-gradient-to-r from-yellow-500/20 via-yellow-400/20 to-yellow-500/20 px-3 py-1.5 rounded-lg border border-yellow-500/30 backdrop-blur-sm">
               <div className="text-yellow-300 font-bold text-[11px] text-center leading-tight">
                 {fomoPhrase}
@@ -366,11 +366,10 @@ const LeaderboardCard = ({ entry, index, handleLike, userLikes }: LeaderboardCar
 
       <button
         onClick={() => handleLike(entry.id)}
-        className={`mt-4 px-6 py-3 rounded-xl transition-all flex items-center justify-center gap-3 font-bold text-base shadow-lg ${
-          userLikes[entry.id]
+        className={`mt-4 px-6 py-3 rounded-xl transition-all flex items-center justify-center gap-3 font-bold text-base shadow-lg ${userLikes[entry.id]
             ? 'bg-gradient-to-r from-red-600 to-red-500 hover:from-red-700 hover:to-red-600 text-white scale-105'
             : 'bg-gray-800 hover:bg-gray-700 text-gray-300 border border-gray-600'
-        }`}
+          }`}
       >
         <span className="text-2xl">{userLikes[entry.id] ? '❤️' : '🤍'}</span>
         <span>{entry.likes || 0}</span>
@@ -413,9 +412,8 @@ const LeaderboardTable = ({ filteredLeaderboard, handleLike, userLikes }: Leader
               return (
                 <tr
                   key={entry.id}
-                  className={`hover:bg-gray-700/30 transition ${
-                    isTop3 ? 'bg-gradient-to-r from-yellow-900/10 to-transparent' : ''
-                  }`}
+                  className={`hover:bg-gray-700/30 transition ${isTop3 ? 'bg-gradient-to-r from-yellow-900/10 to-transparent' : ''
+                    }`}
                 >
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
@@ -506,11 +504,10 @@ const LeaderboardTable = ({ filteredLeaderboard, handleLike, userLikes }: Leader
                   <td className="px-6 py-4 whitespace-nowrap text-center">
                     <button
                       onClick={() => handleLike(entry.id)}
-                      className={`px-3 py-1 rounded-lg transition-all inline-flex items-center gap-1 ${
-                        userLikes[entry.id]
+                      className={`px-3 py-1 rounded-lg transition-all inline-flex items-center gap-1 ${userLikes[entry.id]
                           ? 'bg-red-500/20 text-red-400'
                           : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
-                      }`}
+                        }`}
                     >
                       <span>{userLikes[entry.id] ? '❤️' : '🤍'}</span>
                       <span className="font-bold text-sm">{entry.likes || 0}</span>
@@ -563,9 +560,9 @@ export default function Leaderboard() {
 
   const handleLike = async (cardId: string) => {
     const hasLiked = userLikes[cardId];
-    
+
     setUserLikes(prev => ({ ...prev, [cardId]: !hasLiked }));
-    setLeaderboard(prev => 
+    setLeaderboard(prev =>
       prev.map(entry => {
         if (entry.id === cardId) {
           const newLikes = (entry.likes || 0) + (hasLiked ? -1 : 1);
@@ -587,10 +584,10 @@ export default function Leaderboard() {
       }
 
       const data = await response.json();
-      
-      setLeaderboard(prev => 
-        prev.map(entry => 
-          entry.id === cardId 
+
+      setLeaderboard(prev =>
+        prev.map(entry =>
+          entry.id === cardId
             ? { ...entry, likes: data.likes }
             : entry
         )
@@ -598,9 +595,9 @@ export default function Leaderboard() {
     } catch (error) {
       console.error('Error updating like:', error);
       setUserLikes(prev => ({ ...prev, [cardId]: hasLiked } as { [key: string]: boolean }));
-      setLeaderboard(prev => 
-        prev.map(entry => 
-          entry.id === cardId 
+      setLeaderboard(prev =>
+        prev.map(entry =>
+          entry.id === cardId
             ? { ...entry, likes: (entry.likes || 0) + (hasLiked ? 1 : -1) }
             : entry
         )
@@ -610,9 +607,9 @@ export default function Leaderboard() {
 
   const filteredLeaderboard = searchWallet
     ? leaderboard.filter(entry =>
-        entry.walletAddress.toLowerCase().includes(searchWallet.toLowerCase()) ||
-        (entry.displayName && entry.displayName.toLowerCase().includes(searchWallet.toLowerCase()))
-      )
+      entry.walletAddress.toLowerCase().includes(searchWallet.toLowerCase()) ||
+      (entry.displayName && entry.displayName.toLowerCase().includes(searchWallet.toLowerCase()))
+    )
     : leaderboard;
 
   return (
@@ -685,25 +682,22 @@ export default function Leaderboard() {
                 <div className="flex gap-2">
                   <button
                     onClick={() => setSortBy('likes')}
-                    className={`px-4 py-2 rounded-lg transition ${
-                      sortBy === 'likes' ? 'bg-cyan-500 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
-                    }`}
+                    className={`px-4 py-2 rounded-lg transition ${sortBy === 'likes' ? 'bg-cyan-500 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                      }`}
                   >
                     ❤️ Likes
                   </button>
                   <button
                     onClick={() => setSortBy('referralCount')}
-                    className={`px-4 py-2 rounded-lg transition ${
-                      sortBy === 'referralCount' ? 'bg-cyan-500 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
-                    }`}
+                    className={`px-4 py-2 rounded-lg transition ${sortBy === 'referralCount' ? 'bg-cyan-500 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                      }`}
                   >
                     👥 Referidos
                   </button>
                   <button
                     onClick={() => setSortBy('badgePoints')}
-                    className={`px-4 py-2 rounded-lg transition ${
-                      sortBy === 'badgePoints' ? 'bg-cyan-500 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
-                    }`}
+                    className={`px-4 py-2 rounded-lg transition ${sortBy === 'badgePoints' ? 'bg-cyan-500 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                      }`}
                   >
                     ⭐ Logros
                   </button>
@@ -712,17 +706,15 @@ export default function Leaderboard() {
                 <div className="flex gap-2 md:border-l md:border-gray-700 md:pl-4">
                   <button
                     onClick={() => setViewMode('cards')}
-                    className={`px-4 py-2 rounded-lg transition ${
-                      viewMode === 'cards' ? 'bg-purple-500 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
-                    }`}
+                    className={`px-4 py-2 rounded-lg transition ${viewMode === 'cards' ? 'bg-purple-500 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                      }`}
                   >
                     🎴 Cards
                   </button>
                   <button
                     onClick={() => setViewMode('table')}
-                    className={`px-4 py-2 rounded-lg transition ${
-                      viewMode === 'table' ? 'bg-purple-500 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
-                    }`}
+                    className={`px-4 py-2 rounded-lg transition ${viewMode === 'table' ? 'bg-purple-500 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                      }`}
                   >
                     📊 Table
                   </button>
@@ -789,9 +781,5 @@ export default function Leaderboard() {
   );
 }
 
-// Force Server-Side Rendering (no static generation at build time)
-export async function getServerSideProps() {
-  return {
-    props: {},
-  };
-}
+// ✅ PERFORMANCE: Removed getServerSideProps - all data is fetched client-side.
+// The page shell loads instantly (static), then data loads progressively via API.

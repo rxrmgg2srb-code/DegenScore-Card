@@ -148,8 +148,8 @@ export default function ComparePage() {
                 {overallWinner === 'wallet1'
                   ? comparison.wallet1.displayName || 'Wallet 1'
                   : overallWinner === 'wallet2'
-                  ? comparison.wallet2.displayName || 'Wallet 2'
-                  : "It's a Tie!"}
+                    ? comparison.wallet2.displayName || 'Wallet 2'
+                    : "It's a Tie!"}
               </p>
             </div>
 
@@ -279,9 +279,5 @@ function ComparisonRow({ label, value1, value2, winner, formatter }: ComparisonR
   );
 }
 
-// Force Server-Side Rendering (no static generation at build time)
-export async function getServerSideProps() {
-  return {
-    props: {},
-  };
-}
+// ✅ PERFORMANCE: Removed getServerSideProps - this is a client-side comparison tool.
+// All comparisons are done via API after user input, enabling static generation.

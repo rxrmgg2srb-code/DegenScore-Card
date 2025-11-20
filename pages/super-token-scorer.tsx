@@ -35,9 +35,5 @@ export default function SuperTokenScorerPage() {
   );
 }
 
-// Force this page to be server-side rendered
-export async function getServerSideProps() {
-  return {
-    props: {},
-  };
-}
+// ✅ PERFORMANCE: Removed getServerSideProps - this page is fully static.
+// All data is fetched client-side, enabling static generation for faster loads.
