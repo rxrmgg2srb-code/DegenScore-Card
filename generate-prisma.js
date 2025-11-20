@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 // Script to generate Prisma Client using the locally installed version
 const { execSync } = require('child_process');
 const path = require('path');

@@ -131,7 +131,7 @@ model GlobalStats {
   totalVolume   Float    @default(0)
   avgDegenScore Float    @default(0)
   topScore      Int      @default(0)
-  updatedAt     DateTime @updatedAt
+  updatedAt     DateTime @default(now()) @updatedAt
 }
 
 model HotTrade {
