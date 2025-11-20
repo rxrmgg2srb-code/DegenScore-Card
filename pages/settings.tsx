@@ -124,9 +124,5 @@ export default function SettingsPage() {
   );
 }
 
-// Force Server-Side Rendering
-export async function getServerSideProps() {
-  return {
-    props: {},
-  };
-}
+// ✅ PERFORMANCE: Static page, no SSR needed
+// Settings UI loads client-side data after mount
