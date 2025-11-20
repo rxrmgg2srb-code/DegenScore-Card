@@ -1,7 +1,71 @@
-# 🏆 Plan de Implementación de Badges - DegenScore
+# 🏆 Sistema de Logros y Temporadas - DegenScore
 
 ## Resumen Ejecutivo
-Sistema de 100 badges dividido en 7 categorías para aumentar engagement, viralidad y conversión premium.
+Sistema de badges con puntuación y temporadas competitivas con premios en SOL. Los badges se agrupan en categorías con rareza que determina los puntos otorgados.
+
+---
+
+## 🎮 Sistema de Temporadas (Seasons)
+
+### Estructura de una Temporada
+
+**Duración:** 30 días
+**Entrada:** 0.2 SOL por card premium creada
+**Premios:** Se acumulan automáticamente (cada 100 cards = 4 SOL al pool)
+
+### Categorías de Premios
+
+Cada temporada tiene **3 categorías de premios**:
+
+#### 1. ❤️ Más Likes
+- **Premio:** 1 SOL por cada 100 participantes
+- **Cómo ganar:** Consigue más likes en tu card
+- **Estrategia:** Comparte tu card en Twitter, Telegram, Discord
+
+#### 2. 👥 Más Referidos Premium
+- **Premio:** 1 SOL por cada 100 participantes
+- **Cómo ganar:** Refiere usuarios que creen cards premium (pagan 0.2 SOL)
+- **Estrategia:** Comparte tu link de referido, trae amigos al juego
+
+#### 3. ⭐ Más Logros (Badge Points)
+- **Premio:** 1 SOL por cada 100 participantes (dividido en 2: 1 SOL para categorías de trading + 1 SOL para categoría de logros)
+- **Cómo ganar:** Acumula la mayor cantidad de puntos de badges
+- **Estrategia:** Tradea activo, mantén buenos ratios, desbloquea todos los badges posibles
+
+### Ejemplo de Distribución de Premios
+
+**Season con 500 participantes:**
+- Total recaudado: 500 × 0.2 SOL = **100 SOL**
+- Prize pool (20 SOL):
+  - Categoría Likes: 5 SOL → Ganador con más likes
+  - Categoría Referidos: 5 SOL → Ganador con más referidos premium
+  - Categoría Logros: 10 SOL → Repartidos entre volumen (5 SOL) y logros generales (5 SOL)
+- Revenue del proyecto: 80 SOL (80%)
+
+---
+
+## 🏅 Sistema de Puntuación de Badges
+
+### Rareza y Puntos
+
+| Rareza | Puntos | Color | Dificultad |
+|--------|--------|-------|------------|
+| COMMON | 1 pt | Gris | Fácil de conseguir |
+| RARE | 3 pts | Azul | Requiere algo de esfuerzo |
+| EPIC | 5 pts | Morado | Difícil |
+| LEGENDARY | 10 pts | Dorado | Muy difícil |
+| MYTHIC | 25 pts | Rosa | Extremadamente raro |
+
+### Cómo se Calculan los Puntos Totales
+
+Tu **puntuación total de logros** es la suma de puntos de todos tus badges desbloqueados.
+
+**Ejemplo:**
+- Badge "🐣 Mini Degen" (COMMON) = 1 pt
+- Badge "🦈 Shark" (RARE) = 3 pts
+- Badge "💎 Solid Trader" (EPIC) = 5 pts
+- Badge "👑 Degen King" (LEGENDARY) = 10 pts
+- **Total: 19 puntos**
 
 ---
 

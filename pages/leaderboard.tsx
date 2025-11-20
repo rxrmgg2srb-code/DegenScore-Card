@@ -24,6 +24,8 @@ interface LeaderboardEntry {
   profileImage?: string | null;
   isPaid?: boolean;
   likes: number;
+  badgePoints?: number;
+  referralCount?: number;
 }
 
 interface Stats {
@@ -34,7 +36,7 @@ interface Stats {
 }
 
 type ViewMode = 'table' | 'cards';
-type SortBy = 'degenScore' | 'totalVolume' | 'winRate' | 'likes';
+type SortBy = 'likes' | 'referralCount' | 'badgePoints';
 
 const getTierConfig = (score: number) => {
   if (score >= 90) {
@@ -464,7 +466,7 @@ export default function Leaderboard() {
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
-  const [sortBy, setSortBy] = useState<SortBy>('degenScore');
+  const [sortBy, setSortBy] = useState<SortBy>('likes');
   const [searchWallet, setSearchWallet] = useState('');
   const [viewMode, setViewMode] = useState<ViewMode>('cards');
   const [userLikes, setUserLikes] = useState<{ [key: string]: boolean }>({});
@@ -618,36 +620,28 @@ export default function Leaderboard() {
               <div className="flex flex-col md:flex-row gap-4 mb-6">
                 <div className="flex gap-2">
                   <button
-                    onClick={() => setSortBy('degenScore')}
-                    className={`px-4 py-2 rounded-lg transition ${
-                      sortBy === 'degenScore' ? 'bg-cyan-500 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
-                    }`}
-                  >
-                    🏆 Score
-                  </button>
-                  <button
-                    onClick={() => setSortBy('totalVolume')}
-                    className={`px-4 py-2 rounded-lg transition ${
-                      sortBy === 'totalVolume' ? 'bg-cyan-500 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
-                    }`}
-                  >
-                    💰 Volume
-                  </button>
-                  <button
-                    onClick={() => setSortBy('winRate')}
-                    className={`px-4 py-2 rounded-lg transition ${
-                      sortBy === 'winRate' ? 'bg-cyan-500 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
-                    }`}
-                  >
-                    🎯 Win Rate
-                  </button>
-                  <button
                     onClick={() => setSortBy('likes')}
                     className={`px-4 py-2 rounded-lg transition ${
                       sortBy === 'likes' ? 'bg-cyan-500 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
                     }`}
                   >
                     ❤️ Likes
+                  </button>
+                  <button
+                    onClick={() => setSortBy('referralCount')}
+                    className={`px-4 py-2 rounded-lg transition ${
+                      sortBy === 'referralCount' ? 'bg-cyan-500 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                    }`}
+                  >
+                    👥 Referidos
+                  </button>
+                  <button
+                    onClick={() => setSortBy('badgePoints')}
+                    className={`px-4 py-2 rounded-lg transition ${
+                      sortBy === 'badgePoints' ? 'bg-cyan-500 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                    }`}
+                  >
+                    ⭐ Logros
                   </button>
                 </div>
 
