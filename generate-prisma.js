@@ -22,9 +22,9 @@ try {
     // Windows-specific
     ...(isWindows
       ? [
-          path.join(__dirname, 'node_modules', '.bin', 'prisma.cmd'),
-          path.join(__dirname, 'node_modules', '.bin', 'prisma.ps1'),
-        ]
+        path.join(__dirname, 'node_modules', '.bin', 'prisma.cmd'),
+        path.join(__dirname, 'node_modules', '.bin', 'prisma.ps1'),
+      ]
       : []),
     // Unix-specific
     ...(!isWindows ? [path.join(__dirname, 'node_modules', '.bin', 'prisma')] : []),
