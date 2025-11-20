@@ -40,7 +40,7 @@ export default function RankingsWidget() {
       const [likesData, referralsData, badgesData] = await Promise.all([
         likesRes.json(),
         referralsRes.json(),
-        badgesData.json(),
+        badgesRes.json(),
       ]);
 
       setRankings({
