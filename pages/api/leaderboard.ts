@@ -72,11 +72,38 @@ export default async function handler(
               },
             });
 
+            // Solo retornar los primeros 8 badges y campos esenciales para reducir tamaño de respuesta
+            const simplifiedBadges = badges.slice(0, 8).map(badge => ({
+              key: badge.key,
+              icon: badge.icon,
+              name: badge.name,
+              description: badge.description,
+              rarity: badge.rarity,
+              points: badge.points,
+            }));
+
             return {
-              ...card,
+              id: card.id,
+              walletAddress: card.walletAddress,
+              displayName: card.displayName,
+              twitter: card.twitter,
+              telegram: card.telegram,
+              profileImage: card.profileImage,
+              degenScore: card.degenScore,
+              totalTrades: card.totalTrades,
+              totalVolume: card.totalVolume,
+              profitLoss: card.profitLoss,
+              winRate: card.winRate,
+              level: card.level,
+              xp: card.xp,
+              bestTrade: card.bestTrade,
+              worstTrade: card.worstTrade,
+              likes: card.likes,
+              isPaid: card.isPaid,
+              mintedAt: card.mintedAt,
               badgePoints: totalPoints,
               referralCount,
-              calculatedBadges: badges, // Array de badges desbloqueados
+              calculatedBadges: simplifiedBadges,
             };
           })
         );
