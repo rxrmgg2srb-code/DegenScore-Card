@@ -307,11 +307,11 @@ const LeaderboardCard = ({ entry, index, handleLike, userLikes }: LeaderboardCar
                 <div className="text-[9px] text-yellow-300 uppercase mb-0.5 font-semibold text-center">⭐ Pts</div>
                 <div className="text-white font-bold text-sm text-center">{entry.badgePoints || 0}</div>
               </div>
-              {/* Tooltip con desglose de puntos */}
+              {/* Tooltip with points breakdown */}
               {entry.calculatedBadges && entry.calculatedBadges.length > 0 && (
                 <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10 pointer-events-none">
                   <div className="bg-gray-900 border border-yellow-500/50 rounded-lg p-3 shadow-xl min-w-[180px]">
-                    <div className="text-yellow-300 font-bold text-[10px] mb-2 text-center uppercase">Desglose de Puntos</div>
+                    <div className="text-yellow-300 font-bold text-[10px] mb-2 text-center uppercase">Points Breakdown</div>
                     <div className="space-y-1">
                       {entry.calculatedBadges.map((badge, idx) => (
                         <div key={idx} className="flex items-center justify-between text-[10px] text-white">
@@ -325,7 +325,7 @@ const LeaderboardCard = ({ entry, index, handleLike, userLikes }: LeaderboardCar
                       <span className="text-yellow-400 font-bold">{entry.badgePoints || 0} pts</span>
                     </div>
                   </div>
-                  {/* Flecha del tooltip */}
+                  {/* Tooltip arrow */}
                   <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1">
                     <div className="border-8 border-transparent border-t-yellow-500/50"></div>
                   </div>
