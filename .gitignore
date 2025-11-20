@@ -46,3 +46,11 @@ next-env.d.ts
 # Canvas generated images (si las generas localmente)
 card.png
 generated-cards/
+# SECURITY - NEVER COMMIT THESE
+.env*
+!.env.example
+!.env.local.example
+.next
+publicuploads/*
+*private*.json
+*key*.json

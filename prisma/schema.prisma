@@ -6,11 +6,7 @@ generator client {
 datasource db {
   provider  = "postgresql"
   url       = env("DATABASE_URL")
-  // NOTE: directUrl is commented out to avoid errors in CI/CD environments
-  // Uncomment if using Supabase with connection pooling:
-  // directUrl = env("DIRECT_URL")
-  // DATABASE_URL should use Transaction pooler for queries (pgbouncer=true)
-  // DIRECT_URL should use Direct connection for migrations (without pgbouncer)
+  directUrl = env("DIRECT_URL")
 }
 
 model DegenCard {
@@ -466,7 +462,7 @@ model UserStreak {
 // Daily Challenges System
 model DailyChallenge {
   id               String   @id @default(cuid())
-  date             DateTime @db.Date  // Día del challenge
+  date             DateTime  // Día del challenge
   challengeType    String   // "trades", "winRate", "volume", "follows", "share"
 
   // Challenge parameters
@@ -660,10 +656,10 @@ model AICoachAnalysis {
 
   // AI-generated insights
   overallScore      Int      // 0-100 discipline score
-  strengths         String   @db.Text  // JSON array of strengths
-  weaknesses        String   @db.Text  // JSON array of weaknesses
-  recommendations   String   @db.Text  // JSON array of recommendations
-  patterns          String   @db.Text  // JSON array of detected patterns
+  strengths         String     // JSON array of strengths
+  weaknesses        String     // JSON array of weaknesses
+  recommendations   String     // JSON array of recommendations
+  patterns          String     // JSON array of detected patterns
 
   // Risk analysis
   riskProfile       String   // "conservative", "moderate", "aggressive", "degen"
@@ -674,7 +670,7 @@ model AICoachAnalysis {
   confidenceScore   Float?   // 0-1
 
   // Full AI response
-  fullAnalysis      String   @db.Text  // Complete AI response
+  fullAnalysis      String    // Complete AI response
 
   @@index([walletAddress])
   @@index([analyzedAt])

@@ -1,6 +1,6 @@
 {
   "name": "degenscore-card",
-  "version": "0.2.1",
+  "version": "0.2.0",
   "private": true,
   "engines": {
     "node": "20.x"
@@ -46,8 +46,8 @@
     "@aws-sdk/client-s3": "^3.932.0",
     "@aws-sdk/s3-request-presigner": "^3.932.0",
     "@hcaptcha/react-hcaptcha": "^1.14.0",
-    "@napi-rs/canvas": "^0.1.82",
-    "@prisma/client": "6.19.0",
+    "@napi-rs/canvas": "^0.1.44",
+    "@prisma/client": "^6.19.0",
     "@sentry/nextjs": "^10.25.0",
     "@solana/wallet-adapter-base": "^0.9.27",
     "@solana/wallet-adapter-react": "^0.15.39",
@@ -90,8 +90,7 @@
     "tweetnacl": "^1.0.3",
     "typescript": "^5.7.2",
     "zod": "^3.25.76",
-    "zustand": "^5.0.8",
-    "prisma": "6.19.0"
+    "zustand": "^5.0.8"
   },
   "devDependencies": {
     "@commitlint/cli": "^18.4.3",
@@ -105,7 +104,6 @@
     "@types/jsonwebtoken": "^9.0.10",
     "@typescript-eslint/eslint-plugin": "^6.15.0",
     "@typescript-eslint/parser": "^6.15.0",
-    "copy-webpack-plugin": "^13.0.1",
     "eslint": "^8",
     "eslint-config-next": "14.0.4",
     "husky": "^8.0.3",
@@ -113,7 +111,8 @@
     "jest-environment-jsdom": "^29.7.0",
     "lint-staged": "^15.2.0",
     "node-mocks-http": "^1.14.0",
-    "prettier": "^3.1.1"
+    "prettier": "^3.1.1",
+    "prisma": "6.19.0"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [
