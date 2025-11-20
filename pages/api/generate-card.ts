@@ -26,32 +26,60 @@ function registerFonts() {
   try {
     const fontsPath = path.join(process.cwd(), 'public', 'fonts');
 
-    // Registrar Noto Sans Regular
-    GlobalFonts.registerFromPath(
-      path.join(fontsPath, 'NotoSans-Regular.ttf'),
-      'Noto Sans'
-    );
+    // Log attempt
+    logger.info(`🔤 Attempting to register fonts from: ${fontsPath}`);
 
-    // Registrar Noto Sans Bold
-    GlobalFonts.registerFromPath(
-      path.join(fontsPath, 'NotoSans-Bold.ttf'),
-      'Noto Sans Bold'
-    );
+    // Check if fonts directory exists
+    if (!fs.existsSync(fontsPath)) {
+      logger.error('❌ Fonts directory does not exist:', fontsPath);
+      throw new Error(`Fonts directory not found: ${fontsPath}`);
+    }
+
+    const regularFontPath = path.join(fontsPath, 'NotoSans-Regular.ttf');
+    const boldFontPath = path.join(fontsPath, 'NotoSans-Bold.ttf');
+
+    // Check if font files exist
+    if (!fs.existsSync(regularFontPath)) {
+      logger.error('❌ Regular font file missing:', regularFontPath);
+      throw new Error(`Font file not found: ${regularFontPath}`);
+    }
+
+    if (!fs.existsSync(boldFontPath)) {
+      logger.error('❌ Bold font file missing:', boldFontPath);
+      throw new Error(`Font file not found: ${boldFontPath}`);
+    }
+
+    logger.info('✅ Font files found, registering...');
+
+    // Register Noto Sans Regular
+    GlobalFonts.registerFromPath(regularFontPath, 'Noto Sans');
+    logger.info('   ✓ Noto Sans Regular registered');
+
+    // Register Noto Sans Bold
+    GlobalFonts.registerFromPath(boldFontPath, 'Noto Sans Bold');
+    logger.info('   ✓ Noto Sans Bold registered');
+
+    // List registered fonts to verify
+    const registeredFonts = GlobalFonts.families;
+    logger.info('📋 Registered font families:', registeredFonts);
 
     fontsRegistered = true;
-    logger.info('✅ Fonts registered successfully for Vercel canvas rendering');
-    logger.info('   - Noto Sans Regular');
-    logger.info('   - Noto Sans Bold');
+    logger.info('✅ All fonts registered successfully for canvas rendering');
+
   } catch (error) {
-    logger.error('❌ ERROR: Failed to register fonts', error instanceof Error ? error : undefined, {
+    logger.error('❌ CRITICAL: Failed to register fonts', error instanceof Error ? error : undefined, {
       error: String(error),
+      cwd: process.cwd(),
     });
-    logger.error('   SOLUCIÓN: Verifica que existan estos archivos:');
-    logger.error('   → public/fonts/NotoSans-Regular.ttf');
-    logger.error('   → public/fonts/NotoSans-Bold.ttf');
-    throw error;
+    logger.error('   ⚠️  FALLBACK: Will use system default fonts');
+    logger.error('   📁 Expected font location: public/fonts/NotoSans-*.ttf');
+
+    // Don't throw - allow fallback to system fonts
+    // but log the issue clearly
+    fontsRegistered = true; // Set to true to prevent infinite retry
   }
 }
+
 
 // Función auxiliar para formatear SOL
 function formatSOL(amount: number, decimals: number = 2): string {
@@ -311,8 +339,8 @@ async function generateCardImage(
       return premiumBuffer;
     } catch (error) {
       logger.error('❌ Error generating premium card:', error instanceof Error ? error : undefined, {
-      error: String(error),
-    });
+        error: String(error),
+      });
       logger.info('⚠️ Falling back to basic card');
       return generateBasicCardImage(walletAddress, metrics);
     }
@@ -402,7 +430,7 @@ async function generatePremiumCardImage(
           setTimeout(() => reject(new Error('Image load timeout')), 5000)
         )
       ]);
-      
+
       const imgSize = 140;
       const imgX = width / 2;
 
@@ -427,54 +455,54 @@ async function generatePremiumCardImage(
       ctx.stroke();
 
       currentY += imgSize / 2 + 25;
-      
+
     } catch (error) {
       logger.error('⚠️ Error loading profile image:', error instanceof Error ? error : undefined, {
-      error: String(error),
-    });
+        error: String(error),
+      });
       const imgSize = 140;
       const imgX = width / 2;
-      
+
       ctx.fillStyle = '#1f2937';
       ctx.beginPath();
       ctx.arc(imgX, currentY, imgSize / 2, 0, Math.PI * 2);
       ctx.fill();
-      
+
       ctx.strokeStyle = tier.borderColor;
       ctx.lineWidth = 6;
       ctx.beginPath();
       ctx.arc(imgX, currentY, imgSize / 2, 0, Math.PI * 2);
       ctx.stroke();
-      
+
       ctx.fillStyle = tier.borderColor;
       ctx.font = 'bold 80px "Noto Sans Bold"';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText('👤', imgX, currentY);
-      
+
       currentY += imgSize / 2 + 25;
     }
   } else {
     const imgSize = 140;
     const imgX = width / 2;
-    
+
     ctx.fillStyle = '#1f2937';
     ctx.beginPath();
     ctx.arc(imgX, currentY, imgSize / 2, 0, Math.PI * 2);
     ctx.fill();
-    
+
     ctx.strokeStyle = tier.borderColor;
     ctx.lineWidth = 6;
     ctx.beginPath();
     ctx.arc(imgX, currentY, imgSize / 2, 0, Math.PI * 2);
     ctx.stroke();
-    
+
     ctx.fillStyle = tier.borderColor;
     ctx.font = 'bold 80px "Noto Sans Bold"';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText('👤', imgX, currentY);
-    
+
     currentY += imgSize / 2 + 25;
   }
 
@@ -500,7 +528,7 @@ async function generatePremiumCardImage(
   if (metrics.twitter || metrics.telegram) {
     ctx.font = '14px "Noto Sans"';
     ctx.fillStyle = tier.borderColor;
-    
+
     const socials = [];
     if (metrics.twitter) {
       socials.push(`🐦 @${metrics.twitter}`);
@@ -738,137 +766,137 @@ async function generateBasicCardImage(
 
     logger.info('📊 Safe metrics:', safeMetrics);
 
-  // FONDO DEGRADADO BÁSICO
-  const gradient = ctx.createLinearGradient(0, 0, 0, height);
-  gradient.addColorStop(0, '#0a0e1a');
-  gradient.addColorStop(0.5, '#1a1a2e');
-  gradient.addColorStop(1, '#16213e');
-  ctx.fillStyle = gradient;
-  ctx.fillRect(0, 0, width, height);
+    // FONDO DEGRADADO BÁSICO
+    const gradient = ctx.createLinearGradient(0, 0, 0, height);
+    gradient.addColorStop(0, '#0a0e1a');
+    gradient.addColorStop(0.5, '#1a1a2e');
+    gradient.addColorStop(1, '#16213e');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, width, height);
 
-  // BORDER BÁSICO
-  ctx.strokeStyle = '#00d4ff';
-  ctx.lineWidth = 6;
-  ctx.strokeRect(15, 15, width - 30, height - 30);
+    // BORDER BÁSICO
+    ctx.strokeStyle = '#00d4ff';
+    ctx.lineWidth = 6;
+    ctx.strokeRect(15, 15, width - 30, height - 30);
 
-  let currentY = 90;
+    let currentY = 90;
 
-  // TÍTULO - ✅ FIXED con Noto Sans
-  ctx.fillStyle = '#00d4ff';
-  ctx.font = '700 44px "Noto Sans Bold"';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText('DEGEN CARD', width / 2, currentY);
-  currentY += 55;
+    // TÍTULO - ✅ FIXED con Noto Sans
+    ctx.fillStyle = '#00d4ff';
+    ctx.font = '700 44px "Noto Sans Bold"';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('DEGEN CARD', width / 2, currentY);
+    currentY += 55;
 
-  // WALLET ADDRESS
-  ctx.fillStyle = '#aaaaaa';
-  ctx.font = '16px "Noto Sans"';
-  ctx.textAlign = 'center';
-  const shortAddress = `${walletAddress.slice(0, 6)}...${walletAddress.slice(-6)}`;
-  ctx.fillText(shortAddress, width / 2, currentY);
-  currentY += 60;
+    // WALLET ADDRESS
+    ctx.fillStyle = '#aaaaaa';
+    ctx.font = '16px "Noto Sans"';
+    ctx.textAlign = 'center';
+    const shortAddress = `${walletAddress.slice(0, 6)}...${walletAddress.slice(-6)}`;
+    ctx.fillText(shortAddress, width / 2, currentY);
+    currentY += 60;
 
-  // DEGEN SCORE - ✅ FIXED con Noto Sans
-  const scoreColor = getScoreColor(safeMetrics.degenScore);
-  ctx.fillStyle = scoreColor;
-  ctx.font = '700 110px "Noto Sans Bold"';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
+    // DEGEN SCORE - ✅ FIXED con Noto Sans
+    const scoreColor = getScoreColor(safeMetrics.degenScore);
+    ctx.fillStyle = scoreColor;
+    ctx.font = '700 110px "Noto Sans Bold"';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
 
-  ctx.shadowColor = scoreColor;
-  ctx.shadowBlur = 30;
-  ctx.fillText(String(safeMetrics.degenScore), width / 2, currentY);
-  ctx.shadowColor = 'transparent';
-  ctx.shadowBlur = 0;
+    ctx.shadowColor = scoreColor;
+    ctx.shadowBlur = 30;
+    ctx.fillText(String(safeMetrics.degenScore), width / 2, currentY);
+    ctx.shadowColor = 'transparent';
+    ctx.shadowBlur = 0;
 
-  currentY += 75;
+    currentY += 75;
 
-  // LABEL DEGEN SCORE - ✅ FIXED con Noto Sans
-  ctx.fillStyle = '#aaaaaa';
-  ctx.font = '700 20px "Noto Sans Bold"';
-  ctx.fillText('DEGEN SCORE', width / 2, currentY);
-  currentY += 40;
+    // LABEL DEGEN SCORE - ✅ FIXED con Noto Sans
+    ctx.fillStyle = '#aaaaaa';
+    ctx.font = '700 20px "Noto Sans Bold"';
+    ctx.fillText('DEGEN SCORE', width / 2, currentY);
+    currentY += 40;
 
-  // FRASE FOMO - ✅ FIXED
-  const fomoPhrase = getFOMOPhrase(safeMetrics.degenScore);
+    // FRASE FOMO - ✅ FIXED
+    const fomoPhrase = getFOMOPhrase(safeMetrics.degenScore);
 
-  ctx.fillStyle = 'rgba(255, 215, 0, 0.15)';
-  const textWidth = ctx.measureText(fomoPhrase).width;
-  ctx.fillRect(width / 2 - textWidth / 2 - 20, currentY - 18, textWidth + 40, 36);
+    ctx.fillStyle = 'rgba(255, 215, 0, 0.15)';
+    const textWidth = ctx.measureText(fomoPhrase).width;
+    ctx.fillRect(width / 2 - textWidth / 2 - 20, currentY - 18, textWidth + 40, 36);
 
-  ctx.fillStyle = '#FFD700';
-  ctx.font = '700 17px "Noto Sans Bold"';
-  ctx.textAlign = 'center';
-  ctx.fillText(fomoPhrase, width / 2, currentY);
-  currentY += 50;
+    ctx.fillStyle = '#FFD700';
+    ctx.font = '700 17px "Noto Sans Bold"';
+    ctx.textAlign = 'center';
+    ctx.fillText(fomoPhrase, width / 2, currentY);
+    currentY += 50;
 
-  // LINEA DIVISORIA
-  ctx.strokeStyle = '#00d4ff';
-  ctx.lineWidth = 3;
-  ctx.beginPath();
-  ctx.moveTo(60, currentY);
-  ctx.lineTo(width - 60, currentY);
-  ctx.stroke();
-  currentY += 40;
+    // LINEA DIVISORIA
+    ctx.strokeStyle = '#00d4ff';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(60, currentY);
+    ctx.lineTo(width - 60, currentY);
+    ctx.stroke();
+    currentY += 40;
 
-  // METRICAS
-  const rowHeight = 85;
-  const leftX = 140;
-  const rightX = width - 140;
+    // METRICAS
+    const rowHeight = 85;
+    const leftX = 140;
+    const rightX = width - 140;
 
-  ctx.textAlign = 'left';
+    ctx.textAlign = 'left';
 
-  drawMetric(ctx, 'TOTAL TRADES', String(safeMetrics.totalTrades), leftX, currentY, true);
-  drawMetric(ctx, 'WIN RATE', `${safeMetrics.winRate.toFixed(1)}%`, rightX, currentY, false);
-  currentY += rowHeight;
+    drawMetric(ctx, 'TOTAL TRADES', String(safeMetrics.totalTrades), leftX, currentY, true);
+    drawMetric(ctx, 'WIN RATE', `${safeMetrics.winRate.toFixed(1)}%`, rightX, currentY, false);
+    currentY += rowHeight;
 
-  drawMetric(ctx, 'VOLUME', `${formatSOL(safeMetrics.totalVolume, 1)} SOL`, leftX, currentY, true);
-  const pnlColor = safeMetrics.profitLoss >= 0 ? '#00ff88' : '#ff4444';
-  drawMetric(ctx, 'P&L', `${formatSOL(safeMetrics.profitLoss, 2)} SOL`, rightX, currentY, false, pnlColor);
-  currentY += rowHeight;
+    drawMetric(ctx, 'VOLUME', `${formatSOL(safeMetrics.totalVolume, 1)} SOL`, leftX, currentY, true);
+    const pnlColor = safeMetrics.profitLoss >= 0 ? '#00ff88' : '#ff4444';
+    drawMetric(ctx, 'P&L', `${formatSOL(safeMetrics.profitLoss, 2)} SOL`, rightX, currentY, false, pnlColor);
+    currentY += rowHeight;
 
-  drawMetric(ctx, 'BEST TRADE', `${formatSOL(safeMetrics.bestTrade, 2)} SOL`, leftX, currentY, true);
-  drawMetric(ctx, 'WORST TRADE', `${formatSOL(safeMetrics.worstTrade, 2)} SOL`, rightX, currentY, false);
-  currentY += rowHeight;
+    drawMetric(ctx, 'BEST TRADE', `${formatSOL(safeMetrics.bestTrade, 2)} SOL`, leftX, currentY, true);
+    drawMetric(ctx, 'WORST TRADE', `${formatSOL(safeMetrics.worstTrade, 2)} SOL`, rightX, currentY, false);
+    currentY += rowHeight;
 
-  drawMetric(ctx, 'AVG TRADE', `${formatSOL(safeMetrics.avgTradeSize, 2)} SOL`, leftX, currentY, true);
-  drawMetric(ctx, 'ACTIVE DAYS', String(safeMetrics.tradingDays), rightX, currentY, false);
-  currentY += 60;
+    drawMetric(ctx, 'AVG TRADE', `${formatSOL(safeMetrics.avgTradeSize, 2)} SOL`, leftX, currentY, true);
+    drawMetric(ctx, 'ACTIVE DAYS', String(safeMetrics.tradingDays), rightX, currentY, false);
+    currentY += 60;
 
-  // LINEA DIVISORIA
-  ctx.strokeStyle = '#00d4ff';
-  ctx.lineWidth = 3;
-  ctx.beginPath();
-  ctx.moveTo(60, currentY);
-  ctx.lineTo(width - 60, currentY);
-  ctx.stroke();
-  currentY += 50;
+    // LINEA DIVISORIA
+    ctx.strokeStyle = '#00d4ff';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(60, currentY);
+    ctx.lineTo(width - 60, currentY);
+    ctx.stroke();
+    currentY += 50;
 
-  // FOOTER - ✅ FIXED con Noto Sans
-  const rating = getRating(safeMetrics.degenScore);
-  ctx.fillStyle = '#ffffff';
-  ctx.font = '700 26px "Noto Sans Bold"';
-  ctx.textAlign = 'center';
-  ctx.fillText(rating, width / 2, currentY);
-  currentY += 50;
+    // FOOTER - ✅ FIXED con Noto Sans
+    const rating = getRating(safeMetrics.degenScore);
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '700 26px "Noto Sans Bold"';
+    ctx.textAlign = 'center';
+    ctx.fillText(rating, width / 2, currentY);
+    currentY += 50;
 
-  ctx.fillStyle = '#777777';
-  ctx.font = '400 15px "Noto Sans"';
-  ctx.fillText('Powered by Helius × Solana', width / 2, currentY);
+    ctx.fillStyle = '#777777';
+    ctx.font = '400 15px "Noto Sans"';
+    ctx.fillText('Powered by Helius × Solana', width / 2, currentY);
 
-  // Convert to buffer and clear canvas reference to help GC
-  const buffer = canvas.toBuffer('image/png');
+    // Convert to buffer and clear canvas reference to help GC
+    const buffer = canvas.toBuffer('image/png');
 
-  logger.info('✅ BASIC card buffer generated:', {
-    bufferSize: buffer.length,
-    walletAddress: walletAddress.slice(0, 8)
-  });
+    logger.info('✅ BASIC card buffer generated:', {
+      bufferSize: buffer.length,
+      walletAddress: walletAddress.slice(0, 8)
+    });
 
-  // Clear canvas context to free memory
-  ctx.clearRect(0, 0, width, height);
+    // Clear canvas context to free memory
+    ctx.clearRect(0, 0, width, height);
 
-  return buffer;
+    return buffer;
   } catch (error) {
     logger.error('❌ Error in generateBasicCardImage:', error instanceof Error ? error : undefined, {
       error: String(error),
