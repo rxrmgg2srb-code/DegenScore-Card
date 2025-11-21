@@ -136,6 +136,10 @@ export default function HomeImproved() {
   );
 }
 
-// ✅ PERFORMANCE BOOST: Removed getServerSideProps
-// Landing page is now statically generated at build time
-// Result: 10x faster initial load (~50ms vs ~500ms TTFB)
+// Force SSR to prevent build timeout
+// Components make API calls during render, so we need SSR to avoid build hanging
+export async function getServerSideProps() {
+  return {
+    props: {},
+  };
+}

@@ -35,5 +35,9 @@ export default function SuperTokenScorerPage() {
   );
 }
 
-// ✅ PERFORMANCE: Removed getServerSideProps - this page is fully static.
-// All data is fetched client-side, enabling static generation for faster loads.
+// Force SSR to prevent build timeout
+export async function getServerSideProps() {
+  return {
+    props: {},
+  };
+}

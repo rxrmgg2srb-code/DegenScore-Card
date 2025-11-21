@@ -291,5 +291,9 @@ export default function ProfilePage() {
   );
 }
 
-// ✅ PERFORMANCE: Removed getServerSideProps - profile data is fetched client-side.
-// Static generation + client-side data fetching provides instant shell with progressive loading.
+// Force SSR to prevent build timeout
+export async function getServerSideProps() {
+  return {
+    props: {},
+  };
+}

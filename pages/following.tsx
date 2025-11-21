@@ -234,5 +234,9 @@ export default function FollowingPage() {
   );
 }
 
-// ✅ PERFORMANCE: Removed getServerSideProps - all data is fetched client-side after wallet connection.
-// Static generation provides instant page shell with progressive data loading.
+// Force SSR to prevent build timeout
+export async function getServerSideProps() {
+  return {
+    props: {},
+  };
+}

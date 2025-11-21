@@ -705,10 +705,13 @@ export default function Documentation() {
   );
 }
 
-// ✅ PERFORMANCE: Removed getServerSideProps
-// This page has no dynamic data - static generation is much faster
-// Before: ~500ms TTFB (SSR on every request)
-// After: ~50ms TTFB (served as static HTML)
+// Force SSR to prevent build timeout
+// Even though this page is mostly static, we need SSR to avoid hanging during build
+export async function getServerSideProps() {
+  return {
+    props: {},
+  };
+}
 
 // Helper Components
 

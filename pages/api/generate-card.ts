@@ -51,13 +51,13 @@ function registerFonts() {
 
     logger.info('✅ Font files found, registering...');
 
-    // Register Noto Sans Regular
+    // Register both weights with the SAME family name for @napi-rs/canvas
     GlobalFonts.registerFromPath(regularFontPath, 'Noto Sans');
     logger.info('   ✓ Noto Sans Regular registered');
 
-    // Register Noto Sans Bold
-    GlobalFonts.registerFromPath(boldFontPath, 'Noto Sans Bold');
-    logger.info('   ✓ Noto Sans Bold registered');
+    // Register bold as part of the same family (not "Noto Sans")
+    GlobalFonts.registerFromPath(boldFontPath, 'Noto Sans');
+    logger.info('   ✓ Noto Sans Bold registered (as Noto Sans)');
 
     // List registered fonts to verify
     const registeredFonts = GlobalFonts.families;
@@ -475,7 +475,7 @@ async function generatePremiumCardImage(
       ctx.stroke();
 
       ctx.fillStyle = tier.borderColor;
-      ctx.font = 'bold 80px "Noto Sans Bold"';
+      ctx.font = 'bold 80px "Noto Sans"';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText('👤', imgX, currentY);
@@ -498,7 +498,7 @@ async function generatePremiumCardImage(
     ctx.stroke();
 
     ctx.fillStyle = tier.borderColor;
-    ctx.font = 'bold 80px "Noto Sans Bold"';
+    ctx.font = 'bold 80px "Noto Sans"';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText('👤', imgX, currentY);
@@ -509,7 +509,7 @@ async function generatePremiumCardImage(
   // NOMBRE
   if (metrics.displayName) {
     ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 32px "Noto Sans Bold"';
+    ctx.font = 'bold 32px "Noto Sans"';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(metrics.displayName, width / 2, currentY);
@@ -555,7 +555,7 @@ async function generatePremiumCardImage(
   scoreGradient.addColorStop(1, tier.colors[2] as string);
 
   ctx.fillStyle = scoreGradient;
-  ctx.font = 'bold 130px "Noto Sans Bold"';
+  ctx.font = 'bold 130px "Noto Sans"';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
 
@@ -573,7 +573,7 @@ async function generatePremiumCardImage(
   currentY += 80;
 
   ctx.fillStyle = '#d1d5db';
-  ctx.font = 'bold 18px "Noto Sans Bold"';
+  ctx.font = 'bold 18px "Noto Sans"';
   ctx.fillText('DEGEN SCORE', width / 2, currentY);
   currentY += 40;
 
@@ -586,7 +586,7 @@ async function generatePremiumCardImage(
   fomoBgGradient.addColorStop(1, 'rgba(234, 179, 8, 0.15)');
   ctx.fillStyle = fomoBgGradient;
 
-  ctx.font = 'bold 16px "Noto Sans Bold"';
+  ctx.font = 'bold 16px "Noto Sans"';
   const fomoTextWidth = ctx.measureText(fomoPhrase).width;
   const fomoBoxWidth = fomoTextWidth + 50;
   const fomoBoxHeight = 48;
@@ -654,7 +654,7 @@ async function generatePremiumCardImage(
   ctx.shadowBlur = 0;
 
   ctx.fillStyle = '#ffffff';
-  ctx.font = 'bold 24px "Noto Sans Bold"';
+  ctx.font = 'bold 24px "Noto Sans"';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText(`${tier.emoji} ${tier.name}`, width / 2, currentY);
@@ -724,11 +724,11 @@ function drawPremiumMetric(
 
   ctx.textAlign = alignment;
   ctx.fillStyle = '#9ca3af';
-  ctx.font = 'bold 13px "Noto Sans Bold"';
+  ctx.font = 'bold 13px "Noto Sans"';
   ctx.fillText(label, x, y);
 
   ctx.fillStyle = valueColor;
-  ctx.font = 'bold 30px "Noto Sans Bold"';
+  ctx.font = 'bold 30px "Noto Sans"';
   ctx.fillText(value, x, y + 38);
 }
 
@@ -783,7 +783,7 @@ async function generateBasicCardImage(
 
     // TÍTULO - ✅ FIXED con Noto Sans
     ctx.fillStyle = '#00d4ff';
-    ctx.font = '700 44px "Noto Sans Bold"';
+    ctx.font = '700 44px "Noto Sans"';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText('DEGEN CARD', width / 2, currentY);
@@ -800,7 +800,7 @@ async function generateBasicCardImage(
     // DEGEN SCORE - ✅ FIXED con Noto Sans
     const scoreColor = getScoreColor(safeMetrics.degenScore);
     ctx.fillStyle = scoreColor;
-    ctx.font = '700 110px "Noto Sans Bold"';
+    ctx.font = '700 110px "Noto Sans"';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
 
@@ -814,7 +814,7 @@ async function generateBasicCardImage(
 
     // LABEL DEGEN SCORE - ✅ FIXED con Noto Sans
     ctx.fillStyle = '#aaaaaa';
-    ctx.font = '700 20px "Noto Sans Bold"';
+    ctx.font = '700 20px "Noto Sans"';
     ctx.fillText('DEGEN SCORE', width / 2, currentY);
     currentY += 40;
 
@@ -826,7 +826,7 @@ async function generateBasicCardImage(
     ctx.fillRect(width / 2 - textWidth / 2 - 20, currentY - 18, textWidth + 40, 36);
 
     ctx.fillStyle = '#FFD700';
-    ctx.font = '700 17px "Noto Sans Bold"';
+    ctx.font = '700 17px "Noto Sans"';
     ctx.textAlign = 'center';
     ctx.fillText(fomoPhrase, width / 2, currentY);
     currentY += 50;
@@ -876,7 +876,7 @@ async function generateBasicCardImage(
     // FOOTER - ✅ FIXED con Noto Sans
     const rating = getRating(safeMetrics.degenScore);
     ctx.fillStyle = '#ffffff';
-    ctx.font = '700 26px "Noto Sans Bold"';
+    ctx.font = '700 26px "Noto Sans"';
     ctx.textAlign = 'center';
     ctx.fillText(rating, width / 2, currentY);
     currentY += 50;
@@ -920,11 +920,11 @@ function drawMetric(
 
   ctx.textAlign = alignment;
   ctx.fillStyle = '#999999';
-  ctx.font = '700 13px "Noto Sans Bold"';
+  ctx.font = '700 13px "Noto Sans"';
   ctx.fillText(label, x, y);
 
   ctx.fillStyle = valueColor;
-  ctx.font = '700 26px "Noto Sans Bold"';
+  ctx.font = '700 26px "Noto Sans"';
   ctx.fillText(value, x, y + 32);
 }
 

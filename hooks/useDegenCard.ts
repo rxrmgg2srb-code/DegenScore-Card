@@ -4,6 +4,36 @@ import { achievements, Achievement } from '@/components/AchievementPopup';
 import { logger } from '@/lib/logger';
 import { ProfileData } from '@/components/ProfileFormModal';
 
+/**
+ * Custom hook for managing DegenCard state and operations
+ *
+ * Handles the complete lifecycle of a trading card generation:
+ * - Wallet connection and validation
+ * - Card analysis and generation
+ * - Payment processing for premium features
+ * - Profile customization
+ * - Achievement tracking and celebrations
+ *
+ * @returns {Object} Card state and control methods
+ * @returns {string} walletAddress - Connected wallet address
+ * @returns {string | null} cardImage - Generated card image URL
+ * @returns {boolean} loading - Loading state for card generation
+ * @returns {string | null} error - Error message if any
+ * @returns {Function} generateCard - Trigger card generation
+ * @returns {Function} handleUpgrade - Process premium upgrade
+ * @returns {Function} handleProfileSubmit - Save profile customization
+ *
+ * @example
+ * const {
+ *   cardImage,
+ *   loading,
+ *   error,
+ *   generateCard
+ * } = useDegenCard();
+ *
+ * // Generate card for connected wallet
+ * await generateCard();
+ */
 export function useDegenCard() {
     const { publicKey, connected } = useWallet();
     const [walletAddress, setWalletAddress] = useState('');

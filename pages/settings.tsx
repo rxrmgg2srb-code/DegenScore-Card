@@ -124,5 +124,9 @@ export default function SettingsPage() {
   );
 }
 
-// ✅ PERFORMANCE: Static page, no SSR needed
-// Settings UI loads client-side data after mount
+// Force SSR to prevent build timeout
+export async function getServerSideProps() {
+  return {
+    props: {},
+  };
+}

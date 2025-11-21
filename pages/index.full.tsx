@@ -160,5 +160,12 @@ export default function Home() {
   );
 }
 
+// Force SSR to prevent build timeout
+export async function getServerSideProps() {
+  return {
+    props: {},
+  };
+}
+
 // ✅ PERFORMANCE: Static generation enabled
 // 10x faster page loads than SSR
