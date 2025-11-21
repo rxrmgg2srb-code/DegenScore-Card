@@ -32,6 +32,38 @@ export interface WhaleAlert {
     };
 }
 
+/**
+ * Custom hook for whale wallet tracking and alerts
+ *
+ * Enables users to discover, follow, and get notified about top traders:
+ * - Top whales leaderboard (volume, win rate, profit)
+ * - Follow/unfollow whale wallets
+ * - Real-time trade alerts
+ * - Notification management
+ * - Wallet-authenticated sessions
+ *
+ * @returns {Object} Whale radar state and methods
+ * @returns {'top' | 'following' | 'alerts'} activeTab - Current view tab
+ * @returns {Function} setActiveTab - Switch between tabs
+ * @returns {WhaleWallet[]} topWhales - Top traders list
+ * @returns {WhaleWallet[]} followedWhales - User's followed whales
+ * @returns {WhaleAlert[]} alerts - Recent whale trade alerts
+ * @returns {boolean} loading - Data loading state
+ * @returns {Function} handleFollow - Follow/unfollow whale
+ * @returns {Function} toggleNotifications - Enable/disable alerts
+ *
+ * @example
+ * const {
+ *   activeTab,
+ *   topWhales,
+ *   followedWhales,
+ *   handleFollow,
+ *   loading
+ * } = useWhaleRadar();
+ *
+ * // Follow a whale
+ * await handleFollow(whaleAddress);
+ */
 export function useWhaleRadar() {
     const { publicKey, signMessage } = useWallet();
     const [activeTab, setActiveTab] = useState<'top' | 'following' | 'alerts'>('top');

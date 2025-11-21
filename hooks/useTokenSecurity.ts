@@ -16,6 +16,39 @@ export interface TokenSecurityReport {
     analyzedAt: number;
 }
 
+/**
+ * Custom hook for token security analysis
+ *
+ * Performs comprehensive security scanning of Solana tokens:
+ * - Authority analysis (mint, freeze capabilities)
+ * - Holder concentration and distribution
+ * - Liquidity depth and lock status
+ * - Trading pattern anomalies
+ * - Red flag detection
+ * - Risk scoring (0-100)
+ *
+ * @returns {Object} Security analysis state and methods
+ * @returns {string} tokenAddress - Token address to scan
+ * @returns {Function} setTokenAddress - Update token address
+ * @returns {boolean} loading - Scan in progress
+ * @returns {number} progress - Scan progress (0-100)
+ * @returns {string} progressMessage - Current scan step
+ * @returns {TokenSecurityReport | null} report - Security report
+ * @returns {Function} analyzeToken - Trigger security scan
+ *
+ * @example
+ * const {
+ *   tokenAddress,
+ *   setTokenAddress,
+ *   analyzeToken,
+ *   report,
+ *   loading
+ * } = useTokenSecurity();
+ *
+ * setTokenAddress('TokenAddress...');
+ * await analyzeToken();
+ * console.log(report.securityScore); // 0-100
+ */
 export function useTokenSecurity() {
     const [tokenAddress, setTokenAddress] = useState('');
     const [loading, setLoading] = useState(false);

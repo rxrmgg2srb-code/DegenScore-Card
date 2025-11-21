@@ -1,6 +1,38 @@
 import { useState, useCallback } from 'react';
 import { SuperTokenScore } from '@/lib/services/superTokenScorer';
 
+/**
+ * Custom hook for analyzing Solana tokens
+ *
+ * Provides token scoring and analysis capabilities including:
+ * - Liquidity analysis
+ * - Holder distribution
+ * - Trading patterns
+ * - Risk assessment
+ * - Market metrics
+ *
+ * @returns {Object} Token analysis state and methods
+ * @returns {string} tokenAddress - Token address to analyze
+ * @returns {Function} setTokenAddress - Update token address
+ * @returns {boolean} loading - Analysis in progress
+ * @returns {number} progress - Analysis progress (0-100)
+ * @returns {string} progressMessage - Current analysis step
+ * @returns {SuperTokenScore | null} result - Analysis results
+ * @returns {string} error - Error message if any
+ * @returns {Function} analyzeToken - Trigger token analysis
+ *
+ * @example
+ * const {
+ *   tokenAddress,
+ *   setTokenAddress,
+ *   analyzeToken,
+ *   result,
+ *   loading
+ * } = useTokenAnalysis();
+ *
+ * setTokenAddress('SolTokenAddress...');
+ * await analyzeToken();
+ */
 export function useTokenAnalysis() {
     const [tokenAddress, setTokenAddress] = useState('');
     const [loading, setLoading] = useState(false);
