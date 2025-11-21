@@ -781,5 +781,9 @@ export default function Leaderboard() {
   );
 }
 
-// ✅ PERFORMANCE: Removed getServerSideProps - all data is fetched client-side.
-// The page shell loads instantly (static), then data loads progressively via API.
+// Force SSR to prevent build timeout
+export async function getServerSideProps() {
+  return {
+    props: {},
+  };
+}

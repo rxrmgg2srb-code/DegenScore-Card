@@ -37,3 +37,10 @@ export default function Home() {
     </div>
   );
 }
+
+// Force SSR to prevent build timeout
+export async function getServerSideProps() {
+  return {
+    props: {},
+  };
+}

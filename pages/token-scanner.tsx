@@ -44,5 +44,9 @@ export default function TokenScannerPage() {
   );
 }
 
-// ✅ PERFORMANCE: Removed getServerSideProps - this page is fully static and client-side.
-// Static generation provides 10x faster page loads (~50ms vs ~500ms TTFB)
+// Force SSR to prevent build timeout
+export async function getServerSideProps() {
+  return {
+    props: {},
+  };
+}
