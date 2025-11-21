@@ -19,7 +19,9 @@ export default function App({ Component, pageProps }: AppProps) {
   // Configure supported wallets
   const wallets = useMemo(
     () => [
-      new PhantomWalletAdapter(),
+      new PhantomWalletAdapter({
+        // Configuración específica para Phantom en producción
+      }),
       new SolflareWalletAdapter(),
     ],
     []
@@ -34,7 +36,10 @@ export default function App({ Component, pageProps }: AppProps) {
   // Handle wallet connection errors
   const onError = useMemo(
     () => (error: any) => {
+      // Log detallado para debugging
       console.error('Wallet error:', error);
+      console.error('Error type:', error?.name);
+      console.error('Error message:', error?.message);
 
       // Silently handle common wallet connection errors that are safe to ignore
       const ignorableErrors = [
@@ -42,11 +47,14 @@ export default function App({ Component, pageProps }: AppProps) {
         'WalletConnectionError',
         'Unexpected error',
         'User rejected',
-        'wallet is not available'
+        'wallet is not available',
+        'WalletNotReadyError'
       ];
 
       const shouldIgnore = ignorableErrors.some(msg =>
-        error?.message?.includes(msg) || error?.toString()?.includes(msg)
+        error?.message?.includes(msg) ||
+        error?.toString()?.includes(msg) ||
+        error?.name?.includes(msg)
       );
 
       if (shouldIgnore) {
@@ -66,7 +74,7 @@ export default function App({ Component, pageProps }: AppProps) {
         <ConnectionProvider endpoint={endpoint}>
           <WalletProvider
             wallets={wallets}
-            autoConnect={true}
+            autoConnect={false}
             onError={onError}
           >
             <WalletModalProvider>
