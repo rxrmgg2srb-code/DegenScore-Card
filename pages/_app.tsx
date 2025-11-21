@@ -4,7 +4,10 @@ import type { AppProps } from 'next/app';
 import { useMemo, useEffect } from 'react';
 import { ConnectionProvider, WalletProvider } from '@solana/wallet-adapter-react';
 import { WalletModalProvider } from '@solana/wallet-adapter-react-ui';
-import { PhantomWalletAdapter, SolflareWalletAdapter } from '@solana/wallet-adapter-wallets';
+// 🛑 IMPORTACIÓN MANUAL ELIMINADA:
+// Ya no necesitamos importar PhantomWalletAdapter o SolflareWalletAdapter,
+// ya que el paquete @solana/wallet-adapter-wallets los detecta automáticamente.
+// import { PhantomWalletAdapter, SolflareWalletAdapter } from '@solana/wallet-adapter-wallets';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import { I18nextProvider } from 'react-i18next';
 import i18n from '../lib/i18n';
@@ -17,12 +20,13 @@ export default function App({ Component, pageProps }: AppProps) {
   );
 
   // Configure supported wallets
+  // Dejamos la lista vacía o solo con wallets que NO son detectadas
+  // automáticamente (ej. Ledger, Torus). Phantom y Solflare funcionarán
+  // porque se detectan automáticamente. Esto elimina el conflicto.
   const wallets = useMemo(
     () => [
-      new PhantomWalletAdapter({
-        // Configuración específica para Phantom en producción
-      }),
-      new SolflareWalletAdapter(),
+      // Se eliminó: new PhantomWalletAdapter(),
+      // Se eliminó: new SolflareWalletAdapter(),
     ],
     []
   );
@@ -74,7 +78,7 @@ export default function App({ Component, pageProps }: AppProps) {
         <ConnectionProvider endpoint={endpoint}>
           <WalletProvider
             wallets={wallets}
-            autoConnect={false}
+            autoConnect={true}
             onError={onError}
           >
             <WalletModalProvider>
