@@ -279,5 +279,10 @@ function ComparisonRow({ label, value1, value2, winner, formatter }: ComparisonR
   );
 }
 
-// ✅ PERFORMANCE: Removed getServerSideProps - this is a client-side comparison tool.
-// All comparisons are done via API after user input, enabling static generation.
+// Force SSR to prevent build timeout
+// This page needs to be server-rendered to avoid hanging during static generation
+export async function getServerSideProps() {
+  return {
+    props: {},
+  };
+}
