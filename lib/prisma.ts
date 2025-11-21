@@ -8,19 +8,30 @@ declare global {
 // This prevents "prepared statement already exists" errors
 const getDatabaseUrl = () => {
   // Prefer POOLER URL (DATABASE_URL) for serverless application logic
-  // Direct URL is only for migrations or if pooler is unavailable
   const directUrl = process.env.DIRECT_URL;
   const poolUrl = process.env.DATABASE_URL;
 
   // If pooler URL is available, use it (port 6543)
   if (poolUrl) {
-    // If URL already has pgbouncer=true, return as is
-    if (poolUrl.includes('pgbouncer=true')) {
-      return poolUrl;
+    let url = poolUrl;
+    const hasQueryParams = url.includes('?');
+
+    // Ensure pgbouncer=true
+    if (!url.includes('pgbouncer=true')) {
+      url += `${hasQueryParams ? '&' : '?'}pgbouncer=true`;
     }
-    // Add pgbouncer=true to prevent prepared statement collisions
-    const separator = poolUrl.includes('?') ? '&' : '?';
-    return `${poolUrl}${separator}pgbouncer=true&connection_limit=1`;
+
+    // Ensure connection_limit=1
+    if (!url.includes('connection_limit=')) {
+      url += `${url.includes('?') ? '&' : '?'}connection_limit=1`;
+    }
+
+    // Ensure sslmode=require (CRITICAL for Supabase)
+    if (!url.includes('sslmode=')) {
+      url += `${url.includes('?') ? '&' : '?'}sslmode=require`;
+    }
+
+    return url;
   }
 
   // Fallback to direct connection if pooler is missing
