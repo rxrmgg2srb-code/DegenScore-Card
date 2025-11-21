@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { createCanvas, loadImage } from '@napi-rs/canvas';
+import { createCanvas, loadImage, GlobalFonts } from '@napi-rs/canvas';
 import { isValidSolanaAddress } from '../../lib/services/helius';
 import { prisma } from '../../lib/prisma';
 import { cacheGet, cacheSet, CacheKeys } from '../../lib/cache/redis';
@@ -9,6 +9,21 @@ import {
   isStorageEnabled,
 } from '../../lib/storage/r2';
 import { logger } from '@/lib/logger';
+import path from 'path';
+
+// 🔤 REGISTER FONTS FOR CANVAS RENDERING
+// This is critical for serverless environments where fonts aren't available by default
+try {
+  const fontsDir = path.join(process.cwd(), 'public', 'fonts');
+  GlobalFonts.registerFromPath(path.join(fontsDir, 'DejaVuSans.ttf'), 'DejaVu Sans');
+  GlobalFonts.registerFromPath(path.join(fontsDir, 'DejaVuSans-Bold.ttf'), 'DejaVu Sans Bold');
+  GlobalFonts.registerFromPath(path.join(fontsDir, 'DejaVuSansMono.ttf'), 'DejaVu Sans Mono');
+  logger.info('✅ Fonts registered successfully');
+} catch (error) {
+  logger.error('❌ Error registering fonts:', error instanceof Error ? error : undefined, {
+    error: String(error),
+  });
+}
 
 // Función auxiliar para formatear SOL
 function formatSOL(amount: number, decimals: number = 2): string {
@@ -137,19 +152,24 @@ export default async function handler(
 
     // 🚀 OPTIMIZACIÓN: Verificar cache de imagen
     const cacheKey = CacheKeys.cardImage(walletAddress);
+    logger.info('🔍 Checking cache for key:', cacheKey);
     const cachedImageUrl = await cacheGet<string>(cacheKey);
 
     // Verificar si hay parámetro ?nocache en la query para forzar regeneración
     const forceRegenerate = req.query.nocache === 'true';
 
     if (cachedImageUrl && !forceRegenerate) {
-      logger.info('⚡ Serving card from cache/R2');
+      logger.info('⚡ Serving card from cache/R2:', {
+        cacheType: cachedImageUrl.startsWith('http') ? 'R2 URL' : 'Base64 buffer',
+        urlPreview: cachedImageUrl.substring(0, 100)
+      });
       // Si tenemos URL de R2, redirigir
       if (cachedImageUrl.startsWith('http')) {
         return res.redirect(302, cachedImageUrl);
       }
       // Si es buffer en cache, servir directamente
       const buffer = Buffer.from(cachedImageUrl, 'base64');
+      logger.info('📤 Serving cached buffer, size:', buffer.length, 'bytes');
       res.setHeader('Content-Type', 'image/png');
       res.setHeader('Cache-Control', 'public, max-age=604800, immutable'); // 7 días
       res.setHeader('X-Cache-Status', 'HIT');
@@ -158,6 +178,8 @@ export default async function handler(
 
     if (forceRegenerate) {
       logger.info('🔄 Force regenerating card (nocache=true)');
+    } else {
+      logger.info('💫 No cache found, generating new card image');
     }
 
     // No hay cache, generar imagen
@@ -356,7 +378,7 @@ async function generatePremiumCardImage(
       ctx.stroke();
       
       ctx.fillStyle = tier.borderColor;
-      ctx.font = 'bold 80px Arial';
+      ctx.font = 'bold 80px "DejaVu Sans"';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText('👤', imgX, currentY);
@@ -379,7 +401,7 @@ async function generatePremiumCardImage(
     ctx.stroke();
     
     ctx.fillStyle = tier.borderColor;
-    ctx.font = 'bold 80px Arial';
+    ctx.font = 'bold 80px "DejaVu Sans"';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText('👤', imgX, currentY);
@@ -390,7 +412,7 @@ async function generatePremiumCardImage(
   // NOMBRE
   if (metrics.displayName) {
     ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 32px Arial';
+    ctx.font = 'bold 32px "DejaVu Sans"';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(metrics.displayName, width / 2, currentY);
@@ -399,7 +421,7 @@ async function generatePremiumCardImage(
 
   // WALLET ADDRESS
   ctx.fillStyle = '#9ca3af';
-  ctx.font = '16px monospace';
+  ctx.font = '16px "DejaVu Sans Mono"';
   ctx.textAlign = 'center';
   const shortAddress = `${walletAddress.slice(0, 6)}...${walletAddress.slice(-6)}`;
   ctx.fillText(shortAddress, width / 2, currentY);
@@ -407,7 +429,7 @@ async function generatePremiumCardImage(
 
   // REDES SOCIALES
   if (metrics.twitter || metrics.telegram) {
-    ctx.font = '14px Arial';
+    ctx.font = '14px "DejaVu Sans"';
     ctx.fillStyle = tier.borderColor;
     
     const socials = [];
@@ -432,7 +454,7 @@ async function generatePremiumCardImage(
   scoreGradient.addColorStop(1, tier.colors[2] as string);
 
   ctx.fillStyle = scoreGradient;
-  ctx.font = 'bold 130px Arial';
+  ctx.font = 'bold 130px "DejaVu Sans"';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
 
@@ -450,7 +472,7 @@ async function generatePremiumCardImage(
   currentY += 80;
 
   ctx.fillStyle = '#d1d5db';
-  ctx.font = 'bold 18px Arial';
+  ctx.font = 'bold 18px "DejaVu Sans"';
   ctx.letterSpacing = '4px';
   ctx.fillText('DEGEN SCORE', width / 2, currentY);
   currentY += 40;
@@ -464,7 +486,7 @@ async function generatePremiumCardImage(
   fomoBgGradient.addColorStop(1, 'rgba(234, 179, 8, 0.15)');
   ctx.fillStyle = fomoBgGradient;
 
-  ctx.font = 'bold 16px Arial';
+  ctx.font = 'bold 16px "DejaVu Sans"';
   const fomoTextWidth = ctx.measureText(fomoPhrase).width;
   const fomoBoxWidth = fomoTextWidth + 50;
   const fomoBoxHeight = 48;
@@ -532,7 +554,7 @@ async function generatePremiumCardImage(
   ctx.shadowBlur = 0;
 
   ctx.fillStyle = '#ffffff';
-  ctx.font = 'bold 24px Arial';
+  ctx.font = 'bold 24px "DejaVu Sans"';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText(`${tier.emoji} ${tier.name}`, width / 2, currentY);
@@ -575,7 +597,7 @@ async function generatePremiumCardImage(
 
   // FOOTER
   ctx.fillStyle = '#6b7280';
-  ctx.font = '13px Arial';
+  ctx.font = '13px "DejaVu Sans"';
   ctx.textAlign = 'center';
   ctx.fillText('Powered by Helius × Solana', width / 2, currentY);
 
@@ -602,12 +624,12 @@ function drawPremiumMetric(
 
   ctx.textAlign = alignment;
   ctx.fillStyle = '#9ca3af';
-  ctx.font = 'bold 13px Arial';
+  ctx.font = 'bold 13px "DejaVu Sans"';
   ctx.letterSpacing = '2px';
   ctx.fillText(label, x, y);
 
   ctx.fillStyle = valueColor;
-  ctx.font = 'bold 30px Arial';
+  ctx.font = 'bold 30px "DejaVu Sans"';
   ctx.fillText(value, x, y + 38);
 }
 
@@ -630,6 +652,7 @@ async function generateBasicCardImage(
   };
 
   logger.info('📝 Generating BASIC card with data:', safeMetrics);
+  logger.info('🎨 Wallet address for card:', walletAddress);
 
   const width = 600;
   const height = 950;
@@ -648,34 +671,45 @@ async function generateBasicCardImage(
   ctx.strokeStyle = '#00d4ff';
   ctx.lineWidth = 6;
   ctx.strokeRect(15, 15, width - 30, height - 30);
+  logger.info('✅ Border drawn successfully');
 
   let currentY = 90;
 
   // TÍTULO
   ctx.fillStyle = '#00d4ff';
-  ctx.font = 'bold 44px Arial';
+  ctx.font = 'bold 44px "DejaVu Sans"';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
+  logger.info('🖊️ Drawing title "DEGEN CARD" at position:', { x: width / 2, y: currentY, color: '#00d4ff', font: ctx.font });
   ctx.fillText('DEGEN CARD', width / 2, currentY);
   currentY += 55;
 
   // WALLET ADDRESS
   ctx.fillStyle = '#aaaaaa';
-  ctx.font = '16px monospace';
+  ctx.font = '16px "DejaVu Sans Mono"';
   ctx.textAlign = 'center';
   const shortAddress = `${walletAddress.slice(0, 6)}...${walletAddress.slice(-6)}`;
+  logger.info('🖊️ Drawing wallet address:', { address: shortAddress, x: width / 2, y: currentY, color: '#aaaaaa', font: ctx.font });
   ctx.fillText(shortAddress, width / 2, currentY);
   currentY += 60;
 
   // DEGEN SCORE
   const scoreColor = getScoreColor(safeMetrics.degenScore);
   ctx.fillStyle = scoreColor;
-  ctx.font = 'bold 110px Arial';
+  ctx.font = 'bold 110px "DejaVu Sans"';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
 
   ctx.shadowColor = scoreColor;
   ctx.shadowBlur = 30;
+  logger.info('🖊️ Drawing degen score:', {
+    score: safeMetrics.degenScore,
+    scoreString: safeMetrics.degenScore.toString(),
+    x: width / 2,
+    y: currentY,
+    color: scoreColor,
+    font: ctx.font
+  });
   ctx.fillText(safeMetrics.degenScore.toString(), width / 2, currentY);
   ctx.shadowColor = 'transparent';
   ctx.shadowBlur = 0;
@@ -683,20 +717,22 @@ async function generateBasicCardImage(
   currentY += 75;
 
   ctx.fillStyle = '#aaaaaa';
-  ctx.font = 'bold 20px Arial';
+  ctx.font = 'bold 20px "DejaVu Sans"';
   ctx.letterSpacing = '2px';
+  logger.info('🖊️ Drawing "DEGEN SCORE" label at:', { x: width / 2, y: currentY, color: '#aaaaaa', font: ctx.font });
   ctx.fillText('DEGEN SCORE', width / 2, currentY);
   currentY += 40;
 
   // FRASE FOMO
   const fomoPhrase = getFOMOPhrase(safeMetrics.degenScore);
-  
+  logger.info('🖊️ Drawing FOMO phrase:', { phrase: fomoPhrase, x: width / 2, y: currentY, color: '#FFD700' });
+
   ctx.fillStyle = 'rgba(255, 215, 0, 0.15)';
   const textWidth = ctx.measureText(fomoPhrase).width;
   ctx.fillRect(width / 2 - textWidth / 2 - 20, currentY - 18, textWidth + 40, 36);
-  
+
   ctx.fillStyle = '#FFD700';
-  ctx.font = 'bold 17px Arial';
+  ctx.font = 'bold 17px "DejaVu Sans"';
   ctx.textAlign = 'center';
   ctx.fillText(fomoPhrase, width / 2, currentY);
   currentY += 50;
@@ -717,6 +753,7 @@ async function generateBasicCardImage(
 
   ctx.textAlign = 'left';
 
+  logger.info('🖊️ Drawing metrics...');
   drawMetric(ctx, 'TOTAL TRADES', safeMetrics.totalTrades.toString(), leftX, currentY, true);
   drawMetric(ctx, 'WIN RATE', `${safeMetrics.winRate.toFixed(1)}%`, rightX, currentY, false);
   currentY += rowHeight;
@@ -733,6 +770,7 @@ async function generateBasicCardImage(
   drawMetric(ctx, 'AVG TRADE', `${formatSOL(safeMetrics.avgTradeSize, 2)} SOL`, leftX, currentY, true);
   drawMetric(ctx, 'ACTIVE DAYS', safeMetrics.tradingDays.toString(), rightX, currentY, false);
   currentY += 60;
+  logger.info('✅ All metrics drawn');
 
   // LINEA DIVISORIA
   ctx.strokeStyle = '#00d4ff';
@@ -746,17 +784,19 @@ async function generateBasicCardImage(
   // FOOTER
   const rating = getRating(safeMetrics.degenScore);
   ctx.fillStyle = '#ffffff';
-  ctx.font = 'bold 26px Arial';
+  ctx.font = 'bold 26px "DejaVu Sans"';
   ctx.textAlign = 'center';
   ctx.fillText(rating, width / 2, currentY);
   currentY += 50;
 
   ctx.fillStyle = '#777777';
-  ctx.font = '15px Arial';
+  ctx.font = '15px "DejaVu Sans"';
   ctx.fillText('Powered by Helius × Solana', width / 2, currentY);
 
   // Convert to buffer and clear canvas reference to help GC
+  logger.info('📦 Converting canvas to PNG buffer...');
   const buffer = canvas.toBuffer('image/png');
+  logger.info('✅ BASIC card buffer created successfully, size:', buffer.length, 'bytes');
 
   // Clear canvas context to free memory
   ctx.clearRect(0, 0, width, height);
@@ -775,14 +815,16 @@ function drawMetric(
 ) {
   const alignment = alignLeft ? 'left' : 'right';
 
+  logger.info('  📊 Drawing metric:', { label, value, x, y, alignment, valueColor });
+
   ctx.textAlign = alignment;
   ctx.fillStyle = '#999999';
-  ctx.font = 'bold 13px Arial';
+  ctx.font = 'bold 13px "DejaVu Sans"';
   ctx.letterSpacing = '1px';
   ctx.fillText(label, x, y);
 
   ctx.fillStyle = valueColor;
-  ctx.font = 'bold 26px Arial';
+  ctx.font = 'bold 26px "DejaVu Sans"';
   ctx.fillText(value, x, y + 32);
 }
 
