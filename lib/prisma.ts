@@ -7,25 +7,35 @@ declare global {
 // Build DATABASE_URL with pgbouncer flag if using connection pooler
 // This prevents "prepared statement already exists" errors
 const getDatabaseUrl = () => {
-  const url = process.env.DATABASE_URL;
-  if (!url) return undefined;
+  // Prefer DIRECT_URL for serverless reliability
+  // Pooler (DATABASE_URL) can fail due to connection limits or timeouts
+  const directUrl = process.env.DIRECT_URL;
+  const poolUrl = process.env.DATABASE_URL;
+
+  // Use direct connection if available (more reliable for serverless)
+  if (directUrl) {
+    return directUrl;
+  }
+
+  // Fallback to pooler URL
+  if (!poolUrl) return undefined;
 
   // If URL already has pgbouncer=true, return as is
-  if (url.includes('pgbouncer=true')) {
-    return url;
+  if (poolUrl.includes('pgbouncer=true')) {
+    return poolUrl;
   }
 
   // Add pgbouncer=true to prevent prepared statement collisions
-  const separator = url.includes('?') ? '&' : '?';
-  return `${url}${separator}pgbouncer=true&connection_limit=1`;
+  const separator = poolUrl.includes('?') ? '&' : '?';
+  return `${poolUrl}${separator}pgbouncer=true&connection_limit=1`;
 };
 
-// Optimized Prisma Client for high concurrency (100+ simultaneous users)
-// Always use singleton pattern to prevent prepared statement collisions in serverless
+// Optimized Prisma Client for serverless
+// Uses direct connection (DIRECT_URL) to avoid pooler connection issues
 export const prisma = global.prisma || new PrismaClient({
   log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
 
-  // Connection pool configuration for high load and serverless compatibility
+  // Connection configuration for serverless compatibility
   datasources: {
     db: {
       url: getDatabaseUrl(),
