@@ -98,6 +98,19 @@ export default function DegenCardRefactored() {
       await regenerateCard();
 
       setModalState(prev => ({ ...prev, showProfileModal: false, hasPaid: true }));
+
+      // 🎉 Auto-descargar la card premium
+      logger.info('📥 Auto-downloading premium card...');
+      setTimeout(() => {
+        downloadCard(true);
+      }, 500);
+
+      // 🏆 Redirigir al leaderboard después de 2 segundos
+      logger.info('🏆 Redirecting to leaderboard...');
+      setTimeout(() => {
+        window.location.href = '/leaderboard';
+      }, 2000);
+
     } catch (error) {
       logger.error('Payment error', error instanceof Error ? error : undefined, {
         error: String(error),

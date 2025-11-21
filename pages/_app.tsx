@@ -12,6 +12,10 @@ import { ErrorBoundary } from '../components/ErrorBoundary';
 import { I18nextProvider } from 'react-i18next';
 import i18n from '../lib/i18n';
 
+import Analytics from '../components/Analytics';
+
+import WalletTracker from '../components/WalletTracker';
+
 export default function App({ Component, pageProps }: AppProps) {
   // Configure RPC endpoint
   const endpoint = useMemo(
@@ -74,6 +78,7 @@ export default function App({ Component, pageProps }: AppProps) {
 
   return (
     <ErrorBoundary>
+      <Analytics />
       <I18nextProvider i18n={i18n}>
         <ConnectionProvider endpoint={endpoint}>
           <WalletProvider
@@ -82,6 +87,7 @@ export default function App({ Component, pageProps }: AppProps) {
             onError={onError}
           >
             <WalletModalProvider>
+              <WalletTracker />
               <Component {...pageProps} />
             </WalletModalProvider>
           </WalletProvider>

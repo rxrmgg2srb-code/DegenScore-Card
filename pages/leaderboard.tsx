@@ -39,7 +39,7 @@ interface Stats {
 }
 
 type ViewMode = 'table' | 'cards';
-type SortBy = 'likes' | 'referralCount' | 'badgePoints';
+type SortBy = 'likes' | 'referralCount' | 'badgePoints' | 'newest' | 'oldest';
 
 const getTierConfig = (score: number) => {
   if (score >= 90) {
@@ -528,7 +528,7 @@ export default function Leaderboard() {
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
-  const [sortBy, setSortBy] = useState<SortBy>('likes');
+  const [sortBy, setSortBy] = useState<SortBy>('newest');
   const [searchWallet, setSearchWallet] = useState('');
   const [viewMode, setViewMode] = useState<ViewMode>('cards');
   const [userLikes, setUserLikes] = useState<{ [key: string]: boolean }>({});
@@ -680,24 +680,41 @@ export default function Leaderboard() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2">
               <div className="flex flex-col md:flex-row gap-4 mb-6">
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    onClick={() => setSortBy('newest')}
+                    className={`px-4 py-2 rounded-lg transition font-semibold ${sortBy === 'newest' ? 'bg-cyan-500 text-white shadow-lg' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                      }`}
+                  >
+                    🆕 Más Nuevas
+                  </button>
+                  <button
+                    onClick={() => setSortBy('oldest')}
+                    className={`px-4 py-2 rounded-lg transition font-semibold ${sortBy === 'oldest' ? 'bg-cyan-500 text-white shadow-lg' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                      }`}
+                  >
+                    ⏰ Más Viejas
+                  </button>
+
+                  <div className="hidden md:block w-px bg-gray-700 mx-1"></div>
+
                   <button
                     onClick={() => setSortBy('likes')}
-                    className={`px-4 py-2 rounded-lg transition ${sortBy === 'likes' ? 'bg-cyan-500 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                    className={`px-4 py-2 rounded-lg transition font-semibold ${sortBy === 'likes' ? 'bg-pink-500 text-white shadow-lg' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
                       }`}
                   >
                     ❤️ Likes
                   </button>
                   <button
                     onClick={() => setSortBy('referralCount')}
-                    className={`px-4 py-2 rounded-lg transition ${sortBy === 'referralCount' ? 'bg-cyan-500 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                    className={`px-4 py-2 rounded-lg transition font-semibold ${sortBy === 'referralCount' ? 'bg-blue-500 text-white shadow-lg' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
                       }`}
                   >
                     👥 Referidos
                   </button>
                   <button
                     onClick={() => setSortBy('badgePoints')}
-                    className={`px-4 py-2 rounded-lg transition ${sortBy === 'badgePoints' ? 'bg-cyan-500 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                    className={`px-4 py-2 rounded-lg transition font-semibold ${sortBy === 'badgePoints' ? 'bg-yellow-500 text-white shadow-lg' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
                       }`}
                   >
                     ⭐ Logros
@@ -740,7 +757,7 @@ export default function Leaderboard() {
                   {filteredLeaderboard.length > 0 ? (
                     <>
                       {viewMode === 'cards' && (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                           {filteredLeaderboard.map((entry, index) => (
                             <LeaderboardCard
                               key={entry.id}

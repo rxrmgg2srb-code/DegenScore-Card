@@ -22,9 +22,9 @@ export default async function handler(
   try {
     const { sortBy = 'likes', limit: limitParam, noCache } = req.query;
 
-    // Validate and sanitize sort field - ahora aceptamos: likes, referralCount, badgePoints
-    const validSortFields = ['likes', 'referralCount', 'badgePoints', 'degenScore', 'totalVolume', 'winRate'];
-    const sortField = validSortFields.includes(sortBy as string) ? sortBy as string : 'likes';
+    // Validate and sanitize sort field - ahora aceptamos: likes, referralCount, badgePoints, newest, oldest
+    const validSortFields = ['likes', 'referralCount', 'badgePoints', 'degenScore', 'totalVolume', 'winRate', 'newest', 'oldest'];
+    const sortField = validSortFields.includes(sortBy as string) ? sortBy as string : 'newest';
 
     // Validate limit
     const { limit } = validatePagination(undefined, limitParam);
@@ -34,133 +34,144 @@ export default async function handler(
 
     // Data fetching function
     const fetchData = async () => {
-        // SOLO mostrar cards de quienes pagaron/descargaron (isPaid = true) y no eliminadas
-        const cards = await prisma.degenCard.findMany({
-          where: {
-            isPaid: true,
-            deletedAt: null, // Exclude soft-deleted cards
-          },
-          include: {
-            badges: true,
-          },
-        });
+      // SOLO mostrar cards de quienes pagaron/descargaron (isPaid = true) y no eliminadas
+      const cards = await prisma.degenCard.findMany({
+        where: {
+          isPaid: true,
+          deletedAt: null, // Exclude soft-deleted cards
+        },
+        include: {
+          badges: true,
+        },
+      });
 
-        // Calcular badgePoints y referralCount para cada card
-        const cardsWithExtras = await Promise.all(
-          cards.map(async (card) => {
-            // Calcular badge points y obtener badges desbloqueados
-            const { badges, totalPoints } = checkAllBadges({
-              totalVolume: card.totalVolume,
-              profitLoss: card.profitLoss,
-              winRate: card.winRate,
-              totalTrades: card.totalTrades,
-              tradingDays: card.tradingDays,
-              moonshots: card.moonshots,
-              diamondHands: card.diamondHands,
-              isPaid: card.isPaid,
-              twitter: card.twitter,
-              telegram: card.telegram,
-              profileImage: card.profileImage,
-              displayName: card.displayName,
-            });
-
-            // Obtener conteo de referidos (solo los que pagaron)
-            const referralCount = await prisma.referral.count({
-              where: {
-                referrerAddress: card.walletAddress,
-                hasPaid: true,
-              },
-            });
-
-            // Solo retornar los primeros 8 badges y campos esenciales para reducir tamaño de respuesta
-            const simplifiedBadges = badges.slice(0, 8).map(badge => ({
-              key: badge.key,
-              icon: badge.icon,
-              name: badge.name,
-              description: badge.description,
-              rarity: badge.rarity,
-              points: badge.points,
-            }));
-
-            return {
-              id: card.id,
-              walletAddress: card.walletAddress,
-              displayName: card.displayName,
-              twitter: card.twitter,
-              telegram: card.telegram,
-              profileImage: card.profileImage,
-              degenScore: card.degenScore,
-              totalTrades: card.totalTrades,
-              totalVolume: card.totalVolume,
-              profitLoss: card.profitLoss,
-              winRate: card.winRate,
-              level: card.level,
-              xp: card.xp,
-              bestTrade: card.bestTrade,
-              worstTrade: card.worstTrade,
-              likes: card.likes,
-              isPaid: card.isPaid,
-              mintedAt: card.mintedAt,
-              badgePoints: totalPoints,
-              referralCount,
-              calculatedBadges: simplifiedBadges,
-            };
-          })
-        );
-
-        // Ordenar según el campo solicitado
-        let sortedCards = [...cardsWithExtras];
-        if (sortField === 'badgePoints' || sortField === 'referralCount') {
-          sortedCards.sort((a, b) => {
-            const aValue = sortField === 'badgePoints' ? (a.badgePoints || 0) : (a.referralCount || 0);
-            const bValue = sortField === 'badgePoints' ? (b.badgePoints || 0) : (b.referralCount || 0);
-            return bValue - aValue; // DESC
+      // Calcular badgePoints y referralCount para cada card
+      const cardsWithExtras = await Promise.all(
+        cards.map(async (card) => {
+          // Calcular badge points y obtener badges desbloqueados
+          const { badges, totalPoints } = checkAllBadges({
+            totalVolume: card.totalVolume,
+            profitLoss: card.profitLoss,
+            winRate: card.winRate,
+            totalTrades: card.totalTrades,
+            tradingDays: card.tradingDays,
+            moonshots: card.moonshots,
+            diamondHands: card.diamondHands,
+            isPaid: card.isPaid,
+            twitter: card.twitter,
+            telegram: card.telegram,
+            profileImage: card.profileImage,
+            displayName: card.displayName,
           });
-        } else {
-          // Para otros campos (likes, degenScore, etc.), ya vienen ordenados de Prisma
-          // pero los re-ordenamos por si acaso después de añadir los campos extra
-          sortedCards.sort((a, b) => {
-            const aValue = (a as any)[sortField] || 0;
-            const bValue = (b as any)[sortField] || 0;
-            return bValue - aValue; // DESC
+
+          // Obtener conteo de referidos (solo los que pagaron)
+          const referralCount = await prisma.referral.count({
+            where: {
+              referrerAddress: card.walletAddress,
+              hasPaid: true,
+            },
           });
-        }
 
-        // Limitar resultados
-        const limitedCards = sortedCards.slice(0, safeLimit);
+          // Solo retornar los primeros 8 badges y campos esenciales para reducir tamaño de respuesta
+          const simplifiedBadges = badges.slice(0, 8).map(badge => ({
+            key: badge.key,
+            icon: badge.icon,
+            name: badge.name,
+            description: badge.description,
+            rarity: badge.rarity,
+            points: badge.points,
+          }));
 
-        // Stats solo de cards pagadas y no eliminadas
-        const statsWhere = { isPaid: true, deletedAt: null };
+          return {
+            id: card.id,
+            walletAddress: card.walletAddress,
+            displayName: card.displayName,
+            twitter: card.twitter,
+            telegram: card.telegram,
+            profileImage: card.profileImage,
+            degenScore: card.degenScore,
+            totalTrades: card.totalTrades,
+            totalVolume: card.totalVolume,
+            profitLoss: card.profitLoss,
+            winRate: card.winRate,
+            level: card.level,
+            xp: card.xp,
+            bestTrade: card.bestTrade,
+            worstTrade: card.worstTrade,
+            likes: card.likes,
+            isPaid: card.isPaid,
+            mintedAt: card.mintedAt,
+            badgePoints: totalPoints,
+            referralCount,
+            calculatedBadges: simplifiedBadges,
+          };
+        })
+      );
 
-        const totalCards = await prisma.degenCard.count({
-          where: statsWhere,
+      // Ordenar según el campo solicitado
+      let sortedCards = [...cardsWithExtras];
+
+      if (sortField === 'newest') {
+        // Más nuevas primero (DESC por fecha de mintedAt)
+        sortedCards.sort((a, b) => {
+          return new Date(b.mintedAt).getTime() - new Date(a.mintedAt).getTime();
         });
-
-        const avgScore = await prisma.degenCard.aggregate({
-          where: statsWhere,
-          _avg: { degenScore: true },
+      } else if (sortField === 'oldest') {
+        // Más viejas primero (ASC por mintedAt)
+        sortedCards.sort((a, b) => {
+          return new Date(a.mintedAt).getTime() - new Date(b.mintedAt).getTime();
         });
-
-        const topScore = await prisma.degenCard.aggregate({
-          where: statsWhere,
-          _max: { degenScore: true },
+      } else if (sortField === 'badgePoints' || sortField === 'referralCount') {
+        sortedCards.sort((a, b) => {
+          const aValue = sortField === 'badgePoints' ? (a.badgePoints || 0) : (a.referralCount || 0);
+          const bValue = sortField === 'badgePoints' ? (b.badgePoints || 0) : (b.referralCount || 0);
+          return bValue - aValue; // DESC
         });
-
-        const totalVolume = await prisma.degenCard.aggregate({
-          where: statsWhere,
-          _sum: { totalVolume: true },
+      } else {
+        // Para otros campos (likes, degenScore, etc.), ya vienen ordenados de Prisma
+        // pero los re-ordenamos por si acaso después de añadir los campos extra
+        sortedCards.sort((a, b) => {
+          const aValue = (a as any)[sortField] || 0;
+          const bValue = (b as any)[sortField] || 0;
+          return bValue - aValue; // DESC
         });
+      }
 
-        return {
-          success: true,
-          leaderboard: limitedCards,
-          stats: {
-            totalCards,
-            avgScore: avgScore._avg.degenScore || 0,
-            topScore: topScore._max.degenScore || 0,
-            totalVolume: totalVolume._sum.totalVolume || 0,
-          },
-        };
+      // Limitar resultados
+      const limitedCards = sortedCards.slice(0, safeLimit);
+
+      // Stats solo de cards pagadas y no eliminadas
+      const statsWhere = { isPaid: true, deletedAt: null };
+
+      const totalCards = await prisma.degenCard.count({
+        where: statsWhere,
+      });
+
+      const avgScore = await prisma.degenCard.aggregate({
+        where: statsWhere,
+        _avg: { degenScore: true },
+      });
+
+      const topScore = await prisma.degenCard.aggregate({
+        where: statsWhere,
+        _max: { degenScore: true },
+      });
+
+      const totalVolume = await prisma.degenCard.aggregate({
+        where: statsWhere,
+        _sum: { totalVolume: true },
+      });
+
+      return {
+        success: true,
+        leaderboard: limitedCards,
+        stats: {
+          totalCards,
+          avgScore: avgScore._avg.degenScore || 0,
+          topScore: topScore._max.degenScore || 0,
+          totalVolume: totalVolume._sum.totalVolume || 0,
+        },
+      };
     };
 
     // 🚀 Use cache unless noCache parameter is present
