@@ -16,19 +16,9 @@ const getDatabaseUrl = () => {
     let url = poolUrl;
     const hasQueryParams = url.includes('?');
 
-    // Ensure pgbouncer=true
-    if (!url.includes('pgbouncer=true')) {
-      url += `${hasQueryParams ? '&' : '?'}pgbouncer=true`;
-    }
-
-    // Ensure connection_limit=1
-    if (!url.includes('connection_limit=')) {
-      url += `${url.includes('?') ? '&' : '?'}connection_limit=1`;
-    }
-
     // Ensure sslmode=require (CRITICAL for Supabase)
     if (!url.includes('sslmode=')) {
-      url += `${url.includes('?') ? '&' : '?'}sslmode=require`;
+      url += `${hasQueryParams ? '&' : '?'}sslmode=require`;
     }
 
     return url;

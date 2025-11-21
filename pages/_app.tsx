@@ -37,11 +37,28 @@ export default function App({ Component, pageProps }: AppProps) {
     // This just ensures it's loaded before rendering
   }, []);
 
+  // Handle wallet connection errors
+  const onError = useMemo(
+    () => (error: any) => {
+      console.error('Wallet error:', error);
+      // Silently handle disconnected port errors from Phantom
+      if (error?.message?.includes('disconnected port')) {
+        console.warn('Phantom wallet port disconnected - this is usually safe to ignore');
+        return;
+      }
+    },
+    []
+  );
+
   return (
     <ErrorBoundary>
       <I18nextProvider i18n={i18n}>
         <ConnectionProvider endpoint={endpoint}>
-          <WalletProvider wallets={wallets} autoConnect={false}>
+          <WalletProvider
+            wallets={wallets}
+            autoConnect={true}
+            onError={onError}
+          >
             <WalletModalProvider>
               <Component {...pageProps} />
             </WalletModalProvider>
