@@ -20,13 +20,14 @@ const nextConfig = {
   // Disable font optimization to reduce memory during build
   optimizeFonts: false,
 
-  // Experimental features to reduce memory
+  // Experimental features
   experimental: {
-    workerThreads: false,
-    cpus: 1,
     // External packages that should not be bundled
     serverComponentsExternalPackages: ['@napi-rs/canvas', 'bullmq', 'ioredis'],
   },
+
+  // Increase timeout for static page generation (default is 60s)
+  staticPageGenerationTimeout: 180,
 
   // Security headers
   async headers() {
