@@ -41,11 +41,27 @@ export default function App({ Component, pageProps }: AppProps) {
   const onError = useMemo(
     () => (error: any) => {
       console.error('Wallet error:', error);
-      // Silently handle disconnected port errors from Phantom
-      if (error?.message?.includes('disconnected port')) {
-        console.warn('Phantom wallet port disconnected - this is usually safe to ignore');
+
+      // Silently handle common wallet connection errors that are safe to ignore
+      const ignorableErrors = [
+        'disconnected port',
+        'WalletConnectionError',
+        'Unexpected error',
+        'User rejected',
+        'wallet is not available'
+      ];
+
+      const shouldIgnore = ignorableErrors.some(msg =>
+        error?.message?.includes(msg) || error?.toString()?.includes(msg)
+      );
+
+      if (shouldIgnore) {
+        console.warn('Wallet connection issue (safe to ignore):', error?.message || error);
         return;
       }
+
+      // Only show critical errors to user
+      console.error('Critical wallet error:', error);
     },
     []
   );
