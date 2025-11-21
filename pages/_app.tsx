@@ -8,6 +8,7 @@ import { PhantomWalletAdapter, SolflareWalletAdapter } from '@solana/wallet-adap
 import { WalletError } from '@solana/wallet-adapter-base';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import { WalletConnectionHandler } from '../components/WalletConnectionHandler';
+import { UmamiAnalytics } from '../components/UmamiAnalytics';
 import { I18nextProvider } from 'react-i18next';
 import i18n from '../lib/i18n';
 
@@ -55,6 +56,7 @@ export default function App({ Component, pageProps }: AppProps) {
           <WalletProvider wallets={wallets} autoConnect={false} onError={onError}>
             <WalletModalProvider>
               <WalletConnectionHandler />
+              <UmamiAnalytics />
               <Component {...pageProps} />
             </WalletModalProvider>
           </WalletProvider>
