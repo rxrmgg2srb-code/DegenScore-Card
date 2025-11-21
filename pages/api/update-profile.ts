@@ -4,6 +4,15 @@ import { isValidSolanaAddress, sanitizeHandle, sanitizeDisplayName } from '../..
 import { rateLimit } from '../../lib/rateLimitRedis';
 import { logger } from '../../lib/logger';
 
+// Increase body size limit to 10MB for base64 images
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: '10mb',
+    },
+  },
+};
+
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
