@@ -11,14 +11,27 @@ const getDatabaseUrl = () => {
   const directUrl = process.env.DIRECT_URL;
   const poolUrl = process.env.DATABASE_URL;
 
-  // If pooler URL is available, use it (port 6543)
+  // If pooler URL is available, use it
   if (poolUrl) {
     let url = poolUrl;
     const hasQueryParams = url.includes('?');
+    const separator = hasQueryParams ? '&' : '?';
+
+    // Check if we are using the Supabase transaction pooler (port 6543)
+    if (url.includes(':6543')) {
+      // Ensure pgbouncer=true is present for Prisma to work with the pooler
+      if (!url.includes('pgbouncer=')) {
+        url += `${separator}pgbouncer=true`;
+      }
+      // Add connection_limit=1 for serverless to avoid exhausting the pool
+      if (!url.includes('connection_limit=')) {
+        url += `&connection_limit=1`;
+      }
+    }
 
     // Ensure sslmode=require (CRITICAL for Supabase)
     if (!url.includes('sslmode=')) {
-      url += `${hasQueryParams ? '&' : '?'}sslmode=require`;
+      url += `${url.includes('?') ? '&' : '?'}sslmode=require`;
     }
 
     return url;
