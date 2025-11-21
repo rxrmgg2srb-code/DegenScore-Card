@@ -802,9 +802,9 @@ export default function Leaderboard() {
   );
 }
 
-// Force SSR to prevent build timeout
-export async function getServerSideProps() {
-  return {
-    props: {},
-  };
-}
+// Client-side rendering for faster load times
+// export async function getServerSideProps() {
+//   return {
+//     props: {},
+//   };
+// }
