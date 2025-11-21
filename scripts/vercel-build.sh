@@ -112,6 +112,8 @@ echo ""
 # Step 3: Build Next.js
 echo "🏗️  [3/3] Building Next.js application..."
 echo ""
+# Prevent DB connections during build to avoid timeouts
+export SKIP_DB_CONNECTION=true
 NODE_OPTIONS='--max-old-space-size=4096' npm run build
 echo ""
 

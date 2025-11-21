@@ -32,7 +32,9 @@ const getDatabaseUrl = () => {
 
 // Optimized Prisma Client for serverless
 // Uses direct connection (DIRECT_URL) to avoid pooler connection issues
-export const prisma = global.prisma || new PrismaClient({
+const shouldInstantiate = !process.env.SKIP_DB_CONNECTION;
+
+export const prisma = global.prisma || (shouldInstantiate ? new PrismaClient({
   log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
 
   // Connection configuration for serverless compatibility
@@ -41,7 +43,7 @@ export const prisma = global.prisma || new PrismaClient({
       url: getDatabaseUrl(),
     },
   },
-});
+}) : {} as PrismaClient);
 
 // Store in global to prevent multiple instances (critical for serverless)
 // This prevents PostgreSQL "prepared statement already exists" errors
