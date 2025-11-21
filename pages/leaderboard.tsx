@@ -802,9 +802,6 @@ export default function Leaderboard() {
   );
 }
 
-// Client-side rendering for faster load times
-// export async function getServerSideProps() {
-//   return {
-//     props: {},
-//   };
-// }
+// Force dynamic rendering (no static generation, no SSR)
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
