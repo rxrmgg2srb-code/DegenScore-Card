@@ -155,20 +155,6 @@ export default function ProfileFormModal({ isOpen, onClose, onSubmit, walletAddr
         }),
       });
 
-      if (!profileResponse.ok) throw new Error('Failed to save profile');
-
-      // 4. Verificar pago en backend
-      const paymentResponse = await fetch('/api/verify-payment', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          signature,
-          walletAddress: publicKey.toString(),
-        }),
-      });
-
-      const paymentData = await paymentResponse.json();
-
       if (!paymentResponse.ok) {
         throw new Error(paymentData.error || 'Failed to verify payment');
       }
@@ -211,7 +197,7 @@ export default function ProfileFormModal({ isOpen, onClose, onSubmit, walletAddr
             <label className="text-gray-300 text-sm font-medium mb-3">
               Profile Picture
             </label>
-            
+
             <div className="relative">
               {/* Preview circle */}
               <div className="w-32 h-32 rounded-full border-4 border-cyan-500/50 overflow-hidden bg-gray-800 flex items-center justify-center">
