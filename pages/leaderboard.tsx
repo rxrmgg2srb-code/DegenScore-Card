@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import RankingsWidget from '../components/RankingsWidget';
+import ChallengeWinnersWidget from '../components/ChallengeWinnersWidget';
 import { BadgesDisplay } from '../components/BadgesDisplay';
 import { LanguageSelector } from '../components/LanguageSelector';
 
@@ -367,8 +368,8 @@ const LeaderboardCard = ({ entry, index, handleLike, userLikes }: LeaderboardCar
       <button
         onClick={() => handleLike(entry.id)}
         className={`mt-4 px-6 py-3 rounded-xl transition-all flex items-center justify-center gap-3 font-bold text-base shadow-lg ${userLikes[entry.id]
-            ? 'bg-gradient-to-r from-red-600 to-red-500 hover:from-red-700 hover:to-red-600 text-white scale-105'
-            : 'bg-gray-800 hover:bg-gray-700 text-gray-300 border border-gray-600'
+          ? 'bg-gradient-to-r from-red-600 to-red-500 hover:from-red-700 hover:to-red-600 text-white scale-105'
+          : 'bg-gray-800 hover:bg-gray-700 text-gray-300 border border-gray-600'
           }`}
       >
         <span className="text-2xl">{userLikes[entry.id] ? '❤️' : '🤍'}</span>
@@ -505,8 +506,8 @@ const LeaderboardTable = ({ filteredLeaderboard, handleLike, userLikes }: Leader
                     <button
                       onClick={() => handleLike(entry.id)}
                       className={`px-3 py-1 rounded-lg transition-all inline-flex items-center gap-1 ${userLikes[entry.id]
-                          ? 'bg-red-500/20 text-red-400'
-                          : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                        ? 'bg-red-500/20 text-red-400'
+                        : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
                         }`}
                     >
                       <span>{userLikes[entry.id] ? '❤️' : '🤍'}</span>
@@ -772,7 +773,10 @@ export default function Leaderboard() {
             </div>
 
             <div className="lg:col-span-1">
-              <RankingsWidget />
+              <div className="space-y-6">
+                <RankingsWidget />
+                <ChallengeWinnersWidget />
+              </div>
             </div>
           </div>
         </div>
