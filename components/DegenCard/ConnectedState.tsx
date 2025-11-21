@@ -25,16 +25,16 @@ export default function ConnectedState({
     return (
         <div className="space-y-6">
             <div className="p-6 bg-gradient-to-r from-green-500/30 to-emerald-500/30 border-2 border-green-400 rounded-2xl shadow-[0_0_30px_rgba(34,197,94,0.3)]">
-                <div className="flex items-center justify-between">
-                    <div>
-                        <p className="text-green-300 text-base font-bold mb-2 flex items-center gap-2">
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div className="text-center sm:text-left">
+                        <p className="text-green-300 text-base font-bold mb-2 flex items-center justify-center sm:justify-start gap-2">
                             <span className="text-2xl">✅</span> Wallet Connected
                         </p>
                         <p className="text-white font-mono text-lg font-semibold">
                             {publicKey?.toBase58().slice(0, 8)}...{publicKey?.toBase58().slice(-8)}
                         </p>
                     </div>
-                    <div className="transform hover:scale-105 transition-transform">
+                    <div className="transform hover:scale-105 transition-transform w-full sm:w-auto flex justify-center">
                         <WalletMultiButton />
                     </div>
                 </div>
