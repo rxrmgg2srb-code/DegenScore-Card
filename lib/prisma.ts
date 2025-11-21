@@ -7,27 +7,24 @@ declare global {
 // Build DATABASE_URL with pgbouncer flag if using connection pooler
 // This prevents "prepared statement already exists" errors
 const getDatabaseUrl = () => {
-  // Prefer DIRECT_URL for serverless reliability
-  // Pooler (DATABASE_URL) can fail due to connection limits or timeouts
+  // Prefer POOLER URL (DATABASE_URL) for serverless application logic
+  // Direct URL is only for migrations or if pooler is unavailable
   const directUrl = process.env.DIRECT_URL;
   const poolUrl = process.env.DATABASE_URL;
 
-  // Use direct connection if available (more reliable for serverless)
-  if (directUrl) {
-    return directUrl;
+  // If pooler URL is available, use it (port 6543)
+  if (poolUrl) {
+    // If URL already has pgbouncer=true, return as is
+    if (poolUrl.includes('pgbouncer=true')) {
+      return poolUrl;
+    }
+    // Add pgbouncer=true to prevent prepared statement collisions
+    const separator = poolUrl.includes('?') ? '&' : '?';
+    return `${poolUrl}${separator}pgbouncer=true&connection_limit=1`;
   }
 
-  // Fallback to pooler URL
-  if (!poolUrl) return undefined;
-
-  // If URL already has pgbouncer=true, return as is
-  if (poolUrl.includes('pgbouncer=true')) {
-    return poolUrl;
-  }
-
-  // Add pgbouncer=true to prevent prepared statement collisions
-  const separator = poolUrl.includes('?') ? '&' : '?';
-  return `${poolUrl}${separator}pgbouncer=true&connection_limit=1`;
+  // Fallback to direct connection if pooler is missing
+  return directUrl;
 };
 
 // Optimized Prisma Client for serverless
