@@ -298,7 +298,7 @@ export default async function handler(
       logger.info('✅ PRO subscription activated', {
         walletAddress,
         tier: subscription.tier,
-        expiresAt: subscription.expiresAt.toISOString()
+        expiresAt: subscription.expiresAt ? subscription.expiresAt.toISOString() : null
       });
 
       return {
@@ -362,7 +362,7 @@ export default async function handler(
       walletAddress,
       promoCode: sanitizedCode,
       newTier: result.subscription.tier,
-      expiresAt: result.subscription.expiresAt.toISOString()
+      expiresAt: result.subscription.expiresAt ? result.subscription.expiresAt.toISOString() : null
     });
 
     return res.status(200).json({
@@ -378,9 +378,9 @@ export default async function handler(
         subscription: {
           tier: result.subscription.tier,
           expiresAt: result.subscription.expiresAt,
-          daysRemaining: Math.ceil(
-            (result.subscription.expiresAt.getTime() - Date.now()) / (1000 * 60 * 60 * 24)
-          )
+          daysRemaining: result.subscription.expiresAt
+            ? Math.ceil((result.subscription.expiresAt.getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+            : null
         }
       }
     });
