@@ -802,10 +802,6 @@ export default function Leaderboard() {
   );
 }
 
-// Force Server-Side Rendering (NO static generation)
-// This prevents build timeouts trying to generate static page
-export async function getServerSideProps() {
-  return {
-    props: {}, // No props needed, data fetched client-side
-  };
-}
+// Static Generation - no server-side code, fully client-side
+// This page generates once at build time as static HTML
+// All data fetching happens client-side via useEffect
