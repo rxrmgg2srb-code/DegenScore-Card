@@ -581,7 +581,7 @@ export function sanitizeObject<T extends Record<string, unknown>>(obj: T): Parti
 
   for (const [key, value] of Object.entries(obj)) {
     if (value !== undefined && value !== null) {
-      sanitized[key as keyof T] = value;
+      sanitized[key as keyof T] = value as T[keyof T];
     }
   }
 
