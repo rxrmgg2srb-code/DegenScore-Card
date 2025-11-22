@@ -11,7 +11,7 @@
  * - Cache hit/miss metrics
  */
 
-import redis from './redis';
+import { cacheGet, cacheSet, cacheDel } from './redis';
 import { logger } from '../logger';
 
 interface CachedWalletData {
@@ -65,26 +65,26 @@ export async function getCachedWalletMetrics(
 
   // Check Redis cache (slower but persistent)
   try {
-    const redisCached = await redis?.get(`wallet:metrics:${walletAddress}`);
-    if (redisCached && typeof redisCached === 'string') {
+    const redisCached = await cacheGet<string>(`wallet:metrics:${walletAddress}`);
+    if (redisCached) {
       const parsed: CachedWalletData = JSON.parse(redisCached);
-      
+
       if (!isCacheExpired(parsed)) {
         cacheStats.hits++;
         parsed.hitCount++;
-        
+
         // Promote to memory cache if frequently accessed
         if (parsed.hitCount > 5) {
           setMemoryCache(walletAddress, parsed);
         }
-        
+
         // Update hitCount in Redis
-        await redis?.set(
+        await cacheSet(
           `wallet:metrics:${walletAddress}`,
           JSON.stringify(parsed),
-          { ex: getTTL(parsed.hitCount) }
+          { ttl: getTTL(parsed.hitCount) }
         );
-        
+
         updateCacheStats();
         return parsed.metrics;
       }
@@ -113,10 +113,10 @@ export async function setCachedWalletMetrics(
 
   // Always cache in Redis
   try {
-    await redis?.set(
+    await cacheSet(
       `wallet:metrics:${walletAddress}`,
       JSON.stringify(cacheData),
-      { ex: CACHE_TTL.NORMAL_WALLET / 1000 }
+      { ttl: CACHE_TTL.NORMAL_WALLET / 1000 }
     );
   } catch (error) {
     logger.error('Redis cache write error', error instanceof Error ? error : new Error(String(error)));
@@ -133,9 +133,9 @@ export async function setCachedWalletMetrics(
  */
 export async function invalidateWalletCache(walletAddress: string): Promise<void> {
   memoryCache.delete(walletAddress);
-  
+
   try {
-    await redis?.del(`wallet:metrics:${walletAddress}`);
+    await cacheDel(`wallet:metrics:${walletAddress}`);
   } catch (error) {
     logger.error('Redis cache invalidation error', error instanceof Error ? error : new Error(String(error)));
   }
@@ -146,20 +146,20 @@ export async function invalidateWalletCache(walletAddress: string): Promise<void
  */
 export async function warmCacheForHotWallets(wallets: string[]): Promise<void> {
   logger.info('Warming cache for hot wallets', { count: wallets.length });
-  
+
   // This would be called by a background job
   // For now, it just ensures these wallets are marked as hot
   for (const wallet of wallets) {
     try {
-      const cached = await redis?.get(`wallet:metrics:${wallet}`);
-      if (cached && typeof cached === 'string') {
+      const cached = await cacheGet<string>(`wallet:metrics:${wallet}`);
+      if (cached) {
         const parsed: CachedWalletData = JSON.parse(cached);
         parsed.hitCount = Math.max(parsed.hitCount, 10); // Mark as hot
-        
-        await redis?.set(
+
+        await cacheSet(
           `wallet:metrics:${wallet}`,
           JSON.stringify(parsed),
-          { ex: CACHE_TTL.HOT_WALLET / 1000 }
+          { ttl: CACHE_TTL.HOT_WALLET / 1000 }
         );
       }
     } catch (error) {
@@ -192,15 +192,15 @@ export function resetCacheStats(): void {
  */
 export async function getTrendingWallets(limit: number = 10): Promise<Array<{ wallet: string; hits: number }>> {
   const trending: Array<{ wallet: string; hits: number }> = [];
-  
+
   // Get from memory cache
   for (const [wallet, data] of memoryCache.entries()) {
     trending.push({ wallet, hits: data.hitCount });
   }
-  
+
   // Sort by hit count
   trending.sort((a, b) => b.hits - a.hits);
-  
+
   return trending.slice(0, limit);
 }
 

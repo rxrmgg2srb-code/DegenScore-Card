@@ -4,7 +4,7 @@ import { isValidSolanaAddress } from '@/lib/validation';
 import { strictRateLimit } from '@/lib/rateLimitRedis';
 import { logger } from '@/lib/logger';
 import { prisma } from '@/lib/prisma';
-import redis from '@/lib/cache/redis';
+import { cacheGet, cacheSet } from '@/lib/cache/redis';
 
 /**
  * 🔒 Token Security Analysis API
@@ -61,8 +61,8 @@ export default async function handler(
     const cacheKey = `token:analysis:${tokenAddress}`;
 
     // Check Redis cache first (if not forcing refresh)
-    if (!forceRefresh && redis) {
-      const cached = await redis.get(cacheKey);
+    if (!forceRefresh) {
+      const cached = await cacheGet<string>(cacheKey);
 
       if (cached) {
         logger.info('✅ Returning cached token analysis', { tokenAddress });
@@ -76,7 +76,7 @@ export default async function handler(
               lastViewedAt: new Date(),
             },
           })
-          .catch((err) => {
+          .catch((err: unknown) => {
             logger.error('Failed to update view count', err instanceof Error ? err : undefined);
           });
 
@@ -86,10 +86,6 @@ export default async function handler(
           cached: true,
         });
       }
-    }
-
-    if (!redis && !forceRefresh) {
-      logger.warn('Redis is not available');
     }
 
     // Check database for recent analysis (if not forcing refresh)
@@ -116,12 +112,10 @@ export default async function handler(
 
           const report = existing.fullAnalysisJson as any;
 
-          // Cache in Redis if available
-          if (redis) {
-            await redis.set(cacheKey, JSON.stringify(report), { ex: CACHE_TTL }).catch(() => {
-              // Fail silently
-            });
-          }
+          // Cache in Redis
+          await cacheSet(cacheKey, JSON.stringify(report), { ttl: CACHE_TTL }).catch(() => {
+            // Fail silently
+          });
 
           return res.status(200).json({
             success: true,
@@ -142,12 +136,10 @@ export default async function handler(
     // Save to database
     await saveAnalysisToDatabase(tokenAddress, report);
 
-    // Cache in Redis if available
-    if (redis) {
-      await redis.set(cacheKey, JSON.stringify(report), { ex: CACHE_TTL }).catch((err) => {
-        logger.error('Failed to cache analysis in Redis', err instanceof Error ? err : undefined);
-      });
-    }
+    // Cache in Redis
+    await cacheSet(cacheKey, JSON.stringify(report), { ttl: CACHE_TTL }).catch((err) => {
+      logger.error('Failed to cache analysis in Redis', err instanceof Error ? err : undefined);
+    });
 
     logger.info('✅ Token analysis complete', {
       tokenAddress,

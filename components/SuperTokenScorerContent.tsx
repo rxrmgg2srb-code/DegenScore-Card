@@ -36,6 +36,8 @@ export function SuperTokenScorerPage() {
   );
 }
 
+export default SuperTokenScorerPage;
+
 // Force SSR to prevent build timeout
 export async function getServerSideProps() {
   return {
