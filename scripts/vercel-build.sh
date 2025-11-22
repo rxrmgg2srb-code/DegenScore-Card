@@ -12,7 +12,8 @@ echo ""
 # Step 0: Install Prisma CLI (in devDependencies, not installed in production builds)
 echo "📦 [0/3] Installing Prisma CLI..."
 echo ""
-npm install --no-save prisma@6.19.0
+# Use --legacy-peer-deps to bypass override conflicts
+npm install --no-save --legacy-peer-deps prisma@6.19.0
 echo "✅ Prisma CLI installed"
 echo ""
 
