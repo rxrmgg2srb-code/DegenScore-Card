@@ -1,6 +1,5 @@
 import DegenCard from '../components/DegenCard';
 import { NavigationButtons } from '../components/NavigationButtons';
-import Link from 'next/link';
 
 /**
  * ULTRA MINIMAL VERSION - Solo lo esencial

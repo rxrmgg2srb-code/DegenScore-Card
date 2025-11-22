@@ -13,7 +13,6 @@ const ChallengeWinnersWidget = dynamic(() => import('../components/ChallengeWinn
   ssr: false,
   loading: () => <div className="animate-pulse bg-gray-800/50 rounded-2xl h-96"></div>
 });
-import { BadgesDisplay } from '../components/BadgesDisplay';
 import { LanguageSelector } from '../components/LanguageSelector';
 
 interface LeaderboardEntry {
@@ -303,8 +302,8 @@ const LeaderboardCard = ({ entry, index, handleLike, userLikes }: LeaderboardCar
               <button
                 onClick={() => handleLike(entry.id)}
                 className={`flex flex-col items-center justify-center p-2 rounded-xl border transition-all ${userLikes[entry.id]
-                    ? 'bg-red-500/10 border-red-500/50 text-red-400'
-                    : 'bg-gray-800/50 border-gray-700 text-gray-400 hover:bg-gray-700'
+                  ? 'bg-red-500/10 border-red-500/50 text-red-400'
+                  : 'bg-gray-800/50 border-gray-700 text-gray-400 hover:bg-gray-700'
                   }`}
               >
                 <span className="text-lg mb-1">{userLikes[entry.id] ? '❤️' : '🤍'}</span>
