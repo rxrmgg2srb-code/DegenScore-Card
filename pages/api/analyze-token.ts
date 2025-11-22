@@ -57,39 +57,39 @@ export default async function handler(
 
     logger.info('🔒 Token security analysis requested', { tokenAddress });
 
+    // Define cacheKey at the top level so it's available throughout the function
+    const cacheKey = `token:analysis:${tokenAddress}`;
+
     // Check Redis cache first (if not forcing refresh)
-    if (!forceRefresh) {
-      const cacheKey = `token:analysis:${tokenAddress}`;
+    if (!forceRefresh && redis) {
+      const cached = await redis.get(cacheKey);
 
-      // Check if redis is initialized and available
-      if (redis) {
-        const cached = await redis.get(cacheKey);
+      if (cached) {
+        logger.info('✅ Returning cached token analysis', { tokenAddress });
 
-        if (cached) {
-          logger.info('✅ Returning cached token analysis', { tokenAddress });
-
-          // Update view count asynchronously
-          prisma.tokenAnalysis
-            .update({
-              where: { tokenAddress },
-              data: {
-                viewCount: { increment: 1 },
-                lastViewedAt: new Date(),
-              },
-            })
-            .catch((err) => {
-              logger.error('Failed to update view count', err instanceof Error ? err : undefined);
-            });
-
-          return res.status(200).json({
-            success: true,
-            report: JSON.parse(cached as string),
-            cached: true,
+        // Update view count asynchronously
+        prisma.tokenAnalysis
+          .update({
+            where: { tokenAddress },
+            data: {
+              viewCount: { increment: 1 },
+              lastViewedAt: new Date(),
+            },
+          })
+          .catch((err) => {
+            logger.error('Failed to update view count', err instanceof Error ? err : undefined);
           });
-        }
-      } else {
-        logger.warn('Redis is not available');
+
+        return res.status(200).json({
+          success: true,
+          report: JSON.parse(cached as string),
+          cached: true,
+        });
       }
+    }
+
+    if (!redis && !forceRefresh) {
+      logger.warn('Redis is not available');
     }
 
     // Check database for recent analysis (if not forcing refresh)
@@ -144,7 +144,6 @@ export default async function handler(
 
     // Cache in Redis if available
     if (redis) {
-      const cacheKey = `token:analysis:${tokenAddress}`;
       await redis.set(cacheKey, JSON.stringify(report), { ex: CACHE_TTL }).catch((err) => {
         logger.error('Failed to cache analysis in Redis', err instanceof Error ? err : undefined);
       });
