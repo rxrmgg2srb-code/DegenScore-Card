@@ -495,7 +495,9 @@ export function composeMiddlewares(
       }
 
       const middleware = middlewares[index++];
-      await middleware(req, res, next);
+      if (middleware) {
+        await middleware(req, res, next);
+      }
     };
 
     await next();
