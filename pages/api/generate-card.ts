@@ -20,7 +20,7 @@ try {
   GlobalFonts.registerFromPath(path.join(fontsDir, 'DejaVuSansMono.ttf'), 'DejaVu Sans Mono');
   logger.info('✅ Fonts registered successfully');
 } catch (error) {
-  logger.error('❌ Error registering fonts:', error instanceof Error ? error : undefined, {
+  logger.error('❌ Error registering fonts', error instanceof Error ? error : undefined, {
     error: String(error),
   });
 }
@@ -127,7 +127,7 @@ export default async function handler(
       return res.status(400).json({ error: 'Invalid Solana wallet address' });
     }
 
-    logger.info(`🎨 Generating card image for: ${walletAddress}`);
+    logger.info('🎨 Generating card image', { walletAddress });
 
     const card = await prisma.degenCard.findUnique({
       where: { walletAddress },
@@ -139,15 +139,10 @@ export default async function handler(
       });
     }
 
-    logger.info(`✅ Found card in database with score: ${card.degenScore}`);
-    logger.info(`💎 Premium status: ${card.isPaid ? 'PREMIUM' : 'BASIC'}`);
-    logger.info(`📊 Card data:`, {
+    logger.info('✅ Found card in database', { 
+      walletAddress,
       degenScore: card.degenScore,
-      totalTrades: card.totalTrades,
-      totalVolume: card.totalVolume,
-      profitLoss: card.profitLoss,
-      winRate: card.winRate,
-      isPaid: card.isPaid,
+      isPaid: card.isPaid ? 'PREMIUM' : 'BASIC'
     });
 
     // 🚀 OPTIMIZACIÓN: Verificar cache de imagen
@@ -159,7 +154,7 @@ export default async function handler(
     const forceRegenerate = req.query.nocache === 'true';
 
     if (cachedImageUrl && !forceRegenerate) {
-      logger.info('⚡ Serving card from cache/R2:', {
+      logger.info('⚡ Serving card from cache/R2', {
         cacheType: cachedImageUrl.startsWith('http') ? 'R2 URL' : 'Base64 buffer',
         urlPreview: cachedImageUrl.substring(0, 100)
       });
@@ -169,7 +164,7 @@ export default async function handler(
       }
       // Si es buffer en cache, servir directamente
       const buffer = Buffer.from(cachedImageUrl, 'base64');
-      logger.info('📤 Serving cached buffer, size:', buffer.length, 'bytes');
+      logger.info('📤 Serving cached buffer', { size: buffer.length });
       res.setHeader('Content-Type', 'image/png');
       res.setHeader('Cache-Control', 'public, max-age=604800, immutable'); // 7 días
       res.setHeader('X-Cache-Status', 'HIT');
@@ -210,7 +205,7 @@ export default async function handler(
       });
 
       if (publicUrl) {
-        logger.info('☁️ Image uploaded to R2:', { publicUrl });
+        logger.info('☁️ Image uploaded to R2', { publicUrl });
         // Cachear la URL por 7 días
         await cacheSet(cacheKey, publicUrl, { ttl: 604800 });
         // Redirigir a R2
@@ -228,7 +223,7 @@ export default async function handler(
     res.status(200).send(imageBuffer);
 
   } catch (error) {
-    logger.error('❌ Error generating card:', error instanceof Error ? error : undefined, {
+    logger.error('❌ Error generating card', error instanceof Error ? error : undefined, {
       error: String(error),
     });
     res.status(500).json({
@@ -242,7 +237,7 @@ async function generateCardImage(
   walletAddress: string,
   metrics: any
 ): Promise<Buffer> {
-  logger.info('🎨 generateCardImage called with isPaid:', metrics.isPaid);
+  logger.info('🎨 generateCardImage called', { isPaid: metrics.isPaid });
 
   // Si está pagado, usar estilo premium del leaderboard
   if (metrics.isPaid) {
@@ -254,9 +249,9 @@ async function generateCardImage(
       if (global.gc) global.gc();
       return premiumBuffer;
     } catch (error) {
-      logger.error('❌ Error generating premium card:', error instanceof Error ? error : undefined, {
-      error: String(error),
-    });
+      logger.error('❌ Error generating premium card', error instanceof Error ? error : undefined, {
+        error: String(error),
+      });
       logger.info('⚠️ Falling back to basic card');
       return generateBasicCardImage(walletAddress, metrics);
     }
@@ -360,9 +355,9 @@ async function generatePremiumCardImage(
       currentY += imgSize / 2 + 25;
       
     } catch (error) {
-      logger.error('⚠️ Error loading profile image:', error instanceof Error ? error : undefined, {
-      error: String(error),
-    });
+      logger.error('⚠️ Error loading profile image', error instanceof Error ? error : undefined, {
+        error: String(error),
+      });
       const imgSize = 140;
       const imgX = width / 2;
       
@@ -651,8 +646,10 @@ async function generateBasicCardImage(
     tradingDays: Number(metrics?.tradingDays) || 0,
   };
 
-  logger.info('📝 Generating BASIC card with data:', safeMetrics);
-  logger.info('🎨 Wallet address for card:', walletAddress);
+  logger.info('📝 Generating BASIC card', { 
+    walletAddress,
+    metrics: safeMetrics 
+  });
 
   const width = 600;
   const height = 950;
@@ -680,7 +677,6 @@ async function generateBasicCardImage(
   ctx.font = 'bold 44px "DejaVu Sans"';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  logger.info('🖊️ Drawing title "DEGEN CARD" at position:', { x: width / 2, y: currentY, color: '#00d4ff', font: ctx.font });
   ctx.fillText('DEGEN CARD', width / 2, currentY);
   currentY += 55;
 
@@ -689,7 +685,6 @@ async function generateBasicCardImage(
   ctx.font = '16px "DejaVu Sans Mono"';
   ctx.textAlign = 'center';
   const shortAddress = `${walletAddress.slice(0, 6)}...${walletAddress.slice(-6)}`;
-  logger.info('🖊️ Drawing wallet address:', { address: shortAddress, x: width / 2, y: currentY, color: '#aaaaaa', font: ctx.font });
   ctx.fillText(shortAddress, width / 2, currentY);
   currentY += 60;
 
@@ -702,14 +697,6 @@ async function generateBasicCardImage(
 
   ctx.shadowColor = scoreColor;
   ctx.shadowBlur = 30;
-  logger.info('🖊️ Drawing degen score:', {
-    score: safeMetrics.degenScore,
-    scoreString: safeMetrics.degenScore.toString(),
-    x: width / 2,
-    y: currentY,
-    color: scoreColor,
-    font: ctx.font
-  });
   ctx.fillText(safeMetrics.degenScore.toString(), width / 2, currentY);
   ctx.shadowColor = 'transparent';
   ctx.shadowBlur = 0;
@@ -719,13 +706,11 @@ async function generateBasicCardImage(
   ctx.fillStyle = '#aaaaaa';
   ctx.font = 'bold 20px "DejaVu Sans"';
   ctx.letterSpacing = '2px';
-  logger.info('🖊️ Drawing "DEGEN SCORE" label at:', { x: width / 2, y: currentY, color: '#aaaaaa', font: ctx.font });
   ctx.fillText('DEGEN SCORE', width / 2, currentY);
   currentY += 40;
 
   // FRASE FOMO
   const fomoPhrase = getFOMOPhrase(safeMetrics.degenScore);
-  logger.info('🖊️ Drawing FOMO phrase:', { phrase: fomoPhrase, x: width / 2, y: currentY, color: '#FFD700' });
 
   ctx.fillStyle = 'rgba(255, 215, 0, 0.15)';
   const textWidth = ctx.measureText(fomoPhrase).width;
@@ -796,7 +781,7 @@ async function generateBasicCardImage(
   // Convert to buffer and clear canvas reference to help GC
   logger.info('📦 Converting canvas to PNG buffer...');
   const buffer = canvas.toBuffer('image/png');
-  logger.info('✅ BASIC card buffer created successfully, size:', buffer.length, 'bytes');
+  logger.info('✅ BASIC card buffer created successfully', { size: buffer.length });
 
   // Clear canvas context to free memory
   ctx.clearRect(0, 0, width, height);
@@ -814,8 +799,6 @@ function drawMetric(
   valueColor: string = '#ffffff'
 ) {
   const alignment = alignLeft ? 'left' : 'right';
-
-  logger.info('  📊 Drawing metric:', { label, value, x, y, alignment, valueColor });
 
   ctx.textAlign = alignment;
   ctx.fillStyle = '#999999';
