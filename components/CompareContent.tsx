@@ -1,13 +1,39 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { LanguageSelector } from '../components/LanguageSelector';
-import { NavigationButtons } from '../components/NavigationButtons';
+import { NavigationButtons} from '../components/NavigationButtons';
+
+type WinnerType = 'wallet1' | 'wallet2' | 'tie';
+
+interface WalletData {
+  address: string;
+  displayName?: string;
+  degenScore: number;
+  totalTrades: number;
+  totalVolume: number;
+  profitLoss: number;
+  winRate: number;
+  bestTrade: number;
+  badges: number;
+  likes: number;
+}
+
+interface ComparisonWinner {
+  degenScore: WinnerType;
+  totalTrades: WinnerType;
+  totalVolume: WinnerType;
+  profitLoss: WinnerType;
+  winRate: WinnerType;
+  bestTrade: WinnerType;
+  badges: WinnerType;
+  likes: WinnerType;
+}
 
 interface ComparisonData {
-  wallet1: any;
-  wallet2: any;
-  differences: any;
-  winner: any;
+  wallet1: WalletData;
+  wallet2: WalletData;
+  differences?: Record<string, number>;
+  winner: ComparisonWinner;
 }
 
 // Cambiado a export default para que funcione con dynamic import
@@ -47,8 +73,8 @@ export default function CompareContent() {
 
       setComparison(data.comparison);
       setOverallWinner(data.overallWinner);
-    } catch (err: any) {
-      setError(err.message || 'Failed to compare cards');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to compare cards');
     } finally {
       setLoading(false);
     }

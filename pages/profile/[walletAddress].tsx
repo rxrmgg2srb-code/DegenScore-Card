@@ -77,9 +77,10 @@ export default function ProfilePage() {
 
       // Generate card image URL
       setCardImageUrl(`/api/generate-card?walletAddress=${walletAddress}`);
-    } catch (err: any) {
-      logger.error('Error fetching profile:', err);
-      setError(err.message);
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err));
+      logger.error('Error fetching profile:', error);
+      setError(error.message);
     } finally {
       setLoading(false);
     }

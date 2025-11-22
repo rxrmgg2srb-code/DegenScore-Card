@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+import { logger } from './logger';
 
 // Prevent multiple instances of Prisma Client in development
 const globalForPrisma = global as unknown as { prisma: PrismaClient };
@@ -13,7 +14,7 @@ const getOptimalDatabaseUrl = () => {
     // If we are in production and using Supabase on port 5432 (Session Pooler),
     // we automatically switch to port 6543 (Transaction Pooler) which is designed for Serverless.
     if (process.env.NODE_ENV === 'production' && url.includes('supabase.com') && url.includes(':5432')) {
-        console.log('⚡ Auto-optimizing Supabase connection: Switching to Transaction Pooler (port 6543)');
+        logger.info('Auto-optimizing Supabase connection to Transaction Pooler', { port: 6543 });
         url = url.replace(':5432', ':6543');
     }
 
