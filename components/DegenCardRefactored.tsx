@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
+import { PublicKey } from '@solana/web3.js';
 import ProfileFormModal, { ProfileData } from './ProfileFormModal';
 import UpgradeModal from './UpgradeModal';
 import ShareModal from './ShareModal';
@@ -245,7 +246,7 @@ function Footer() {
 }
 
 interface ConnectedWalletViewProps {
-  publicKey: any;
+  publicKey: PublicKey | null;
   error: string | null;
   analyzing: boolean;
   analysisMessage: string;

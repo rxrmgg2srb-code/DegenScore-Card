@@ -4,6 +4,12 @@ import { useWallet } from '@solana/wallet-adapter-react';
 import toast from 'react-hot-toast';
 import { logger } from '@/lib/logger';
 
+interface Milestone {
+  referrals: number;
+  reward: number;
+  tier: string;
+}
+
 interface ReferralStats {
   totalReferrals: number;
   level1Referrals: number;
@@ -13,7 +19,7 @@ interface ReferralStats {
   pendingRewards: number;
   claimedRewards: number;
   currentTier: string;
-  nextMilestone: any;
+  nextMilestone: Milestone | null;
 }
 
 export default function ReferralDashboard() {
