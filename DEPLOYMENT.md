@@ -1,469 +1,576 @@
-# 🚀 Guía Completa de Deployment
+# 🚀 Deployment Guide - DegenScore Card
 
-## Resumen de Features
-
-### Sistema de Engagement:
-- ✅ Daily Login Streaks
-- ✅ Daily Challenges
-- ✅ User Analytics & Leveling
-- ✅ Achievement System (preparado)
-- ✅ Trading Duels (preparado)
-- ✅ Referral System (preparado)
-
-### Killer Features:
-- ✅ AI Trading Coach (GPT-4)
-- ✅ Whale Tracking Radar
-- ✅ Telegram Mini App
+**Tiempo estimado:** 5-10 minutos para primer deploy
+**Costo:** $0/mes para MVP (hasta ~100 usuarios/día)
 
 ---
 
-## 📋 Pre-requisitos
+## 📋 Quick Start - Deploy en 5 Minutos
 
-1. **Cuenta de Supabase**
-   - URL de conexión
-   - Anon key configurada
-
-2. **OpenAI API Key**
-   - Cuenta en https://platform.openai.com
-   - Créditos disponibles (~$5-10/mes estimado)
-
-3. **Telegram Bot Token** (opcional)
-   - Bot creado con @BotFather
-
-4. **Render/Vercel Account**
-   - Para deployment
-
----
-
-## 🗄️ Paso 1: Migraciones de Base de Datos
-
-### A. Engagement Features
-
-En Supabase SQL Editor, ejecutar:
+### 1. Configurar Base de Datos (Supabase)
 
 ```bash
-migrations/engagement_features.sql
+# Ya tienes la DB configurada, solo verifica:
+# 1. Ir a Supabase Dashboard → Settings → Database
+# 2. Copiar "Connection String" (URI format)
+# 3. ⚠️ IMPORTANTE: Debe terminar en :5432 (NO :6543)
 ```
 
-Esto crea 9 tablas:
-- UserStreak
-- DailyChallenge
-- DailyChallengeCompletion
-- TradingDuel
-- VirtualTrade
-- UserAnalytics
-- Achievement
-- AchievementUnlock
-- Referral
+**Ejemplo de DATABASE_URL correcto:**
+```
+postgresql://postgres:[PASSWORD]@db.[PROJECT].supabase.co:5432/postgres
+                                                          ^^^^^
+                                                          Debe ser 5432
+```
 
-### B. Killer Features
-
-En Supabase SQL Editor, ejecutar:
+### 2. Configurar Variables en Vercel
 
 ```bash
-migrations/killer_features.sql
+# En Vercel Dashboard → tu proyecto → Settings → Environment Variables
+
+# 🔴 REQUERIDAS (la app NO funciona sin estas):
+DATABASE_URL=postgresql://postgres:[PASSWORD]@db.[PROJECT].supabase.co:5432/postgres
+NEXTAUTH_SECRET=[genera con: openssl rand -base64 32]
+NEXTAUTH_URL=https://tu-dominio.vercel.app
+
+# 🟡 OPCIONALES (mejoran performance, no críticas):
+UPSTASH_REDIS_REST_URL=https://[endpoint].upstash.io
+UPSTASH_REDIS_REST_TOKEN=[token]
+HELIUS_RPC_URL=https://[api-key].helius-rpc.com/?api-key=[key]
+
+# 🟢 RECOMENDADAS (para producción):
+NEXT_PUBLIC_SENTRY_DSN=[tu-dsn]
+SENTRY_AUTH_TOKEN=[token] # Solo para source maps
 ```
 
-Esto crea 5 tablas:
-- AICoachAnalysis
-- WhaleWallet
-- WhaleAlert
-- WhaleFollower
-- TelegramUser
-
-### C. Verificar Tablas Creadas
-
-Ejecutar en SQL Editor:
-
-```sql
-SELECT table_name
-FROM information_schema.tables
-WHERE table_schema = 'public'
-ORDER BY table_name;
-```
-
-Deberías ver 14 nuevas tablas + las existentes.
-
----
-
-## 🔑 Paso 2: Variables de Entorno
-
-### Render Dashboard → Environment
-
-Agregar las siguientes variables:
-
-```env
-# Database (ya existente)
-DATABASE_URL=postgresql://...
-
-# Wallet Auth (ya existente)
-JWT_SECRET=...
-CRON_API_KEY=...
-WEBHOOK_SECRET=...
-
-# OpenAI (NUEVO)
-OPENAI_API_KEY=sk-proj-...
-
-# Telegram (NUEVO - opcional)
-TELEGRAM_BOT_TOKEN=1234567890:ABCdefGHIjklMNOpqrsTUVwxyz
-```
-
-### Cómo Obtener Cada Key:
-
-#### **OPENAI_API_KEY:**
-
-1. Ir a https://platform.openai.com/api-keys
-2. Click "Create new secret key"
-3. Copiar el key (empieza con `sk-proj-`)
-4. Agregar $5-10 de crédito en https://platform.openai.com/settings/organization/billing
-
-**Costo estimado:**
-- Análisis promedio: ~2000 tokens = $0.03
-- 100 análisis/día = $3/día
-- Con cooldowns: ~$20-40/mes
-
-#### **TELEGRAM_BOT_TOKEN:**
-
-1. Abrir Telegram
-2. Buscar @BotFather
-3. Enviar `/newbot`
-4. Seguir instrucciones:
-   - Nombre del bot: "DegenScore Bot"
-   - Username: "DegenScoreBot" (debe terminar en "bot")
-5. Copiar el token que te da
-6. Guardar el token
-
----
-
-## 🤖 Paso 3: Configurar Telegram Bot
-
-### Después de hacer deployment:
-
-#### A. Configurar Webhook
+### 3. Deploy
 
 ```bash
-curl -X POST "https://api.telegram.org/bot<TU_TOKEN>/setWebhook" \
-  -H "Content-Type: application/json" \
-  -d '{"url": "https://www.solanamillondollar.com/api/telegram/webhook"}'
+git push origin claude/fix-redis-rate-limiting-01B4c7mAnTZcHaLf7V37tRZw
+
+# Vercel auto-detecta el push y hace deploy automático
+# ⏱️ Tiempo de build: 2-4 minutos
 ```
 
-**Respuesta esperada:**
-```json
-{
-  "ok": true,
-  "result": true,
-  "description": "Webhook was set"
-}
-```
-
-#### B. Verificar Webhook
+### 4. Verificar Deploy
 
 ```bash
-curl "https://api.telegram.org/bot<TU_TOKEN>/getWebhookInfo"
+# Opción A: Healthcheck manual
+curl https://tu-dominio.vercel.app/api/health
+
+# Opción B: Abrir en navegador
+open https://tu-dominio.vercel.app
 ```
-
-**Respuesta esperada:**
-```json
-{
-  "ok": true,
-  "result": {
-    "url": "https://www.solanamillondollar.com/api/telegram/webhook",
-    "has_custom_certificate": false,
-    "pending_update_count": 0
-  }
-}
-```
-
-#### C. Probar el Bot
-
-1. Buscar tu bot en Telegram
-2. Enviar `/start`
-3. Deberías recibir mensaje de bienvenida
 
 ---
 
-## 🌐 Paso 4: Deployment en Render
+## 🔧 Configuración Detallada
 
-### A. Push de Código
+### Supabase (Database)
 
-El código ya está pusheado a:
-```
-claude/deploy-features-01D4QqcUJW3GRxAAg7cY2mJN
-```
+1. **Crear cuenta en Supabase** (si no tienes):
+   - https://supabase.com
+   - New Project → Elige región cercana a tus usuarios
 
-### B. Merge a Main
+2. **Obtener credenciales**:
+   ```
+   Dashboard → Settings → Database → Connection String (URI)
+   ```
 
-**Opción 1: GitHub UI**
-1. Ir a GitHub
-2. Create Pull Request
-3. Merge
+3. **⚠️ CRÍTICO - Usar puerto correcto**:
+   ```bash
+   # ✅ CORRECTO (conexión directa):
+   postgresql://postgres:pass@db.project.supabase.co:5432/postgres
 
-**Opción 2: Git CLI**
+   # ❌ INCORRECTO (connection pooler):
+   postgresql://postgres:pass@db.project.supabase.co:6543/postgres
+   ```
+
+   **Por qué 5432 y no 6543:**
+   - Puerto 5432: Conexión directa, permite transacciones largas
+   - Puerto 6543: Pooler de conexiones, para conexiones cortas
+   - Nuestra app necesita 5432 para Prisma migrations
+
+4. **Verificar schema**:
+   ```bash
+   # Las migraciones se aplican automáticamente en build
+   # Pero puedes verificar manualmente:
+   npx prisma migrate deploy
+   ```
+
+### Upstash Redis (Rate Limiting)
+
+**¿Es necesario?** No para MVP, sí para producción.
+
+Sin Redis:
+- ✅ La app funciona perfecto
+- ⚠️ Rate limiting usa memoria (se reinicia en cada deploy)
+
+Con Redis:
+- ✅ Rate limiting persistente entre deploys
+- ✅ Mejor performance para usuarios concurrentes
+- ✅ Compartido entre todas las instancias serverless
+
+**Setup:**
+
+1. Crear cuenta: https://upstash.com (FREE tier: 10k requests/día)
+
+2. Create Database → Elige región cercana a Vercel
+
+3. Copiar credenciales:
+   ```bash
+   UPSTASH_REDIS_REST_URL=https://[endpoint].upstash.io
+   UPSTASH_REDIS_REST_TOKEN=[token]
+   ```
+
+4. Agregar a Vercel Environment Variables
+
+### Helius RPC (Solana)
+
+**¿Es necesario?** No, pero mejora velocidad.
+
+Sin Helius:
+- ✅ Usa endpoint público de Solana
+- ⚠️ Más lento (1-2 segundos por request)
+- ⚠️ Puede tener rate limits
+
+Con Helius:
+- ✅ 5-10x más rápido
+- ✅ 100k requests/mes gratis
+- ✅ Soporte para NFTs, tokens, etc.
+
+**Setup:**
+
+1. Crear cuenta: https://helius.dev
+
+2. Create API Key → Mainnet
+
+3. Copiar URL:
+   ```bash
+   HELIUS_RPC_URL=https://mainnet.helius-rpc.com/?api-key=[tu-api-key]
+   ```
+
+4. Agregar a Vercel Environment Variables
+
+### NextAuth (Autenticación)
+
+**Requerido:** Sí
+
 ```bash
-git checkout main
-git pull origin main
-git merge claude/deploy-features-01D4QqcUJW3GRxAAg7cY2mJN
-git push origin main
+# 1. Generar secret:
+openssl rand -base64 32
+
+# 2. Agregar a Vercel:
+NEXTAUTH_SECRET=[el secret generado]
+NEXTAUTH_URL=https://tu-dominio.vercel.app
+
+# ⚠️ IMPORTANTE: NEXTAUTH_URL debe ser tu dominio de producción
 ```
 
-### C. Deploy Automático
+### Sentry (Opcional - Error Tracking)
 
-Render detectará el push a main y hará deploy automáticamente.
+**¿Es necesario?** No para MVP, muy útil para producción.
 
-### D. Verificar Deploy
+**Setup:**
 
-1. Ir a Render Dashboard
-2. Ver logs del deploy
-3. Esperar a que termine (5-10 minutos)
+1. Crear cuenta: https://sentry.io
+
+2. Create Project → Next.js
+
+3. Copiar DSN:
+   ```bash
+   NEXT_PUBLIC_SENTRY_DSN=https://[hash]@[project].ingest.sentry.io/[id]
+   SENTRY_AUTH_TOKEN=[token] # Solo para subir source maps
+   ```
 
 ---
 
-## ✅ Paso 5: Verificación Post-Deployment
+## 🔄 Re-Deploy (Actualizar Producción)
 
-### A. Verificar Homepage
+### Deploy de Cambios
 
-Visitar: https://www.solanamillondollar.com
-
-Deberías ver:
-- ✅ Streak Widget (si wallet conectada)
-- ✅ Daily Challenges Widget
-- ✅ AI Trading Coach section
-- ✅ Whale Tracking Radar section
-
-### B. Probar AI Trading Coach
-
-1. Conectar wallet con trades
-2. Ir a sección "AI Trading Coach"
-3. Click "Get AI Analysis"
-4. Esperar 20-30 segundos
-5. Deberías ver análisis completo
-
-**Si falla:**
-- Verificar OPENAI_API_KEY en Render
-- Ver logs de Render para errores
-- Verificar que wallet tenga trades
-
-### C. Probar Whale Radar
-
-1. Ir a sección "Whale Tracking Radar"
-2. Tab "Top Whales" debería mostrar whales
-3. Si wallet conectada, puede seguir whales
-4. Tab "Alerts" mostrará actividad
-
-**Si no hay whales:**
-- Normal al inicio
-- Se detectarán automáticamente con cron job
-- Puedes forzar detección procesando trades
-
-### D. Probar Telegram Bot
-
-1. Buscar bot en Telegram
-2. Enviar `/start`
-3. Enviar `/score` (sin vincular wallet)
-4. Debería pedir vincular con `/link`
-5. Enviar `/help` para ver comandos
-
-**Si no responde:**
-- Verificar webhook con getWebhookInfo
-- Verificar TELEGRAM_BOT_TOKEN en Render
-- Ver logs de Render
-
----
-
-## 🔧 Paso 6: Configurar Cron Jobs
-
-### Ya configurado:
-
-```
-URL: https://www.solanamillondollar.com/api/cron/record-scores
-Intervalo: 0 */6 * * * (cada 6 horas)
-Método: POST
-Header: x-cron-key: <CRON_API_KEY>
-```
-
-### Nuevo cron para detectar whales (opcional):
-
-```
-URL: https://www.solanamillondollar.com/api/cron/detect-whales
-Intervalo: 0 */12 * * * (cada 12 horas)
-Método: POST
-Header: x-cron-key: <CRON_API_KEY>
-```
-
-**Crear endpoint:** `pages/api/cron/detect-whales.ts`
-
-```typescript
-import type { NextApiRequest, NextApiResponse } from 'next';
-import { detectAndRegisterWhale, updateWhaleMetrics } from '../../../lib/whaleTracker';
-import prisma from '../../../lib/prisma';
-
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  // Verify cron key
-  const cronKey = req.headers['x-cron-key'];
-  if (cronKey !== process.env.CRON_API_KEY) {
-    return res.status(401).json({ error: 'Unauthorized' });
-  }
-
-  // Get active traders (traded in last 7 days)
-  const activeWallets = await prisma.trade.findMany({
-    where: {
-      timestamp: {
-        gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
-      },
-    },
-    distinct: ['walletAddress'],
-    select: { walletAddress: true },
-  });
-
-  let detected = 0;
-  for (const { walletAddress } of activeWallets) {
-    const isNew = await detectAndRegisterWhale(walletAddress);
-    if (isNew) detected++;
-  }
-
-  return res.status(200).json({ detected });
-}
-```
-
----
-
-## 📊 Paso 7: Monitoreo
-
-### A. Logs de Render
-
-Ver logs en tiempo real:
-```
-Render Dashboard → Web Service → Logs
-```
-
-Buscar errores de:
-- OpenAI API
-- Telegram webhook
-- Prisma queries
-
-### B. OpenAI Usage
-
-Monitorear uso:
-https://platform.openai.com/usage
-
-### C. Telegram Webhook
-
-Ver estado:
 ```bash
-curl "https://api.telegram.org/bot<TOKEN>/getWebhookInfo"
+# 1. Hacer tus cambios y commitear
+git add .
+git commit -m "Feature: descripción del cambio"
+
+# 2. Push a la rama de deploy
+git push origin claude/fix-redis-rate-limiting-01B4c7mAnTZcHaLf7V37tRZw
+
+# 3. Vercel detecta el push y hace auto-deploy (2-4 min)
+```
+
+### Rollback (Volver a Versión Anterior)
+
+```bash
+# Opción A: Desde Vercel Dashboard
+# 1. Deployments → Ver deploy anterior → "Promote to Production"
+
+# Opción B: Desde git
+git revert HEAD
+git push origin claude/fix-redis-rate-limiting-01B4c7mAnTZcHaLf7V37tRZw
+```
+
+### Actualizar Variables de Entorno
+
+```bash
+# 1. Vercel Dashboard → Settings → Environment Variables
+# 2. Editar la variable
+# 3. ⚠️ IMPORTANTE: Hacer re-deploy para aplicar
+# 4. Deployments → Latest → "Redeploy"
 ```
 
 ---
 
 ## 🐛 Troubleshooting
 
-### Error: "OpenAI API key not configured"
+### Build Falla con Error de Database
+
+**Síntoma:**
+```
+Error: P1001: Can't reach database server
+```
 
 **Solución:**
-1. Verificar OPENAI_API_KEY en Render
-2. Re-deploy si es necesario
-3. Verificar que key empieza con `sk-proj-`
+✅ **NO HACER NADA** - el build está diseñado para continuar aunque la DB no esté disponible.
 
-### Error: "Telegram webhook not responding"
+Si el build realmente falla:
+
+1. Verificar que usas puerto 5432 (no 6543)
+2. Verificar que DATABASE_URL está en Vercel Environment Variables
+3. Ver logs completos: Vercel Dashboard → Deployments → [tu deploy] → Building
+
+**El build NUNCA debe fallar por la database.** Si falla, es un bug - avísame.
+
+### App Funciona Pero No Guarda Cards
+
+**Síntoma:**
+Usuario genera card, pero al recargar no aparece.
+
+**Diagnóstico:**
+
+1. Verificar DATABASE_URL en producción:
+   ```bash
+   # Vercel Dashboard → Settings → Environment Variables
+   # DATABASE_URL debe estar configurada
+   ```
+
+2. Verificar conexión a DB:
+   ```bash
+   # Ejecutar localmente:
+   DATABASE_URL=[tu-url-de-produccion] npx prisma db execute --stdin <<< "SELECT 1;"
+   ```
+
+3. Ver logs de API:
+   ```bash
+   # Vercel Dashboard → Logs (real-time)
+   # Buscar errores de Prisma
+   ```
+
+**Soluciones:**
+
+- Si DATABASE_URL no está: Agregarla y re-deploy
+- Si puerto es 6543: Cambiar a 5432 y re-deploy
+- Si DB no responde: Verificar que Supabase project esté activo
+
+### Rate Limiting No Funciona
+
+**Síntoma:**
+Usuarios pueden hacer 1000 requests seguidos sin ser bloqueados.
+
+**Diagnóstico:**
+
+```bash
+# Verificar si Redis está configurado:
+# Vercel Dashboard → Settings → Environment Variables
+# Buscar: UPSTASH_REDIS_REST_URL
+```
+
+**Soluciones:**
+
+- Si no está configurado: Es normal, rate limiting usa memoria (se reinicia en cada deploy)
+- Si quieres rate limiting persistente: Configurar Upstash Redis
+- Si Redis está configurado pero no funciona: Verificar token y URL
+
+### Cards Se Generan Lentas
+
+**Síntoma:**
+Tarda 5-10 segundos en generar una card.
+
+**Diagnóstico:**
+
+1. ¿Helius configurado?
+   ```bash
+   # Vercel Dashboard → Settings → Environment Variables
+   # HELIUS_RPC_URL debe estar configurada
+   ```
+
+2. Ver logs de tiempo:
+   ```bash
+   # Vercel Dashboard → Logs
+   # Buscar: "Token analysis took"
+   ```
+
+**Soluciones:**
+
+- Sin Helius: 2-3 seg es normal (usar endpoint público)
+- Con Helius: Debe ser <1 seg
+- Si con Helius sigue lento: Verificar API key válida
+
+### Memory/Timeout en Build
+
+**Síntoma:**
+```
+Error: Command "npm run build" exited with 137 (out of memory)
+```
 
 **Solución:**
-1. Verificar webhook: `getWebhookInfo`
-2. Re-configurar webhook con setWebhook
-3. Verificar TELEGRAM_BOT_TOKEN en Render
 
-### Error: "No whales detected"
+Ya configurado en `next.config.js`:
+```javascript
+experimental: {
+  workerThreads: false,
+  cpus: 1,
+}
+```
 
-**Solución:**
-1. Normal al inicio
-2. Ejecutar cron job de detección manualmente
-3. Esperar a que haya suficientes trades
-
-### Error: "Challenge not updating"
-
-**Solución:**
-1. Verificar que endpoint POST /api/challenges/daily funciona
-2. Ver logs de Render
-3. Verificar que tabla DailyChallenge tiene datos
-
-### Error: "Prisma client errors"
-
-**Solución:**
-1. Verificar migraciones ejecutadas
-2. Ejecutar `npx prisma generate` localmente
-3. Re-deploy
+Si persiste:
+1. Vercel Dashboard → Settings → General
+2. Node.js Version → Verificar que sea 18.x o superior
+3. Considerar upgrade a Vercel Pro (más memoria)
 
 ---
 
-## 📈 Métricas de Éxito
+## 💰 Costos Estimados
 
-### Día 1:
-- ✅ Deploy exitoso sin errores
-- ✅ Homepage carga con nuevos componentes
-- ✅ Telegram bot responde a /start
+### MVP (0-100 usuarios/día)
 
-### Semana 1:
-- 📊 10+ análisis de AI Coach
-- 📊 5+ whales detectadas
-- 📊 50+ usuarios con streak activo
-- 📊 20+ usuarios vinculados a Telegram
+| Servicio | Plan | Costo | Límites |
+|----------|------|-------|---------|
+| Vercel | Hobby | **$0** | 100 GB bandwidth/mes |
+| Supabase | Free | **$0** | 500 MB DB, 1 GB bandwidth |
+| Upstash Redis | Free | **$0** | 10k requests/día |
+| Helius | Free | **$0** | 100k requests/mes |
+| **TOTAL** | | **$0/mes** | |
 
-### Mes 1:
-- 📊 DAU/MAU: 65%+
-- 📊 Premium conversion: 5%+
-- 📊 100+ whales en sistema
-- 📊 500+ Telegram users
+### Producción (1000 usuarios/día)
 
----
+| Servicio | Plan | Costo | Límites |
+|----------|------|-------|---------|
+| Vercel | Pro | **$20** | 1 TB bandwidth/mes |
+| Supabase | Pro | **$25** | 8 GB DB, 50 GB bandwidth |
+| Upstash Redis | Pay as you go | **~$2** | 100k requests/día |
+| Helius | Developer | **$49** | 1M requests/mes |
+| **TOTAL** | | **~$96/mes** | |
 
-## 🎯 Próximos Pasos Post-Launch
+### Scale (10k usuarios/día)
 
-1. **Semana 1-2:**
-   - Monitorear errores y bugs
-   - Ajustar cooldowns de AI Coach según uso
-   - Optimizar detección de whales
-
-2. **Semana 3-4:**
-   - Implementar Trading Duels
-   - Implementar Referral System
-   - Push notifications en Telegram
-
-3. **Mes 2:**
-   - Copy Trading automático
-   - AI Predictions
-   - Telegram voice commands
+| Servicio | Plan | Costo |
+|----------|------|-------|
+| Vercel | Pro | **$20** |
+| Supabase | Pro | **$25-50** (depende de DB size) |
+| Upstash Redis | **~$10** |
+| Helius | Professional | **$149** |
+| **TOTAL** | | **~$204-229/mes** |
 
 ---
 
-## 💰 Monetización
+## ✅ Production Launch Checklist
 
-### Pricing Sugerido:
+### Pre-Launch (1 hora antes)
 
-**Free:**
-- 1 AI análisis/semana
-- 5 whales máximo
-- Challenges básicos
+- [ ] Ejecutar healthcheck:
+  ```bash
+  bash scripts/production-healthcheck.sh
+  ```
 
-**Premium ($25-30/mes):**
-- 1 AI análisis/día
-- Whales ilimitadas
-- Real-time alerts
-- Copy trading
-- Premium support
+- [ ] Verificar todas las variables de entorno en Vercel
 
-**Conversión esperada:** 5-8% (vs 2-3% actual)
+- [ ] Hacer test end-to-end:
+  - [ ] Conectar wallet
+  - [ ] Generar card
+  - [ ] Guardar card
+  - [ ] Ver en dashboard
+  - [ ] Compartir en Twitter
+
+- [ ] Verificar Sentry configurado (opcional pero recomendado)
+
+- [ ] Backup de base de datos:
+  ```bash
+  # Supabase Dashboard → Database → Backups → Create Backup
+  ```
+
+### Durante Launch
+
+- [ ] Monitorear logs en tiempo real:
+  ```bash
+  # Vercel Dashboard → Logs (mantener abierto)
+  ```
+
+- [ ] Tener plan de rollback listo:
+  ```bash
+  # En caso de problemas críticos:
+  # Vercel → Deployments → [versión anterior] → Promote to Production
+  ```
+
+- [ ] Monitorear métricas:
+  - Response times (debe ser <2 seg)
+  - Error rate (debe ser <1%)
+  - Database connections
+
+### Post-Launch (primeras 24h)
+
+- [ ] Revisar Sentry para errores inesperados
+
+- [ ] Verificar que rate limiting funcione:
+  ```bash
+  # Intentar generar 20 cards seguidas
+  # Debe bloquearse después de 10
+  ```
+
+- [ ] Verificar que cards se guarden correctamente
+
+- [ ] Revisar feedback de primeros usuarios
+
+- [ ] Monitorear costos en dashboards
 
 ---
 
-## 📞 Support
+## 🆘 Contactos de Emergencia
 
-**Issues:**
-- GitHub: https://github.com/rxrmgg2srb-code/DegenScore-Card/issues
+### Si la App Cae en Producción
 
-**Documentación:**
-- ENGAGEMENT_FEATURES.md
-- KILLER_FEATURES.md
-- Este archivo (DEPLOYMENT.md)
+1. **Rollback inmediato:**
+   - Vercel Dashboard → Deployments → [última versión estable] → Promote to Production
+   - Tiempo: <1 minuto
+
+2. **Verificar servicios externos:**
+   - Supabase: https://status.supabase.com
+   - Vercel: https://www.vercel-status.com
+   - Upstash: https://status.upstash.com
+
+3. **Ver logs:**
+   - Vercel Dashboard → Logs (real-time)
+   - Buscar stack traces de errores
+
+4. **Desactivar feature problemática:**
+   - Si sabes qué feature causa el problema
+   - Hacer commit revirtiendo solo esa feature
+   - Push y esperar re-deploy (2-4 min)
+
+### Soporte de Servicios
+
+- Vercel: https://vercel.com/support
+- Supabase: https://supabase.com/support
+- Upstash: hello@upstash.com
+- Helius: support@helius.dev
 
 ---
 
-**¡Todo listo para lanzar! 🚀**
+## 📊 Monitoring
+
+### Métricas Clave a Monitorear
+
+1. **Response Time**
+   - Meta: <2 segundos
+   - Crítico: >5 segundos
+   - Vercel Dashboard → Analytics → Performance
+
+2. **Error Rate**
+   - Meta: <1%
+   - Crítico: >5%
+   - Sentry Dashboard (si configurado)
+
+3. **Database Connections**
+   - Supabase Dashboard → Database → Connections
+   - Meta: <20 conexiones activas
+   - Crítico: >80 conexiones (límite es 100)
+
+4. **API Usage**
+   - Helius Dashboard → Usage
+   - Monitorear para no exceder plan gratuito
+
+### Logs a Revisar Diariamente
+
+```bash
+# Vercel Dashboard → Logs
+# Buscar estos patrones:
+
+# ❌ Errores críticos:
+"Error:"
+"Failed to"
+"Timeout"
+
+# ⚠️ Warnings:
+"Rate limit exceeded"
+"Slow query"
+"High memory usage"
+
+# ✅ Métricas normales:
+"Card generated in"
+"Database connected"
+"Cache hit"
+```
+
+---
+
+## 🎯 Next Steps After Deploy
+
+1. **Configurar dominio custom** (opcional):
+   - Vercel Dashboard → Settings → Domains
+   - Agregar: degenscore.app (ejemplo)
+
+2. **Configurar alertas** (recomendado):
+   - Sentry → Alerts → New Alert Rule
+   - Trigger: Error rate > 5%
+
+3. **Optimizar SEO**:
+   - Verificar meta tags en `pages/_app.tsx`
+   - Agregar `robots.txt` y `sitemap.xml`
+
+4. **Analytics** (opcional):
+   - Google Analytics o Plausible
+   - Agregar tracking de conversión
+
+---
+
+## 📝 Notas Importantes
+
+### Build vs Runtime
+
+El build de Vercel está diseñado para **NUNCA fallar** por problemas de base de datos:
+
+- ✅ Build usa DATABASE_URL placeholder
+- ✅ Migraciones son best-effort (continúa aunque fallen)
+- ✅ Runtime usa DATABASE_URL real de environment variables
+
+**Esto significa:**
+- Puedes cambiar DATABASE_URL sin re-build
+- Puedes cambiar puerto de 5432 a 6543 (aunque no recomendado)
+- Puedes cambiar de Supabase a Neon sin problemas
+
+### Port 5432 vs 6543
+
+**Recomendación:** Siempre usar **5432** en producción.
+
+**Por qué:**
+- 5432: Conexión directa, soporta transacciones largas (Prisma migrations)
+- 6543: Connection pooler, solo para queries rápidos (<30 seg)
+
+**Cuándo usar 6543:**
+- Si tienes >100 conexiones concurrentes
+- Si usas Prisma Data Proxy (no nuestro caso)
+- Si Supabase recomienda explícitamente
+
+**Para cambiar:**
+```bash
+# 1. Actualizar variable en Vercel
+DATABASE_URL=postgresql://...:[puerto]/postgres
+
+# 2. Re-deploy (no rebuild necesario)
+# Vercel → Deployments → Redeploy
+```
+
+---
+
+**¿Preguntas?** Revisa `PRODUCTION-CHECKLIST.md` para más detalles sobre cada sistema.
