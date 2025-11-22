@@ -45,6 +45,8 @@ export function TokenScannerPage() {
   );
 }
 
+export default TokenScannerPage;
+
 // Force SSR to prevent build timeout
 export async function getServerSideProps() {
   return {
