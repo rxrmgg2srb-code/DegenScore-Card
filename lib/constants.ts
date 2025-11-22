@@ -43,6 +43,7 @@ export const TRADING = {
 // =============================================================================
 
 export const RATE_LIMIT = {
+  WINDOW_MS: 60000, // 1 minute in milliseconds
   REQUESTS_PER_MINUTE: 60,
   REQUESTS_PER_HOUR: 1000,
   REQUESTS_PER_DAY: 10000,

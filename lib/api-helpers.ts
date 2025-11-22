@@ -309,7 +309,7 @@ const rateLimitStore: RateLimitStore = {};
  */
 export function checkRateLimit(
   identifier: string,
-  maxRequests: number = RATE_LIMIT.MAX_REQUESTS_PER_MINUTE,
+  maxRequests: number = RATE_LIMIT.REQUESTS_PER_MINUTE,
   windowMs: number = RATE_LIMIT.WINDOW_MS
 ): {
   allowed: boolean;
@@ -358,7 +358,7 @@ export function checkRateLimit(
  */
 export function withRateLimit(
   handler: (req: NextApiRequest, res: NextApiResponse) => Promise<void>,
-  maxRequests: number = RATE_LIMIT.MAX_REQUESTS_PER_MINUTE
+  maxRequests: number = RATE_LIMIT.REQUESTS_PER_MINUTE
 ) {
   return withErrorHandler(async (req, res) => {
     // Use IP address as identifier (fallback to 'unknown')
