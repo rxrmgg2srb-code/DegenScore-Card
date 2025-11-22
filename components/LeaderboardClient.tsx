@@ -1,5 +1,3 @@
-import Head from 'next/head';
-import Link from 'next/link';
 import dynamic from 'next/dynamic';
 
 // Dynamic imports - NO ejecutar en servidor, solo en cliente
