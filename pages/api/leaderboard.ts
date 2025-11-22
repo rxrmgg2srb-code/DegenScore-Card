@@ -50,14 +50,14 @@ export default async function handler(
         cards.map(async (card) => {
           // Calcular badge points y obtener badges desbloqueados
           const { badges, totalPoints } = checkAllBadges({
-            totalVolume: card.totalVolume,
-            profitLoss: card.profitLoss,
-            winRate: card.winRate,
-            totalTrades: card.totalTrades,
-            tradingDays: card.tradingDays,
-            moonshots: card.moonshots,
-            diamondHands: card.diamondHands,
-            isPaid: card.isPaid,
+            totalVolume: card.totalVolume || 0,
+            profitLoss: card.profitLoss || 0,
+            winRate: card.winRate || 0,
+            totalTrades: card.totalTrades || 0,
+            tradingDays: card.tradingDays || 0,
+            moonshots: card.moonshots || 0,
+            diamondHands: card.diamondHands || 0,
+            isPaid: card.isPaid || false,
             twitter: card.twitter,
             telegram: card.telegram,
             profileImage: card.profileImage,
