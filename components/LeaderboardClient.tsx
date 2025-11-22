@@ -1,6 +1,3 @@
-import { useState, useEffect } from 'react';
-import Head from 'next/head';
-import Link from 'next/link';
 import dynamic from 'next/dynamic';
 
 // Dynamic imports - NO ejecutar en servidor, solo en cliente
@@ -14,10 +11,16 @@ const ChallengeWinnersWidget = dynamic(() => import('./ChallengeWinnersWidget'),
     loading: () => <div className="animate-pulse bg-gray-800/50 rounded-2xl h-96"></div>
 });
 
-import { BadgesDisplay } from './BadgesDisplay';
-import { LanguageSelector } from './LanguageSelector';
+export function LeaderboardClient() {
+    return (
+        <div className="container mx-auto px-4 py-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <RankingsWidget />
+                <ChallengeWinnersWidget />
+            </div>
+        </div>
+    );
+}
 
-// All the leaderboard logic and components
-export { LeaderboardClient as default };
+export default LeaderboardClient;
 
-// ... (rest of leaderboard implementation will be here)
