@@ -14,6 +14,7 @@ const ChallengeWinnersWidget = dynamic(() => import('../components/ChallengeWinn
   loading: () => <div className="animate-pulse bg-gray-800/50 rounded-2xl h-96"></div>
 });
 import { LanguageSelector } from '../components/LanguageSelector';
+import { Badge } from '../lib/badges-advanced';
 
 interface LeaderboardEntry {
   id: string;
@@ -27,7 +28,7 @@ interface LeaderboardEntry {
   xp: number;
   bestTrade: number;
   worstTrade: number;
-  badges: any[];
+  badges: string[];
   mintedAt: string;
   displayName?: string | null;
   twitter?: string | null;
@@ -37,7 +38,7 @@ interface LeaderboardEntry {
   likes: number;
   badgePoints?: number;
   referralCount?: number;
-  calculatedBadges?: any[]; // Badges desbloqueados con su info completa
+  calculatedBadges?: Badge[]; // Badges desbloqueados con su info completa
 }
 
 interface Stats {

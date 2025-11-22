@@ -1,19 +1,75 @@
-# Set default line ending behavior, in case people don't have core.autocrlf set.
+# =============================================================================
+# Git attributes for DegenScore Card
+# =============================================================================
+
+# Set default line ending behavior
 * text=auto
 
-# Declare files that will always have LF line endings on checkout.
+# Source code - Always LF
 *.js text eol=lf
 *.jsx text eol=lf
 *.ts text eol=lf
 *.tsx text eol=lf
 *.json text eol=lf
 *.sh text eol=lf
+*.md text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
 
-# Denote all files that are truly binary and should not be modified.
+# Lockfiles - should not be modified manually and use LF
+package-lock.json text eol=lf -diff
+yarn.lock text eol=lf -diff
+pnpm-lock.yaml text eol=lf -diff
+
+# Documentation
+*.md text eol=lf diff=markdown
+*.mdx text eol=lf diff=markdown
+
+# Config files
+.env* text eol=lf
+.gitignore text eol=lf
+.gitattributes text eol=lf
+*.config.js text eol=lf
+*.config.ts text eol=lf
+
+# Prisma
+*.prisma text eol=lf
+
+# Images - Binary files
 *.png binary
 *.jpg binary
 *.jpeg binary
 *.gif binary
 *.ico binary
+*.svg text eol=lf
+*.webp binary
+*.avif binary
+
+# Fonts - Binary files
 *.woff binary
 *.woff2 binary
+*.ttf binary
+*.otf binary
+*.eot binary
+
+# Archives - Binary files
+*.zip binary
+*.tar binary
+*.gz binary
+*.rar binary
+
+# Video/Audio - Binary files
+*.mp4 binary
+*.mov binary
+*.mp3 binary
+*.wav binary
+
+# Documents - Binary files
+*.pdf binary
+
+# Special handling for generated files
+.next/** -diff
+node_modules/** -diff
+dist/** -diff
+build/** -diff
+coverage/** -diff

@@ -54,6 +54,7 @@
     "**/*.test.tsx",
     "**/*.spec.ts",
     "e2e",
-    "sentry.*.config.ts"
+    "sentry.*.config.ts",
+    "playwright.config.ts"
   ]
 }

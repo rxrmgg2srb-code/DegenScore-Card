@@ -53,12 +53,11 @@ export default function FollowingContent() {
 
       const data = await response.json();
       setFollowedWallets(data.wallets);
-    } catch (err: any) {
-      logger.error('Error fetching followed wallets', err instanceof Error ? err : undefined, {
-        error: String(err)
-      });
-      setError(err.message);
-    } finally {
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err));
+      logger.error('Error fetching followed wallets', error);
+      setError(error.message);
+    } finally{
       setLoading(false);
     }
   };

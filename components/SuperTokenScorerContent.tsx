@@ -10,7 +10,7 @@ import { Header } from '@/components/Header';
 import SuperTokenScorer from '@/components/SuperTokenScorer';
 
 // Component only
-export function SuperTokenScorerPage() {
+export default function SuperTokenScorerPage() {
   return (
     <>
       <Head>
@@ -34,11 +34,4 @@ export function SuperTokenScorerPage() {
       </div>
     </>
   );
-}
-
-// Force SSR to prevent build timeout
-export async function getServerSideProps() {
-  return {
-    props: {},
-  };
 }

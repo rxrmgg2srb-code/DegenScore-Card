@@ -36,7 +36,17 @@
     "docker:dev": "docker-compose up",
     "docker:build": "docker build -t degenscore:latest .",
     "docker:down": "docker-compose down",
-    "prepare:husky": "husky install"
+    "prepare:husky": "husky install",
+    "check:console": "grep -r 'console\\.log' pages/ components/ lib/ --include='*.ts' --include='*.tsx' | grep -v logger.ts | grep -v node_modules || echo '✅ No console.log found'",
+    "check:any": "grep -r ': any' components/ pages/ lib/ --include='*.ts' --include='*.tsx' | grep -v node_modules | grep -v test | wc -l",
+    "check:quality": "npm run check:console && npm run check:any",
+    "clean": "rm -rf .next out dist node_modules/.cache",
+    "clean:all": "npm run clean && rm -rf node_modules",
+    "postinstall": "npx prisma generate",
+    "analyze": "ANALYZE=true next build",
+    "db:studio": "npx prisma studio",
+    "db:reset": "npx prisma migrate reset",
+    "db:seed": "npx prisma db seed"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.932.0",

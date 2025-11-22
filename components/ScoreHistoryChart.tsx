@@ -67,9 +67,10 @@ export default function ScoreHistoryChart({ walletAddress, className = '' }: Sco
       }
 
       setData(json);
-    } catch (err: any) {
-      logger.error('Error fetching score history:', err);
-      setError(err.message);
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err));
+      logger.error('Error fetching score history:', error);
+      setError(error.message);
     } finally {
       setLoading(false);
     }

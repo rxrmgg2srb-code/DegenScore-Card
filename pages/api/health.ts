@@ -1,4 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
+import { logger } from '@/lib/logger';
 
 /**
  * Health check endpoint para Render y otros servicios de monitoreo
@@ -25,13 +26,8 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 
   const allHealthy = Object.values(checks).every(Boolean);
 
-  // Log para debugging (solo en desarrollo)
-  if (process.env.NODE_ENV !== 'production') {
-    console.log('[Health Check]', {
-      ...checks,
-      timestamp: new Date().toISOString(),
-    });
-  }
+  // Log para debugging usando logger estructurado
+  logger.debug('Health check executed', checks);
 
   // Respuesta del health check
   const response = {

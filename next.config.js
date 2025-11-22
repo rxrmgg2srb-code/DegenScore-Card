@@ -31,16 +31,9 @@ const nextConfig = {
   // Increase timeout for static page generation (default is 60s)
   staticPageGenerationTimeout: 180,
 
-  // Exclude problematic pages from static generation
-  // These pages will be generated on-demand at runtime
-  experimental: {
-    // External packages that should not be bundled
-    serverComponentsExternalPackages: ['@napi-rs/canvas', 'bullmq', 'ioredis'],
-
-    // Skip static generation for these pages - they timeout during build
-    skipTrailingSlashRedirect: true,
-    skipMiddlewareUrlNormalize: true,
-  },
+  // Skip trailing slash redirect (moved out of experimental in Next.js 14+)
+  skipTrailingSlashRedirect: true,
+  skipMiddlewareUrlNormalize: true,
 
   // Disable static optimization for specific pages
   // This forces them to be server-rendered on-demand
@@ -89,12 +82,12 @@ const nextConfig = {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://cdn.jsdelivr.net https://js.sentry-cdn.com https://browser.sentry-cdn.com",
-              "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+              "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://cdn.jsdelivr.net https://js.sentry-cdn.com https://browser.sentry-cdn.com https://vercel.live https://*.vercel.live",
+              "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://extension-cdn.getdirecto.com",
               "font-src 'self' https://fonts.gstatic.com data:",
               "img-src 'self' data: blob: https:",
-              "connect-src 'self' https://api.mainnet-beta.solana.com https://api.devnet.solana.com https://*.helius-rpc.com wss://*.helius-rpc.com https://*.supabase.co wss://*.supabase.co https://twitter.com https://t.me https://*.ingest.sentry.io https://pusher.com wss://ws-*.pusher.com",
-              "frame-src 'self'",
+              "connect-src 'self' https://api.mainnet-beta.solana.com https://api.devnet.solana.com https://*.helius-rpc.com wss://*.helius-rpc.com https://*.supabase.co wss://*.supabase.co https://twitter.com https://t.me https://*.ingest.sentry.io https://*.pusher.com wss://*.pusher.com https://vercel.live wss://*.pusher.com",
+              "frame-src 'self' https://vercel.live",
               "object-src 'none'",
               "base-uri 'self'",
               "form-action 'self'"
