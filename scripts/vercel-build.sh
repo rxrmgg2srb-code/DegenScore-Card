@@ -9,14 +9,6 @@ echo "🚀 Vercel Build - DegenScore Card"
 echo "========================================="
 echo ""
 
-# Step 0: Install Prisma CLI (in devDependencies, not installed in production builds)
-echo "📦 [0/3] Installing Prisma CLI..."
-echo ""
-# Use --legacy-peer-deps to bypass override conflicts
-npm install --no-save --legacy-peer-deps prisma@6.19.0
-echo "✅ Prisma CLI installed"
-echo ""
-
 # Step 1: Apply Prisma migrations
 echo "📊 [1/3] Applying Prisma migrations..."
 echo ""
@@ -55,7 +47,7 @@ else
     # Try to run migrations with timeout, but don't fail the build if they error
     echo "⏱️  Running migrations (60s timeout)..."
   set +e  # Temporarily disable exit on error
-  # Prisma CLI is now installed in Step 0
+  # Prisma CLI is now in dependencies (auto-installed)
   MIGRATION_OUTPUT=$(timeout 60 npx prisma migrate deploy 2>&1)
   EXIT_CODE=$?
   set -e  # Re-enable exit on error
@@ -114,7 +106,7 @@ fi  # End of DATABASE_URL check
 # Step 2: Generate Prisma Client
 echo "🔧 [2/3] Generating Prisma Client..."
 echo ""
-# Prisma CLI is now installed in Step 0
+# Prisma CLI is now in dependencies (auto-installed)
 npx prisma generate
 echo "✅ Prisma Client generated successfully"
 echo ""
