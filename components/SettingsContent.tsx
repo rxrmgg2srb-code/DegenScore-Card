@@ -9,7 +9,7 @@ const NotificationSettings = dynamic(() => import('../components/NotificationSet
 });
 
 // Component only
-export function SettingsPage() {
+export default function SettingsContent() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 relative overflow-hidden">
       {/* Animated background */}
