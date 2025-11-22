@@ -972,7 +972,7 @@ async function checkLPStatus(pairAddress: string): Promise<{ lpBurned: boolean; 
       if (isRaydiumProgram || isOrcaProgram) {
         // For DEX programs, we need to check the LP token holders
         // This requires more complex parsing - for now, return conservative estimate
-        logger.info('[LP Status] Detected DEX program pool', undefined, {
+        logger.info('[LP Status] Detected DEX program pool', {
           pairAddress: pairAddress.substring(0, 10) + '...',
           program: isRaydiumProgram ? 'Raydium' : 'Orca',
         });
@@ -984,7 +984,8 @@ async function checkLPStatus(pairAddress: string): Promise<{ lpBurned: boolean; 
       return { lpBurned: false, lpLocked: false, burnPercentage: 0 };
     }
   } catch (error) {
-    logger.warn('[LP Status] Failed to check LP status', error instanceof Error ? error : undefined, {
+    logger.warn('[LP Status] Failed to check LP status', {
+      error: error instanceof Error ? error.message : String(error),
       pairAddress: pairAddress.substring(0, 10) + '...'
     });
     return { lpBurned: false, lpLocked: false, burnPercentage: 0 };
@@ -1008,7 +1009,7 @@ async function fetchLiquidityPools(tokenAddress: string): Promise<any[]> {
       const data = await response.json();
 
       if (data?.pairs && Array.isArray(data.pairs) && data.pairs.length > 0) {
-        logger.info('[Liquidity] DexScreener found pools', undefined, {
+        logger.info('[Liquidity] DexScreener found pools', {
           tokenAddress: tokenAddress.substring(0, 10) + '...',
           poolCount: data.pairs.length
         });
@@ -1019,9 +1020,9 @@ async function fetchLiquidityPools(tokenAddress: string): Promise<any[]> {
         for (const pair of data.pairs) {
           // Filter for SOL pairs only (most relevant)
           const isSOLPair = pair.quoteToken?.symbol === 'SOL' ||
-                           pair.quoteToken?.symbol === 'WSOL' ||
-                           pair.baseToken?.symbol === 'SOL' ||
-                           pair.baseToken?.symbol === 'WSOL';
+            pair.quoteToken?.symbol === 'WSOL' ||
+            pair.baseToken?.symbol === 'SOL' ||
+            pair.baseToken?.symbol === 'WSOL';
 
           if (!isSOLPair) continue;
 
@@ -1072,7 +1073,7 @@ async function fetchLiquidityPools(tokenAddress: string): Promise<any[]> {
 
             // Log LP status for debugging
             if (lpBurned || lpLocked) {
-              logger.info('[LP Status] Detected LP protection from DexScreener', undefined, {
+              logger.info('[LP Status] Detected LP protection from DexScreener', {
                 pairAddress: pair.pairAddress?.substring(0, 10) + '...',
                 lpBurned,
                 lpLocked,
@@ -1084,7 +1085,7 @@ async function fetchLiquidityPools(tokenAddress: string): Promise<any[]> {
 
         if (pools.length > 0) {
           const totalLiquiditySOL = pools.reduce((sum, p) => sum + p.liquiditySOL, 0);
-          logger.info('[Liquidity] Successfully retrieved pool data from DexScreener', undefined, {
+          logger.info('[Liquidity] Successfully retrieved pool data from DexScreener', {
             poolCount: pools.length,
             totalLiquiditySOL: totalLiquiditySOL.toFixed(2),
             totalLiquidityUSD: (totalLiquiditySOL * solPrice).toFixed(2),
@@ -1094,7 +1095,8 @@ async function fetchLiquidityPools(tokenAddress: string): Promise<any[]> {
       }
     }
   } catch (error) {
-    logger.warn('[Liquidity] DexScreener failed', error instanceof Error ? error : undefined, {
+    logger.warn('[Liquidity] DexScreener failed', {
+      error: error instanceof Error ? error.message : String(error),
       tokenAddress: tokenAddress.substring(0, 10) + '...'
     });
   }
@@ -1132,7 +1134,7 @@ async function fetchLiquidityPools(tokenAddress: string): Promise<any[]> {
               lpLocked: false,
             });
 
-            logger.info('[Liquidity] Retrieved from Birdeye', undefined, {
+            logger.info('[Liquidity] Retrieved from Birdeye', {
               liquiditySOL: liquiditySOL.toFixed(2),
               liquidityUSD: liquidityUSD.toFixed(2),
             });
@@ -1174,7 +1176,7 @@ async function fetchLiquidityPools(tokenAddress: string): Promise<any[]> {
           lpLocked: false,
         });
 
-        logger.info('[Liquidity] Estimated from Jupiter', undefined, {
+        logger.info('[Liquidity] Estimated from Jupiter', {
           liquiditySOL: estimatedLiquiditySOL.toFixed(2),
         });
         return pools;
@@ -1208,7 +1210,7 @@ async function getSOLPrice(): Promise<number> {
       const data = await response.json();
       const price = data?.solana?.usd;
       if (price && typeof price === 'number' && price > 0) {
-        logger.info('[SOL Price] Obtained from CoinGecko', undefined, { price });
+        logger.info('[SOL Price] Obtained from CoinGecko', { price });
         return price;
       }
     }
@@ -1230,7 +1232,7 @@ async function getSOLPrice(): Promise<number> {
       const data = await response.json();
       const price = data?.data?.SOL?.price;
       if (price && typeof price === 'number' && price > 0) {
-        logger.info('[SOL Price] Obtained from Jupiter', undefined, { price });
+        logger.info('[SOL Price] Obtained from Jupiter', { price });
         return price;
       }
     }
@@ -1240,7 +1242,7 @@ async function getSOLPrice(): Promise<number> {
 
   // Conservative fallback price (updated periodically)
   const fallbackPrice = 150;
-  logger.warn('[SOL Price] Using fallback price', undefined, { fallbackPrice });
+  logger.warn('[SOL Price] Using fallback price', { fallbackPrice });
   return fallbackPrice;
 }
 
