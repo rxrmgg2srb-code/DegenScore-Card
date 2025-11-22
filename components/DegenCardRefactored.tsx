@@ -273,7 +273,7 @@ function ConnectedWalletView({
               <span className="text-2xl">✅</span> Wallet Connected
             </p>
             <p className="text-white font-mono text-lg font-semibold">
-              {publicKey.toBase58().slice(0, 8)}...{publicKey.toBase58().slice(-8)}
+              {publicKey ? `${publicKey.toBase58().slice(0, 8)}...${publicKey.toBase58().slice(-8)}` : 'Unknown'}
             </p>
           </div>
           <div className="transform hover:scale-105 transition-transform">
