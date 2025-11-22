@@ -13,13 +13,15 @@ export interface ErrorContext {
  */
 export class AppError extends Error {
     public readonly errorCode: string;
+    public readonly statusCode: number;
     public readonly context?: ErrorContext;
     public readonly timestamp: Date;
 
-    constructor(message: string, errorCode: string, context?: ErrorContext) {
+    constructor(message: string, errorCode: string, statusCode: number = 500, context?: ErrorContext) {
         super(message);
         this.name = this.constructor.name;
         this.errorCode = errorCode;
+        this.statusCode = statusCode;
         this.context = context;
         this.timestamp = new Date();
 
@@ -34,8 +36,8 @@ export class AppError extends Error {
  * API-related errors
  */
 export class APIError extends AppError {
-    constructor(message: string, context?: ErrorContext) {
-        super(message, 'API_ERROR', context);
+    constructor(message: string, statusCode: number = 500, context?: ErrorContext) {
+        super(message, 'API_ERROR', statusCode, context);
     }
 }
 
@@ -44,7 +46,7 @@ export class APIError extends AppError {
  */
 export class DatabaseError extends AppError {
     constructor(message: string, context?: ErrorContext) {
-        super(message, 'DATABASE_ERROR', context);
+        super(message, 'DATABASE_ERROR', 500, context);
     }
 }
 
@@ -53,7 +55,7 @@ export class DatabaseError extends AppError {
  */
 export class ValidationError extends AppError {
     constructor(message: string, context?: ErrorContext) {
-        super(message, 'VALIDATION_ERROR', context);
+        super(message, 'VALIDATION_ERROR', 400, context);
     }
 }
 
@@ -62,7 +64,7 @@ export class ValidationError extends AppError {
  */
 export class AuthenticationError extends AppError {
     constructor(message: string, context?: ErrorContext) {
-        super(message, 'AUTHENTICATION_ERROR', context);
+        super(message, 'AUTHENTICATION_ERROR', 401, context);
     }
 }
 
@@ -71,7 +73,7 @@ export class AuthenticationError extends AppError {
  */
 export class AuthorizationError extends AppError {
     constructor(message: string, context?: ErrorContext) {
-        super(message, 'AUTHORIZATION_ERROR', context);
+        super(message, 'AUTHORIZATION_ERROR', 403, context);
     }
 }
 
@@ -80,7 +82,7 @@ export class AuthorizationError extends AppError {
  */
 export class InvalidWalletAddressError extends AppError {
     constructor(address: string) {
-        super('Invalid wallet address', 'INVALID_ADDRESS', { address });
+        super('Invalid wallet address', 'INVALID_ADDRESS', 400, { address });
     }
 }
 
@@ -89,7 +91,7 @@ export class InvalidWalletAddressError extends AppError {
  */
 export class RateLimitError extends AppError {
     constructor(message: string, context?: ErrorContext) {
-        super(message, 'RATE_LIMIT_EXCEEDED', context);
+        super(message, 'RATE_LIMIT_EXCEEDED', 429, context);
     }
 }
 
@@ -101,6 +103,7 @@ export class NotFoundError extends AppError {
         super(
             `${resource} not found${identifier ? `: ${identifier}` : ''}`,
             'NOT_FOUND',
+            404,
             { resource, identifier }
         );
     }
@@ -114,6 +117,7 @@ export class ExternalServiceError extends AppError {
         super(
             `External service error (${service}): ${message}`,
             'EXTERNAL_SERVICE_ERROR',
+            502,
             { service, ...context }
         );
     }
@@ -124,7 +128,7 @@ export class ExternalServiceError extends AppError {
  */
 export class ConfigurationError extends AppError {
     constructor(message: string, context?: ErrorContext) {
-        super(message, 'CONFIGURATION_ERROR', context);
+        super(message, 'CONFIGURATION_ERROR', 500, context);
     }
 }
 

@@ -1,30 +1,15 @@
 import { useState } from 'react';
 import Head from 'next/head';
-import { motion } from 'framer-motion';
 import { LanguageSelector } from '../components/LanguageSelector';
 import { NavigationButtons } from '../components/NavigationButtons';
-
-interface Section {
-  id: string;
-  title: string;
-  icon: string;
-}
-
-const sections: Section[] = [
-  { id: 'intro', title: 'Introducción', icon: '📖' },
-  { id: 'getting-started', title: 'Primeros Pasos', icon: '🚀' },
-  { id: 'generate-card', title: 'Generar Tu Card', icon: '🎴' },
-  { id: 'understand-metrics', title: 'Entender Métricas', icon: '📊' },
-  { id: 'badges', title: 'Sistema de Badges', icon: '🏆' },
-  { id: 'upgrade', title: 'Upgrade a Premium', icon: '💎' },
-  { id: 'daily-checkin', title: 'Check-In Diario', icon: '🔥' },
-  { id: 'referrals', title: 'Sistema de Referidos', icon: '🎁' },
-  { id: 'challenges', title: 'Weekly Challenges', icon: '⚔️' },
-  { id: 'hot-feed', title: 'Alpha Feed', icon: '📡' },
-  { id: 'leaderboard', title: 'Leaderboard', icon: '🏅' },
-  { id: 'tiers', title: 'Tiers & Beneficios', icon: '⭐' },
-  { id: 'faq', title: 'FAQ', icon: '❓' },
-];
+import { sections } from './docs/constants';
+import { DocSidebar } from './docs/DocSidebar';
+import { DocSection } from './docs/DocSection';
+import { MetricCard } from './docs/MetricCard';
+import { Badge, BadgeCategory, BadgeItem, RarityBadge } from './docs/BadgeComponents';
+import { TierCard, ReferralTier, FeedDelayCard, TierRow } from './docs/TierComponents';
+import { FAQ } from './docs/FAQ';
+import { Step, ProcessStep, FeedExample, LeaderboardCategory } from './docs/Common';
 
 export function Documentation() {
   const [activeSection, setActiveSection] = useState('intro');
@@ -67,34 +52,17 @@ export function Documentation() {
         <div className="container mx-auto px-4 py-8">
           <div className="flex flex-col lg:flex-row gap-8">
             {/* Sidebar Navigation */}
-            <aside className="lg:w-64 flex-shrink-0">
-              <div className="sticky top-24 bg-black/30 backdrop-blur-sm rounded-xl p-4 border border-purple-500/30">
-                <h2 className="text-sm font-bold text-purple-300 mb-3 uppercase tracking-wider">
-                  Contenido
-                </h2>
-                <nav className="space-y-1">
-                  {sections.map((section) => (
-                    <button
-                      key={section.id}
-                      onClick={() => scrollToSection(section.id)}
-                      className={`w-full text-left px-3 py-2 rounded-lg transition-all ${activeSection === section.id
-                        ? 'bg-purple-600 text-white font-medium'
-                        : 'text-gray-300 hover:bg-purple-900/30 hover:text-white'
-                        }`}
-                    >
-                      <span className="mr-2">{section.icon}</span>
-                      {section.title}
-                    </button>
-                  ))}
-                </nav>
-              </div>
-            </aside>
+            <DocSidebar
+              sections={sections}
+              activeSection={activeSection}
+              onSectionClick={scrollToSection}
+            />
 
             {/* Main Content */}
             <main className="flex-1 max-w-4xl">
               <div className="space-y-12">
                 {/* Introducción */}
-                <Section id="intro" title="Introducción" icon="📖">
+                <DocSection id="intro" title="Introducción" icon="📖">
                   <p className="text-gray-300 text-lg mb-4">
                     Bienvenido a <strong className="text-purple-400">DegenScore Card</strong>, la plataforma definitiva para analizar,
                     gamificar y compartir tus trades en Solana.
@@ -127,10 +95,10 @@ export function Documentation() {
                       </li>
                     </ul>
                   </div>
-                </Section>
+                </DocSection>
 
                 {/* Primeros Pasos */}
-                <Section id="getting-started" title="Primeros Pasos" icon="🚀">
+                <DocSection id="getting-started" title="Primeros Pasos" icon="🚀">
                   <div className="space-y-4">
                     <Step number={1} title="Conecta tu Wallet">
                       <p className="text-gray-300 mb-3">
@@ -170,10 +138,10 @@ export function Documentation() {
                       </p>
                     </Step>
                   </div>
-                </Section>
+                </DocSection>
 
                 {/* Generar Card */}
-                <Section id="generate-card" title="Generar Tu Card" icon="🎴">
+                <DocSection id="generate-card" title="Generar Tu Card" icon="🎴">
                   <p className="text-gray-300 mb-4">
                     Tu DegenScore Card es completamente <strong>GRATIS</strong> de generar. Aquí está el proceso:
                   </p>
@@ -208,10 +176,10 @@ export function Documentation() {
                       Vuelve regularmente para ver cómo mejora tu DegenScore!
                     </p>
                   </div>
-                </Section>
+                </DocSection>
 
                 {/* Entender Métricas */}
-                <Section id="understand-metrics" title="Entender Métricas" icon="📊">
+                <DocSection id="understand-metrics" title="Entender Métricas" icon="📊">
                   <p className="text-gray-300 mb-6">
                     DegenScore Card rastrea más de 30 métricas. Aquí las más importantes:
                   </p>
@@ -266,10 +234,10 @@ export function Documentation() {
                       description="Trades ejecutados en menos de 1 hora. Velocidad pura ⚡"
                     />
                   </div>
-                </Section>
+                </DocSection>
 
                 {/* Badges */}
-                <Section id="badges" title="Sistema de Badges" icon="🏆">
+                <DocSection id="badges" title="Sistema de Badges" icon="🏆">
                   <p className="text-gray-300 mb-6">
                     Los badges son logros que desbloqueas basados en tus actividades. Hay <strong>50+ badges</strong> disponibles.
                   </p>
@@ -308,10 +276,10 @@ export function Documentation() {
                       <RarityBadge color="red">MYTHIC</RarityBadge>
                     </div>
                   </div>
-                </Section>
+                </DocSection>
 
                 {/* Upgrade */}
-                <Section id="upgrade" title="Upgrade a Premium" icon="💎">
+                <DocSection id="upgrade" title="Upgrade a Premium" icon="💎">
                   <p className="text-gray-300 mb-6">
                     Desbloquea features exclusivos con PREMIUM o PRO tier.
                   </p>
@@ -369,10 +337,10 @@ export function Documentation() {
                       <li>✓ Primeros 100 usuarios solamente</li>
                     </ul>
                   </div>
-                </Section>
+                </DocSection>
 
                 {/* Daily Check-In */}
-                <Section id="daily-checkin" title="Check-In Diario" icon="🔥">
+                <DocSection id="daily-checkin" title="Check-In Diario" icon="🔥">
                   <p className="text-gray-300 mb-6">
                     El sistema de check-in diario te recompensa por engagement constante.
                   </p>
@@ -420,10 +388,10 @@ export function Documentation() {
                       </p>
                     </div>
                   </div>
-                </Section>
+                </DocSection>
 
                 {/* Referidos */}
-                <Section id="referrals" title="Sistema de Referidos" icon="🎁">
+                <DocSection id="referrals" title="Sistema de Referidos" icon="🎁">
                   <p className="text-gray-300 mb-6">
                     Invita amigos y gana recompensas increíbles. Tu link de referido: <code className="bg-purple-900/50 px-2 py-1 rounded">degenscore.xyz?ref=TU_WALLET</code>
                   </p>
@@ -461,10 +429,10 @@ export function Documentation() {
                       <p><strong>5.</strong> Reclama recompensas cuando alcances un milestone</p>
                     </div>
                   </div>
-                </Section>
+                </DocSection>
 
                 {/* Weekly Challenges */}
-                <Section id="challenges" title="Weekly Challenges" icon="⚔️">
+                <DocSection id="challenges" title="Weekly Challenges" icon="⚔️">
                   <p className="text-gray-300 mb-6">
                     Compite semanalmente por <strong className="text-yellow-400">1 SOL</strong>. El challenge se activa cuando haya <strong>100 cards generadas</strong>.
                   </p>
@@ -520,10 +488,10 @@ export function Documentation() {
                       💡 <strong>Nota:</strong> Solo usuarios PREMIUM o PRO pueden participar en challenges.
                     </p>
                   </div>
-                </Section>
+                </DocSection>
 
                 {/* Hot Feed */}
-                <Section id="hot-feed" title="Alpha Feed (Hot Trades)" icon="📡">
+                <DocSection id="hot-feed" title="Alpha Feed (Hot Trades)" icon="📡">
                   <p className="text-gray-300 mb-6">
                     El Alpha Feed muestra trades en tiempo real de las mejores wallets de Solana. ¡Copia a los winners!
                   </p>
@@ -562,10 +530,10 @@ export function Documentation() {
                       DYOR (Do Your Own Research) antes de copiar cualquier trade.
                     </p>
                   </div>
-                </Section>
+                </DocSection>
 
                 {/* Leaderboard */}
-                <Section id="leaderboard" title="Leaderboard" icon="🏅">
+                <DocSection id="leaderboard" title="Leaderboard" icon="🏅">
                   <p className="text-gray-300 mb-6">
                     Compite globalmente y demuestra quién es el mejor degen. El leaderboard tiene múltiples categorías:
                   </p>
@@ -603,10 +571,10 @@ export function Documentation() {
                       <li>• <strong>Holdea winners</strong>: Diamond hands se recompensa</li>
                     </ul>
                   </div>
-                </Section>
+                </DocSection>
 
                 {/* Tiers */}
-                <Section id="tiers" title="Tiers & Beneficios Completos" icon="⭐">
+                <DocSection id="tiers" title="Tiers & Beneficios Completos" icon="⭐">
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm">
                       <thead>
@@ -634,10 +602,10 @@ export function Documentation() {
                       </tbody>
                     </table>
                   </div>
-                </Section>
+                </DocSection>
 
                 {/* FAQ */}
-                <Section id="faq" title="Preguntas Frecuentes" icon="❓">
+                <DocSection id="faq" title="Preguntas Frecuentes" icon="❓">
                   <div className="space-y-4">
                     <FAQ
                       question="¿Es gratis generar mi card?"
@@ -680,7 +648,7 @@ export function Documentation() {
                       answer="Al final de la semana, automáticamente verificamos quién cumple los requisitos y tiene la mejor métrica. El premio se envía en las 48h siguientes."
                     />
                   </div>
-                </Section>
+                </DocSection>
               </div>
 
               {/* Footer */}
@@ -707,230 +675,3 @@ export function Documentation() {
 
 // Component only - loaded dynamically
 export { Documentation as default };
-
-// Helper Components
-
-function Section({ id, title, icon, children }: { id: string; title: string; icon: string; children: React.ReactNode }) {
-  return (
-    <motion.section
-      id={id}
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      className="scroll-mt-24"
-    >
-      <h2 className="text-3xl font-bold mb-6 flex items-center gap-3">
-        <span className="text-4xl">{icon}</span>
-        {title}
-      </h2>
-      <div className="text-gray-300">
-        {children}
-      </div>
-    </motion.section>
-  );
-}
-
-function Step({ number, title, children }: { number: number; title: string; children: React.ReactNode }) {
-  return (
-    <div className="flex gap-4">
-      <div className="flex-shrink-0 w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center font-bold">
-        {number}
-      </div>
-      <div className="flex-1">
-        <h4 className="font-bold text-lg mb-2">{title}</h4>
-        {children}
-      </div>
-    </div>
-  );
-}
-
-function ProcessStep({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="flex items-center gap-3 text-gray-200">
-      <div className="w-2 h-2 bg-purple-400 rounded-full" />
-      <p>{children}</p>
-    </div>
-  );
-}
-
-function Badge({ children }: { children: React.ReactNode }) {
-  return (
-    <span className="bg-purple-900/50 border border-purple-500/30 px-2 py-1 rounded text-xs">
-      {children}
-    </span>
-  );
-}
-
-function MetricCard({ title, range, description, levels }: any) {
-  return (
-    <div className="bg-black/30 border border-gray-700 rounded-lg p-4">
-      <div className="flex justify-between items-start mb-2">
-        <h4 className="font-bold text-lg">{title}</h4>
-        <span className="text-sm text-purple-400">{range}</span>
-      </div>
-      <p className="text-sm text-gray-400 mb-3">{description}</p>
-      {levels && (
-        <div className="space-y-1">
-          {levels.map((level: any, i: number) => (
-            <div key={i} className="flex justify-between text-xs">
-              <span>{level.emoji} {level.label}</span>
-              <span className="text-gray-500">{level.range}</span>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function BadgeCategory({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div className="bg-black/30 border border-gray-700 rounded-lg p-4">
-      <h4 className="font-bold mb-3">{title}</h4>
-      <div className="space-y-2">
-        {children}
-      </div>
-    </div>
-  );
-}
-
-function BadgeItem({ name, description, rarity }: { name: string; description: string; rarity: string }) {
-  const colors: any = {
-    COMMON: 'text-gray-400',
-    RARE: 'text-green-400',
-    EPIC: 'text-purple-400',
-    LEGENDARY: 'text-orange-400',
-    MYTHIC: 'text-red-400',
-  };
-
-  return (
-    <div className="flex justify-between items-center text-sm">
-      <div>
-        <p className="font-medium">{name}</p>
-        <p className="text-xs text-gray-500">{description}</p>
-      </div>
-      <span className={`text-xs font-bold ${colors[rarity]}`}>{rarity}</span>
-    </div>
-  );
-}
-
-function RarityBadge({ color, children }: { color: string; children: React.ReactNode }) {
-  const colors: any = {
-    gray: 'bg-gray-700 text-gray-300',
-    green: 'bg-green-900/50 text-green-300 border-green-500/30',
-    purple: 'bg-purple-900/50 text-purple-300 border-purple-500/30',
-    orange: 'bg-orange-900/50 text-orange-300 border-orange-500/30',
-    red: 'bg-red-900/50 text-red-300 border-red-500/30',
-  };
-
-  return (
-    <div className={`${colors[color]} border px-2 py-1 rounded text-xs font-bold text-center`}>
-      {children}
-    </div>
-  );
-}
-
-function TierCard({ tier, price, features, highlight }: any) {
-  return (
-    <div className={`rounded-xl p-6 ${highlight ? 'bg-gradient-to-br from-purple-900/50 to-pink-900/50 border-2 border-purple-500' : 'bg-black/30 border border-gray-700'}`}>
-      <h4 className="text-xl font-bold mb-2">{tier}</h4>
-      <p className={`text-2xl font-bold mb-4 ${highlight ? 'text-purple-400' : 'text-gray-300'}`}>{price}</p>
-      <ul className="space-y-2 text-sm">
-        {features.map((f: string, i: number) => (
-          <li key={i} className="flex items-start gap-2">
-            <span className="text-purple-400">✓</span>
-            <span>{f}</span>
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
-
-function ReferralTier({ count, title, rewards }: { count: number; title: string; rewards: string[] }) {
-  return (
-    <div className="bg-gradient-to-br from-purple-900/30 to-pink-900/30 border border-purple-500/30 rounded-lg p-4">
-      <div className="flex items-center gap-3 mb-3">
-        <div className="bg-purple-600 rounded-full w-10 h-10 flex items-center justify-center font-bold">
-          {count}
-        </div>
-        <h5 className="font-bold">{title}</h5>
-      </div>
-      <ul className="space-y-1 text-sm text-gray-300">
-        {rewards.map((r, i) => (
-          <li key={i}>• {r}</li>
-        ))}
-      </ul>
-    </div>
-  );
-}
-
-function FeedDelayCard({ tier, delay, highlight }: { tier: string; delay: string; highlight?: boolean }) {
-  return (
-    <div className={`rounded-lg p-4 text-center ${highlight ? 'bg-purple-900/50 border-2 border-purple-500' : 'bg-black/30 border border-gray-700'}`}>
-      <p className="font-bold mb-1">{tier}</p>
-      <p className={`text-2xl font-bold ${highlight ? 'text-purple-400' : 'text-gray-400'}`}>{delay}</p>
-      <p className="text-xs text-gray-500 mt-1">delay</p>
-    </div>
-  );
-}
-
-function FeedExample({ emoji, action, wallet, token, amount, score }: any) {
-  return (
-    <div className="bg-gray-800/50 rounded-lg p-3 text-sm">
-      <p>
-        <span className="mr-2">{emoji}</span>
-        <strong>{action}</strong> by{' '}
-        <span className="text-purple-400">{wallet}</span>{' '}
-        (Score: {score})
-      </p>
-      <p className="text-gray-400 text-xs mt-1">
-        {token} • {amount}
-      </p>
-    </div>
-  );
-}
-
-function LeaderboardCategory({ icon, title, description }: { icon: string; title: string; description: string }) {
-  return (
-    <div className="bg-black/30 border border-gray-700 rounded-lg p-4">
-      <h5 className="font-bold mb-2">
-        <span className="mr-2">{icon}</span>
-        {title}
-      </h5>
-      <p className="text-sm text-gray-400">{description}</p>
-    </div>
-  );
-}
-
-function TierRow({ feature, free, premium, pro }: any) {
-  return (
-    <tr className="border-b border-gray-800">
-      <td className="p-3">{feature}</td>
-      <td className="p-3 text-center text-gray-400">{free}</td>
-      <td className="p-3 text-center text-purple-400">{premium}</td>
-      <td className="p-3 text-center text-yellow-400">{pro}</td>
-    </tr>
-  );
-}
-
-function FAQ({ question, answer }: { question: string; answer: string }) {
-  const [isOpen, setIsOpen] = useState(false);
-
-  return (
-    <div className="bg-black/30 border border-gray-700 rounded-lg overflow-hidden">
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="w-full text-left p-4 flex justify-between items-center hover:bg-gray-800/30 transition-colors"
-      >
-        <span className="font-medium">{question}</span>
-        <span className="text-purple-400">{isOpen ? '−' : '+'}</span>
-      </button>
-      {isOpen && (
-        <div className="p-4 pt-0 text-gray-400 text-sm border-t border-gray-800">
-          {answer}
-        </div>
-      )}
-    </div>
-  );
-}
