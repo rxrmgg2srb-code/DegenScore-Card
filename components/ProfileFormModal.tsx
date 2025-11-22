@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { Connection, PublicKey, Transaction, SystemProgram, LAMPORTS_PER_SOL } from '@solana/web3.js';
-import { PAYMENT_CONFIG } from '../lib/config';
+import { PAYMENT_CONFIG, UPLOAD_CONFIG } from '../lib/config';
 import { logger } from '@/lib/logger';
 
 interface ProfileFormModalProps {
@@ -20,7 +20,14 @@ export interface ProfileData {
   profileImage: string | null;
 }
 
-export default function ProfileFormModal({ isOpen, onClose, onSubmit, walletAddress, hasPromoCode = false, promoCodeApplied }: ProfileFormModalProps) {
+export default function ProfileFormModal({
+  isOpen,
+  onClose,
+  onSubmit,
+  walletAddress,
+  hasPromoCode = false,
+  promoCodeApplied,
+}: ProfileFormModalProps) {
   const { publicKey, sendTransaction } = useWallet();
   const [formData, setFormData] = useState<ProfileData>({
     displayName: '',
@@ -39,29 +46,27 @@ export default function ProfileFormModal({ isOpen, onClose, onSubmit, walletAddr
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validar tamaño (máx 2MB)
-    if (file.size > 2 * 1024 * 1024) {
-      alert('Image must be less than 2MB');
+    // Validate size using config
+    if (file.size > UPLOAD_CONFIG.MAX_FILE_SIZE) {
+      const maxMb = Math.round(UPLOAD_CONFIG.MAX_FILE_SIZE / (1024 * 1024));
+      alert(`Image must be less than ${maxMb} MB`);
       return;
     }
 
-    // Validar tipo
+    // Validate type
     if (!file.type.startsWith('image/')) {
       alert('File must be an image');
       return;
     }
 
     setIsUploading(true);
-
     try {
-      // Convertir a base64 para preview
+      // Preview
       const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string);
-      };
+      reader.onloadend = () => setImagePreview(reader.result as string);
       reader.readAsDataURL(file);
 
-      // Subir a tu servidor o servicio (ejemplo con FormData)
+      // Upload to API
       const formDataUpload = new FormData();
       formDataUpload.append('file', file);
       formDataUpload.append('walletAddress', walletAddress);
@@ -70,9 +75,7 @@ export default function ProfileFormModal({ isOpen, onClose, onSubmit, walletAddr
         method: 'POST',
         body: formDataUpload,
       });
-
       const data = await response.json();
-
       if (data.success) {
         setFormData({ ...formData, profileImage: data.imageUrl });
       } else {
@@ -90,28 +93,19 @@ export default function ProfileFormModal({ isOpen, onClose, onSubmit, walletAddr
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    // Validaciones básicas
     if (!formData.displayName.trim()) {
       alert('Please enter your name');
       return;
     }
 
-    // Si tiene código promocional, no necesita pagar
     if (hasPromoCode) {
-      // Guardar perfil y activar premium gratis
       try {
         const response = await fetch('/api/update-profile', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            walletAddress,
-            ...formData,
-          }),
+          body: JSON.stringify({ walletAddress, ...formData }),
         });
-
         if (!response.ok) throw new Error('Failed to save profile');
-
         onSubmit(formData);
       } catch (error: any) {
         alert('Error saving profile: ' + error.message);
@@ -119,7 +113,6 @@ export default function ProfileFormModal({ isOpen, onClose, onSubmit, walletAddr
       return;
     }
 
-    // Si NO tiene promo code, necesita pagar primero
     if (!publicKey) {
       alert('Please connect your wallet first');
       return;
@@ -127,14 +120,10 @@ export default function ProfileFormModal({ isOpen, onClose, onSubmit, walletAddr
 
     setIsPaying(true);
     setPaymentError(null);
-
     try {
-      // 1. Crear transacción de pago
       const connection = new Connection(PAYMENT_CONFIG.SOLANA_NETWORK, 'confirmed');
       const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
-
       const lamports = PAYMENT_CONFIG.MINT_PRICE_SOL * LAMPORTS_PER_SOL;
-
       const transaction = new Transaction().add(
         SystemProgram.transfer({
           fromPubkey: publicKey,
@@ -142,55 +131,32 @@ export default function ProfileFormModal({ isOpen, onClose, onSubmit, walletAddr
           lamports,
         })
       );
-
       transaction.recentBlockhash = blockhash;
       transaction.feePayer = publicKey;
-
-      // 2. Enviar transacción
       const signature = await sendTransaction(transaction, connection);
-
-      // Confirmar usando la estrategia moderna (más robusta)
-      const confirmation = await connection.confirmTransaction({
-        signature,
-        blockhash,
-        lastValidBlockHeight
-      }, 'confirmed');
-
+      const confirmation = await connection.confirmTransaction({ signature, blockhash, lastValidBlockHeight }, 'confirmed');
       if (confirmation.value.err) {
         throw new Error('Transaction failed: ' + confirmation.value.err.toString());
       }
 
-      // 3. Guardar perfil
       const profileResponse = await fetch('/api/update-profile', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          walletAddress,
-          ...formData,
-        }),
+        body: JSON.stringify({ walletAddress, ...formData }),
       });
-
       if (!profileResponse.ok) throw new Error('Failed to save profile');
 
-      // 4. Verificar pago en backend
       const paymentResponse = await fetch('/api/verify-payment', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          paymentSignature: signature,
-          walletAddress: publicKey.toString(),
-        }),
+        body: JSON.stringify({ paymentSignature: signature, walletAddress: publicKey.toString() }),
       });
-
       const paymentData = await paymentResponse.json();
-
       if (!paymentResponse.ok) {
         throw new Error(paymentData.error || 'Failed to verify payment');
       }
 
-      // ✅ Éxito total
       onSubmit(formData);
-
     } catch (error: any) {
       console.error('Payment error:', error);
       setPaymentError(error.message || 'Payment failed');
@@ -202,40 +168,21 @@ export default function ProfileFormModal({ isOpen, onClose, onSubmit, walletAddr
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl border-2 border-cyan-500/50 shadow-2xl shadow-cyan-500/20 max-w-md w-full p-8 relative">
-        {/* Close button */}
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 text-gray-400 hover:text-white transition"
-        >
+        <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-white transition">
           ✕
         </button>
-
-        {/* Header */}
         <div className="text-center mb-6">
-          <h2 className="text-3xl font-bold text-white mb-2">
-            🎨 Customize Your Card
-          </h2>
-          <p className="text-gray-400 text-sm">
-            Add your info to make your card unique
-          </p>
+          <h2 className="text-3xl font-bold text-white mb-2">🎨 Customize Your Card</h2>
+          <p className="text-gray-400 text-sm">Add your info to make your card unique</p>
         </div>
-
         <form onSubmit={handleSubmit} className="space-y-5">
           {/* Profile Image Upload */}
           <div className="flex flex-col items-center">
-            <label className="text-gray-300 text-sm font-medium mb-3">
-              Profile Picture
-            </label>
-
+            <label className="text-gray-300 text-sm font-medium mb-3">Profile Picture</label>
             <div className="relative">
-              {/* Preview circle */}
               <div className="w-32 h-32 rounded-full border-4 border-cyan-500/50 overflow-hidden bg-gray-800 flex items-center justify-center">
                 {imagePreview ? (
-                  <img
-                    src={imagePreview}
-                    alt="Profile preview"
-                    className="w-full h-full object-cover"
-                  />
+                  <img src={imagePreview} alt="Profile preview" className="w-full h-full object-cover" />
                 ) : (
                   <div className="text-gray-500 text-center">
                     <div className="text-4xl mb-2">📷</div>
@@ -243,17 +190,11 @@ export default function ProfileFormModal({ isOpen, onClose, onSubmit, walletAddr
                   </div>
                 )}
               </div>
-
-              {/* Upload button overlay */}
-              <label
-                htmlFor="profile-image"
-                className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 hover:opacity-100 transition cursor-pointer"
-              >
+              <label htmlFor="profile-image" className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 hover:opacity-100 transition cursor-pointer">
                 <span className="text-white text-sm font-medium">
                   {isUploading ? 'Uploading...' : 'Change'}
                 </span>
               </label>
-
               <input
                 id="profile-image"
                 type="file"
@@ -263,16 +204,12 @@ export default function ProfileFormModal({ isOpen, onClose, onSubmit, walletAddr
                 disabled={isUploading}
               />
             </div>
-            <p className="text-gray-500 text-xs mt-2">
-              Max 2MB • JPG, PNG, GIF
-            </p>
+            <p className="text-gray-500 text-xs mt-2">Max {Math.round(UPLOAD_CONFIG.MAX_FILE_SIZE / (1024 * 1024))} MB • JPG, PNG, GIF</p>
           </div>
 
           {/* Display Name */}
           <div>
-            <label className="text-gray-300 text-sm font-medium mb-2 block">
-              Display Name *
-            </label>
+            <label className="text-gray-300 text-sm font-medium mb-2 block">Display Name *</label>
             <input
               type="text"
               placeholder="Your name or nickname"
@@ -286,13 +223,9 @@ export default function ProfileFormModal({ isOpen, onClose, onSubmit, walletAddr
 
           {/* Twitter */}
           <div>
-            <label className="text-gray-300 text-sm font-medium mb-2 block">
-              Twitter (optional)
-            </label>
+            <label className="text-gray-300 text-sm font-medium mb-2 block">Twitter (optional)</label>
             <div className="relative">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">
-                @
-              </span>
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">@</span>
               <input
                 type="text"
                 placeholder="username"
@@ -306,13 +239,9 @@ export default function ProfileFormModal({ isOpen, onClose, onSubmit, walletAddr
 
           {/* Telegram */}
           <div>
-            <label className="text-gray-300 text-sm font-medium mb-2 block">
-              Telegram (optional)
-            </label>
+            <label className="text-gray-300 text-sm font-medium mb-2 block">Telegram (optional)</label>
             <div className="relative">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">
-                @
-              </span>
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">@</span>
               <input
                 type="text"
                 placeholder="username"
@@ -358,8 +287,8 @@ export default function ProfileFormModal({ isOpen, onClose, onSubmit, walletAddr
               {isPaying ? (
                 <span className="flex items-center justify-center">
                   <svg className="animate-spin -ml-1 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                   </svg>
                   Paying...
                 </span>
@@ -371,8 +300,6 @@ export default function ProfileFormModal({ isOpen, onClose, onSubmit, walletAddr
             </button>
           </div>
         </form>
-
-        {/* Info note */}
         <p className="text-gray-500 text-xs text-center mt-4">
           This info will appear on your card and leaderboard
         </p>

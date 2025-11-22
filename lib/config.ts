@@ -21,7 +21,7 @@ export const API_CONFIG = {
 
 // Upload configuration
 export const UPLOAD_CONFIG = {
-  MAX_FILE_SIZE: 2 * 1024 * 1024, // 2MB
+  MAX_FILE_SIZE: 4 * 1024 * 1024, // 4MB
   ALLOWED_MIME_TYPES: ['image/jpeg', 'image/png', 'image/gif', 'image/webp'],
 } as const;
 
