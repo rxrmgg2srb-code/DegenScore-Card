@@ -20,8 +20,8 @@ interface FollowedWallet {
   };
 }
 
-// Component only
-export function FollowingPage() {
+// Cambiado a export default para que funcione con dynamic import
+export default function FollowingContent() {
   const { publicKey, connected } = useWallet();
   const [followedWallets, setFollowedWallets] = useState<FollowedWallet[]>([]);
   const [loading, setLoading] = useState(true);
@@ -54,7 +54,9 @@ export function FollowingPage() {
       const data = await response.json();
       setFollowedWallets(data.wallets);
     } catch (err: any) {
-      logger.error('Error fetching followed wallets:', err);
+      logger.error('Error fetching followed wallets', err instanceof Error ? err : undefined, {
+        error: String(err)
+      });
       setError(err.message);
     } finally {
       setLoading(false);
@@ -235,9 +237,4 @@ export function FollowingPage() {
   );
 }
 
-// Force SSR to prevent build timeout
-export async function getServerSideProps() {
-  return {
-    props: {},
-  };
-}
+// Eliminado getServerSideProps - esto no debe estar en un componente, solo en páginas
