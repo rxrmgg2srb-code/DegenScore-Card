@@ -31,16 +31,9 @@ const nextConfig = {
   // Increase timeout for static page generation (default is 60s)
   staticPageGenerationTimeout: 180,
 
-  // Exclude problematic pages from static generation
-  // These pages will be generated on-demand at runtime
-  experimental: {
-    // External packages that should not be bundled
-    serverComponentsExternalPackages: ['@napi-rs/canvas', 'bullmq', 'ioredis'],
-
-    // Skip static generation for these pages - they timeout during build
-    skipTrailingSlashRedirect: true,
-    skipMiddlewareUrlNormalize: true,
-  },
+  // Skip trailing slash redirect (moved out of experimental in Next.js 14+)
+  skipTrailingSlashRedirect: true,
+  skipMiddlewareUrlNormalize: true,
 
   // Disable static optimization for specific pages
   // This forces them to be server-rendered on-demand
