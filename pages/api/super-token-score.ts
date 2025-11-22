@@ -103,7 +103,7 @@ export default async function handler(
           // Update view count
           await updateViewCount(tokenAddress);
 
-          const data = existing.fullDataJson as SuperTokenScore;
+          const data = existing.fullDataJson as unknown as SuperTokenScore;
 
           // Cache in Redis if available
           if (redis) {
