@@ -1,8 +1,18 @@
 import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
-import RankingsWidget from '../components/RankingsWidget';
-import ChallengeWinnersWidget from '../components/ChallengeWinnersWidget';
+import dynamic from 'next/dynamic';
+
+// Dynamic imports - NO ejecutar en servidor, solo en cliente
+const RankingsWidget = dynamic(() => import('../components/RankingsWidget'), {
+  ssr: false,
+  loading: () => <div className="animate-pulse bg-gray-800/50 rounded-2xl h-96"></div>
+});
+
+const ChallengeWinnersWidget = dynamic(() => import('../components/ChallengeWinnersWidget'), {
+  ssr: false,
+  loading: () => <div className="animate-pulse bg-gray-800/50 rounded-2xl h-96"></div>
+});
 import { BadgesDisplay } from '../components/BadgesDisplay';
 import { LanguageSelector } from '../components/LanguageSelector';
 
