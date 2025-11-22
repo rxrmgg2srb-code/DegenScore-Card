@@ -1,7 +1,7 @@
 import OpenAI from 'openai';
 import { prisma } from './prisma';
 import { logger } from './logger';
-import { cacheIncr, cacheGet } from './cache/redis';
+import { cacheGet } from './cache/redis';
 
 /**
  * AI Trading Coach
