@@ -10,8 +10,8 @@ interface ComparisonData {
   winner: any;
 }
 
-// Component only
-export function ComparePage() {
+// Cambiado a export default para que funcione con dynamic import
+export default function CompareContent() {
   const [wallet1, setWallet1] = useState('');
   const [wallet2, setWallet2] = useState('');
   const [comparison, setComparison] = useState<ComparisonData | null>(null);
@@ -279,10 +279,4 @@ function ComparisonRow({ label, value1, value2, winner, formatter }: ComparisonR
   );
 }
 
-// Force SSR to prevent build timeout
-// This page needs to be server-rendered to avoid hanging during static generation
-export async function getServerSideProps() {
-  return {
-    props: {},
-  };
-}
+// Eliminado getServerSideProps - esto no debe estar en un componente, solo en páginas
