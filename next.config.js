@@ -82,12 +82,12 @@ const nextConfig = {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://cdn.jsdelivr.net https://js.sentry-cdn.com https://browser.sentry-cdn.com",
-              "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+              "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://cdn.jsdelivr.net https://js.sentry-cdn.com https://browser.sentry-cdn.com https://vercel.live https://*.vercel.live",
+              "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://extension-cdn.getdirecto.com",
               "font-src 'self' https://fonts.gstatic.com data:",
               "img-src 'self' data: blob: https:",
-              "connect-src 'self' https://api.mainnet-beta.solana.com https://api.devnet.solana.com https://*.helius-rpc.com wss://*.helius-rpc.com https://*.supabase.co wss://*.supabase.co https://twitter.com https://t.me https://*.ingest.sentry.io https://pusher.com wss://ws-*.pusher.com",
-              "frame-src 'self'",
+              "connect-src 'self' https://api.mainnet-beta.solana.com https://api.devnet.solana.com https://*.helius-rpc.com wss://*.helius-rpc.com https://*.supabase.co wss://*.supabase.co https://twitter.com https://t.me https://*.ingest.sentry.io https://*.pusher.com wss://*.pusher.com https://vercel.live wss://*.pusher.com",
+              "frame-src 'self' https://vercel.live",
               "object-src 'none'",
               "base-uri 'self'",
               "form-action 'self'"
