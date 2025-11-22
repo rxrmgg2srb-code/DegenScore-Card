@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { prisma } from '../../lib/prisma';
-import { isValidSortField, validatePagination } from '../../lib/validation';
+import { validatePagination } from '../../lib/validation';
 import { rateLimit } from '../../lib/rateLimitRedis';
 import { logger } from '../../lib/logger';
 import { cacheGetOrSet, CacheKeys } from '../../lib/cache/redis';
@@ -30,7 +30,7 @@ export default async function handler(
     const { limit } = validatePagination(undefined, limitParam);
     const safeLimit = Math.min(limit, 100); // Max 100 entries
 
-    logger.debug('Leaderboard request:', { sortBy: sortField, limit: safeLimit, noCache: !!noCache });
+    logger.debug('Leaderboard request', { sortBy: sortField, limit: safeLimit, noCache: !!noCache });
 
     // Data fetching function
     const fetchData = async () => {
@@ -188,7 +188,7 @@ export default async function handler(
 
     res.status(200).json(result);
   } catch (error: any) {
-    logger.error('Error fetching leaderboard:', error instanceof Error ? error : undefined, {
+    logger.error('Error fetching leaderboard', error instanceof Error ? error : undefined, {
       error: String(error),
     });
 
