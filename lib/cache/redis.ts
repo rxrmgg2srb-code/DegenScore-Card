@@ -210,6 +210,9 @@ export const CacheKeys = {
 
   // Recent activity
   recentActivity: () => 'activity:recent',
+
+  // Season stats
+  seasonStats: () => 'season:stats',
 };
 
 export default redis;

@@ -19,10 +19,10 @@ export default async function handler(
   }
 
   try {
-    const { sortBy = 'degenScore', limit: limitParam } = req.query;
+    const { sortBy = 'newest', limit: limitParam } = req.query;
 
     // Validate and sanitize sort field
-    const sortField = isValidSortField(sortBy as string) ? sortBy as string : 'degenScore';
+    const sortField = isValidSortField(sortBy as string) ? sortBy as string : 'newest';
 
     // Validate limit
     const { limit } = validatePagination(undefined, limitParam);
@@ -35,15 +35,23 @@ export default async function handler(
     const result = await cacheGetOrSet(
       cacheKey,
       async () => {
+        // Determine orderBy based on sortField
+        let orderBy: any;
+        if (sortField === 'newest') {
+          orderBy = { mintedAt: 'desc' };
+        } else if (sortField === 'oldest') {
+          orderBy = { mintedAt: 'asc' };
+        } else {
+          orderBy = { [sortField]: 'desc' };
+        }
+
         // SOLO mostrar cards de quienes pagaron/descargaron (isPaid = true) y no eliminadas
         const cards = await prisma.degenCard.findMany({
           where: {
             isPaid: true,
             deletedAt: null, // Exclude soft-deleted cards
           },
-          orderBy: {
-            [sortField]: 'desc',
-          },
+          orderBy,
           take: safeLimit,
           include: {
             badges: true,

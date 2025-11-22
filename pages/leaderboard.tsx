@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
-import HotFeedWidget from '../components/HotFeedWidget';
+import SeasonStatsWidget from '../components/SeasonStatsWidget';
 import { LanguageSelector } from '../components/LanguageSelector';
 
 interface LeaderboardEntry {
@@ -34,7 +34,7 @@ interface Stats {
 }
 
 type ViewMode = 'table' | 'cards';
-type SortBy = 'degenScore' | 'totalVolume' | 'winRate' | 'profitLoss' | 'likes';
+type SortBy = 'newest' | 'oldest' | 'degenScore' | 'totalVolume' | 'winRate' | 'profitLoss' | 'likes';
 
 const getTierConfig = (score: number) => {
   if (score >= 90) {
@@ -464,7 +464,7 @@ export default function Leaderboard() {
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
-  const [sortBy, setSortBy] = useState<SortBy>('degenScore');
+  const [sortBy, setSortBy] = useState<SortBy>('newest');
   const [searchWallet, setSearchWallet] = useState('');
   const [viewMode, setViewMode] = useState<ViewMode>('cards');
   const [userLikes, setUserLikes] = useState<{ [key: string]: boolean }>({});
@@ -616,7 +616,23 @@ export default function Leaderboard() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2">
               <div className="flex flex-col md:flex-row gap-4 mb-6">
-                <div className="flex gap-2">
+                <div className="flex gap-2 flex-wrap">
+                  <button
+                    onClick={() => setSortBy('newest')}
+                    className={`px-4 py-2 rounded-lg transition ${
+                      sortBy === 'newest' ? 'bg-green-500 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                    }`}
+                  >
+                    🆕 Más Nuevos
+                  </button>
+                  <button
+                    onClick={() => setSortBy('oldest')}
+                    className={`px-4 py-2 rounded-lg transition ${
+                      sortBy === 'oldest' ? 'bg-blue-500 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                    }`}
+                  >
+                    ⏰ Más Viejos
+                  </button>
                   <button
                     onClick={() => setSortBy('degenScore')}
                     className={`px-4 py-2 rounded-lg transition ${
@@ -730,7 +746,7 @@ export default function Leaderboard() {
             </div>
 
             <div className="lg:col-span-1">
-              <HotFeedWidget />
+              <SeasonStatsWidget />
             </div>
           </div>
         </div>
