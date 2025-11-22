@@ -903,28 +903,7 @@ async function analyzeInsiders(tokenAddress: string): Promise<InsiderAnalysis> {
           throw new Error('No transactions found for token');
         }
 
-        // Get the actual transaction details for early transactions
-        // We'll analyze the first 200 transactions
-        const earlySignatures = signatures.slice(Math.max(0, signatures.length - 200));
-        const earlyBuyers = new Set<string>();
-        const buyerAmounts = new Map<string, number>();
-
-        // Analyze signatures to find buyers
-        // Note: We're looking at the oldest transactions (early buyers)
-        for (const sig of earlySignatures) {
-          if (sig.err === null) { // Only successful transactions
-            // The signature's slot tells us when it happened
-            // The feePayer is potentially a buyer
-            // We'd need full transaction data to be certain, but for performance
-            // we'll use a heuristic based on signatures
-
-            // Add to early buyers set (these are wallets that interacted early)
-            const feePayer = sig.signature; // This is actually the signature, we need to parse differently
-
-            // For proper analysis, we'd fetch the full transaction, but that's expensive
-            // Instead, let's use Helius Enhanced API with proper query
-          }
-        }
+        // Logic replaced by Helius DAS API below for better performance and accuracy
 
         // 🔥 NEW APPROACH: Use Helius DAS API to get holders and check wallet ages
         // This is more reliable than trying to parse transaction data
@@ -1471,8 +1450,9 @@ async function analyzeSmartMoney(tokenAddress: string): Promise<SmartMoneyAnalys
     let analyzedWallets = 0;
 
     // Get recent token signatures to see recent activity
-    const tokenPubkey = new PublicKey(tokenAddress);
-    const recentSigs = await connection.getSignaturesForAddress(tokenPubkey, { limit: 100 });
+    // Get recent token signatures to see recent activity
+    // const tokenPubkey = new PublicKey(tokenAddress);
+    // const recentSigs = await connection.getSignaturesForAddress(tokenPubkey, { limit: 100 });
     const recentTimestamp = Date.now() / 1000 - 86400; // Last 24h
 
     for (const holder of holders.slice(0, 20)) { // Check top 20 holders
@@ -1526,7 +1506,7 @@ async function analyzeSmartMoney(tokenAddress: string): Promise<SmartMoneyAnalys
     }
 
     // Calculate holdings percentage (rough estimate)
-    const totalBalance = holders.reduce((sum, h) => sum + parseFloat(h.amount || '0'), 0);
+    const totalBalance = holders.reduce((sum: number, h: any) => sum + parseFloat(h.amount || '0'), 0);
     const smartMoneyHoldings = totalBalance > 0 ? (totalSmartMoneyBalance / totalBalance) * 100 : 0;
 
     // Determine if smart money is buying or selling
