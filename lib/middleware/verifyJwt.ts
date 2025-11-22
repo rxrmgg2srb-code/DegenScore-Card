@@ -21,7 +21,7 @@ export function verifyJwt(req: NextApiRequest, res: NextApiResponse, next: () =>
             res.status(500).json({ error: 'Server misconfiguration' });
             return;
         }
-        const payload = jwt.verify(token, secret) as { walletAddress: string };
+        const payload = jwt.verify(token, secret as string) as { walletAddress: string };
         // Attach wallet address to request for downstream handlers
         (req as any).walletAddress = payload.walletAddress;
         next();
