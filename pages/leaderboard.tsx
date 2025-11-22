@@ -802,6 +802,10 @@ export default function Leaderboard() {
   );
 }
 
-// Force dynamic rendering (no static generation, no SSR)
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
+// Force Server-Side Rendering (NO static generation)
+// This prevents build timeouts trying to generate static page
+export async function getServerSideProps() {
+  return {
+    props: {}, // No props needed, data fetched client-side
+  };
+}
