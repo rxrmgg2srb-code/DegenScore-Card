@@ -39,10 +39,15 @@ export default function SeasonStatsWidget() {
   const [activeTab, setActiveTab] = useState<'liked' | 'referrals' | 'achievements'>('liked');
 
   useEffect(() => {
-    fetchSeasonStats();
-    // Refresh every 5 minutes
-    const interval = setInterval(fetchSeasonStats, 300000);
-    return () => clearInterval(interval);
+    // Only fetch on client-side (not during SSR)
+    if (typeof window !== 'undefined') {
+      fetchSeasonStats();
+      // Refresh every 5 minutes
+      const interval = setInterval(fetchSeasonStats, 300000);
+      return () => clearInterval(interval);
+    } else {
+      setLoading(false);
+    }
   }, []);
 
   const fetchSeasonStats = async () => {
