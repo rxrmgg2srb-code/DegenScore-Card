@@ -4,6 +4,7 @@ import fs from 'fs';
 import { isValidSolanaAddress, isValidImageType } from '../../lib/validation';
 import { rateLimit } from '../../lib/rateLimitRedis';
 import { logger } from '../../lib/logger';
+import { withAuth } from '@/lib/middleware/withAuth';
 import { UPLOAD_CONFIG } from '../../lib/config';
 
 export const config = {
@@ -12,7 +13,7 @@ export const config = {
   },
 };
 
-export default async function handler(
+export default withAuth(async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
