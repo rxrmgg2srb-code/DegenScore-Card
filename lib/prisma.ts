@@ -41,20 +41,56 @@ const getDatabaseUrl = () => {
   return directUrl;
 };
 
-// Optimized Prisma Client for serverless
-// Uses direct connection (DIRECT_URL) to avoid pooler connection issues
-const shouldInstantiate = !process.env.SKIP_DB_CONNECTION;
+// Prisma Client with retry logic for production reliability
+const prismaClientSingleton = () => {
+  const databaseUrl = getDatabaseUrl();
 
-export const prisma = global.prisma || (shouldInstantiate ? new PrismaClient({
-  log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
-
-  // Connection configuration for serverless compatibility
-  datasources: {
-    db: {
-      url: getDatabaseUrl(),
+  return new PrismaClient({
+    datasources: {
+      db: {
+        url: databaseUrl,
+      },
     },
-  },
-}) : {} as PrismaClient);
+    log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
+    // CRITICAL: Connection pooling + retry logic para evitar fallos
+    // https://www.prisma.io/docs/concepts/components/prisma-client/connection-management
+  }).$extends({
+    query: {
+      async $allOperations({ operation, model, args, query }) {
+        const maxRetries = 3;
+        const baseDelay = 1000; // 1 second
+
+        for (let attempt = 0; attempt <= maxRetries; attempt++) {
+          try {
+            return await query(args);
+          } catch (error: any) {
+            const isLastAttempt = attempt === maxRetries;
+            const isRetryableError =
+              error.code === 'P1001' ||  // Can't reach database
+              error.code === 'P1017' ||  // Server closed connection
+              error.code === 'P2024' ||  // Timed out
+              error.message?.includes('Connection') ||
+              error.message?.includes('ECONNREFUSED') ||
+              error.message?.includes('ETIMEDOUT');
+
+            if (isRetryableError && !isLastAttempt) {
+              const delay = baseDelay * Math.pow(2, attempt); // Exponential backoff
+              console.warn(`⚠️ Database error on ${model}.${operation} (attempt ${attempt + 1}/${maxRetries + 1}):`, error.message);
+              console.warn(`🔄 Retrying in ${delay}ms...`);
+              await new Promise(resolve => setTimeout(resolve, delay));
+              continue;
+            }
+
+            // No es retryable o ya agotamos los intentos
+            throw error;
+          }
+        }
+      },
+    },
+  });
+};
+
+export const prisma = global.prisma ?? prismaClientSingleton();
 
 // Store in global to prevent multiple instances (critical for serverless)
 // This prevents PostgreSQL "prepared statement already exists" errors
