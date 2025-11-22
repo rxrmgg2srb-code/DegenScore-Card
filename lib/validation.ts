@@ -41,7 +41,7 @@ export function sanitizeDisplayName(name: string): string {
 /**
  * Validates sort field for leaderboard
  */
-export const VALID_SORT_FIELDS = ['degenScore', 'totalVolume', 'winRate', 'likes'] as const;
+export const VALID_SORT_FIELDS = ['degenScore', 'totalVolume', 'winRate', 'profitLoss', 'likes'] as const;
 export type SortField = typeof VALID_SORT_FIELDS[number];
 
 export function isValidSortField(field: string): field is SortField {

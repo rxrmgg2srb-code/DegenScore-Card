@@ -34,7 +34,7 @@ interface Stats {
 }
 
 type ViewMode = 'table' | 'cards';
-type SortBy = 'degenScore' | 'totalVolume' | 'winRate' | 'likes';
+type SortBy = 'degenScore' | 'totalVolume' | 'winRate' | 'profitLoss' | 'likes';
 
 const getTierConfig = (score: number) => {
   if (score >= 90) {
@@ -640,6 +640,14 @@ export default function Leaderboard() {
                     }`}
                   >
                     🎯 Win Rate
+                  </button>
+                  <button
+                    onClick={() => setSortBy('profitLoss')}
+                    className={`px-4 py-2 rounded-lg transition ${
+                      sortBy === 'profitLoss' ? 'bg-cyan-500 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                    }`}
+                  >
+                    💸 Ganadores
                   </button>
                   <button
                     onClick={() => setSortBy('likes')}
