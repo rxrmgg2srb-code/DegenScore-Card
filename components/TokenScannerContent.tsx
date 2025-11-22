@@ -10,7 +10,7 @@ import { Header } from '@/components/Header';
 import TokenSecurityScanner from '@/components/TokenSecurityScanner';
 
 // Component only
-export function TokenScannerPage() {
+export default function TokenScannerPage() {
   return (
     <>
       <Head>
@@ -43,11 +43,4 @@ export function TokenScannerPage() {
       </div>
     </>
   );
-}
-
-// Force SSR to prevent build timeout
-export async function getServerSideProps() {
-  return {
-    props: {},
-  };
 }
