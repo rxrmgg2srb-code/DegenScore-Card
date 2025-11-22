@@ -17,6 +17,9 @@ const nextConfig = {
   // Disable font optimization to reduce memory during build
   optimizeFonts: false,
 
+  // Increase static page generation timeout to prevent build failures
+  staticPageGenerationTimeout: 300, // 5 minutes (default is 60 seconds)
+
   // Experimental features to reduce memory
   experimental: {
     workerThreads: false,

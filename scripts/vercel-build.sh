@@ -112,6 +112,20 @@ echo ""
 # Step 3: Build Next.js
 echo "🏗️  [3/3] Building Next.js application..."
 echo ""
+
+# If database is not accessible during build, set a dummy URL to prevent Prisma connection attempts
+# This is safe because:
+# 1. Pages with getServerSideProps don't actually connect to DB during build
+# 2. Prisma Client is generated but not connected
+# 3. Actual DB connections only happen at runtime, not build time
+if [ "$SKIP_MIGRATIONS" = "true" ] || [ $EXIT_CODE -ne 0 ] 2>/dev/null; then
+  echo "⚠️  Database not accessible during build - setting placeholder DATABASE_URL"
+  echo "   (This is safe - actual DB connections happen at runtime, not build time)"
+  echo ""
+  # Use a valid-looking but non-functional DATABASE_URL for build
+  export DATABASE_URL="postgresql://placeholder:placeholder@localhost:5432/placeholder"
+fi
+
 NODE_OPTIONS='--max-old-space-size=4096' npm run build
 echo ""
 
