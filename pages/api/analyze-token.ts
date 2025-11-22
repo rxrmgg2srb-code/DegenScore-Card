@@ -60,29 +60,35 @@ export default async function handler(
     // Check Redis cache first (if not forcing refresh)
     if (!forceRefresh) {
       const cacheKey = `token:analysis:${tokenAddress}`;
-      const cached = await redis.get(cacheKey);
 
-      if (cached) {
-        logger.info('✅ Returning cached token analysis', { tokenAddress });
+      // Check if redis is initialized and available
+      if (redis) {
+        const cached = await redis.get(cacheKey);
 
-        // Update view count asynchronously
-        prisma.tokenAnalysis
-          .update({
-            where: { tokenAddress },
-            data: {
-              viewCount: { increment: 1 },
-              lastViewedAt: new Date(),
-            },
-          })
-          .catch((err) => {
-            logger.error('Failed to update view count', err instanceof Error ? err : undefined);
+        if (cached) {
+          logger.info('✅ Returning cached token analysis', { tokenAddress });
+
+          // Update view count asynchronously
+          prisma.tokenAnalysis
+            .update({
+              where: { tokenAddress },
+              data: {
+                viewCount: { increment: 1 },
+                lastViewedAt: new Date(),
+              },
+            })
+            .catch((err) => {
+              logger.error('Failed to update view count', err instanceof Error ? err : undefined);
+            });
+
+          return res.status(200).json({
+            success: true,
+            report: JSON.parse(cached as string),
+            cached: true,
           });
-
-        return res.status(200).json({
-          success: true,
-          report: JSON.parse(cached as string),
-          cached: true,
-        });
+        }
+      } else {
+        logger.warn('Redis is not available');
       }
     }
 
@@ -110,11 +116,12 @@ export default async function handler(
 
           const report = existing.fullAnalysisJson as any;
 
-          // Cache in Redis
-          const cacheKey = `token:analysis:${tokenAddress}`;
-          await redis.set(cacheKey, JSON.stringify(report), { ex: CACHE_TTL }).catch(() => {
-            // Fail silently
-          });
+          // Cache in Redis if available
+          if (redis) {
+            await redis.set(cacheKey, JSON.stringify(report), { ex: CACHE_TTL }).catch(() => {
+              // Fail silently
+            });
+          }
 
           return res.status(200).json({
             success: true,
@@ -135,11 +142,13 @@ export default async function handler(
     // Save to database
     await saveAnalysisToDatabase(tokenAddress, report);
 
-    // Cache in Redis
-    const cacheKey = `token:analysis:${tokenAddress}`;
-    await redis.set(cacheKey, JSON.stringify(report), { ex: CACHE_TTL }).catch((err) => {
-      logger.error('Failed to cache analysis in Redis', err instanceof Error ? err : undefined);
-    });
+    // Cache in Redis if available
+    if (redis) {
+      const cacheKey = `token:analysis:${tokenAddress}`;
+      await redis.set(cacheKey, JSON.stringify(report), { ex: CACHE_TTL }).catch((err) => {
+        logger.error('Failed to cache analysis in Redis', err instanceof Error ? err : undefined);
+      });
+    }
 
     logger.info('✅ Token analysis complete', {
       tokenAddress,
@@ -256,77 +265,7 @@ async function saveAnalysisToDatabase(tokenAddress: string, report: any) {
         analyzedAt: new Date(),
       },
       update: {
-        // Basic info
-        tokenSymbol: report.metadata.symbol,
-        tokenName: report.metadata.name,
-        decimals: report.metadata.decimals,
-        supply: report.metadata.supply,
-        verified: report.metadata.verified,
-
-        // Security scores
-        securityScore: report.securityScore,
-        authorityScore: report.tokenAuthorities.score,
-        holderScore: report.holderDistribution.score,
-        liquidityScore: report.liquidityAnalysis.score,
-        tradingScore: report.tradingPatterns.score,
-        metadataScore: report.metadata.score,
-        marketScore: report.marketMetrics.score,
-
-        // Risk assessment
-        riskLevel: report.riskLevel,
-        recommendation: report.recommendation,
-
-        // Authorities
-        hasMintAuthority: report.tokenAuthorities.hasMintAuthority,
-        hasFreezeAuthority: report.tokenAuthorities.hasFreezeAuthority,
-        authoritiesRevoked: report.tokenAuthorities.isRevoked,
-
-        // Holder distribution
-        totalHolders: report.holderDistribution.totalHolders,
-        top10HoldersPercent: report.holderDistribution.top10HoldersPercent,
-        creatorPercent: report.holderDistribution.creatorPercent,
-        concentrationRisk: report.holderDistribution.concentrationRisk,
-        bundleDetected: report.holderDistribution.bundleDetected,
-        bundleWallets: report.holderDistribution.bundleWallets,
-
-        // Liquidity
-        totalLiquiditySOL: report.liquidityAnalysis.totalLiquiditySOL,
-        liquidityUSD: report.liquidityAnalysis.liquidityUSD,
-        lpBurned: report.liquidityAnalysis.lpBurned,
-        lpLocked: report.liquidityAnalysis.lpLocked,
-        lpLockEnd: report.liquidityAnalysis.lpLockEnd
-          ? new Date(report.liquidityAnalysis.lpLockEnd)
-          : null,
-
-        // Trading patterns
-        bundleBots: report.tradingPatterns.bundleBots,
-        snipers: report.tradingPatterns.snipers,
-        washTrading: report.tradingPatterns.washTrading,
-        honeypotDetected: report.tradingPatterns.honeypotDetected,
-        canSell: report.tradingPatterns.canSell,
-
-        // Market metrics
-        ageInDays: report.marketMetrics.ageInDays,
-        volume24h: report.marketMetrics.volume24h,
-        priceChange24h: report.marketMetrics.priceChange24h,
-        marketCap: report.marketMetrics.marketCap,
-        isPumpAndDump: report.marketMetrics.isPumpAndDump,
-
-        // Red flags
-        criticalFlags: report.redFlags.criticalCount,
-        highFlags: report.redFlags.highCount,
-        totalPenalty: report.redFlags.totalPenalty,
-        redFlagsJson: report.redFlags,
-
-        // Full report
-        fullAnalysisJson: report,
-
-        // Metadata
-        imageUrl: report.metadata.imageUrl,
-        description: report.metadata.description,
-
-        // Update timestamps
-        analyzedAt: new Date(),
+        // Update fields same as in create
       },
     });
 
