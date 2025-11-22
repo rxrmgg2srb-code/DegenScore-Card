@@ -27,11 +27,14 @@ export default function FollowingPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (connected && publicKey) {
-      fetchFollowedWallets();
-    } else {
-      setLoading(false);
-      setFollowedWallets([]);
+    // Only fetch on client-side (not during SSR)
+    if (typeof window !== 'undefined') {
+      if (connected && publicKey) {
+        fetchFollowedWallets();
+      } else {
+        setLoading(false);
+        setFollowedWallets([]);
+      }
     }
   }, [connected, publicKey]);
 

@@ -18,51 +18,56 @@ export default function RealtimeLeaderboard() {
   const [newTopScorer, setNewTopScorer] = useState<string | null>(null);
 
   useEffect(() => {
-    // Fetch inicial
-    fetchLeaderboard();
+    // Only fetch on client-side (not during SSR)
+    if (typeof window !== 'undefined') {
+      // Fetch inicial
+      fetchLeaderboard();
 
-    // Configurar Pusher real-time
-    const pusher = getPusherClient();
-    if (!pusher) {
-      logger.warn('Pusher not configured, falling back to polling');
-      // Fallback: polling cada 30 segundos
-      const interval = setInterval(fetchLeaderboard, 30000);
-      return () => clearInterval(interval);
-    }
-
-    // Subscribe al canal de leaderboard
-    const channel = pusher.subscribe(PusherChannels.LEADERBOARD);
-
-    channel.bind('pusher:subscription_succeeded', () => {
-      setIsConnected(true);
-      logger.info('✅ Connected to real-time leaderboard');
-    });
-
-    // Escuchar updates del leaderboard
-    channel.bind(PusherEvents.LEADERBOARD_UPDATE, (data: { leaderboard: LeaderboardEntry[] }) => {
-      logger.info('📊 Leaderboard update received:', { count: data.leaderboard.length });
-      setLeaderboard(data.leaderboard);
-    });
-
-    // Escuchar nuevo top scorer
-    channel.bind(
-      PusherEvents.NEW_TOP_SCORER,
-      (data: { walletAddress: string; username?: string; score: number }) => {
-        logger.info('👑 New top scorer:', data);
-        setNewTopScorer(data.username || data.walletAddress);
-        // Mostrar notificación por 5 segundos
-        setTimeout(() => setNewTopScorer(null), 5000);
-        // Refresh leaderboard
-        fetchLeaderboard();
+      // Configurar Pusher real-time
+      const pusher = getPusherClient();
+      if (!pusher) {
+        logger.warn('Pusher not configured, falling back to polling');
+        // Fallback: polling cada 30 segundos
+        const interval = setInterval(fetchLeaderboard, 30000);
+        return () => clearInterval(interval);
       }
-    );
 
-    // Cleanup
-    return () => {
-      channel.unbind_all();
-      channel.unsubscribe();
-      pusher.disconnect();
-    };
+      // Subscribe al canal de leaderboard
+      const channel = pusher.subscribe(PusherChannels.LEADERBOARD);
+
+      channel.bind('pusher:subscription_succeeded', () => {
+        setIsConnected(true);
+        logger.info('✅ Connected to real-time leaderboard');
+      });
+
+      // Escuchar updates del leaderboard
+      channel.bind(PusherEvents.LEADERBOARD_UPDATE, (data: { leaderboard: LeaderboardEntry[] }) => {
+        logger.info('📊 Leaderboard update received:', { count: data.leaderboard.length });
+        setLeaderboard(data.leaderboard);
+      });
+
+      // Escuchar nuevo top scorer
+      channel.bind(
+        PusherEvents.NEW_TOP_SCORER,
+        (data: { walletAddress: string; username?: string; score: number }) => {
+          logger.info('👑 New top scorer:', data);
+          setNewTopScorer(data.username || data.walletAddress);
+          // Mostrar notificación por 5 segundos
+          setTimeout(() => setNewTopScorer(null), 5000);
+          // Refresh leaderboard
+          fetchLeaderboard();
+        }
+      );
+
+      // Cleanup
+      return () => {
+        channel.unbind_all();
+        channel.unsubscribe();
+        pusher.disconnect();
+      };
+    } else {
+      setLoading(false);
+    }
   }, []);
 
   async function fetchLeaderboard() {

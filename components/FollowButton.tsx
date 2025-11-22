@@ -24,14 +24,16 @@ export default function FollowButton({
 
   // Check follow status when component mounts
   useEffect(() => {
-    if (publicKey && walletAddress && publicKey.toBase58() !== walletAddress) {
+    // Only fetch on client-side (not during SSR)
+    if (typeof window !== 'undefined' && publicKey && walletAddress && publicKey.toBase58() !== walletAddress) {
       checkFollowStatus();
     }
   }, [publicKey, walletAddress]);
 
   // Generate session token when wallet connects
   useEffect(() => {
-    if (publicKey) {
+    // Only run on client-side (not during SSR)
+    if (typeof window !== 'undefined' && publicKey) {
       generateToken();
     }
   }, [publicKey]);

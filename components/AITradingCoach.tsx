@@ -25,14 +25,16 @@ export default function AITradingCoach() {
   const [sessionToken, setSessionToken] = useState<string | null>(null);
 
   useEffect(() => {
-    if (publicKey) {
+    // Only fetch on client-side (not during SSR)
+    if (typeof window !== 'undefined' && publicKey) {
       generateToken();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [publicKey]);
 
   useEffect(() => {
-    if (sessionToken) {
+    // Only fetch on client-side (not during SSR)
+    if (typeof window !== 'undefined' && sessionToken) {
       fetchAnalysis();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

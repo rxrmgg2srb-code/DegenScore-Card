@@ -46,7 +46,8 @@ export default function ProfilePage() {
   const [cardImageUrl, setCardImageUrl] = useState<string | null>(null);
 
   useEffect(() => {
-    if (walletAddress && typeof walletAddress === 'string') {
+    // Only fetch on client-side (not during SSR)
+    if (typeof window !== 'undefined' && walletAddress && typeof walletAddress === 'string') {
       fetchCardData();
     }
   }, [walletAddress]);

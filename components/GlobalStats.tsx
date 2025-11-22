@@ -17,47 +17,52 @@ export function GlobalStats({ className = '' }: GlobalStatsProps) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Fetch real stats from API
-    const fetchStats = async () => {
-      try {
-        const response = await fetch('/api/leaderboard?limit=1000');
-        const data = await response.json();
+    // Only fetch on client-side (not during SSR)
+    if (typeof window !== 'undefined') {
+      // Fetch real stats from API
+      const fetchStats = async () => {
+        try {
+          const response = await fetch('/api/leaderboard?limit=1000');
+          const data = await response.json();
 
-        if (data.success) {
-          setStats({
-            onlineUsers: Math.floor(Math.random() * 50) + 80, // Simulated online users
-            cardsGenerated: data.stats.totalCards || 0,
-            totalVolume: data.stats.totalVolume || 0,
-            cardsToday: Math.floor(Math.random() * 30) + 10, // Simulated daily cards
+          if (data.success) {
+            setStats({
+              onlineUsers: Math.floor(Math.random() * 50) + 80, // Simulated online users
+              cardsGenerated: data.stats.totalCards || 0,
+              totalVolume: data.stats.totalVolume || 0,
+              cardsToday: Math.floor(Math.random() * 30) + 10, // Simulated daily cards
+            });
+          }
+        } catch (error) {
+          logger.error('Error fetching stats', error instanceof Error ? error : undefined, {
+            error: String(error),
           });
+          // Fallback values
+          setStats({
+            onlineUsers: 127,
+            cardsGenerated: 1234,
+            totalVolume: 5678,
+            cardsToday: 23,
+          });
+        } finally {
+          setIsLoading(false);
         }
-      } catch (error) {
-        logger.error('Error fetching stats', error instanceof Error ? error : undefined, {
-          error: String(error),
-        });
-        // Fallback values
-        setStats({
-          onlineUsers: 127,
-          cardsGenerated: 1234,
-          totalVolume: 5678,
-          cardsToday: 23,
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
+      };
 
-    fetchStats();
+      fetchStats();
 
-    // Update online users count every 30 seconds
-    const interval = setInterval(() => {
-      setStats((prev) => ({
-        ...prev,
-        onlineUsers: Math.floor(Math.random() * 50) + 80,
-      }));
-    }, 30000);
+      // Update online users count every 30 seconds
+      const interval = setInterval(() => {
+        setStats((prev) => ({
+          ...prev,
+          onlineUsers: Math.floor(Math.random() * 50) + 80,
+        }));
+      }, 30000);
 
-    return () => clearInterval(interval);
+      return () => clearInterval(interval);
+    } else {
+      setIsLoading(false);
+    }
   }, []);
 
   if (isLoading) {

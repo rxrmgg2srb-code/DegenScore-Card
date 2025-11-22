@@ -24,7 +24,8 @@ export default function ReferralDashboard() {
   const referralCode = publicKey ? publicKey.toString().slice(0, 8) : '';
 
   useEffect(() => {
-    if (publicKey) {
+    // Only fetch on client-side (not during SSR)
+    if (typeof window !== 'undefined' && publicKey) {
       fetchStats();
     }
   }, [publicKey]);

@@ -31,13 +31,15 @@ export default function NotificationSettings() {
   });
 
   useEffect(() => {
-    if (publicKey) {
+    // Only run on client-side (not during SSR)
+    if (typeof window !== 'undefined' && publicKey) {
       generateToken();
     }
   }, [publicKey]);
 
   useEffect(() => {
-    if (sessionToken) {
+    // Only fetch on client-side (not during SSR)
+    if (typeof window !== 'undefined' && sessionToken) {
       fetchPreferences();
     }
   }, [sessionToken]);

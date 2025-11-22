@@ -28,16 +28,20 @@ export default function DailyChallengesWidget() {
   const [sessionToken, setSessionToken] = useState<string | null>(null);
 
   useEffect(() => {
-    if (publicKey && signMessage) {
-      generateToken();
-    } else {
-      // Fetch challenges without auth (no progress)
-      fetchChallenges();
+    // Only fetch on client-side (not during SSR)
+    if (typeof window !== 'undefined') {
+      if (publicKey && signMessage) {
+        generateToken();
+      } else {
+        // Fetch challenges without auth (no progress)
+        fetchChallenges();
+      }
     }
   }, [publicKey, signMessage]);
 
   useEffect(() => {
-    if (sessionToken) {
+    // Only fetch on client-side (not during SSR)
+    if (typeof window !== 'undefined' && sessionToken) {
       fetchChallenges();
     }
   }, [sessionToken]);
