@@ -17,7 +17,7 @@ try {
  * Genera una tarjeta simple de prueba
  */
 export default async function handler(
-  req: NextApiRequest,
+  _req: NextApiRequest,
   res: NextApiResponse
 ) {
   try {
