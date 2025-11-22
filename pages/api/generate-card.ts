@@ -152,7 +152,7 @@ export default async function handler(
 
     // 🚀 OPTIMIZACIÓN: Verificar cache de imagen
     const cacheKey = CacheKeys.cardImage(walletAddress);
-    logger.info('🔍 Checking cache for key:', cacheKey);
+    logger.info('🔍 Checking cache for key', { cacheKey });
     const cachedImageUrl = await cacheGet<string>(cacheKey);
 
     // Verificar si hay parámetro ?nocache en la query para forzar regeneración
