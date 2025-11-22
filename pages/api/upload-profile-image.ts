@@ -81,7 +81,7 @@ export default withAuth(async function handler(
     // Delete temporary file
     fs.unlinkSync(file.filepath);
 
-    logger.info('✅ Image converted to base64 for wallet:', {
+    logger.info('✅ Image converted to base64 for wallet', {
       walletAddress,
       size: fileBuffer.length,
       mimeType
@@ -92,7 +92,7 @@ export default withAuth(async function handler(
       imageUrl: dataUri,
     });
   } catch (error: any) {
-    logger.error('Error uploading image:', error instanceof Error ? error : undefined, {
+    logger.error('Error uploading image', error instanceof Error ? error : undefined, {
       error: String(error),
     });
 
@@ -102,4 +102,4 @@ export default withAuth(async function handler(
 
     res.status(500).json({ error: errorMessage });
   }
-}
+}); // ← Este paréntesis faltaba para cerrar withAuth()
