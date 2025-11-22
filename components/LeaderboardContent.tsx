@@ -158,7 +158,6 @@ interface LeaderboardCardProps {
 const LeaderboardCard = ({ entry, index, handleLike, userLikes }: LeaderboardCardProps) => {
   const tier = getTierConfig(entry.degenScore);
   const isTop3 = index < 3;
-  const levelPhrase = getLevelPhrase(entry.level);
 
   const getFOMOPhrase = (score: number): string => {
     if (score >= 95) return "🔥 GOD MODE - They Bow to You";
