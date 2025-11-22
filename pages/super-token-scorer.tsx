@@ -1,43 +1,13 @@
-/**
- * 🚀 SUPER TOKEN SCORER PAGE
- *
- * Página principal del sistema de análisis de tokens más completo de Web3
- */
-
-import React from 'react';
+import dynamic from 'next/dynamic';
 import Head from 'next/head';
-import { Header } from '@/components/Header';
-import SuperTokenScorer from '@/components/SuperTokenScorer';
 
-export default function SuperTokenScorerPage() {
+const SuperTokenScorerContent = dynamic(() => import('../components/SuperTokenScorerContent'), { ssr: false, loading: () => <div className="min-h-screen bg-gray-900 flex items-center justify-center"><div className="animate-spin rounded-full h-16 w-16 border-t-4 border-yellow-500"></div></div> });
+
+export default function SuperTokenScorer() {
   return (
     <>
-      <Head>
-        <title>Super Token Scorer - El Análisis Más Completo de Web3</title>
-        <meta
-          name="description"
-          content="Analiza tokens de Solana con más de 50 métricas diferentes. Integra RugCheck, DexScreener, Birdeye, Jupiter y mucho más. El sistema de scoring más completo del ecosistema."
-        />
-        <meta property="og:title" content="Super Token Scorer - DegenScore" />
-        <meta
-          property="og:description"
-          content="El sistema de análisis de tokens más completo de Web3. 15+ APIs, 50+ métricas, análisis en tiempo real."
-        />
-        <meta property="og:type" content="website" />
-        <link rel="icon" href="/favicon.ico" />
-      </Head>
-
-      <div className="min-h-screen">
-        <Header />
-        <SuperTokenScorer />
-      </div>
+      <Head><title>⭐ Super Token Scorer - DegenScore Card</title></Head>
+      <SuperTokenScorerContent />
     </>
   );
-}
-
-// Force SSR to prevent build timeout
-export async function getServerSideProps() {
-  return {
-    props: {},
-  };
 }
