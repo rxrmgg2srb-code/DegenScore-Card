@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { cacheGet, cacheDel } from '@/lib/cache/redis';
 import { logger } from '@/lib/logger';
-import jwt from 'jsonwebtoken';
+import * as jwt from 'jsonwebtoken';
 import { PublicKey } from '@solana/web3.js';
 import nacl from 'tweetnacl';
 import bs58 from 'bs58';

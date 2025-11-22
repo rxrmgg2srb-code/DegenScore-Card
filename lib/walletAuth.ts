@@ -1,7 +1,7 @@
 import { PublicKey } from '@solana/web3.js';
 import nacl from 'tweetnacl';
 import bs58 from 'bs58';
-import jwt from 'jsonwebtoken';
+import * as jwt from 'jsonwebtoken';
 import { logger } from '@/lib/logger';
 
 /**

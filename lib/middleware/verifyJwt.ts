@@ -1,5 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import jwt from 'jsonwebtoken';
+import * as jwt from 'jsonwebtoken';
 import { logger } from '@/lib/logger';
 
 /**
