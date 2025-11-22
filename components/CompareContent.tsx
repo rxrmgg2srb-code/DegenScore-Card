@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { LanguageSelector } from '../components/LanguageSelector';
 import { NavigationButtons } from '../components/NavigationButtons';
