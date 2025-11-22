@@ -182,10 +182,9 @@ const LeaderboardCard = ({ entry, index, handleLike, userLikes }: LeaderboardCar
   const fomoPhrase = getFOMOPhrase(entry.degenScore);
 
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col h-full">
       <div
-        className={`relative rounded-3xl border-[6px] ${tier.border} ${tier.glow} hover:scale-[1.03] transition-all duration-500 overflow-hidden group`}
-        style={{ aspectRatio: '2/3' }}
+        className={`relative rounded-3xl border-[6px] ${tier.border} ${tier.glow} hover:scale-[1.03] transition-all duration-500 overflow-hidden group flex flex-col h-full`}
       >
         <div className={`absolute inset-0 ${tier.bgPattern}`}></div>
 
@@ -195,13 +194,14 @@ const LeaderboardCard = ({ entry, index, handleLike, userLikes }: LeaderboardCar
 
         <div className={`absolute inset-0 bg-gradient-to-br ${tier.gradient} opacity-15 group-hover:opacity-20 transition-opacity`}></div>
 
-        <div className="relative h-full flex flex-col p-6 bg-gray-900/90 backdrop-blur-md justify-between">
-          <div className="flex justify-between items-start mb-2">
+        <div className="relative flex-grow flex flex-col p-5 bg-gray-900/90 backdrop-blur-md">
+          {/* Header: Rank & Medal */}
+          <div className="flex justify-between items-start mb-4">
             <div className={`text-3xl font-black ${tier.textColor} drop-shadow-lg`}>
               #{index + 1}
             </div>
             {isTop3 && (
-              <div className="text-3xl drop-shadow-lg">
+              <div className="text-4xl drop-shadow-lg filter hover:brightness-110 transition">
                 {index === 0 && '🥇'}
                 {index === 1 && '🥈'}
                 {index === 2 && '🥉'}
@@ -209,182 +209,133 @@ const LeaderboardCard = ({ entry, index, handleLike, userLikes }: LeaderboardCar
             )}
           </div>
 
-          <div className="flex flex-col items-center gap-2 mb-3">
-            {entry.profileImage ? (
-              <div className="w-20 h-20 rounded-full border-4 border-cyan-500/60 overflow-hidden bg-gray-800 shadow-xl">
-                <img
-                  src={entry.profileImage}
-                  alt={entry.displayName || 'Profile'}
-                  className="w-full h-full object-cover"
-                />
+          {/* Profile Section */}
+          <div className="flex flex-col items-center gap-3 mb-4">
+            <div className="relative">
+              {entry.profileImage ? (
+                <div className="w-24 h-24 rounded-full border-4 border-cyan-500/60 overflow-hidden bg-gray-800 shadow-2xl ring-4 ring-black/20">
+                  <img
+                    src={entry.profileImage}
+                    alt={entry.displayName || 'Profile'}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              ) : (
+                <div className="w-24 h-24 rounded-full border-4 border-cyan-500/60 bg-gray-800 flex items-center justify-center shadow-2xl ring-4 ring-black/20">
+                  <span className="text-4xl">👤</span>
+                </div>
+              )}
+              {/* Level Badge Absolute */}
+              <div className="absolute -bottom-2 -right-2 bg-gray-900 rounded-full p-1 border border-gray-700">
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center bg-gradient-to-r ${tier.gradient} text-white text-xs font-bold shadow-lg`}>
+                  {entry.level}
+                </div>
               </div>
-            ) : (
-              <div className="w-20 h-20 rounded-full border-4 border-cyan-500/60 bg-gray-800 flex items-center justify-center shadow-xl">
-                <span className="text-3xl">👤</span>
-              </div>
-            )}
-
-            {entry.displayName && (
-              <div className="text-white font-bold text-base text-center leading-tight">
-                {entry.displayName}
-              </div>
-            )}
-
-            <div className="text-xs text-gray-300 font-mono bg-black/40 px-3 py-1 rounded-full">
-              {entry.walletAddress.slice(0, 6)}...{entry.walletAddress.slice(-6)}
             </div>
 
-            <div className="flex gap-2 text-xs flex-wrap justify-center min-h-[28px]">
-              {entry.twitter && (
-                <a
-                  href={`https://twitter.com/${entry.twitter}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-cyan-400 hover:text-cyan-300 transition bg-black/30 px-2 py-1 rounded"
-                >
-                  🐦 @{entry.twitter.slice(0, 10)}
-                </a>
+            <div className="text-center">
+              {entry.displayName && (
+                <div className="text-white font-black text-lg tracking-wide mb-1">
+                  {entry.displayName}
+                </div>
               )}
-              {entry.telegram && (
-                <a
-                  href={`https://t.me/${entry.telegram}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-cyan-400 hover:text-cyan-300 transition bg-black/30 px-2 py-1 rounded"
-                >
-                  ✈️ @{entry.telegram}
-                </a>
-              )}
+              <div className="text-xs text-cyan-400 font-mono bg-cyan-950/30 px-3 py-1 rounded-full border border-cyan-500/20 inline-block mb-2">
+                {entry.walletAddress.slice(0, 6)}...{entry.walletAddress.slice(-6)}
+              </div>
+
+              <div className="flex gap-2 justify-center">
+                {entry.twitter && (
+                  <a href={`https://twitter.com/${entry.twitter}`} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition">
+                    🐦
+                  </a>
+                )}
+                {entry.telegram && (
+                  <a href={`https://t.me/${entry.telegram}`} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition">
+                    ✈️
+                  </a>
+                )}
+              </div>
             </div>
           </div>
 
-          <div className="flex flex-col items-center mb-3">
-            <div className={`text-7xl font-black bg-gradient-to-br ${tier.gradient} bg-clip-text text-transparent drop-shadow-2xl mb-1`}>
+          {/* Score Section */}
+          <div className="flex flex-col items-center mb-6">
+            <div className={`text-6xl font-black bg-gradient-to-br ${tier.gradient} bg-clip-text text-transparent drop-shadow-2xl`}>
               {entry.degenScore}
             </div>
-            <div className="text-gray-300 text-xs uppercase tracking-wider font-bold mb-2">
-              DEGEN SCORE
+            <div className="text-gray-400 text-[10px] uppercase tracking-[0.2em] font-bold mb-3">
+              Degen Score
             </div>
 
-            <div className="bg-gradient-to-r from-yellow-500/20 via-yellow-400/20 to-yellow-500/20 px-3 py-1.5 rounded-lg border border-yellow-500/30 backdrop-blur-sm">
-              <div className="text-yellow-300 font-bold text-[11px] text-center leading-tight">
+            <div className="w-full bg-gradient-to-r from-transparent via-yellow-500/10 to-transparent py-2 border-y border-yellow-500/20">
+              <div className="text-yellow-300 font-bold text-xs text-center uppercase tracking-wide">
                 {fomoPhrase}
               </div>
             </div>
           </div>
 
-          <div className="flex justify-center mb-3">
-            <div className={`px-5 py-2 rounded-full bg-gradient-to-r ${tier.badgeGradient} shadow-xl`}>
-              <span className="text-white font-black text-xs flex items-center gap-2">
-                {tier.emoji} {tier.name}
-              </span>
+          {/* Main Stats Grid */}
+          <div className="grid grid-cols-2 gap-3 mb-4">
+            <div className="bg-black/40 rounded-xl p-3 border border-gray-700/50">
+              <div className="text-[10px] text-gray-500 uppercase font-bold">Trades</div>
+              <div className="text-white font-bold text-lg">{formatNumber(entry.totalTrades, 0)}</div>
             </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-2 mb-3">
-            <div className="bg-black/50 rounded-xl p-2.5 border border-gray-600/50 shadow-lg backdrop-blur-sm">
-              <div className="text-[9px] text-gray-400 uppercase mb-1 font-semibold">Trades</div>
-              <div className="text-white font-bold text-sm">{formatNumber(entry.totalTrades, 0)}</div>
+            <div className="bg-black/40 rounded-xl p-3 border border-gray-700/50">
+              <div className="text-[10px] text-gray-500 uppercase font-bold">Win Rate</div>
+              <div className="text-white font-bold text-lg">{entry.winRate.toFixed(0)}%</div>
             </div>
-            <div className="bg-black/50 rounded-xl p-2.5 border border-gray-600/50 shadow-lg backdrop-blur-sm">
-              <div className="text-[9px] text-gray-400 uppercase mb-1 font-semibold">Win Rate</div>
-              <div className="text-white font-bold text-sm">{entry.winRate.toFixed(0)}%</div>
+            <div className="bg-black/40 rounded-xl p-3 border border-gray-700/50">
+              <div className="text-[10px] text-gray-500 uppercase font-bold">Volume</div>
+              <div className="text-white font-bold text-lg">{formatNumber(entry.totalVolume)} <span className="text-xs text-gray-500">SOL</span></div>
             </div>
-            <div className="bg-black/50 rounded-xl p-2.5 border border-gray-600/50 shadow-lg backdrop-blur-sm">
-              <div className="text-[9px] text-gray-400 uppercase mb-1 font-semibold">Volume</div>
-              <div className="text-white font-bold text-sm">{formatNumber(entry.totalVolume)} SOL</div>
-            </div>
-            <div className="bg-black/50 rounded-xl p-2.5 border border-gray-600/50 shadow-lg backdrop-blur-sm">
-              <div className="text-[9px] text-gray-400 uppercase mb-1 font-semibold">P&L</div>
-              <div className={`font-bold text-sm ${entry.profitLoss >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+            <div className="bg-black/40 rounded-xl p-3 border border-gray-700/50">
+              <div className="text-[10px] text-gray-500 uppercase font-bold">P&L</div>
+              <div className={`font-bold text-lg ${entry.profitLoss >= 0 ? 'text-green-400' : 'text-red-400'}`}>
                 {entry.profitLoss >= 0 ? '+' : ''}{formatNumber(entry.profitLoss)}
               </div>
             </div>
           </div>
 
-          {/* Métricas de Categorías de Premios */}
-          <div className="grid grid-cols-3 gap-1 mb-3">
-            <div className="bg-red-900/20 rounded-lg p-2 border border-red-500/30">
-              <div className="text-[9px] text-red-300 uppercase mb-0.5 font-semibold text-center">❤️ Likes</div>
-              <div className="text-white font-bold text-sm text-center">{entry.likes || 0}</div>
-            </div>
-            <div className="bg-blue-900/20 rounded-lg p-2 border border-blue-500/30">
-              <div className="text-[9px] text-blue-300 uppercase mb-0.5 font-semibold text-center">👥 Refs</div>
-              <div className="text-white font-bold text-sm text-center">{entry.referralCount || 0}</div>
-            </div>
-            {/* Badge Points con tooltip detallado */}
-            <div className="relative group">
-              <div className="bg-yellow-900/20 rounded-lg p-2 border border-yellow-500/30 cursor-help hover:bg-yellow-900/30 transition">
-                <div className="text-[9px] text-yellow-300 uppercase mb-0.5 font-semibold text-center">⭐ Pts</div>
-                <div className="text-white font-bold text-sm text-center">{entry.badgePoints || 0}</div>
-              </div>
-              {/* Tooltip with points breakdown */}
-              {entry.calculatedBadges && entry.calculatedBadges.length > 0 && (
-                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10 pointer-events-none">
-                  <div className="bg-gray-900 border border-yellow-500/50 rounded-lg p-3 shadow-xl min-w-[180px]">
-                    <div className="text-yellow-300 font-bold text-[10px] mb-2 text-center uppercase">Points Breakdown</div>
-                    <div className="space-y-1">
-                      {entry.calculatedBadges.map((badge, idx) => (
-                        <div key={idx} className="flex items-center justify-between text-[10px] text-white">
-                          <span className="text-gray-300 truncate flex-1">{badge.name}</span>
-                          <span className="text-yellow-400 font-bold ml-2">+{badge.points}</span>
-                        </div>
-                      ))}
-                    </div>
-                    <div className="border-t border-yellow-500/30 mt-2 pt-2 flex justify-between text-[10px]">
-                      <span className="text-yellow-300 font-bold">TOTAL:</span>
-                      <span className="text-yellow-400 font-bold">{entry.badgePoints || 0} pts</span>
-                    </div>
-                  </div>
-                  {/* Tooltip arrow */}
-                  <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1">
-                    <div className="border-8 border-transparent border-t-yellow-500/50"></div>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
+          {/* Bottom Actions & Social Proof - Ahora con más espacio y mejor diseño */}
+          <div className="mt-auto pt-2 space-y-3">
+            {/* Social Stats Grid */}
+            <div className="grid grid-cols-3 gap-2">
+              <button
+                onClick={() => handleLike(entry.id)}
+                className={`flex flex-col items-center justify-center p-2 rounded-xl border transition-all ${userLikes[entry.id]
+                    ? 'bg-red-500/10 border-red-500/50 text-red-400'
+                    : 'bg-gray-800/50 border-gray-700 text-gray-400 hover:bg-gray-700'
+                  }`}
+              >
+                <span className="text-lg mb-1">{userLikes[entry.id] ? '❤️' : '🤍'}</span>
+                <span className="text-xs font-bold">{entry.likes || 0}</span>
+              </button>
 
-          {/* Badges desbloqueados con tooltips - SIEMPRE VISIBLE */}
-          <div className="mb-3 bg-black/30 rounded-lg p-2.5 border border-yellow-500/20">
-            <div className="text-[9px] text-yellow-300 uppercase mb-1.5 font-semibold text-center">
-              🏆 Logros Desbloqueados ({entry.calculatedBadges?.length || 0})
+              <div className="flex flex-col items-center justify-center p-2 rounded-xl border border-blue-500/20 bg-blue-500/5">
+                <span className="text-lg mb-1">👥</span>
+                <span className="text-xs font-bold text-blue-300">{entry.referralCount || 0}</span>
+              </div>
+
+              <div className="flex flex-col items-center justify-center p-2 rounded-xl border border-yellow-500/20 bg-yellow-500/5">
+                <span className="text-lg mb-1">⭐</span>
+                <span className="text-xs font-bold text-yellow-300">{entry.badgePoints || 0}</span>
+              </div>
             </div>
-            {entry.calculatedBadges && entry.calculatedBadges.length > 0 ? (
-              <BadgesDisplay
-                badges={entry.calculatedBadges}
-                totalPoints={entry.badgePoints || 0}
-                showPoints={false}
-                maxDisplay={8}
-              />
-            ) : (
-              <div className="text-center text-gray-500 text-xs py-2">
-                Sin logros aún
+
+            {/* Badges Row */}
+            {entry.calculatedBadges && entry.calculatedBadges.length > 0 && (
+              <div className="flex gap-1 justify-center flex-wrap opacity-80">
+                {entry.calculatedBadges.slice(0, 5).map((badge, idx) => (
+                  <span key={idx} className="text-base" title={badge.name}>{badge.icon}</span>
+                ))}
+                {entry.calculatedBadges.length > 5 && (
+                  <span className="text-xs text-gray-500 flex items-center">+{entry.calculatedBadges.length - 5}</span>
+                )}
               </div>
             )}
           </div>
-
-          <div className="text-center space-y-1">
-            <div className={`inline-block px-4 py-1.5 rounded-full bg-gradient-to-r ${tier.gradient} opacity-90 shadow-lg`}>
-              <span className="text-white font-bold text-xs">LVL {entry.level}</span>
-            </div>
-            <div className="text-[10px] text-gray-200 italic font-medium">
-              {levelPhrase}
-            </div>
-          </div>
         </div>
       </div>
-
-      <button
-        onClick={() => handleLike(entry.id)}
-        className={`mt-4 px-6 py-3 rounded-xl transition-all flex items-center justify-center gap-3 font-bold text-base shadow-lg ${userLikes[entry.id]
-          ? 'bg-gradient-to-r from-red-600 to-red-500 hover:from-red-700 hover:to-red-600 text-white scale-105'
-          : 'bg-gray-800 hover:bg-gray-700 text-gray-300 border border-gray-600'
-          }`}
-      >
-        <span className="text-2xl">{userLikes[entry.id] ? '❤️' : '🤍'}</span>
-        <span>{entry.likes || 0}</span>
-      </button>
     </div>
   );
 };
