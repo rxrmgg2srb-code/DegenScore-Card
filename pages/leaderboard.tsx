@@ -534,7 +534,10 @@ export default function Leaderboard() {
   const [userLikes, setUserLikes] = useState<{ [key: string]: boolean }>({});
 
   useEffect(() => {
-    fetchLeaderboard();
+    // CRITICAL: Only fetch on client-side, NOT during build/SSG
+    if (typeof window !== 'undefined') {
+      fetchLeaderboard();
+    }
   }, [sortBy]);
 
   const fetchLeaderboard = async () => {
