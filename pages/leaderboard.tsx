@@ -805,6 +805,11 @@ export default function Leaderboard() {
   );
 }
 
-// Static Generation - no server-side code, fully client-side
-// This page generates once at build time as static HTML
-// All data fetching happens client-side via useEffect
+// Use ISR (Incremental Static Regeneration) instead of pure SSG
+// This builds a quick static shell, then regenerates on-demand
+export async function getStaticProps() {
+  return {
+    props: {}, // Pass empty props - data fetched client-side
+    revalidate: 1, // Regenerate every 1 second if needed
+  };
+}
