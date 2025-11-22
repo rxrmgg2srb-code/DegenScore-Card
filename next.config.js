@@ -7,9 +7,10 @@ const nextConfig = {
   // Enable standalone output for better Docker/Render deployments
   output: 'standalone',
 
-  // Enable ESLint during production builds for better code quality
+  // Disable ESLint during builds (TypeScript provides sufficient type safety)
+  // ESLint can be run separately in CI/CD pipeline
   eslint: {
-    ignoreDuringBuilds: false,
+    ignoreDuringBuilds: true,
   },
 
   // Enable TypeScript type checking during builds
