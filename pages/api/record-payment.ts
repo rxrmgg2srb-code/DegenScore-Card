@@ -51,28 +51,48 @@ export default async function handler(
       return res.status(400).json({ error: 'Failed to verify transaction' });
     }
 
-    // Guardar el pago en la base de datos
-    const payment = await prisma.payment.create({
-      data: {
-        walletAddress,
-        signature,
-        amount: parseFloat(amount.toString()),
-        status: 'confirmed',
-      },
+    // Use transaction to ensure atomicity and prevent duplicate payments
+    const result = await prisma.$transaction(async (tx) => {
+      // SECURITY: Check for duplicate payment signature to prevent replay attacks
+      const existingPayment = await tx.payment.findUnique({
+        where: { signature },
+      });
+
+      if (existingPayment) {
+        logger.warn('⚠️ Duplicate payment signature detected:', {
+          signature,
+          existingPayment: existingPayment.id
+        });
+        throw new Error('Payment signature already used. Possible replay attack.');
+      }
+
+      // Guardar el pago en la base de datos
+      const payment = await tx.payment.create({
+        data: {
+          walletAddress,
+          signature,
+          amount: parseFloat(amount.toString()),
+          status: 'confirmed',
+        },
+      });
+
+      logger.info('✅ Payment saved:', { paymentId: payment.id });
+
+      // Marcar la card como pagada
+      const updatedCard = await tx.degenCard.update({
+        where: { walletAddress },
+        data: {
+          isPaid: true,
+          lastSeen: new Date(),
+        },
+      });
+
+      logger.info('✅ Card marked as paid for wallet:', walletAddress);
+
+      return { payment, card: updatedCard };
     });
 
-    logger.info('✅ Payment saved:', { paymentId: payment.id });
-
-    // Marcar la card como pagada
-    await prisma.degenCard.update({
-      where: { walletAddress },
-      data: {
-        isPaid: true,
-        lastSeen: new Date(),
-      },
-    });
-
-    logger.info('✅ Card marked as paid for wallet:', walletAddress);
+    const { payment } = result;
 
     res.status(200).json({
       success: true,
@@ -80,6 +100,14 @@ export default async function handler(
       payment,
     });
   } catch (error) {
+    // Handle duplicate payment signature error specifically
+    if (error instanceof Error && error.message.includes('Payment signature already used')) {
+      return res.status(400).json({
+        error: 'Duplicate payment',
+        details: 'This payment signature has already been used. Please use a different transaction.',
+      });
+    }
+
     logger.error('❌ Error recording payment:', error instanceof Error ? error : undefined, {
       error: String(error),
     });

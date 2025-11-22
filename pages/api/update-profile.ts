@@ -3,6 +3,8 @@ import { prisma } from '../../lib/prisma';
 import { isValidSolanaAddress, sanitizeHandle, sanitizeDisplayName } from '../../lib/validation';
 import { rateLimit } from '../../lib/rateLimitRedis';
 import { logger } from '../../lib/logger';
+import { verifySessionToken } from '../../lib/walletAuth';
+import { validateOrigin } from '../../lib/csrfProtection';
 
 // Increase body size limit to 10MB for base64 images
 export const config = {
@@ -19,6 +21,11 @@ export default async function handler(
 ) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  // SECURITY: CSRF protection via origin validation
+  if (!validateOrigin(req, res)) {
+    return; // Response already sent
   }
 
   // Apply rate limiting
@@ -40,8 +47,39 @@ export default async function handler(
       return res.status(400).json({ error: 'Invalid wallet address' });
     }
 
-    // ✅ AUTENTICACIÓN REMOVIDA - Simplificado para evitar errores 401
-    // En un entorno de producción, considera implementar autenticación adecuada
+    // SECURITY: Verify JWT authentication
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      logger.warn('Missing or invalid Authorization header', { walletAddress });
+      return res.status(401).json({
+        error: 'Authentication required',
+        details: 'Please provide a valid session token in the Authorization header'
+      });
+    }
+
+    const token = authHeader.substring(7); // Remove 'Bearer ' prefix
+    const verification = verifySessionToken(token);
+
+    if (!verification.valid) {
+      logger.warn('Invalid session token', { walletAddress, error: verification.error });
+      return res.status(401).json({
+        error: 'Invalid or expired session',
+        details: verification.error
+      });
+    }
+
+    // SECURITY: Verify that the authenticated wallet matches the requested wallet
+    if (verification.wallet !== walletAddress) {
+      logger.warn('⚠️ Attempted unauthorized profile modification', {
+        authenticatedWallet: verification.wallet,
+        requestedWallet: walletAddress
+      });
+      return res.status(403).json({
+        error: 'Forbidden',
+        details: 'You can only modify your own profile'
+      });
+    }
+
     logger.info('Updating profile for:', { walletAddress });
 
     // Sanitize user inputs to prevent XSS
@@ -52,11 +90,11 @@ export default async function handler(
       profileImage: profileImage || null,
     };
 
-    // Update the card with social data and mark as paid
+    // Update the card with social data
+    // NOTE: isPaid status is managed by the payment verification endpoint
     const updatedCard = await prisma.degenCard.update({
       where: { walletAddress },
       data: {
-        isPaid: true,
         ...sanitizedData,
         lastSeen: new Date(),
       },
@@ -68,12 +106,12 @@ export default async function handler(
       success: true,
       card: updatedCard,
     });
-  } catch (error: any) {
+  } catch (error) {
     logger.error('Error updating profile:', error instanceof Error ? error : undefined, {
       error: String(error),
     });
 
-    const errorMessage = process.env.NODE_ENV === 'development'
+    const errorMessage = process.env.NODE_ENV === 'development' && error instanceof Error
       ? error.message
       : 'Failed to update profile';
 

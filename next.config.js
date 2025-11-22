@@ -7,14 +7,15 @@ const nextConfig = {
   // Enable standalone output for better Docker/Render deployments
   output: 'standalone',
 
-  // Disable ESLint during production builds (errors can be fixed later)
+  // Enable ESLint during production builds for better code quality
   eslint: {
-    ignoreDuringBuilds: true,
+    ignoreDuringBuilds: false,
   },
 
-  // Disable TypeScript type checking during builds to reduce memory usage
+  // Enable TypeScript type checking during builds
+  // This ensures type errors are caught before deployment
   typescript: {
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: false,
   },
 
   // Disable font optimization to reduce memory during build
@@ -83,24 +84,21 @@ const nextConfig = {
             key: 'Permissions-Policy',
             value: 'camera=(), microphone=(), geolocation=()',
           },
-          // CSP desactivado temporalmente para debugging en Render
-          // TODO: Re-habilitar después de confirmar que el deploy funciona
-          // {
-          //   key: 'Content-Security-Policy',
-          //   value: [
-          //     "default-src 'self'",
-          //     "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://cdn.jsdelivr.net https://js.sentry-cdn.com https://browser.sentry-cdn.com",
-          //     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-          //     "font-src 'self' https://fonts.gstatic.com data:",
-          //     "img-src 'self' data: blob: https:",
-          //     "connect-src 'self' https://api.mainnet-beta.solana.com https://*.helius-rpc.com wss://*.helius-rpc.com https://twitter.com https://t.me https://*.ingest.sentry.io https://pusher.com wss://ws-*.pusher.com",
-          //     "frame-src 'self'",
-          //     "object-src 'none'",
-          //     "base-uri 'self'",
-          //     "form-action 'self'"
-          //     // "upgrade-insecure-requests" REMOVED - causaba problemas en Render
-          //   ].join('; ')
-          // }
+          {
+            key: 'Content-Security-Policy',
+            value: [
+              "default-src 'self'",
+              "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://cdn.jsdelivr.net https://js.sentry-cdn.com https://browser.sentry-cdn.com",
+              "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+              "font-src 'self' https://fonts.gstatic.com data:",
+              "img-src 'self' data: blob: https:",
+              "connect-src 'self' https://api.mainnet-beta.solana.com https://api.devnet.solana.com https://*.helius-rpc.com wss://*.helius-rpc.com https://*.supabase.co wss://*.supabase.co https://twitter.com https://t.me https://*.ingest.sentry.io https://pusher.com wss://ws-*.pusher.com",
+              "frame-src 'self'",
+              "object-src 'none'",
+              "base-uri 'self'",
+              "form-action 'self'"
+            ].join('; ')
+          }
         ],
       },
     ];
