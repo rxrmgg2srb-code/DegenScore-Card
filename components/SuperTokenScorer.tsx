@@ -4,7 +4,6 @@
  * El componente de análisis de tokens MÁS COMPLETO de Web3
  * Muestra TODAS las métricas posibles con una UI impresionante
  */
-
 import React from 'react';
 import { useTokenAnalysis } from '@/hooks/useTokenAnalysis';
 import Header from './SuperTokenScorer/Header';
@@ -15,7 +14,7 @@ import FlagSection from './SuperTokenScorer/FlagSection';
 import DetailedMetrics from './SuperTokenScorer/DetailedMetrics';
 import ExternalData from './SuperTokenScorer/ExternalData';
 
-export default function SuperTokenScorer() {
+export default function SuperTokenScorerContent() {
   const {
     tokenAddress,
     setTokenAddress,
@@ -31,7 +30,7 @@ export default function SuperTokenScorer() {
     <div className="min-h-screen bg-gradient-to-br from-purple-900 via-black to-blue-900 p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
         <Header />
-
+        
         <InputSection
           tokenAddress={tokenAddress}
           setTokenAddress={setTokenAddress}
