@@ -13,9 +13,9 @@ export interface UploadOptions {
  * ❌ R2 Storage DISABLED - Images served from cache/on-demand
  */
 export async function uploadImage(
-  key: string,
-  buffer: Buffer,
-  options: UploadOptions = {}
+  _key: string,
+  _buffer: Buffer,
+  _options: UploadOptions = {}
 ): Promise<string | null> {
   logger.info('✅ R2 storage disabled - images served from cache');
   return null;
@@ -25,8 +25,8 @@ export async function uploadImage(
  * ❌ R2 Storage DISABLED
  */
 export async function getImageUrl(
-  key: string,
-  expiresIn: number = 3600
+  _key: string,
+  _expiresIn: number = 3600
 ): Promise<string | null> {
   return null;
 }
@@ -34,7 +34,7 @@ export async function getImageUrl(
 /**
  * ❌ R2 Storage DISABLED
  */
-export async function deleteImage(key: string): Promise<boolean> {
+export async function deleteImage(_key: string): Promise<boolean> {
   return false;
 }
 
@@ -51,7 +51,7 @@ export function generateCardImageKey(walletAddress: string): string {
 /**
  * ❌ R2 Storage DISABLED
  */
-export function getPublicUrl(key: string): string {
+export function getPublicUrl(_key: string): string {
   return '';
 }
 
