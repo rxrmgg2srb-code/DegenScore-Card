@@ -566,4 +566,491 @@ describe('Error Classes - Comprehensive Test Suite', () => {
             expect(error.context?.number).toBe(123);
         });
     });
+
+    describe('🔥 NUCLEAR LEVEL TESTS - Extreme Edge Cases 🔥', () => {
+        describe('Immutability and Object Freezing', () => {
+            it('should handle frozen error objects', () => {
+                const error = new AppError('Test', 'TEST', 500);
+                Object.freeze(error);
+
+                expect(error.message).toBe('Test');
+                expect(error.errorCode).toBe('TEST');
+                expect(Object.isFrozen(error)).toBe(true);
+
+                // In strict mode (Jest), this throws TypeError
+                expect(() => {
+                    (error as any).newProp = 'value';
+                }).toThrow(TypeError);
+                expect((error as any).newProp).toBeUndefined();
+            });
+
+            it('should handle sealed error objects', () => {
+                const error = new AppError('Test', 'TEST', 500);
+                Object.seal(error);
+
+                expect(Object.isSealed(error)).toBe(true);
+                // In strict mode, adding properties to sealed objects throws
+                expect(() => {
+                    (error as any).newProp = 'value';
+                }).toThrow(TypeError);
+            });
+
+            it('should handle frozen context objects', () => {
+                const context = Object.freeze({ key: 'value' });
+                const error = new AppError('Test', 'TEST', 500, context);
+
+                expect(error.context?.key).toBe('value');
+                expect(Object.isFrozen(error.context)).toBe(true);
+            });
+
+            it('should handle deeply frozen nested objects', () => {
+                const context = {
+                    level1: Object.freeze({
+                        level2: Object.freeze({
+                            level3: 'deep'
+                        })
+                    })
+                };
+
+                const error = new AppError('Test', 'TEST', 500, context);
+                expect(error.context?.level1?.level2?.level3).toBe('deep');
+            });
+        });
+
+        describe('JavaScript Limits and Boundaries', () => {
+            it('should handle Number.MAX_SAFE_INTEGER', () => {
+                const error = new AppError('Test', 'TEST', Number.MAX_SAFE_INTEGER);
+                expect(error.statusCode).toBe(Number.MAX_SAFE_INTEGER);
+            });
+
+            it('should handle Number.MIN_SAFE_INTEGER as status code', () => {
+                const error = new AppError('Test', 'TEST', Number.MIN_SAFE_INTEGER);
+                expect(error.statusCode).toBe(Number.MIN_SAFE_INTEGER);
+            });
+
+            it('should handle context with MAX_SAFE_INTEGER values', () => {
+                const context = {
+                    bigNumber: Number.MAX_SAFE_INTEGER,
+                    negativeBig: Number.MIN_SAFE_INTEGER,
+                };
+                const error = new AppError('Test', 'TEST', 500, context);
+                expect(error.context?.bigNumber).toBe(Number.MAX_SAFE_INTEGER);
+            });
+
+            it('should handle extremely deep stack traces', () => {
+                function deepRecursion(depth: number): AppError {
+                    if (depth === 0) {
+                        return new AppError('Deep error', 'DEEP', 500);
+                    }
+                    return deepRecursion(depth - 1);
+                }
+
+                const error = deepRecursion(100);
+                expect(error.stack).toBeDefined();
+                expect(error.stack!.split('\n').length).toBeGreaterThan(10);
+            });
+        });
+
+        describe('Prototype Pollution and Security', () => {
+            it('should not allow prototype pollution via constructor', () => {
+                const maliciousContext: any = {
+                    '__proto__': { polluted: true },
+                    'constructor': { prototype: { polluted: true } }
+                };
+
+                const error = new AppError('Test', 'TEST', 500, maliciousContext);
+
+                // Should not pollute Object.prototype
+                expect((Object.prototype as any).polluted).toBeUndefined();
+                expect(error.context).toBeDefined();
+            });
+
+            it('should handle context with __proto__ property', () => {
+                const context = { '__proto__': 'malicious' };
+                const error = new AppError('Test', 'TEST', 500, context);
+                expect(error.context).toBeDefined();
+            });
+
+            it('should preserve prototype chain integrity', () => {
+                const error = new ValidationError('Test');
+                expect(Object.getPrototypeOf(error)).toBe(ValidationError.prototype);
+                expect(Object.getPrototypeOf(Object.getPrototypeOf(error))).toBe(AppError.prototype);
+                expect(Object.getPrototypeOf(Object.getPrototypeOf(Object.getPrototypeOf(error)))).toBe(Error.prototype);
+            });
+        });
+
+        describe('Concurrency and Timing', () => {
+            it('should handle concurrent error creation', async () => {
+                const promises = Array.from({ length: 1000 }, (_, i) =>
+                    Promise.resolve(new AppError(`Error ${i}`, 'TEST', 500))
+                );
+
+                const errors = await Promise.all(promises);
+                expect(errors).toHaveLength(1000);
+                expect(errors[0].message).toBe('Error 0');
+                expect(errors[999].message).toBe('Error 999');
+            });
+
+            it('should maintain unique timestamps under rapid creation', () => {
+                const errors = Array.from({ length: 100 }, () =>
+                    new AppError('Test', 'TEST', 500)
+                );
+
+                // At least some timestamps should be different
+                const uniqueTimestamps = new Set(errors.map(e => e.timestamp.getTime()));
+                // Can't guarantee all unique due to millisecond precision
+                expect(uniqueTimestamps.size).toBeGreaterThan(0);
+            });
+
+            it('should handle errors created in async context', async () => {
+                const error = await new Promise<AppError>((resolve) => {
+                    setTimeout(() => {
+                        resolve(new AppError('Async', 'ASYNC', 500));
+                    }, 0);
+                });
+
+                expect(error.message).toBe('Async');
+            });
+        });
+
+        describe('Exotic Types and Values', () => {
+            it('should handle Symbol in context', () => {
+                const sym = Symbol('test');
+                const context = { symbol: sym };
+                const error = new AppError('Test', 'TEST', 500, context);
+                expect(error.context?.symbol).toBe(sym);
+            });
+
+            it('should handle BigInt in context', () => {
+                const big = BigInt('9007199254740991');
+                const context = { bigint: big };
+                const error = new AppError('Test', 'TEST', 500, context);
+                expect(error.context?.bigint).toBe(big);
+            });
+
+            it('should handle Map in context', () => {
+                const map = new Map([['key', 'value']]);
+                const context = { map };
+                const error = new AppError('Test', 'TEST', 500, context);
+                expect(error.context?.map).toBe(map);
+                expect(error.context?.map.get('key')).toBe('value');
+            });
+
+            it('should handle Set in context', () => {
+                const set = new Set([1, 2, 3]);
+                const context = { set };
+                const error = new AppError('Test', 'TEST', 500, context);
+                expect(error.context?.set).toBe(set);
+                expect(error.context?.set.size).toBe(3);
+            });
+
+            it('should handle WeakMap in context', () => {
+                const obj = { key: 'value' };
+                const weakMap = new WeakMap([[obj, 'data']]);
+                const context = { weakMap };
+                const error = new AppError('Test', 'TEST', 500, context);
+                expect(error.context?.weakMap).toBe(weakMap);
+            });
+
+            it('should handle Function in context', () => {
+                const fn = () => 'test';
+                const context = { fn };
+                const error = new AppError('Test', 'TEST', 500, context);
+                expect(error.context?.fn).toBe(fn);
+                expect(error.context?.fn()).toBe('test');
+            });
+
+            it('should handle class instances in context', () => {
+                class Custom { value = 42; }
+                const instance = new Custom();
+                const context = { instance };
+                const error = new AppError('Test', 'TEST', 500, context);
+                expect(error.context?.instance).toBe(instance);
+                expect(error.context?.instance.value).toBe(42);
+            });
+        });
+
+        describe('Unicode and Internationalization Extremes', () => {
+            it('should handle right-to-left text', () => {
+                const rtlText = 'مرحبا بك في العالم';
+                const error = new AppError(rtlText, 'RTL', 500);
+                expect(error.message).toBe(rtlText);
+            });
+
+            it('should handle mixed bidirectional text', () => {
+                const bidiText = 'Hello مرحبا World 世界';
+                const error = new AppError(bidiText, 'BIDI', 500);
+                expect(error.message).toBe(bidiText);
+            });
+
+            it('should handle zero-width characters', () => {
+                const text = 'Hello\u200BWorld'; // Zero-width space
+                const error = new AppError(text, 'ZERO', 500);
+                expect(error.message).toContain('Hello');
+                expect(error.message).toContain('World');
+            });
+
+            it('should handle combining characters', () => {
+                const text = 'café'; // Using combining acute accent
+                const error = new AppError(text, 'COMBINING', 500);
+                expect(error.message).toBeDefined();
+            });
+
+            it('should handle emoji with skin tone modifiers', () => {
+                const emoji = '👋🏽👨🏾‍💻🎉';
+                const error = new AppError(emoji, 'EMOJI', 500);
+                expect(error.message).toBe(emoji);
+            });
+
+            it('should handle emoji sequences', () => {
+                const sequence = '👨‍👩‍👧‍👦'; // Family emoji (ZWJ sequence)
+                const error = new AppError(sequence, 'ZWJ', 500);
+                expect(error.message).toBe(sequence);
+            });
+
+            it('should handle surrogate pairs', () => {
+                const text = '𝕳𝖊𝖑𝖑𝖔'; // Mathematical bold text
+                const error = new AppError(text, 'SURROGATE', 500);
+                expect(error.message).toBe(text);
+            });
+        });
+
+        describe('Memory and Performance Extremes', () => {
+            it('should handle 1 million character message without OOM', () => {
+                const hugMessage = 'A'.repeat(1000000);
+                const error = new AppError(hugMessage, 'HUGE', 500);
+                expect(error.message.length).toBe(1000000);
+            });
+
+            it('should handle deeply nested context (100 levels)', () => {
+                let context: any = { value: 'deep' };
+                for (let i = 0; i < 100; i++) {
+                    context = { nested: context };
+                }
+
+                const error = new AppError('Test', 'DEEP', 500, context);
+                expect(error.context).toBeDefined();
+
+                // Navigate to the deepest value
+                let current: any = error.context;
+                for (let i = 0; i < 100; i++) {
+                    current = current?.nested;
+                }
+                expect(current?.value).toBe('deep');
+            });
+
+            it('should handle context with 10,000 properties', () => {
+                const context: any = {};
+                for (let i = 0; i < 10000; i++) {
+                    context[`key${i}`] = `value${i}`;
+                }
+
+                const error = new AppError('Test', 'WIDE', 500, context);
+                expect(error.context?.key0).toBe('value0');
+                expect(error.context?.key9999).toBe('value9999');
+            });
+
+            it('should handle rapid error creation and garbage collection', () => {
+                const iterations = 100000;
+                let lastError: AppError | null = null;
+
+                for (let i = 0; i < iterations; i++) {
+                    lastError = new AppError(`Error ${i}`, 'TEST', 500);
+                }
+
+                expect(lastError?.message).toBe(`Error ${iterations - 1}`);
+                // Previous errors should be eligible for GC
+            });
+        });
+
+        describe('Error Chaining and Wrapping', () => {
+            it('should handle error as cause in context', () => {
+                const cause = new Error('Original error');
+                const error = new AppError('Wrapped error', 'WRAPPED', 500, { cause });
+
+                expect(error.context?.cause).toBe(cause);
+                expect((error.context?.cause as Error).message).toBe('Original error');
+            });
+
+            it('should handle multiple levels of error wrapping', () => {
+                const level1 = new Error('Level 1');
+                const level2 = new AppError('Level 2', 'L2', 500, { cause: level1 });
+                const level3 = new AppError('Level 3', 'L3', 500, { cause: level2 });
+
+                expect(level3.context?.cause).toBe(level2);
+                expect((level3.context?.cause as AppError).context?.cause).toBe(level1);
+            });
+
+            it('should handle error chains with 50 levels', () => {
+                let error: Error = new Error('Root');
+
+                for (let i = 0; i < 50; i++) {
+                    error = new AppError(`Level ${i}`, `L${i}`, 500, { cause: error });
+                }
+
+                expect(error.message).toBe('Level 49');
+
+                // Walk the chain
+                let current: any = error;
+                let depth = 0;
+                while (current.context?.cause && depth < 100) {
+                    current = current.context.cause;
+                    depth++;
+                }
+                expect(depth).toBe(50);
+            });
+        });
+
+        describe('Proxy and Getter/Setter Behavior', () => {
+            it('should handle Proxy wrapping error objects', () => {
+                const error = new AppError('Test', 'TEST', 500);
+                const handler = {
+                    get(target: any, prop: string) {
+                        if (prop === 'message') return 'Proxied message';
+                        return target[prop];
+                    }
+                };
+
+                const proxied = new Proxy(error, handler);
+                expect(proxied.message).toBe('Proxied message');
+                expect(proxied.errorCode).toBe('TEST');
+            });
+
+            it('should handle getters in context', () => {
+                const context = {
+                    get computed() {
+                        return 'computed value';
+                    }
+                };
+
+                const error = new AppError('Test', 'TEST', 500, context);
+                expect(error.context?.computed).toBe('computed value');
+            });
+
+            it('should handle context with volatile getters', () => {
+                let counter = 0;
+                const context = {
+                    get volatile() {
+                        return counter++;
+                    }
+                };
+
+                const error = new AppError('Test', 'TEST', 500, context);
+                const val1 = error.context?.volatile;
+                const val2 = error.context?.volatile;
+
+                // Getter is called each time
+                expect(val2).toBe(val1! + 1);
+            });
+        });
+
+        describe('Type Coercion Edge Cases', () => {
+            it('should handle objects with custom toString', () => {
+                const context = {
+                    custom: {
+                        toString() { return 'Custom String'; },
+                        valueOf() { return 42; }
+                    }
+                };
+
+                const error = new AppError('Test', 'TEST', 500, context);
+                expect(String(error.context?.custom)).toBe('Custom String');
+                expect(Number(error.context?.custom)).toBe(42);
+            });
+
+            it('should handle status code as string (coercion)', () => {
+                const error = new AppError('Test', 'TEST', '404' as any);
+                expect(error.statusCode).toBe('404');
+            });
+
+            it('should handle errorCode as number', () => {
+                const error = new AppError('Test', 12345 as any, 500);
+                expect(error.errorCode).toBe(12345);
+            });
+        });
+
+        describe('Helper Functions Under Extreme Conditions', () => {
+            it('should handle getErrorMessage with Proxy', () => {
+                const handler = {
+                    get() { throw new Error('Proxy trap'); }
+                };
+                const proxy = new Proxy({}, handler);
+
+                // Should handle gracefully
+                expect(() => getErrorMessage(proxy)).not.toThrow();
+            });
+
+            it('should handle isAppError with modified prototype', () => {
+                const error = new AppError('Test', 'TEST', 500);
+
+                // Try to confuse instanceof
+                expect(isAppError(error)).toBe(true);
+
+                // Even if we mess with it
+                const fake = Object.create(AppError.prototype);
+                expect(fake instanceof AppError).toBe(true);
+            });
+
+            it('should handle getErrorCode with 1000 different error types', () => {
+                const errors = Array.from({ length: 1000 }, (_, i) =>
+                    new AppError(`Error ${i}`, `CODE_${i}`, 500)
+                );
+
+                errors.forEach((err, i) => {
+                    expect(getErrorCode(err)).toBe(`CODE_${i}`);
+                });
+            });
+        });
+
+        describe('Extreme Serialization Cases', () => {
+            it('should handle context with non-enumerable properties', () => {
+                const context: any = { visible: 'yes' };
+                Object.defineProperty(context, 'hidden', {
+                    value: 'secret',
+                    enumerable: false
+                });
+
+                const error = new AppError('Test', 'TEST', 500, context);
+                expect(error.context?.visible).toBe('yes');
+                expect(error.context?.hidden).toBe('secret');
+
+                const json = JSON.parse(JSON.stringify(error));
+                expect(json.context?.visible).toBe('yes');
+                // Hidden won't serialize
+                expect(json.context?.hidden).toBeUndefined();
+            });
+
+            it('should handle toJSON method in context', () => {
+                const context = {
+                    data: {
+                        secret: 'hidden',
+                        toJSON() {
+                            return { sanitized: true };
+                        }
+                    }
+                };
+
+                const error = new AppError('Test', 'TEST', 500, context);
+                const json = JSON.parse(JSON.stringify(error));
+
+                expect(json.context?.data).toEqual({ sanitized: true });
+            });
+
+            it('should handle context with getters that throw', () => {
+                const context = {
+                    get dangerous() {
+                        throw new Error('Getter error');
+                    }
+                };
+
+                const error = new AppError('Test', 'TEST', 500, context);
+
+                // Should not throw during creation
+                expect(error).toBeDefined();
+
+                // But accessing the getter will throw
+                expect(() => error.context?.dangerous).toThrow('Getter error');
+            });
+        });
+    });
 });

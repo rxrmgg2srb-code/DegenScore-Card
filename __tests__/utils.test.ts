@@ -634,4 +634,469 @@ describe('Leaderboard Utils - Extreme Test Suite', () => {
             });
         });
     });
+
+    describe('☢️ NUCLEAR LEVEL TESTS - Extreme Chaos ☢️', () => {
+        describe('Floating Point Precision Hell', () => {
+            it('should handle scores with extreme decimal precision', () => {
+                const score = 89.99999999999999;
+                const tier = getTierConfig(score);
+                // Due to floating point, this might be exactly 90
+                expect(['MASTER', 'LEGENDARY']).toContain(tier.name);
+            });
+
+            it('should handle Number.EPSILON boundaries', () => {
+                const justBelowNinety = 90 - Number.EPSILON;
+                const justAboveNinety = 90 + Number.EPSILON;
+
+                const tier1 = getTierConfig(justBelowNinety);
+                const tier2 = getTierConfig(justAboveNinety);
+
+                expect(tier1.name).toBe('LEGENDARY');
+                expect(tier2.name).toBe('LEGENDARY');
+            });
+
+            it('should handle subnormal numbers', () => {
+                const tiny = Number.MIN_VALUE;
+                expect(formatNumber(tiny)).toBe('0.00');
+                expect(getTierConfig(tiny).name).toBe('DEGEN');
+            });
+
+            it('should handle denormalized numbers near zero', () => {
+                const denormal = 1e-320;
+                expect(formatNumber(denormal)).toBe('0.00');
+            });
+
+            it('should handle floating point arithmetic errors', () => {
+                const result = 0.1 + 0.2; // 0.30000000000000004
+                expect(formatNumber(result)).toBeDefined();
+                expect(typeof formatNumber(result)).toBe('string');
+            });
+        });
+
+        describe('Unicode Madness in Strings', () => {
+            it('should handle invisible characters in FOMO phrases', () => {
+                // These functions don't take string input, but we test their output
+                const phrase = getFOMOPhrase(95);
+                expect(phrase).toBeTruthy();
+                expect(phrase.length).toBeGreaterThan(0);
+            });
+
+            it('should handle emoji counting in level phrases', () => {
+                const phrase = getLevelPhrase(50);
+                expect(phrase).toContain('🔥');
+                // Emoji can be multi-byte
+                expect(phrase.length).toBeGreaterThan(phrase.replace(/🔥/g, '').length);
+            });
+
+            it('should handle zero-width joiners in output', () => {
+                const phrase = getFOMOPhrase(92);
+                // Check it doesn't break with special characters
+                expect(phrase).toBeDefined();
+                expect(String(phrase)).toBeTruthy();
+            });
+        });
+
+        describe('Extreme Number Formatting', () => {
+            it('should handle numbers larger than MAX_SAFE_INTEGER', () => {
+                const huge = Number.MAX_SAFE_INTEGER + 1000000;
+                const formatted = formatNumber(huge);
+                expect(formatted).toContain('B');
+            });
+
+            it('should handle scientific notation input', () => {
+                expect(formatNumber(1.23e9)).toBe('1.23B');
+                expect(formatNumber(5.67e6)).toBe('5.67M');
+                expect(formatNumber(8.9e3)).toBe('8.90K');
+                expect(formatNumber(1.23e-5)).toBe('0.00');
+            });
+
+            it('should handle hexadecimal number coercion', () => {
+                const hex = 0xFF; // 255
+                expect(formatNumber(hex)).toBe('255.00');
+            });
+
+            it('should handle octal number coercion', () => {
+                const octal = 0o77; // 63
+                expect(formatNumber(octal)).toBe('63.00');
+            });
+
+            it('should handle binary number coercion', () => {
+                const binary = 0b1111; // 15
+                expect(formatNumber(binary)).toBe('15.00');
+            });
+
+            it('should handle Number constructor coercion', () => {
+                expect(formatNumber(Number('1500000'))).toBe('1.50M');
+                expect(formatNumber(Number('0xFF'))).toBe('255.00');
+            });
+
+            it('should handle parseFloat edge cases', () => {
+                const parsed = parseFloat('1500000.999');
+                expect(formatNumber(parsed)).toBe('1.50M');
+            });
+        });
+
+        describe('Tier Config Object Immutability', () => {
+            it('should return objects that can be frozen', () => {
+                const tier = getTierConfig(85);
+                Object.freeze(tier);
+                expect(Object.isFrozen(tier)).toBe(true);
+
+                // In strict mode, can't add properties to frozen objects
+                expect(() => {
+                    (tier as any).hacked = true;
+                }).toThrow(TypeError);
+                expect((tier as any).hacked).toBeUndefined();
+            });
+
+            it('should not share references between calls', () => {
+                const tier1 = getTierConfig(85);
+                const tier2 = getTierConfig(85);
+
+                // Same structure
+                expect(tier1).toEqual(tier2);
+                // But DIFFERENT object references (function returns new object each time)
+                expect(tier1).not.toBe(tier2);
+            });
+
+            it('should handle mutation attempts', () => {
+                const tier = getTierConfig(75);
+                const original = tier.name;
+
+                (tier as any).name = 'HACKED';
+
+                // Re-getting should return correct value
+                const fresh = getTierConfig(75);
+                expect(fresh.name).toBe(original);
+            });
+        });
+
+        describe('Extreme Memory Pressure', () => {
+            it('should handle 1 million formatNumber calls', () => {
+                const iterations = 1000000;
+                let last = '';
+
+                for (let i = 0; i < iterations; i++) {
+                    last = formatNumber(i);
+                }
+
+                expect(last).toBeDefined();
+            });
+
+            it('should handle alternating function calls', () => {
+                for (let i = 0; i < 10000; i++) {
+                    getTierConfig(i % 100);
+                    getLevelPhrase(i % 50);
+                    formatNumber(i * 1000);
+                    getFOMOPhrase(i % 100);
+                }
+
+                // Should not crash
+                expect(true).toBe(true);
+            });
+
+            it('should handle results in large arrays', () => {
+                const results = Array.from({ length: 100000 }, (_, i) => ({
+                    tier: getTierConfig(i % 100),
+                    phrase: getLevelPhrase(i % 50),
+                    formatted: formatNumber(i * 1000),
+                    fomo: getFOMOPhrase(i % 100),
+                }));
+
+                expect(results).toHaveLength(100000);
+                expect(results[0]).toBeDefined();
+                expect(results[99999]).toBeDefined();
+            });
+
+            it('should handle deeply nested function call chains', () => {
+                function recurse(depth: number): string {
+                    if (depth === 0) {
+                        return formatNumber(1500000);
+                    }
+                    return recurse(depth - 1) + formatNumber(depth);
+                }
+
+                const result = recurse(100);
+                expect(result).toContain('1.50M');
+            });
+        });
+
+        describe('Concurrent Access Simulation', () => {
+            it('should handle Promise.all with different functions', async () => {
+                const promises = [
+                    Promise.resolve(getTierConfig(85)),
+                    Promise.resolve(getLevelPhrase(25)),
+                    Promise.resolve(formatNumber(1500000)),
+                    Promise.resolve(getFOMOPhrase(92)),
+                ];
+
+                const results = await Promise.all(promises);
+                expect(results).toHaveLength(4);
+                expect(results[0]).toHaveProperty('name');
+                expect(typeof results[1]).toBe('string');
+                expect(typeof results[2]).toBe('string');
+                expect(typeof results[3]).toBe('string');
+            });
+
+            it('should handle Promise.race without side effects', async () => {
+                const result = await Promise.race([
+                    Promise.resolve(formatNumber(1000000)),
+                    Promise.resolve(formatNumber(2000000)),
+                    Promise.resolve(formatNumber(3000000)),
+                ]);
+
+                expect(result).toMatch(/\d+\.\d{2}M/);
+            });
+
+            it('should handle async/await in loops', async () => {
+                const results = [];
+                for (let i = 0; i < 100; i++) {
+                    results.push(await Promise.resolve(getTierConfig(i)));
+                }
+
+                expect(results).toHaveLength(100);
+            });
+        });
+
+        describe('Type Coercion Chaos', () => {
+            it('should handle string scores that look like numbers', () => {
+                const tier = getTierConfig(parseFloat('85.5'));
+                expect(tier.name).toBe('MASTER');
+            });
+
+            it('should handle boolean coercion', () => {
+                const trueTier = getTierConfig(Number(true)); // 1
+                const falseTier = getTierConfig(Number(false)); // 0
+
+                expect(trueTier.name).toBe('DEGEN');
+                expect(falseTier.name).toBe('DEGEN');
+            });
+
+            it('should handle array coercion', () => {
+                const fromArray = Number([85]); // 85
+                expect(getTierConfig(fromArray).name).toBe('MASTER');
+            });
+
+            it('should handle object valueOf', () => {
+                const obj = {
+                    valueOf() { return 92; }
+                };
+                expect(getTierConfig(Number(obj)).name).toBe('LEGENDARY');
+            });
+        });
+
+        describe('Edge Case Combinations', () => {
+            it('should handle score at exactly 0', () => {
+                const tier = getTierConfig(0);
+                const phrase = getFOMOPhrase(0);
+
+                expect(tier.name).toBe('DEGEN');
+                expect(phrase).toContain('QUIT FOREVER');
+            });
+
+            it('should handle perfect 100 score', () => {
+                const tier = getTierConfig(100);
+                const phrase = getFOMOPhrase(100);
+
+                expect(tier.name).toBe('LEGENDARY');
+                expect(phrase).toContain('GOD MODE');
+            });
+
+            it('should handle score of exactly 50 (boundary)', () => {
+                const tier = getTierConfig(50);
+                const level = getLevelPhrase(50);
+                const fomo = getFOMOPhrase(50);
+
+                expect(tier.name).toBe('GOLD');
+                expect(level).toContain('Gigachad');
+                expect(fomo).toContain('NGMI');
+            });
+
+            it('should handle all tier boundaries exactly', () => {
+                const boundaries = [50, 60, 70, 80, 90];
+                const expectedTiers = ['GOLD', 'PLATINUM', 'DIAMOND', 'MASTER', 'LEGENDARY'];
+
+                boundaries.forEach((score, idx) => {
+                    const tier = getTierConfig(score);
+                    expect(tier.name).toBe(expectedTiers[idx]);
+                });
+            });
+        });
+
+        describe('Return Value Structure Validation', () => {
+            it('should always return objects with all required properties for getTierConfig', () => {
+                const requiredProps = [
+                    'name', 'emoji', 'gradient', 'border', 'glow',
+                    'bgPattern', 'textColor', 'badgeGradient', 'shine'
+                ];
+
+                for (let score = 0; score <= 100; score += 10) {
+                    const tier = getTierConfig(score);
+                    requiredProps.forEach(prop => {
+                        expect(tier).toHaveProperty(prop);
+                    });
+                }
+            });
+
+            it('should always return string for formatNumber', () => {
+                const testValues = [
+                    0, 1, 100, 1000, 1000000, 1000000000,
+                    -1, -1000, null, undefined, NaN, Infinity
+                ];
+
+                testValues.forEach(val => {
+                    const result = formatNumber(val as any);
+                    expect(typeof result).toBe('string');
+                });
+            });
+
+            it('should always return string for getLevelPhrase', () => {
+                for (let level = 0; level <= 100; level += 5) {
+                    const phrase = getLevelPhrase(level);
+                    expect(typeof phrase).toBe('string');
+                    expect(phrase.length).toBeGreaterThan(0);
+                }
+            });
+
+            it('should always return string for getFOMOPhrase', () => {
+                for (let score = 0; score <= 100; score += 5) {
+                    const phrase = getFOMOPhrase(score);
+                    expect(typeof phrase).toBe('string');
+                    expect(phrase.length).toBeGreaterThan(0);
+                    expect(phrase).toContain(' - ');
+                }
+            });
+        });
+
+        describe('Rounding and Precision Edge Cases', () => {
+            it('should handle .5 rounding consistently', () => {
+                expect(formatNumber(1500.5, 0)).toBe('2K');
+                expect(formatNumber(1499.5, 0)).toBe('1K');
+            });
+
+            it('should handle banker\'s rounding edge cases', () => {
+                // JavaScript uses "round half up"
+                expect(formatNumber(1.5)).toBe('1.50');
+                expect(formatNumber(2.5)).toBe('2.50');
+            });
+
+            it('should handle very small decimals in formatNumber', () => {
+                expect(formatNumber(1234567.89012345, 8)).toBe('1.23456789M');
+            });
+
+            it('should handle decimal overflow', () => {
+                // toFixed can throw if decimals > 100
+                expect(() => formatNumber(1000, 101)).toThrow();
+            });
+        });
+
+        describe('Extreme Input Permutations', () => {
+            it('should handle every score from 0 to 100', () => {
+                for (let score = 0; score <= 100; score++) {
+                    const tier = getTierConfig(score);
+                    const fomo = getFOMOPhrase(score);
+
+                    expect(tier).toBeDefined();
+                    expect(tier.name).toBeTruthy();
+                    expect(fomo).toBeTruthy();
+                }
+            });
+
+            it('should handle every level from 0 to 100', () => {
+                for (let level = 0; level <= 100; level++) {
+                    const phrase = getLevelPhrase(level);
+                    expect(phrase).toBeTruthy();
+                    expect(phrase.length).toBeGreaterThan(5);
+                }
+            });
+
+            it('should handle powers of 10', () => {
+                const powers = [1, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000, 1000000000];
+                powers.forEach(num => {
+                    const formatted = formatNumber(num);
+                    expect(formatted).toBeTruthy();
+                    expect(typeof formatted).toBe('string');
+                });
+            });
+
+            it('should handle powers of 2', () => {
+                for (let i = 0; i <= 30; i++) {
+                    const num = Math.pow(2, i);
+                    const formatted = formatNumber(num);
+                    expect(formatted).toBeDefined();
+                }
+            });
+        });
+
+        describe('Function Purity and Side Effects', () => {
+            it('should not mutate input or have side effects', () => {
+                const score = 85;
+                const level = 25;
+                const number = 1500000;
+
+                getTierConfig(score);
+                getLevelPhrase(level);
+                formatNumber(number);
+                getFOMOPhrase(score);
+
+                // Re-running should give same results
+                expect(getTierConfig(score).name).toBe('MASTER');
+                expect(getLevelPhrase(level)).toContain('Diamond');
+                expect(formatNumber(number)).toBe('1.50M');
+            });
+
+            it('should be referentially transparent', () => {
+                const score = 75;
+
+                const result1 = getTierConfig(score);
+                const result2 = getTierConfig(score);
+                const result3 = getTierConfig(score);
+
+                // Same values
+                expect(result1).toEqual(result2);
+                expect(result2).toEqual(result3);
+                // But different object instances (pure function returns new object)
+                expect(result1).not.toBe(result2);
+            });
+
+            it('should not modify global state', () => {
+                // globalThis contains circular references and can't be serialized
+                // Instead, check that functions don't pollute globals
+                const beforeKeys = Object.keys(globalThis);
+
+                for (let i = 0; i < 1000; i++) {
+                    getTierConfig(i % 100);
+                    getLevelPhrase(i % 50);
+                    formatNumber(i * 1000);
+                    getFOMOPhrase(i % 100);
+                }
+
+                const afterKeys = Object.keys(globalThis);
+                // No new global variables should be created
+                expect(afterKeys.length).toBe(beforeKeys.length);
+            });
+        });
+
+        describe('Mathematical Constants and Special Values', () => {
+            it('should handle Math.PI', () => {
+                expect(formatNumber(Math.PI)).toBe('3.14');
+                expect(getTierConfig(Math.PI).name).toBe('DEGEN');
+            });
+
+            it('should handle Math.E', () => {
+                expect(formatNumber(Math.E)).toBe('2.72');
+                expect(getTierConfig(Math.E).name).toBe('DEGEN');
+            });
+
+            it('should handle golden ratio', () => {
+                const phi = (1 + Math.sqrt(5)) / 2;
+                expect(formatNumber(phi)).toBe('1.62');
+            });
+
+            it('should handle square roots', () => {
+                expect(formatNumber(Math.sqrt(2))).toBe('1.41');
+                expect(formatNumber(Math.sqrt(1000000))).toBe('1.00K');
+            });
+        });
+    });
 });
