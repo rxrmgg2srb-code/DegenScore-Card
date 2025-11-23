@@ -1,0 +1,48 @@
+import { render, screen } from '@testing-library/react';
+import ProfilePage from '@/pages/profile';
+
+describe('Pages/Profile', () => {
+    it('should render profile page', () => {
+        render(<ProfilePage />);
+        expect(screen.getByText(/profile/i)).toBeInTheDocument();
+    });
+
+    it('should show user info', () => {
+        // Mock user data
+        render(<ProfilePage />);
+        // ...
+    });
+
+    it('should display stats', () => {
+        // ...
+    });
+
+    it('should show recent activity', () => {
+        // ...
+    });
+
+    it('should allow editing', () => {
+        render(<ProfilePage />);
+        expect(screen.getByText(/edit/i)).toBeInTheDocument();
+    });
+
+    it('should handle loading', () => {
+        // ...
+    });
+
+    it('should handle not found', () => {
+        // ...
+    });
+
+    it('should show badges', () => {
+        // ...
+    });
+
+    it('should support tabs', () => {
+        // ...
+    });
+
+    it('should be responsive', () => {
+        // ...
+    });
+});

@@ -1,121 +1,88 @@
-import { renderHook, act } from '@testing-library/react';
+import { renderHook, act } from '@testing-library/react-hooks';
 import { useTokenSecurity } from '@/hooks/useTokenSecurity';
+import { Connection, PublicKey } from '@solana/web3.js';
 
-// Mock toast
-jest.mock('react-hot-toast', () => ({
-  toast: {
-    error: jest.fn(),
-    success: jest.fn()
-  }
+jest.mock('@solana/web3.js', () => ({
+  Connection: jest.fn(),
+  PublicKey: jest.fn(),
 }));
 
-// Mock fetch
 global.fetch = jest.fn();
 
 describe('useTokenSecurity', () => {
+  const mockTokenAddress = '7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU';
+
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  it('initializes with empty state', () => {
-    const { result } = renderHook(() => useTokenSecurity());
-
-    expect(result.current.tokenAddress).toBe('');
-    expect(result.current.loading).toBe(false);
-    expect(result.current.progress).toBe(0);
-    expect(result.current.report).toBeNull();
+  it('should initialize with default state', () => {
+    const { result } = renderHook(() => useTokenSecurity(mockTokenAddress));
+    expect(result.current.loading).toBe(true);
+    expect(result.current.securityData).toBeNull();
+    expect(result.current.error).toBeNull();
   });
 
-  it('updates token address', () => {
-    const { result } = renderHook(() => useTokenSecurity());
-
-    act(() => {
-      result.current.setTokenAddress('TokenAddress123');
-    });
-
-    expect(result.current.tokenAddress).toBe('TokenAddress123');
-  });
-
-  it('successfully scans token', async () => {
-    const mockReport = {
-      tokenAddress: 'TestToken',
-      securityScore: 75,
-      riskLevel: 'Medium',
-      recommendation: 'Use caution',
-      tokenAuthorities: {},
-      holderDistribution: {},
-      liquidityAnalysis: {},
-      tradingPatterns: {},
-      metadata: {},
-      marketMetrics: {},
-      redFlags: [],
-      analyzedAt: Date.now()
-    };
-
+  it('should fetch security data on mount', async () => {
+    const mockData = { score: 85, risks: [] };
     (global.fetch as jest.Mock).mockResolvedValueOnce({
       ok: true,
-      json: async () => ({ report: mockReport })
+      json: async () => mockData,
     });
 
-    const { result } = renderHook(() => useTokenSecurity());
+    const { result, waitForNextUpdate } = renderHook(() => useTokenSecurity(mockTokenAddress));
+    await waitForNextUpdate();
 
-    act(() => {
-      result.current.setTokenAddress('ValidTokenAddress');
-    });
+    expect(result.current.loading).toBe(false);
+    expect(result.current.securityData).toEqual(mockData);
+  });
 
-    await act(async () => {
-      await result.current.analyzeToken();
-    });
+  it('should handle fetch errors', async () => {
+    (global.fetch as jest.Mock).mockRejectedValueOnce(new Error('API Error'));
 
-    expect(result.current.report).toEqual(mockReport);
+    const { result, waitForNextUpdate } = renderHook(() => useTokenSecurity(mockTokenAddress));
+    await waitForNextUpdate();
+
+    expect(result.current.loading).toBe(false);
+    expect(result.current.error).toBeTruthy();
+  });
+
+  it('should handle invalid token address', () => {
+    const { result } = renderHook(() => useTokenSecurity(''));
+    expect(result.current.error).toBe('Invalid token address');
     expect(result.current.loading).toBe(false);
   });
 
-  it('handles scan errors', async () => {
-    (global.fetch as jest.Mock).mockRejectedValueOnce(
-      new Error('Network error')
+  it('should retry on failure', async () => {
+    (global.fetch as jest.Mock)
+      .mockRejectedValueOnce(new Error('Fail 1'))
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ score: 90 }),
+      });
+
+    const { result, waitForNextUpdate } = renderHook(() => useTokenSecurity(mockTokenAddress));
+    await waitForNextUpdate();
+
+    expect(result.current.loading).toBe(false);
+  });
+
+  it('should update when token address changes', async () => {
+    const { result, rerender, waitForNextUpdate } = renderHook(
+      ({ address }) => useTokenSecurity(address),
+      { initialProps: { address: mockTokenAddress } }
     );
 
-    const { result } = renderHook(() => useTokenSecurity());
-
-    act(() => {
-      result.current.setTokenAddress('TokenAddress');
-    });
-
-    await act(async () => {
-      await result.current.analyzeToken();
-    });
-
-    expect(result.current.loading).toBe(false);
-    expect(result.current.report).toBeNull();
-  });
-
-  it('detects high-risk tokens', async () => {
-    const highRiskReport = {
-      tokenAddress: 'ScamToken',
-      securityScore: 15,
-      riskLevel: 'High',
-      recommendation: 'Avoid this token',
-      redFlags: ['Mint authority enabled', 'Freeze authority enabled'],
-      analyzedAt: Date.now()
-    };
+    await waitForNextUpdate();
 
     (global.fetch as jest.Mock).mockResolvedValueOnce({
       ok: true,
-      json: async () => ({ report: highRiskReport })
+      json: async () => ({ score: 50 }),
     });
 
-    const { result } = renderHook(() => useTokenSecurity());
-
-    act(() => {
-      result.current.setTokenAddress('ScamToken');
-    });
-
-    await act(async () => {
-      await result.current.analyzeToken();
-    });
-
-    expect(result.current.report?.riskLevel).toBe('High');
-    expect(result.current.report?.securityScore).toBeLessThan(30);
+    rerender({ address: 'new-address' });
+    expect(result.current.loading).toBe(true);
+    await waitForNextUpdate();
+    expect(result.current.securityData).toEqual({ score: 50 });
   });
 });

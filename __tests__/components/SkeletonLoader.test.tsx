@@ -79,13 +79,14 @@ describe('SkeletonLoader', () => {
 describe('ProgressSkeleton', () => {
   it('should render default number of steps (5)', () => {
     const { container } = render(<ProgressSkeleton />);
-    const steps = container.querySelectorAll('.space-y-2 > .space-y-2');
+    // El contenedor principal usa .space-y-4, cada step usa .space-y-2
+    const steps = container.querySelectorAll('.space-y-4 > .space-y-2');
     expect(steps).toHaveLength(5);
   });
 
   it('should render custom number of steps', () => {
     const { container } = render(<ProgressSkeleton steps={3} />);
-    const steps = container.querySelectorAll('.space-y-2 > .space-y-2');
+    const steps = container.querySelectorAll('.space-y-4 > .space-y-2');
     expect(steps).toHaveLength(3);
   });
 

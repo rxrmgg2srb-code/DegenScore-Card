@@ -3,9 +3,13 @@ import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import { LanguageSelector } from './LanguageSelector';
 import Link from 'next/link';
 
-export const Header = () => {
-  const { t } = useTranslation();
+interface HeaderProps {
+  connected?: boolean;
+  username?: string;
+}
 
+export const Header: React.FC<HeaderProps> = ({ connected = false, username = '' }) => {
+  const { t } = useTranslation();
   return (
     <header className="bg-black/50 backdrop-blur-lg sticky top-0 z-40 border-b border-purple-500/30">
       <div className="container mx-auto px-4 py-4">
@@ -19,78 +23,49 @@ export const Header = () => {
 
           {/* Navigation */}
           <nav className="hidden md:flex items-center gap-6">
-            <Link
-              href="/"
-              className="text-gray-300 hover:text-white transition-colors"
-            >
+            <Link href="/" className="text-gray-300 hover:text-white transition-colors">
               {t('nav.home')}
             </Link>
-            <Link
-              href="/leaderboard"
-              className="text-gray-300 hover:text-white transition-colors"
-            >
+            <Link href="/leaderboard" className="text-gray-300 hover:text-white transition-colors">
               {t('nav.leaderboard')}
             </Link>
-            <Link
-              href="/token-scanner"
-              className="text-gray-300 hover:text-white transition-colors flex items-center gap-1"
-            >
+            <Link href="/token-scanner" className="text-gray-300 hover:text-white transition-colors flex items-center gap-1">
               🔒 Token Scanner
             </Link>
-            <Link
-              href="/super-token-scorer"
-              className="text-gray-300 hover:text-white transition-colors flex items-center gap-1"
-            >
+            <Link href="/super-token-scorer" className="text-gray-300 hover:text-white transition-colors flex items-center gap-1">
               🚀 Super Scorer
             </Link>
-            <Link
-              href="/documentation"
-              className="text-gray-300 hover:text-white transition-colors"
-            >
+            <Link href="/documentation" className="text-gray-300 hover:text-white transition-colors">
               {t('nav.documentation')}
             </Link>
           </nav>
 
           {/* Right side: Language selector + Wallet */}
           <div className="flex items-center gap-3">
-            {/* Language Selector */}
             <LanguageSelector />
-
-            {/* Wallet Button */}
-            <WalletMultiButton className="!bg-purple-600 hover:!bg-purple-700" />
+            {connected ? (
+              <div className="text-white font-medium">{username}</div>
+            ) : (
+              <WalletMultiButton className="!bg-purple-600 hover:!bg-purple-700" />
+            )}
           </div>
         </div>
 
         {/* Mobile navigation */}
         <nav className="md:hidden flex items-center gap-4 mt-4 overflow-x-auto">
-          <Link
-            href="/"
-            className="text-sm text-gray-300 hover:text-white transition-colors whitespace-nowrap"
-          >
+          <Link href="/" className="text-sm text-gray-300 hover:text-white transition-colors whitespace-nowrap">
             {t('nav.home')}
           </Link>
-          <Link
-            href="/leaderboard"
-            className="text-sm text-gray-300 hover:text-white transition-colors whitespace-nowrap"
-          >
+          <Link href="/leaderboard" className="text-sm text-gray-300 hover:text-white transition-colors whitespace-nowrap">
             {t('nav.leaderboard')}
           </Link>
-          <Link
-            href="/token-scanner"
-            className="text-sm text-gray-300 hover:text-white transition-colors whitespace-nowrap"
-          >
+          <Link href="/token-scanner" className="text-sm text-gray-300 hover:text-white transition-colors whitespace-nowrap">
             🔒 Scanner
           </Link>
-          <Link
-            href="/super-token-scorer"
-            className="text-sm text-gray-300 hover:text-white transition-colors whitespace-nowrap"
-          >
+          <Link href="/super-token-scorer" className="text-sm text-gray-300 hover:text-white transition-colors whitespace-nowrap">
             🚀 Super
           </Link>
-          <Link
-            href="/documentation"
-            className="text-sm text-gray-300 hover:text-white transition-colors whitespace-nowrap"
-          >
+          <Link href="/documentation" className="text-sm text-gray-300 hover:text-white transition-colors whitespace-nowrap">
             {t('nav.documentation')}
           </Link>
         </nav>
@@ -98,3 +73,5 @@ export const Header = () => {
     </header>
   );
 };
+
+export default Header;

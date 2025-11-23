@@ -11,15 +11,26 @@ const customJestConfig = {
   testEnvironment: 'jest-environment-jsdom',
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/$1',
+    // Mock UUID to avoid ESM issues in jayson/solana dependencies
+    '^uuid$': require.resolve('uuid'),
   },
   testPathIgnorePatterns: [
     '<rootDir>/.next/',
     '<rootDir>/node_modules/',
     '<rootDir>/__tests__/lib/walletAuth.test.ts',
+    '<rootDir>/e2e/',
   ],
   transformIgnorePatterns: [
-    'node_modules/(?!(uuid|jayson|@solana)/)',
+    // Allow transformation of specific ESM modules
+    'node_modules/(?!(@solana|jayson|uuid|@noble|@metaplex-foundation|bn\\.js|uncrypto)/)',
   ],
+  // Enable ESM support
+  extensionsToTreatAsEsm: ['.ts', '.tsx'],
+  globals: {
+    'ts-jest': {
+      useESM: false,
+    },
+  },
   collectCoverageFrom: [
     'lib/**/*.{js,ts}',
     'pages/api/**/*.{js,ts}',

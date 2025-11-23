@@ -5,6 +5,16 @@ import { TextEncoder, TextDecoder } from 'util';
 global.TextEncoder = TextEncoder;
 global.TextDecoder = TextDecoder;
 
+// Polyfill TransformStream for E2E tests (Playwright compatibility)
+if (typeof global.TransformStream === 'undefined') {
+    global.TransformStream = class TransformStream {
+        constructor() {
+            this.readable = {};
+            this.writable = {};
+        }
+    };
+}
+
 // Mock environment variables for tests
 process.env.NEXT_PUBLIC_SOLANA_NETWORK = 'devnet';
 process.env.NEXT_PUBLIC_RPC_ENDPOINT = 'https://api.devnet.solana.com';
