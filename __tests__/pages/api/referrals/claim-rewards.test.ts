@@ -1,7 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import claimRewardsHandler from '@/pages/api/referrals/claim-rewards';
 
-jest.mock('@/lib/prisma');
+
 jest.mock('@/lib/logger');
 
 describe('/api/referrals/claim-rewards', () => {

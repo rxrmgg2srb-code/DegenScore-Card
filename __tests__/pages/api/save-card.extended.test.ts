@@ -2,7 +2,7 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import saveCardHandler from '@/pages/api/save-card';
 import { prisma } from '@/lib/prisma';
 
-jest.mock('@/lib/prisma');
+
 jest.mock('@/lib/logger');
 
 describe('/api/save-card', () => {

@@ -1,7 +1,7 @@
 import { getStreakData, updateStreak, checkStreakEligibility } from '@/lib/streaks';
 import { prisma } from '@/lib/prisma';
 
-jest.mock('@/lib/prisma');
+
 jest.mock('@/lib/logger');
 
 describe('streaks', () => {

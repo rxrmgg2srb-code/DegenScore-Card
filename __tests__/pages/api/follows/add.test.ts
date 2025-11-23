@@ -1,7 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import addFollowHandler from '@/pages/api/follows/add';
+import { prisma } from '@/lib/prisma';
 
-jest.mock('@/lib/prisma');
 jest.mock('@/lib/logger');
 
 describe('/api/follows/add', () => {

@@ -7,8 +7,8 @@ import {
     validateWalletAddress,
     validateSignature,
     validateEmail,
-    sanitizeString,
 } from '../../lib/validation';
+import { sanitizeString } from '../../lib/sanitize';
 
 describe('Input Validation', () => {
     describe('validateWalletAddress', () => {

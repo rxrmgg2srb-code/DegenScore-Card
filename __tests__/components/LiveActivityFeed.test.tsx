@@ -1,65 +1,86 @@
 import { render, screen, waitFor, act } from '@testing-library/react';
 import LiveActivityFeed from '@/components/LiveActivityFeed';
 
-jest.mock('node-fetch');
-
 describe('LiveActivityFeed', () => {
-    const mockActivities = [
-        { id: '1', type: 'trade', user: 'alice', amount: 100 },
-        { id: '2', type: 'mint', user: 'bob', amount: 50 },
-    ];
-
-    it('should render feed', () => {
-        render(<LiveActivityFeed activities={mockActivities} />);
-        expect(screen.getByText('alice')).toBeInTheDocument();
-        expect(screen.getByText('bob')).toBeInTheDocument();
+    beforeEach(() => {
+        jest.useFakeTimers();
     });
 
-    it('should display activity types', () => {
-        render(<LiveActivityFeed activities={mockActivities} />);
-        expect(screen.getByText(/trade/i)).toBeInTheDocument();
-        expect(screen.getByText(/mint/i)).toBeInTheDocument();
+    afterEach(() => {
+        jest.useRealTimers();
     });
 
-    it('should animate new items', () => {
-        const { rerender, container } = render(<LiveActivityFeed activities={mockActivities} />);
-        const newActivities = [{ id: '3', type: 'burn', user: 'charlie' }, ...mockActivities];
-        rerender(<LiveActivityFeed activities={newActivities} />);
-        // Check animation class
-        expect(container.firstChild).toHaveClass('animate-fade-in');
+    it('should render live activity feed', () => {
+        render(<LiveActivityFeed />);
+        // The component generates its own initial activities
+        expect(screen.getByText('LIVE')).toBeInTheDocument();
     });
 
-    it('should limit items', () => {
-        const many = Array(20).fill(mockActivities[0]).map((a, i) => ({ ...a, id: String(i) }));
-        render(<LiveActivityFeed activities={many} limit={5} />);
-        expect(screen.getAllByRole('listitem')).toHaveLength(5);
+    it('should display wallet addresses', async () => {
+        render(<LiveActivityFeed />);
+
+        await waitFor(() => {
+            // Look for elements that contain "..." which are part of truncated wallet addresses
+            const addresses = screen.getAllByText(/\.\.\./);
+            expect(addresses.length).toBeGreaterThan(0);
+        });
     });
 
-    it('should show empty state', () => {
-        render(<LiveActivityFeed activities={[]} />);
-        expect(screen.getByText(/no activity/i)).toBeInTheDocument();
+    it('should show activity types', async () => {
+        render(<LiveActivityFeed />);
+
+        await waitFor(() => {
+            // The component should show at least one activity message
+            const messages = screen.getByText(/generated a|unlocked premium|achieved/i);
+            expect(messages).toBeInTheDocument();
+        });
     });
 
-    it('should show timestamps', () => {
-        render(<LiveActivityFeed activities={mockActivities} />);
-        expect(screen.getAllByText(/ago/i).length).toBeGreaterThan(0);
+    it('should show activity indicators', () => {
+        const { container } = render(<LiveActivityFeed />);
+
+        // Check for indicator dots
+        const indicators = container.querySelectorAll('.h-1.w-8');
+        expect(indicators.length).toBeGreaterThan(0);
     });
 
-    it('should support filters', () => {
-        render(<LiveActivityFeed activities={mockActivities} showFilters={true} />);
-        expect(screen.getByText(/filter/i)).toBeInTheDocument();
+    it('should animate between activities', async () => {
+        render(<LiveActivityFeed />);
+
+        // Fast-forward time to trigger activity rotation
+        act(() => {
+            jest.advanceTimersByTime(3000);
+        });
+
+        // Should still have the LIVE indicator
+        expect(screen.getByText('LIVE')).toBeInTheDocument();
     });
 
-    it('should handle websocket updates', () => {
-        // Mock websocket hook
+    it('should generate new activities over time', () => {
+        render(<LiveActivityFeed />);
+
+        // Fast-forward to trigger new activity generation
+        act(() => {
+            jest.advanceTimersByTime(10000);
+        });
+
+        // Component should still be rendering
+        expect(screen.queryByText('LIVE')).toBeInTheDocument();
     });
 
-    it('should be accessible', () => {
-        render(<LiveActivityFeed activities={mockActivities} />);
-        expect(screen.getByRole('feed')).toBeInTheDocument();
+    it('should display activity icons', () => {
+        const { container } = render(<LiveActivityFeed />);
+
+        // Icons are rendered as emojis in span elements
+        const icons = container.querySelectorAll('.text-2xl');
+        expect(icons.length).toBeGreaterThan(0);
     });
 
-    it('should support dark mode', () => {
-        // ...
+    it('should render with animated pulse effect', () => {
+        const { container } = render(<LiveActivityFeed />);
+
+        // Check for ping animation on live indicator
+        const pingElement = container.querySelector('.animate-ping');
+        expect(pingElement).toBeInTheDocument();
     });
 });

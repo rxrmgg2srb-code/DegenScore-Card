@@ -1,7 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import trackHandler from '@/pages/api/referrals/track';
+import { prisma } from '@/lib/prisma';
 
-jest.mock('@/lib/prisma');
 jest.mock('@/lib/logger');
 
 describe('/api/referrals/track', () => {

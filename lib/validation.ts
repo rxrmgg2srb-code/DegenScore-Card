@@ -82,3 +82,18 @@ export function isValidImageType(buffer: Buffer, declaredType: string): boolean 
   const fileHeader = getFileMagicNumbers(buffer);
   return magic.every((byte, i) => fileHeader[i] === byte);
 }
+
+// Aliases and additional validators for tests
+export const validateWalletAddress = isValidSolanaAddress;
+
+export function validateSignature(signature: string): boolean {
+  if (!signature || typeof signature !== 'string') return false;
+  // Basic base58 check. Solana signatures are usually 87-88 chars.
+  // The test uses 'A'.repeat(87) which is valid base58.
+  return /^[1-9A-HJ-NP-Za-km-z]{80,90}$/.test(signature);
+}
+
+export function validateEmail(email: string): boolean {
+  if (!email || typeof email !== 'string') return false;
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}

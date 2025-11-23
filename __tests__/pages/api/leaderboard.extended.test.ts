@@ -1,7 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import leaderboardHandler from '@/pages/api/leaderboard';
 
-jest.mock('@/lib/prisma');
+
 jest.mock('@/lib/logger');
 
 describe('/api/leaderboard', () => {

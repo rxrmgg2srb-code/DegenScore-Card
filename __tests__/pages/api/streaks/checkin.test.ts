@@ -1,7 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import checkinHandler from '@/pages/api/streaks/checkin';
 
-jest.mock('@/lib/prisma');
+
 jest.mock('@/lib/logger');
 
 describe('/api/streaks/checkin', () => {

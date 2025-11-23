@@ -1,57 +1,102 @@
-import { render, screen, waitFor, act } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import ScoreHistoryChart from '@/components/ScoreHistoryChart';
 
-jest.mock('node-fetch');
+// Mock fetch globally for this test
+global.fetch = jest.fn();
 
 describe('ScoreHistoryChart', () => {
-    const mockData = [
-        { date: '2024-01-01', score: 80 },
-        { date: '2024-01-02', score: 85 },
-    ];
+    const mockWalletAddress = 'ABC123...XYZ';
 
-    it('should render chart', () => {
-        const { container } = render(<ScoreHistoryChart data={mockData} />);
-        expect(container.querySelector('canvas')).toBeInTheDocument();
+    const mockHistoryResponse = {
+        walletAddress: mockWalletAddress,
+        period: {
+            startDate: '2024-01-01',
+            endDate: '2024-01-30',
+            days: 30
+        },
+        dataPoints: 30,
+        history: [
+            {
+                timestamp: '2024-01-01T00:00:00Z',
+                score: 80,
+                rank: 100,
+                totalTrades: 50,
+                totalVolume: 10000,
+                profitLoss: 500,
+                winRate: 60,
+                badges: 5
+            },
+            {
+                timestamp: '2024-01-02T00:00:00Z',
+                score: 85,
+                rank: 95,
+                totalTrades: 52,
+                totalVolume: 11000,
+                profitLoss: 600,
+                winRate: 62,
+                badges: 5
+            }
+        ],
+        statistics: {
+            current: 85,
+            max: 90,
+            min: 75,
+            average: 82,
+            change: 5,
+            changePercent: 6.25,
+            bestRank: 90
+        }
+    };
+
+    beforeEach(() => {
+        (global.fetch as jest.Mock).mockReset();
+        (global.fetch as jest.Mock).mockResolvedValue({
+            ok: true,
+            json: async () => mockHistoryResponse
+        });
     });
 
-    it('should display title', () => {
-        render(<ScoreHistoryChart data={mockData} title="History" />);
-        expect(screen.getByText('History')).toBeInTheDocument();
+    it('should render chart with data', async () => {
+        const { container } = render(<ScoreHistoryChart walletAddress={mockWalletAddress} />);
+
+        await waitFor(() => {
+            expect(container.querySelectorAll('.recharts-surface').length).toBeGreaterThan(0);
+        });
     });
 
-    it('should handle empty data', () => {
-        render(<ScoreHistoryChart data={[]} />);
-        expect(screen.getByText(/no data/i)).toBeInTheDocument();
+    it('should display current score and statistics', async () => {
+        render(<ScoreHistoryChart walletAddress={mockWalletAddress} />);
+
+        await waitFor(() => {
+            expect(screen.getByText('85')).toBeInTheDocument();
+        });
     });
 
-    it('should show loading state', () => {
-        render(<ScoreHistoryChart loading={true} />);
-        expect(screen.getByTestId('skeleton')).toBeInTheDocument();
+    it('should handle loading state', () => {
+        render(<ScoreHistoryChart walletAddress={mockWalletAddress} />);
+        expect(screen.getByText(/evolución de score/i)).toBeInTheDocument();
     });
 
-    it('should support different timeframes', () => {
-        render(<ScoreHistoryChart data={mockData} timeframe="7d" />);
-        // Check if filter applied or UI updated
+    it('should handle error state', async () => {
+        (global.fetch as jest.Mock).mockResolvedValueOnce({
+            ok: false,
+            json: async () => ({ error: 'Failed to fetch' })
+        });
+
+        render(<ScoreHistoryChart walletAddress={mockWalletAddress} />);
+
+        await waitFor(() => {
+            expect(screen.getByText(/sin historial disponible/i)).toBeInTheDocument();
+        });
     });
 
-    it('should be responsive', () => {
-        const { container } = render(<ScoreHistoryChart data={mockData} />);
-        expect(container.firstChild).toHaveClass('w-full');
-    });
+    it('should allow period selection', async () => {
+        render(<ScoreHistoryChart walletAddress={mockWalletAddress} />);
 
-    it('should show tooltip on hover', () => {
-        // Difficult to test with canvas, usually mocked or integration test
-    });
-
-    it('should support dark mode', () => {
-        // ...
-    });
-
-    it('should animate entry', () => {
-        // ...
-    });
-
-    it('should handle resize', () => {
-        // ...
+        await waitFor(() => {
+            expect(screen.getByText('7D')).toBeInTheDocument();
+            expect(screen.getByText('30D')).toBeInTheDocument();
+            expect(screen.getByText('90D')).toBeInTheDocument();
+        });
     });
 });

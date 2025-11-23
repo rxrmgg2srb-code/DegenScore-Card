@@ -1,7 +1,7 @@
 import { generateBadge, checkBadgeEligibility, awardBadge, getUserBadges } from '@/lib/badges-with-points';
 import { prisma } from '@/lib/prisma';
 
-jest.mock('@/lib/prisma');
+
 jest.mock('@/lib/logger');
 
 describe('badges-with-points', () => {

@@ -9,6 +9,7 @@ describe('AchievementPopup', () => {
             description: 'You made your first trade!',
             icon: '🎉',
             xp: 100,
+            rarity: 'common' as const,
         },
         onClose: jest.fn(),
     };

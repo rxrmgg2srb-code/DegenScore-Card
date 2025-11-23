@@ -17,58 +17,58 @@ describe('TokenSecurityScanner/LiquidityCard', () => {
     };
 
     it('should render liquidity amounts', () => {
-        render(<LiquidityCard data={mockData} />);
+        render(<LiquidityCard liquidity={mockData} />);
         expect(screen.getByText(/100/)).toBeInTheDocument();
         expect(screen.getByText(/15,000/)).toBeInTheDocument();
     });
 
     it('should show LP burned status', () => {
-        render(<LiquidityCard data={mockData} />);
+        render(<LiquidityCard liquidity={mockData} />);
         expect(screen.getByText(/burned/i)).toBeInTheDocument();
     });
 
     it('should display risk level', () => {
-        render(<LiquidityCard data={mockData} />);
+        render(<LiquidityCard liquidity={mockData} />);
         expect(screen.getByText(/LOW/i)).toBeInTheDocument();
     });
 
     it('should show major pools', () => {
-        render(<LiquidityCard data={mockData} />);
+        render(<LiquidityCard liquidity={mockData} />);
         expect(screen.getByText(/Raydium/)).toBeInTheDocument();
         expect(screen.getByText(/Orca/)).toBeInTheDocument();
     });
 
     it('should handle critical risk', () => {
         const critical = { ...mockData, riskLevel: 'CRITICAL' as const, totalLiquiditySOL: 2 };
-        render(<LiquidityCard data={critical} />);
+        render(<LiquidityCard liquidity={critical} />);
         expect(screen.getByText(/CRITICAL/i)).toBeInTheDocument();
     });
 
     it('should show LP locked status', () => {
         const locked = { ...mockData, lpBurned: false, lpLocked: true };
-        render(<LiquidityCard data={locked} />);
+        render(<LiquidityCard liquidity={locked} />);
         expect(screen.getByText(/locked/i)).toBeInTheDocument();
     });
 
     it('should display score', () => {
-        render(<LiquidityCard data={mockData} />);
+        render(<LiquidityCard liquidity={mockData} />);
         expect(screen.getByText(/18/)).toBeInTheDocument();
     });
 
     it('should handle zero liquidity', () => {
         const zero = { ...mockData, totalLiquiditySOL: 0, liquidityUSD: 0 };
-        render(<LiquidityCard data={zero} />);
+        render(<LiquidityCard liquidity={zero} />);
         expect(screen.getByText(/0/)).toBeInTheDocument();
     });
 
     it('should show liquidity to market cap ratio', () => {
-        render(<LiquidityCard data={mockData} />);
+        render(<LiquidityCard liquidity={mockData} />);
         expect(screen.getByText(/0\.15/)).toBeInTheDocument();
     });
 
     it('should handle no pools', () => {
         const noPools = { ...mockData, majorPools: [] };
-        render(<LiquidityCard data={noPools} />);
+        render(<LiquidityCard liquidity={noPools} />);
         expect(screen.getByText(/No pools/i)).toBeInTheDocument();
     });
 });
