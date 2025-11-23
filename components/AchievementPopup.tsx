@@ -190,3 +190,5 @@ export const achievements = {
     rarity: 'common' as const,
   },
 };
+
+export default AchievementPopup;

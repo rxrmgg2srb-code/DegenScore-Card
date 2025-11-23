@@ -186,3 +186,5 @@ export const LanguageSelectorSimple = () => {
     </div>
   );
 };
+
+export default LanguageSelector;

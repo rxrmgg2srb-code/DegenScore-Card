@@ -174,3 +174,5 @@ export const DailyCheckIn = () => {
     </motion.div>
   );
 };
+
+export default DailyCheckIn;

@@ -1,5 +1,7 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor, act } from '@testing-library/react';
 import LiveActivityFeed from '@/components/LiveActivityFeed';
+
+jest.mock('node-fetch');
 
 describe('LiveActivityFeed', () => {
     const mockActivities = [

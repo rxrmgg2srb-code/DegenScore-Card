@@ -108,3 +108,6 @@ export function BadgePointsCompact({ totalPoints, badgeCount }: BadgePointsCompa
     </div>
   );
 }
+
+
+export default BadgesDisplay;

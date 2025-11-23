@@ -183,3 +183,5 @@ export const showToast = {
   warning: (message: string) => (window as any).addToast?.(message, 'warning'),
   info: (message: string) => (window as any).addToast?.(message, 'info'),
 };
+
+export default AnimatedToast;

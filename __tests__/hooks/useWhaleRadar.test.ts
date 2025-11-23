@@ -1,48 +1,96 @@
 import { renderHook, act, waitFor } from '@testing-library/react';
-import { useWhaleRadar } from '@/hooks/useWhaleRadar';
+import { useWhaleRadar, WhaleWallet } from '@/hooks/useWhaleRadar';
+
+jest.mock('react-hot-toast', () => ({
+    error: jest.fn(),
+    success: jest.fn(),
+}));
+jest.mock('@/lib/logger', () => ({
+    logger: {
+        error: jest.fn(),
+        log: jest.fn(),
+    },
+}));
+jest.mock('@/lib/walletAuth', () => ({
+    generateSessionToken: jest.fn(),
+}));
+jest.mock('@solana/wallet-adapter-react', () => ({
+    useWallet: jest.fn(() => ({
+        publicKey: null,
+        signMessage: jest.fn(),
+        connected: false,
+    })),
+}));
 
 global.fetch = jest.fn();
 
-describe('useWhaleRadar', () => {
-    const mockWhales = [
-        {
-            address: 'whale1',
-            balance: 1000000,
-            recentActivity: 50,
-            riskScore: 75,
-            tags: ['smart-money', 'early-adopter'],
-        },
-        {
-            address: 'whale2',
-            balance: 500000,
-            recentActivity: 30,
-            riskScore: 85,
-            tags: ['whale'],
-        },
-    ];
+const mockWhales: WhaleWallet[] = [
+    {
+        id: '1',
+        walletAddress: 'whale1',
+        nickname: null,
+        totalVolume: 1000000,
+        winRate: 0.5,
+        avgPositionSize: 100,
+        followersCount: 10,
+        totalProfit: 5000,
+        topTokens: [],
+        lastActive: '2024-01-01',
+        address: 'whale1',
+        balance: 1000000,
+        riskScore: 75,
+        tags: ['smart-money', 'early-adopter'],
+        recentActivity: 50,
+    },
+    {
+        id: '2',
+        walletAddress: 'whale2',
+        nickname: null,
+        totalVolume: 500000,
+        winRate: 0.6,
+        avgPositionSize: 50,
+        followersCount: 5,
+        totalProfit: 2000,
+        topTokens: [],
+        lastActive: '2024-01-02',
+        address: 'whale2',
+        balance: 500000,
+        riskScore: 85,
+        tags: ['whale'],
+        recentActivity: 30,
+    },
+];
 
+describe('useWhaleRadar', () => {
     beforeEach(() => {
         jest.clearAllMocks();
+        (global.fetch as jest.Mock).mockReset();
+        (global.fetch as jest.Mock).mockImplementation(() =>
+            Promise.resolve({
+                ok: true,
+                json: async () => ({ whales: [] }),
+            })
+        );
     });
 
     describe('Initialization', () => {
-        it('should initialize with empty state', () => {
+        it('should initialize with empty state', async () => {
             const { result } = renderHook(() => useWhaleRadar());
-
+            await waitFor(() => expect(global.fetch).toHaveBeenCalled());
+            await waitFor(() => expect(result.current.loading).toBe(false));
             expect(result.current.whales).toEqual([]);
-            expect(result.current.loading).toBe(false);
             expect(result.current.error).toBe(null);
         });
     });
 
     describe('fetchWhales', () => {
         it('should fetch whales successfully', async () => {
-            (global.fetch as jest.Mock).mockResolvedValueOnce({
-                ok: true,
-                json: async () => ({ whales: mockWhales }),
-            });
+            (global.fetch as jest.Mock)
+                .mockImplementationOnce(() => Promise.resolve({ ok: true, json: async () => ({ whales: [] }) }))
+                .mockImplementationOnce(() => Promise.resolve({ ok: true, json: async () => ({ whales: mockWhales }) }));
 
             const { result } = renderHook(() => useWhaleRadar());
+            await waitFor(() => expect(result.current.loading).toBe(false));
 
             await act(async () => {
                 await result.current.fetchWhales();
@@ -54,12 +102,12 @@ describe('useWhaleRadar', () => {
         });
 
         it('should handle fetch errors', async () => {
-            (global.fetch as jest.Mock).mockResolvedValueOnce({
-                ok: false,
-                json: async () => ({ error: 'Failed to fetch whales' }),
-            });
+            (global.fetch as jest.Mock)
+                .mockImplementationOnce(() => Promise.resolve({ ok: true, json: async () => ({ whales: [] }) }))
+                .mockImplementationOnce(() => Promise.resolve({ ok: false, json: async () => ({ error: 'Failed to fetch whales' }) }));
 
             const { result } = renderHook(() => useWhaleRadar());
+            await waitFor(() => expect(result.current.loading).toBe(false));
 
             await act(async () => {
                 await result.current.fetchWhales();
@@ -71,8 +119,9 @@ describe('useWhaleRadar', () => {
     });
 
     describe('Filtering', () => {
-        it('should filter whales by minimum balance', () => {
+        it('should filter whales by minimum balance', async () => {
             const { result } = renderHook(() => useWhaleRadar());
+            await waitFor(() => expect(global.fetch).toHaveBeenCalled());
 
             act(() => {
                 result.current.setWhales(mockWhales);
@@ -84,8 +133,9 @@ describe('useWhaleRadar', () => {
             expect(filtered[0].address).toBe('whale1');
         });
 
-        it('should filter whales by risk score', () => {
+        it('should filter whales by risk score', async () => {
             const { result } = renderHook(() => useWhaleRadar());
+            await waitFor(() => expect(global.fetch).toHaveBeenCalled());
 
             act(() => {
                 result.current.setWhales(mockWhales);
@@ -97,8 +147,9 @@ describe('useWhaleRadar', () => {
             expect(filtered[0].address).toBe('whale2');
         });
 
-        it('should filter by tags', () => {
+        it('should filter by tags', async () => {
             const { result } = renderHook(() => useWhaleRadar());
+            await waitFor(() => expect(global.fetch).toHaveBeenCalled());
 
             act(() => {
                 result.current.setWhales(mockWhales);
@@ -112,8 +163,9 @@ describe('useWhaleRadar', () => {
     });
 
     describe('Sorting', () => {
-        it('should sort by balance descending', () => {
+        it('should sort by balance descending', async () => {
             const { result } = renderHook(() => useWhaleRadar());
+            await waitFor(() => expect(global.fetch).toHaveBeenCalled());
 
             act(() => {
                 result.current.setWhales(mockWhales);
@@ -125,8 +177,9 @@ describe('useWhaleRadar', () => {
             expect(sorted[0].balance).toBeGreaterThan(sorted[1].balance);
         });
 
-        it('should sort by risk score ascending', () => {
+        it('should sort by risk score ascending', async () => {
             const { result } = renderHook(() => useWhaleRadar());
+            await waitFor(() => expect(global.fetch).toHaveBeenCalled());
 
             act(() => {
                 result.current.setWhales(mockWhales);
@@ -140,24 +193,28 @@ describe('useWhaleRadar', () => {
     });
 
     describe('Alerts', () => {
-        it('should trigger alert for new whale', () => {
+        it('should trigger alert for new whale', async () => {
             const { result } = renderHook(() => useWhaleRadar());
+            await waitFor(() => expect(global.fetch).toHaveBeenCalled());
+
             const mockAlert = jest.fn();
+            result.current.setOnNewWhale(mockAlert);
 
             act(() => {
-                result.current.setOnNewWhale(mockAlert);
                 result.current.addWhale(mockWhales[0]);
             });
 
             expect(mockAlert).toHaveBeenCalledWith(mockWhales[0]);
         });
 
-        it('should trigger alert for high risk whale', () => {
+        it('should trigger alert for high risk whale', async () => {
             const { result } = renderHook(() => useWhaleRadar());
+            await waitFor(() => expect(global.fetch).toHaveBeenCalled());
+
             const mockAlert = jest.fn();
+            result.current.setOnHighRisk(mockAlert);
 
             act(() => {
-                result.current.setOnHighRisk(mockAlert);
                 result.current.checkRiskAlert(mockWhales[1]);
             });
 

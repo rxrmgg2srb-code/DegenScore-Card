@@ -1,5 +1,7 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor, act } from '@testing-library/react';
 import ScoreHistoryChart from '@/components/ScoreHistoryChart';
+
+jest.mock('node-fetch');
 
 describe('ScoreHistoryChart', () => {
     const mockData = [
