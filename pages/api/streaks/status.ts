@@ -1,7 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { prisma } from '@/lib/prisma';
 
 export default async function handler(
     req: NextApiRequest,
@@ -15,26 +13,32 @@ export default async function handler(
         const { userId } = req.query;
 
         if (!userId || typeof userId !== 'string') {
-            return res.status(400).json({ error: 'User ID is required' });
+            return res.status(400).json({ error: 'User ID (wallet address) is required' });
         }
 
         // Get user's streak information
-        const user = await prisma.user.findUnique({
-            where: { id: userId },
+        const userStreak = await prisma.userStreak.findUnique({
+            where: { walletAddress: userId },
             select: {
-                id: true,
+                walletAddress: true,
                 currentStreak: true,
                 longestStreak: true,
-                lastCheckIn: true,
+                lastLoginDate: true,
             },
         });
 
-        if (!user) {
-            return res.status(404).json({ error: 'User not found' });
+        if (!userStreak) {
+            // If no streak record exists, return default values
+            return res.status(200).json({
+                currentStreak: 0,
+                longestStreak: 0,
+                lastCheckIn: null,
+                canCheckIn: true,
+            });
         }
 
         // Check if user can check in today
-        const lastCheckIn = user.lastCheckIn ? new Date(user.lastCheckIn) : null;
+        const lastCheckIn = userStreak.lastLoginDate ? new Date(userStreak.lastLoginDate) : null;
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
@@ -42,13 +46,21 @@ export default async function handler(
         if (lastCheckIn) {
             const lastCheckInDate = new Date(lastCheckIn);
             lastCheckInDate.setHours(0, 0, 0, 0);
-            canCheckIn = lastCheckInDate < today;
+
+            // If last check-in was today, they can't check in again
+            if (lastCheckInDate.getTime() === today.getTime()) {
+                canCheckIn = false;
+            }
+            // If last check-in was in the future (timezone weirdness), assume they can't
+            if (lastCheckInDate > today) {
+                canCheckIn = false;
+            }
         }
 
         return res.status(200).json({
-            currentStreak: user.currentStreak || 0,
-            longestStreak: user.longestStreak || 0,
-            lastCheckIn: user.lastCheckIn,
+            currentStreak: userStreak.currentStreak || 0,
+            longestStreak: userStreak.longestStreak || 0,
+            lastCheckIn: userStreak.lastLoginDate,
             canCheckIn,
         });
     } catch (error) {

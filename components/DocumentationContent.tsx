@@ -674,6 +674,4 @@ export function Documentation() {
 }
 
 // Component only - loaded dynamically
-export { Documentation as default };
-
 export default Documentation;
