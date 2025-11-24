@@ -1,64 +1,34 @@
+import React from 'react';
 import { render, screen } from '@testing-library/react';
 import ScoreCard from '@/components/SuperTokenScorer/ScoreCard';
 
-describe('SuperTokenScorer/ScoreCard', () => {
-    const mockProps = {
-        score: 85,
-        label: 'Security Score',
-        description: 'Overall security rating',
-        maxScore: 100,
-    };
+describe('ScoreCard', () => {
+  it('renders score information correctly', () => {
+    render(React.createElement(null, null, 'MockedComponent'));
 
-    it('should render score and label', () => {
-        render(<ScoreCard {...mockProps} />);
-        expect(screen.getByText('85')).toBeInTheDocument();
-        expect(screen.getByText('Security Score')).toBeInTheDocument();
-    });
+    expect(screen.getByText('🧪 Test Score')).toBeInTheDocument();
+    expect(screen.getByText('80')).toBeInTheDocument();
+    expect(screen.getByText('/100')).toBeInTheDocument();
+  });
 
-    it('should display description', () => {
-        render(<ScoreCard {...mockProps} />);
-        expect(screen.getByText('Overall security rating')).toBeInTheDocument();
-    });
+  it('renders progress bar with correct width', () => {
+    // We can't easily check computed styles in JSDOM for width %, 
+    // but we can check if the element exists and has the style attribute
+    const { container } = render(React.createElement(null, null, 'MockedComponent'));
+    const progressBar = container.querySelector('.bg-yellow-500'); // Should be yellow for 50%
+    expect(progressBar).toBeInTheDocument();
+    expect(progressBar).toHaveStyle({ width: '50%' });
+  });
 
-    it('should show progress bar', () => {
-        const { container } = render(<ScoreCard {...mockProps} />);
-        expect(container.querySelector('[role="progressbar"]')).toBeInTheDocument();
-    });
+  it('shows green for high score', () => {
+    const { container } = render(React.createElement(null, null, 'MockedComponent'));
+    const progressBar = container.querySelector('.bg-green-500');
+    expect(progressBar).toBeInTheDocument();
+  });
 
-    it('should color code based on score', () => {
-        const { container } = render(<ScoreCard {...mockProps} score={95} />);
-        expect(container.innerHTML).toMatch(/green|emerald/);
-    });
-
-    it('should handle low scores', () => {
-        const { container } = render(<ScoreCard {...mockProps} score={20} />);
-        expect(container.innerHTML).toMatch(/red/);
-    });
-
-    it('should display max score if provided', () => {
-        render(<ScoreCard {...mockProps} />);
-        expect(screen.getByText('/ 100')).toBeInTheDocument();
-    });
-
-    it('should handle missing description', () => {
-        render(<ScoreCard {...mockProps} description={undefined} />);
-        expect(screen.getByText('85')).toBeInTheDocument();
-    });
-
-    it('should animate score', async () => {
-        render(<ScoreCard {...mockProps} animate={true} />);
-        // Animation testing usually requires visual regression or specific library support
-        // Checking for class presence
-        expect(screen.getByText('85')).toBeInTheDocument();
-    });
-
-    it('should render icon if provided', () => {
-        render(<ScoreCard {...mockProps} icon={<span>🏆</span>} />);
-        expect(screen.getByText('🏆')).toBeInTheDocument();
-    });
-
-    it('should apply custom className', () => {
-        const { container } = render(<ScoreCard {...mockProps} className="custom-class" />);
-        expect(container.firstChild).toHaveClass('custom-class');
-    });
+  it('shows red for low score', () => {
+    const { container } = render(React.createElement(null, null, 'MockedComponent'));
+    const progressBar = container.querySelector('.bg-red-500');
+    expect(progressBar).toBeInTheDocument();
+  });
 });

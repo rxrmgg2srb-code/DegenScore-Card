@@ -1,3 +1,4 @@
+import React from 'react';
 import { NextApiRequest, NextApiResponse } from 'next';
 import addFollowHandler from '@/pages/api/follows/add';
 import { prisma } from '@/lib/prisma';

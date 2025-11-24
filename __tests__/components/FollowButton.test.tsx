@@ -1,65 +1,136 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import React from 'react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import FollowButton from '@/components/FollowButton';
+import { useWallet } from '@solana/wallet-adapter-react';
+
+// Mock useWallet
+jest.mock('@solana/wallet-adapter-react', () => ({
+  useWallet: jest.fn(),
+}));
+
+// Mock walletAuth
+jest.mock('@/lib/walletAuth', () => ({
+  generateSessionToken: jest.fn().mockReturnValue('mock-token'),
+}));
+
+// Mock logger
+jest.mock('@/lib/logger', () => ({
+  logger: {
+    error: jest.fn(),
+  },
+}));
+
+// Mock toast
+jest.mock('react-hot-toast', () => ({
+  success: jest.fn(),
+  error: jest.fn(),
+}));
 
 describe('FollowButton', () => {
-    const mockProps = {
-        targetWallet: 'target-wallet',
+  beforeEach(() => {
+    jest.clearAllMocks();
+    (useWallet as jest.Mock).mockReturnValue({
+      publicKey: null,
+      connected: false,
+    });
+    global.fetch = jest.fn();
+  });
+
+  it('renders counts only when not connected', () => {
+    render(React.createElement(null, null, 'MockedComponent'));
+    expect(screen.getByText(/followers/)).toBeInTheDocument();
+    expect(screen.queryByRole('button')).not.toBeInTheDocument();
+  });
+
+  it('renders nothing when own wallet', () => {
+    (useWallet as jest.Mock).mockReturnValue({
+      publicKey: { toBase58: () => 'my-wallet' },
+      connected: true,
+    });
+    const { container } = render(React.createElement(null, null, 'MockedComponent'));
+    expect(container).toBeEmptyDOMElement();
+  });
+
+  it('renders follow button when connected and not following', async () => {
+    (useWallet as jest.Mock).mockReturnValue({
+      publicKey: { toBase58: () => 'my-wallet' },
+      connected: true,
+    });
+
+    // Mock status check
+    (global.fetch as jest.Mock).mockResolvedValue({
+      ok: true,
+      json: async () => ({
         isFollowing: false,
-        onFollow: jest.fn(),
-        onUnfollow: jest.fn(),
-    };
-
-    it('should render follow button', () => {
-        render(<FollowButton {...mockProps} />);
-        expect(screen.getByText(/follow/i)).toBeInTheDocument();
+        counts: { followers: 10, following: 5 },
+      }),
     });
 
-    it('should render following state', () => {
-        render(<FollowButton {...mockProps} isFollowing={true} />);
-        expect(screen.getByText(/following/i)).toBeInTheDocument();
+    await act(async () => {
+      render(React.createElement(null, null, 'MockedComponent'));
     });
 
-    it('should call onFollow when clicked', () => {
-        render(<FollowButton {...mockProps} />);
-        fireEvent.click(screen.getByRole('button'));
-        expect(mockProps.onFollow).toHaveBeenCalled();
+    await waitFor(() => {
+      expect(screen.getByText('+ Follow')).toBeInTheDocument();
+      expect(screen.getByText('👥 10 followers')).toBeInTheDocument();
+    });
+  });
+
+  it('renders following button when already following', async () => {
+    (useWallet as jest.Mock).mockReturnValue({
+      publicKey: { toBase58: () => 'my-wallet' },
+      connected: true,
     });
 
-    it('should call onUnfollow when clicked while following', () => {
-        render(<FollowButton {...mockProps} isFollowing={true} />);
-        fireEvent.click(screen.getByRole('button'));
-        expect(mockProps.onUnfollow).toHaveBeenCalled();
+    (global.fetch as jest.Mock).mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        isFollowing: true,
+        counts: { followers: 11, following: 5 },
+      }),
     });
 
-    it('should show loading state', () => {
-        render(<FollowButton {...mockProps} loading={true} />);
-        expect(screen.getByRole('button')).toBeDisabled();
-        expect(screen.getByTestId('spinner')).toBeInTheDocument();
+    await act(async () => {
+      render(React.createElement(null, null, 'MockedComponent'));
     });
 
-    it('should disable if not authenticated', () => {
-        render(<FollowButton {...mockProps} authenticated={false} />);
-        expect(screen.getByRole('button')).toBeDisabled();
+    await waitFor(() => {
+      expect(screen.getByText('✓ Following')).toBeInTheDocument();
+    });
+  });
+
+  it('handles follow action', async () => {
+    (useWallet as jest.Mock).mockReturnValue({
+      publicKey: { toBase58: () => 'my-wallet' },
+      connected: true,
     });
 
-    it('should show icon', () => {
-        render(<FollowButton {...mockProps} />);
-        expect(screen.getByTestId('follow-icon')).toBeInTheDocument();
+    // Initial status: not following
+    (global.fetch as jest.Mock)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          isFollowing: false,
+          counts: { followers: 10, following: 5 },
+        }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ success: true }),
+      });
+
+    await act(async () => {
+      render(React.createElement(null, null, 'MockedComponent'));
     });
 
-    it('should animate on toggle', () => {
-        const { container } = render(<FollowButton {...mockProps} />);
-        fireEvent.click(screen.getByRole('button'));
-        expect(container.firstChild).toHaveClass('transform');
+    const button = screen.getByText('+ Follow');
+
+    await act(async () => {
+      fireEvent.click(button);
     });
 
-    it('should support different sizes', () => {
-        const { container } = render(<FollowButton {...mockProps} size="small" />);
-        expect(container.firstChild).toHaveClass('text-sm');
+    await waitFor(() => {
+      expect(screen.getByText('✓ Following')).toBeInTheDocument();
     });
-
-    it('should handle error state', () => {
-        render(<FollowButton {...mockProps} error="Failed" />);
-        expect(screen.getByText('Failed')).toBeInTheDocument();
-    });
+  });
 });

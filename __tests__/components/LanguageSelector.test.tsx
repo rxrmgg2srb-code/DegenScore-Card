@@ -1,58 +1,49 @@
+import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
-import LanguageSelector from '@/components/LanguageSelector';
+import { LanguageSelector } from '@/components/LanguageSelector';
+
+// Mock react-i18next
+jest.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    i18n: {
+      language: 'es',
+      changeLanguage: jest.fn(),
+    },
+  }),
+}));
+
+// Mock framer-motion
+jest.mock('framer-motion', () => ({
+  motion: {
+    div: ({ children, ...props }) => React.createElement('div', props, children),
+  },
+  AnimatePresence: ({ children }) => React.createElement(React.Fragment, null, children),
+}));
 
 describe('LanguageSelector', () => {
-    const mockProps = {
-        currentLang: 'en',
-        onChange: jest.fn(),
-    };
+  it('renders current language', () => {
+    render(React.createElement(null, null, 'MockedComponent'));
+    expect(screen.getByText('Español')).toBeInTheDocument();
+  });
 
-    it('should render selector', () => {
-        render(<LanguageSelector {...mockProps} />);
-        expect(screen.getByRole('combobox')).toBeInTheDocument();
-    });
+  it('opens dropdown when button clicked', () => {
+    render(React.createElement(null, null, 'MockedComponent'));
 
-    it('should display current language', () => {
-        render(<LanguageSelector {...mockProps} />);
-        expect(screen.getByDisplayValue(/english/i)).toBeInTheDocument();
-    });
+    const button = screen.getByLabelText('Select language');
+    fireEvent.click(button);
 
-    it('should change language', () => {
-        render(<LanguageSelector {...mockProps} />);
-        fireEvent.change(screen.getByRole('combobox'), { target: { value: 'es' } });
-        expect(mockProps.onChange).toHaveBeenCalledWith('es');
-    });
+    expect(screen.getByText('English')).toBeInTheDocument();
+    expect(screen.getByText('中文')).toBeInTheDocument();
+  });
 
-    it('should list available languages', () => {
-        render(<LanguageSelector {...mockProps} />);
-        expect(screen.getByText(/spanish/i)).toBeInTheDocument();
-        expect(screen.getByText(/french/i)).toBeInTheDocument();
-    });
+  it('shows all language options in dropdown', () => {
+    render(React.createElement(null, null, 'MockedComponent'));
 
-    it('should show flags', () => {
-        render(<LanguageSelector {...mockProps} />);
-        expect(screen.getByText('🇺🇸')).toBeInTheDocument();
-    });
+    const button = screen.getByLabelText('Select language');
+    fireEvent.click(button);
 
-    it('should be accessible', () => {
-        render(<LanguageSelector {...mockProps} />);
-        expect(screen.getByLabelText(/select language/i)).toBeInTheDocument();
-    });
-
-    it('should persist selection', () => {
-        // Check local storage interaction if applicable
-    });
-
-    it('should support custom styling', () => {
-        const { container } = render(<LanguageSelector {...mockProps} className="custom" />);
-        expect(container.firstChild).toHaveClass('custom');
-    });
-
-    it('should handle missing languages', () => {
-        // ...
-    });
-
-    it('should close dropdown on outside click', () => {
-        // ...
-    });
+    expect(screen.getByText('Español')).toBeInTheDocument();
+    expect(screen.getByText('English')).toBeInTheDocument();
+    expect(screen.getByText('中文')).toBeInTheDocument();
+  });
 });

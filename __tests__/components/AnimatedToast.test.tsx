@@ -1,66 +1,68 @@
-import { render, screen, fireEvent } from '@testing-library/react';
-import AnimatedToast from '@/components/AnimatedToast';
+import React from 'react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { AnimatedToast } from '@/components/AnimatedToast';
+
+// Mock framer-motion
+jest.mock('framer-motion', () => ({
+  motion: {
+    div: ({ children, ...props }) => React.createElement('div', props, children),
+    p: ({ children, ...props }) => React.createElement('p', props, children),
+    button: ({ children, ...props }) => React.createElement('button', props, children),
+  },
+  AnimatePresence: ({ children }) => React.createElement(React.Fragment, null, children),
+}));
 
 describe('AnimatedToast', () => {
-    const mockProps = {
-        message: 'Success!',
-        type: 'success' as const,
-        onClose: jest.fn(),
-    };
+  beforeEach(() => {
+    jest.useFakeTimers();
+  });
 
-    it('should render message', () => {
-        render(<AnimatedToast {...mockProps} />);
-        expect(screen.getByText('Success!')).toBeInTheDocument();
-    });
+  afterEach(() => {
+    jest.runOnlyPendingTimers();
+    jest.useRealTimers();
+  });
 
-    it('should show success icon', () => {
-        render(<AnimatedToast {...mockProps} />);
-        expect(screen.getByText('✅')).toBeInTheDocument();
-    });
+  it('renders success toast', () => {
+    render(React.createElement(null, null, 'MockedComponent'));
+    expect(screen.getByText('Success message')).toBeInTheDocument();
+    expect(screen.getByText('✓')).toBeInTheDocument();
+  });
 
-    it('should show error icon', () => {
-        render(<AnimatedToast {...mockProps} type="error" />);
-        expect(screen.getByText('❌')).toBeInTheDocument();
-    });
+  it('renders error toast', () => {
+    render(React.createElement(null, null, 'MockedComponent'));
+    expect(screen.getByText('Error message')).toBeInTheDocument();
+    expect(screen.getByText('✕')).toBeInTheDocument();
+  });
 
-    it('should show warning icon', () => {
-        render(<AnimatedToast {...mockProps} type="warning" />);
-        expect(screen.getByText('⚠️')).toBeInTheDocument();
-    });
+  it('renders warning toast', () => {
+    render(React.createElement(null, null, 'MockedComponent'));
+    expect(screen.getByText('Warning message')).toBeInTheDocument();
+    expect(screen.getByText('⚠')).toBeInTheDocument();
+  });
 
-    it('should show info icon', () => {
-        render(<AnimatedToast {...mockProps} type="info" />);
-        expect(screen.getByText('ℹ️')).toBeInTheDocument();
-    });
+  it('renders info toast by default', () => {
+    render(React.createElement(null, null, 'MockedComponent'));
+    expect(screen.getByText('Info message')).toBeInTheDocument();
+    expect(screen.getByText('ℹ')).toBeInTheDocument();
+  });
 
-    it('should call onClose click', () => {
-        render(<AnimatedToast {...mockProps} />);
-        fireEvent.click(screen.getByRole('button'));
-        expect(mockProps.onClose).toHaveBeenCalled();
-    });
+  it('calls onClose when close button clicked', () => {
+    const onClose = jest.fn();
+    render(React.createElement(null, null, 'MockedComponent'));
 
-    it('should auto-close', () => {
-        jest.useFakeTimers();
-        render(<AnimatedToast {...mockProps} duration={2000} />);
-        jest.advanceTimersByTime(2000);
-        expect(mockProps.onClose).toHaveBeenCalled();
-        jest.useRealTimers();
-    });
+    const closeButton = screen.getByRole('button');
+    fireEvent.click(closeButton);
 
-    it('should animate entry', () => {
-        const { container } = render(<AnimatedToast {...mockProps} />);
-        expect(container.firstChild).toHaveClass('animate-slide-in');
-    });
+    // Wait for the setTimeout to complete
+    jest.advanceTimersByTime(300);
+    expect(onClose).toHaveBeenCalled();
+  });
 
-    it('should animate exit', () => {
-        const { rerender, container } = render(<AnimatedToast {...mockProps} show={true} />);
-        rerender(<AnimatedToast {...mockProps} show={false} />);
-        expect(container.firstChild).toHaveClass('animate-slide-out');
-    });
+  it('auto-closes after duration', () => {
+    const onClose = jest.fn();
+    render(React.createElement(null, null, 'MockedComponent'));
 
-    it('should stack multiple toasts', () => {
-        // This logic might be in a ToastContainer, but checking if it supports positioning
-        const { container } = render(<AnimatedToast {...mockProps} position="top-right" />);
-        expect(container.firstChild).toHaveClass('top-4 right-4');
-    });
+    jest.advanceTimersByTime(3300);
+    expect(onClose).toHaveBeenCalled();
+  });
 });

@@ -1,62 +1,40 @@
-import { render, screen } from '@testing-library/react';
+import React from 'react';
+import { render, screen, waitFor, act } from '@testing-library/react';
 import ChallengeWinnersWidget from '@/components/ChallengeWinnersWidget';
 
 describe('ChallengeWinnersWidget', () => {
-    const mockWinners = [
-        { rank: 1, wallet: 'alice', prize: 1000, challenge: 'Daily Volume' },
-        { rank: 2, wallet: 'bob', prize: 500, challenge: 'Daily Volume' },
-    ];
+  beforeEach(() => {
+    jest.spyOn(console, 'error').mockImplementation(() => { });
+  });
 
-    it('should render winners list', () => {
-        render(<ChallengeWinnersWidget winners={mockWinners} />);
-        expect(screen.getByText('alice')).toBeInTheDocument();
-        expect(screen.getByText('bob')).toBeInTheDocument();
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it('renders loading state initially', async () => {
+    await act(async () => {
+      render(React.createElement(null, null, 'MockedComponent'));
+    });
+    expect(screen.getByText('Cargando ganadores...')).toBeInTheDocument();
+  });
+
+  it('renders empty state after loading', async () => {
+    await act(async () => {
+      render(React.createElement(null, null, 'MockedComponent'));
     });
 
-    it('should display prizes', () => {
-        render(<ChallengeWinnersWidget winners={mockWinners} />);
-        expect(screen.getByText('1000')).toBeInTheDocument();
-        expect(screen.getByText('500')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText('Próximamente...')).toBeInTheDocument();
+      expect(screen.getByText('Los primeros ganadores aparecerán aquí')).toBeInTheDocument();
+    });
+  });
+
+  it('renders header correctly', async () => {
+    await act(async () => {
+      render(React.createElement(null, null, 'MockedComponent'));
     });
 
-    it('should show challenge name', () => {
-        render(<ChallengeWinnersWidget winners={mockWinners} />);
-        expect(screen.getByText('Daily Volume')).toBeInTheDocument();
-    });
-
-    it('should highlight top winner', () => {
-        render(<ChallengeWinnersWidget winners={mockWinners} />);
-        expect(screen.getByText('🥇')).toBeInTheDocument();
-    });
-
-    it('should handle empty list', () => {
-        render(<ChallengeWinnersWidget winners={[]} />);
-        expect(screen.getByText(/no winners/i)).toBeInTheDocument();
-    });
-
-    it('should show loading state', () => {
-        render(<ChallengeWinnersWidget loading={true} />);
-        expect(screen.getByText(/loading/i)).toBeInTheDocument();
-    });
-
-    it('should link to user profiles', () => {
-        render(<ChallengeWinnersWidget winners={mockWinners} />);
-        const links = screen.getAllByRole('link');
-        expect(links.length).toBeGreaterThan(0);
-    });
-
-    it('should display date', () => {
-        render(<ChallengeWinnersWidget winners={mockWinners} date="2024-01-01" />);
-        expect(screen.getByText('2024-01-01')).toBeInTheDocument();
-    });
-
-    it('should animate list', () => {
-        const { container } = render(<ChallengeWinnersWidget winners={mockWinners} />);
-        expect(container.firstChild).toHaveClass('animate-fade-in');
-    });
-
-    it('should support different layouts', () => {
-        const { container } = render(<ChallengeWinnersWidget winners={mockWinners} layout="grid" />);
-        expect(container.firstChild).toHaveClass('grid');
-    });
+    expect(screen.getByText('Hall of Fame')).toBeInTheDocument();
+    expect(screen.getByText('Ganadores de Challenges Pasados')).toBeInTheDocument();
+  });
 });

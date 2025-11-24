@@ -1,3 +1,4 @@
+import React from 'react';
 // Security Tests: Vulnerabilities and Attack Vectors
 describe('Security Tests: Attack Vectors', () => {
     describe('SQL Injection', () => {

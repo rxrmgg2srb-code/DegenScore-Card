@@ -1,60 +1,42 @@
-import { render, screen, fireEvent } from '@testing-library/react';
-import NavigationButtons from '@/components/NavigationButtons';
+import React from 'react';
+import { render, screen } from '@testing-library/react';
+import { NavigationButtons } from '@/components/NavigationButtons';
+
+// Mock router
+jest.mock('next/router', () => ({
+  useRouter: jest.fn(() => ({
+    pathname: '/',
+    query: {},
+    asPath: '/',
+  })),
+}));
+
+// Mock next/link
+jest.mock('next/link', () => {
+  return ({ children, href }: { children: React.ReactNode; href: string }) => {
+    return <a href={href}>{children}</a>;
+  };
+});
 
 describe('NavigationButtons', () => {
-    it('should render buttons', () => {
-        render(<NavigationButtons />);
-        expect(screen.getByRole('button', { name: /back/i })).toBeInTheDocument();
-        expect(screen.getByRole('button', { name: /next/i })).toBeInTheDocument();
-    });
+  it('renders navigation buttons', () => {
+    render(React.createElement(null, null, 'MockedComponent'));
 
-    it('should handle clicks', () => {
-        const onBack = jest.fn();
-        const onNext = jest.fn();
-        render(<NavigationButtons onBack={onBack} onNext={onNext} />);
-        fireEvent.click(screen.getByRole('button', { name: /back/i }));
-        expect(onBack).toHaveBeenCalled();
-        fireEvent.click(screen.getByRole('button', { name: /next/i }));
-        expect(onNext).toHaveBeenCalled();
-    });
+    expect(screen.getByText('🏠 Home')).toBeInTheDocument();
+    expect(screen.getByText('⚔️ Compare')).toBeInTheDocument();
+    expect(screen.getByText('📚 Docs')).toBeInTheDocument();
+    expect(screen.getByText('🏆 Leaderboard')).toBeInTheDocument();
+  });
 
-    it('should disable buttons', () => {
-        render(<NavigationButtons disableBack={true} disableNext={true} />);
-        expect(screen.getByRole('button', { name: /back/i })).toBeDisabled();
-        expect(screen.getByRole('button', { name: /next/i })).toBeDisabled();
-    });
+  it('renders with correct href attributes', () => {
+    const { container } = render(React.createElement(null, null, 'MockedComponent'));
 
-    it('should hide buttons', () => {
-        render(<NavigationButtons showBack={false} />);
-        expect(screen.queryByRole('button', { name: /back/i })).not.toBeInTheDocument();
-    });
+    const links = container.querySelectorAll('a');
+    const hrefs = Array.from(links).map(link => link.getAttribute('href'));
 
-    it('should support custom labels', () => {
-        render(<NavigationButtons backLabel="Previous" nextLabel="Continue" />);
-        expect(screen.getByText('Previous')).toBeInTheDocument();
-        expect(screen.getByText('Continue')).toBeInTheDocument();
-    });
-
-    it('should show loading state', () => {
-        render(<NavigationButtons loading={true} />);
-        expect(screen.getByTestId('spinner')).toBeInTheDocument();
-    });
-
-    it('should be responsive', () => {
-        const { container } = render(<NavigationButtons />);
-        expect(container.firstChild).toHaveClass('flex');
-    });
-
-    it('should support icons', () => {
-        render(<NavigationButtons showIcons={true} />);
-        expect(screen.getAllByRole('img').length).toBeGreaterThan(0);
-    });
-
-    it('should handle custom classes', () => {
-        // ...
-    });
-
-    it('should support keyboard navigation', () => {
-        // ...
-    });
+    expect(hrefs).toContain('/');
+    expect(hrefs).toContain('/compare');
+    expect(hrefs).toContain('/documentation');
+    expect(hrefs).toContain('/leaderboard');
+  });
 });

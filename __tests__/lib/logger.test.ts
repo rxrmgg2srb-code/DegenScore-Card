@@ -2,7 +2,16 @@ import { logger } from '@/lib/logger';
 
 describe('logger', () => {
     beforeEach(() => {
+        // Spy on logger methods instead of assuming they are already mocks
+        // We use mockImplementation to prevent actual console logging during tests
+        jest.spyOn(logger, 'info').mockImplementation(() => { });
+        jest.spyOn(logger, 'error').mockImplementation(() => { });
+        jest.spyOn(logger, 'warn').mockImplementation(() => { });
         jest.clearAllMocks();
+    });
+
+    afterEach(() => {
+        jest.restoreAllMocks();
     });
 
     it('should have info method', () => {

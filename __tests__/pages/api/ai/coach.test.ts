@@ -1,3 +1,4 @@
+import React from 'react';
 import { createMocks } from 'node-mocks-http';
 import handler from '@/pages/api/ai/coach';
 import { getAiAdvice } from '@/lib/aiCoach';

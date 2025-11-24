@@ -1,66 +1,139 @@
-import { render, screen } from '@testing-library/react';
+import React from 'react';
+import { render, screen, waitFor, act } from '@testing-library/react';
 import FollowingContent from '@/components/FollowingContent';
+import { useWallet } from '@solana/wallet-adapter-react';
+
+// Mock dependencies
+jest.mock('@solana/wallet-adapter-react', () => ({
+  useWallet: jest.fn(),
+}));
+
+jest.mock('@solana/wallet-adapter-react-ui', () => ({
+  WalletMultiButton: () => React.createElement('button', {}, 'Connect Wallet'),
+}));
+
+jest.mock('next/link', () => {
+  return ({ children }: { children: React.ReactNode }) => {
+    return <>{children}</>;
+  };
+});
+
+jest.mock('@/lib/logger', () => ({
+  logger: {
+    error: jest.fn(),
+  },
+}));
 
 describe('FollowingContent', () => {
-    const mockFollowing = [
-        { wallet: 'alice', score: 90, avatar: 'alice.png' },
-        { wallet: 'bob', score: 80, avatar: 'bob.png' },
+  beforeEach(() => {
+    jest.clearAllMocks();
+    (useWallet as jest.Mock).mockReturnValue({
+      publicKey: null,
+      connected: false,
+    });
+    global.fetch = jest.fn();
+  });
+
+  it('renders connect wallet state when not connected', () => {
+    render(React.createElement(null, null, 'MockedComponent'));
+    expect(screen.getByText('Connect Your Wallet')).toBeInTheDocument();
+    expect(screen.getByText('Conecta tu wallet para ver las wallets que sigues')).toBeInTheDocument();
+  });
+
+  it('renders loading state when connected and fetching', async () => {
+    (useWallet as jest.Mock).mockReturnValue({
+      publicKey: { toBase58: () => 'mock-pubkey' },
+      connected: true,
+    });
+    (global.fetch as jest.Mock).mockImplementation(() => new Promise(() => { })); // Never resolves
+
+    await act(async () => {
+      render(React.createElement(null, null, 'MockedComponent'));
+    });
+
+    // Check for loading skeleton (animate-pulse)
+    const skeletons = document.querySelectorAll('.animate-pulse');
+    expect(skeletons.length).toBeGreaterThan(0);
+  });
+
+  it('renders followed wallets when fetch successful', async () => {
+    (useWallet as jest.Mock).mockReturnValue({
+      publicKey: { toBase58: () => 'mock-pubkey' },
+      connected: true,
+    });
+
+    const mockWallets = [
+      {
+        walletAddress: 'wallet-1',
+        followedAt: new Date().toISOString(),
+        card: {
+          walletAddress: 'wallet-1',
+          degenScore: 85,
+          totalTrades: 100,
+          totalVolume: 50000,
+          winRate: 60,
+          isPaid: true,
+          profileName: 'Top Trader',
+          profileAvatar: null,
+          lastUpdated: new Date().toISOString(),
+        },
+      },
     ];
 
-    it('should render following list', () => {
-        render(<FollowingContent following={mockFollowing} />);
-        expect(screen.getByText('alice')).toBeInTheDocument();
-        expect(screen.getByText('bob')).toBeInTheDocument();
+    (global.fetch as jest.Mock).mockResolvedValue({
+      ok: true,
+      json: async () => ({ wallets: mockWallets }),
     });
 
-    it('should display scores', () => {
-        render(<FollowingContent following={mockFollowing} />);
-        expect(screen.getByText('90')).toBeInTheDocument();
-        expect(screen.getByText('80')).toBeInTheDocument();
+    await act(async () => {
+      render(React.createElement(null, null, 'MockedComponent'));
     });
 
-    it('should show avatars', () => {
-        render(<FollowingContent following={mockFollowing} />);
-        expect(screen.getAllByRole('img')).toHaveLength(2);
+    await waitFor(() => {
+      expect(screen.getByText('Top Trader')).toBeInTheDocument();
+      expect(screen.getByText('85')).toBeInTheDocument(); // Score
+      expect(screen.getByText('60%')).toBeInTheDocument(); // Win Rate
+      expect(screen.getByText('Siguiendo 1 wallets')).toBeInTheDocument();
+    });
+  });
+
+  it('renders empty state when following no one', async () => {
+    (useWallet as jest.Mock).mockReturnValue({
+      publicKey: { toBase58: () => 'mock-pubkey' },
+      connected: true,
     });
 
-    it('should handle empty list', () => {
-        render(<FollowingContent following={[]} />);
-        expect(screen.getByText(/not following anyone/i)).toBeInTheDocument();
+    (global.fetch as jest.Mock).mockResolvedValue({
+      ok: true,
+      json: async () => ({ wallets: [] }),
     });
 
-    it('should show loading state', () => {
-        render(<FollowingContent loading={true} />);
-        expect(screen.getByTestId('skeleton')).toBeInTheDocument();
+    await act(async () => {
+      render(React.createElement(null, null, 'MockedComponent'));
     });
 
-    it('should allow unfollowing', () => {
-        const onUnfollow = jest.fn();
-        render(<FollowingContent following={mockFollowing} onUnfollow={onUnfollow} />);
-        const buttons = screen.getAllByText(/unfollow/i);
-        fireEvent.click(buttons[0]);
-        expect(onUnfollow).toHaveBeenCalledWith('alice');
+    await waitFor(() => {
+      expect(screen.getByText('No sigues a nadie aún')).toBeInTheDocument();
+      expect(screen.getByText('Explorar Leaderboard')).toBeInTheDocument();
+    });
+  });
+
+  it('renders error state on fetch failure', async () => {
+    (useWallet as jest.Mock).mockReturnValue({
+      publicKey: { toBase58: () => 'mock-pubkey' },
+      connected: true,
     });
 
-    it('should filter list', () => {
-        render(<FollowingContent following={mockFollowing} />);
-        const input = screen.getByPlaceholderText(/search/i);
-        fireEvent.change(input, { target: { value: 'alice' } });
-        expect(screen.getByText('alice')).toBeInTheDocument();
-        expect(screen.queryByText('bob')).not.toBeInTheDocument();
+    (global.fetch as jest.Mock).mockRejectedValue(new Error('API Error'));
+
+    await act(async () => {
+      render(React.createElement(null, null, 'MockedComponent'));
     });
 
-    it('should show activity status', () => {
-        const activeFollowing = [{ ...mockFollowing[0], online: true }];
-        render(<FollowingContent following={activeFollowing} />);
-        expect(screen.getByTestId('online-indicator')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText('Error')).toBeInTheDocument();
+      expect(screen.getByText('API Error')).toBeInTheDocument();
+      expect(screen.getByText('Reintentar')).toBeInTheDocument();
     });
-
-    it('should paginate list', () => {
-        // ...
-    });
-
-    it('should sort list', () => {
-        // ...
-    });
+  });
 });

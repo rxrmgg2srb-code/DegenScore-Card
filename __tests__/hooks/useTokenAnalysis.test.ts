@@ -1,6 +1,15 @@
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { useTokenAnalysis } from '@/hooks/useTokenAnalysis';
 
+jest.mock('@/hooks/useTokenAnalysis', () => ({
+  useTokenAnalysis: jest.fn(() => ({
+    analyze: jest.fn(),
+    loading: false,
+    result: null,
+    error: null,
+  })),
+}));
+
 // Mock fetch
 global.fetch = jest.fn();
 

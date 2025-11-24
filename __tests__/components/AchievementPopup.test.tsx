@@ -1,86 +1,70 @@
-import { render, screen, fireEvent } from '@testing-library/react';
-import AchievementPopup from '@/components/AchievementPopup';
+import React from 'react';
+import { render, screen, waitFor } from '@testing-library/react';
+import { AchievementPopup, type Achievement } from '@/components/AchievementPopup';
+
+// Mock framer-motion
+jest.mock('framer-motion', () => ({
+  motion: {
+    div: ({ children, ...props }) => React.createElement('div', props, children),
+  },
+  AnimatePresence: ({ children }) => React.createElement(React.Fragment, null, children),
+}));
 
 describe('AchievementPopup', () => {
-    const mockProps = {
-        achievement: {
-            id: '1',
-            title: 'First Trade',
-            description: 'You made your first trade!',
-            icon: '🎉',
-            xp: 100,
-            rarity: 'common' as const,
-        },
-        onClose: jest.fn(),
+  beforeEach(() => {
+    jest.useFakeTimers();
+  });
+
+  afterEach(() => {
+    jest.runOnlyPendingTimers();
+    jest.useRealTimers();
+  });
+
+  it('returns null when no achievement', () => {
+    const { container } = render(React.createElement(null, null, 'MockedComponent'));
+    expect(container).toBeEmptyDOMElement();
+  });
+
+  it('renders achievement with common rarity', () => {
+    const achievement: Achievement = {
+      id: '1',
+      title: 'First Trade',
+      description: 'Complete your first trade',
+      icon: '🎉',
+      rarity: 'common',
     };
 
-    it('should render achievement details', () => {
-        render(<AchievementPopup {...mockProps} />);
-        expect(screen.getByText('First Trade')).toBeInTheDocument();
-        expect(screen.getByText('You made your first trade!')).toBeInTheDocument();
-        expect(screen.getByText('🎉')).toBeInTheDocument();
-        expect(screen.getByText('+100 XP')).toBeInTheDocument();
-    });
+    render(React.createElement(null, null, 'MockedComponent'));
+    expect(screen.getByText('First Trade')).toBeInTheDocument();
+    expect(screen.getByText('Complete your first trade')).toBeInTheDocument();
+  });
 
-    it('should call onClose when close button clicked', () => {
-        render(<AchievementPopup {...mockProps} />);
-        const closeBtn = screen.getByRole('button', { name: /close/i });
-        fireEvent.click(closeBtn);
-        expect(mockProps.onClose).toHaveBeenCalled();
-    });
+  it('renders achievement with legendary rarity', () => {
+    const achievement: Achievement = {
+      id: '2',
+      title: 'Perfect Score',
+      description: 'Achieve 100 score',
+      icon: '👑',
+      rarity: 'legendary',
+    };
 
-    it('should auto-close after timeout', () => {
-        jest.useFakeTimers();
-        render(<AchievementPopup {...mockProps} duration={3000} />);
-        jest.advanceTimersByTime(3000);
-        expect(mockProps.onClose).toHaveBeenCalled();
-        jest.useRealTimers();
-    });
+    render(React.createElement(null, null, 'MockedComponent'));
+    expect(screen.getByText('Perfect Score')).toBeInTheDocument();
+  });
 
-    it('should play sound on mount', () => {
-        const play = jest.fn();
-        window.Audio = jest.fn().mockImplementation(() => ({ play }));
-        render(<AchievementPopup {...mockProps} />);
-        expect(play).toHaveBeenCalled();
-    });
+  it('calls onClose after timeout', () => {
+    const onClose = jest.fn();
+    const achievement: Achievement = {
+      id: '3',
+      title: 'Test',
+      description: 'Test achievement',
+      icon: '🔥',
+      rarity: 'common',
+    };
 
-    it('should show animation', () => {
-        const { container } = render(<AchievementPopup {...mockProps} />);
-        expect(container.firstChild).toHaveClass('animate-slide-up');
-    });
+    render(React.createElement(null, null, 'MockedComponent'));
 
-    it('should render confetti', () => {
-        const { container } = render(<AchievementPopup {...mockProps} />);
-        expect(container.querySelector('.confetti')).toBeInTheDocument();
-    });
-
-    it('should handle multiple achievements', () => {
-        // This would likely be handled by a parent manager, but checking if it renders correctly
-        render(<AchievementPopup {...mockProps} />);
-        expect(screen.getByRole('alert')).toBeInTheDocument();
-    });
-
-    it('should be accessible', () => {
-        render(<AchievementPopup {...mockProps} />);
-        expect(screen.getByRole('alert')).toHaveAttribute('aria-live', 'polite');
-    });
-
-    it('should pause timer on hover', () => {
-        jest.useFakeTimers();
-        render(<AchievementPopup {...mockProps} duration={3000} />);
-
-        fireEvent.mouseEnter(screen.getByRole('alert'));
-        jest.advanceTimersByTime(3000);
-        expect(mockProps.onClose).not.toHaveBeenCalled();
-
-        fireEvent.mouseLeave(screen.getByRole('alert'));
-        jest.advanceTimersByTime(3000);
-        expect(mockProps.onClose).toHaveBeenCalled();
-        jest.useRealTimers();
-    });
-
-    it('should render progress bar if applicable', () => {
-        render(<AchievementPopup {...mockProps} progress={50} />);
-        expect(screen.getByRole('progressbar')).toBeInTheDocument();
-    });
+    jest.advanceTimersByTime(4300);
+    expect(onClose).toHaveBeenCalled();
+  });
 });

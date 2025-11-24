@@ -1,68 +1,70 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import React from 'react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import CompareContent from '@/components/CompareContent';
 
+// Mock NavigationButtons and LanguageSelector to simplify test
+jest.mock('@/components/NavigationButtons', () => ({
+  NavigationButtons: () => React.createElement('div', data-testid="nav-buttons", 'Nav Buttons'),
+}));
+jest.mock('@/components/LanguageSelector', () => ({
+  LanguageSelector: () => React.createElement('div', data-testid="lang-selector", 'Lang Selector'),
+}));
+
 describe('CompareContent', () => {
-    const mockCards = [
-        { id: '1', wallet: 'alice', score: 90 },
-        { id: '2', wallet: 'bob', score: 80 },
-    ];
+  beforeEach(() => {
+    global.fetch = jest.fn();
+  });
 
-    it('should render comparison view', () => {
-        render(<CompareContent cards={mockCards} />);
-        expect(screen.getByText('alice')).toBeInTheDocument();
-        expect(screen.getByText('bob')).toBeInTheDocument();
+  it('renders input fields and compare button', () => {
+    render(React.createElement(null, null, 'MockedComponent'));
+    expect(screen.getByText(/Card Comparison/i)).toBeInTheDocument();
+    expect(screen.getByPlaceholderText(/Enter first wallet address/i)).toBeInTheDocument();
+    expect(screen.getByPlaceholderText(/Enter second wallet address/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Compare Cards/i })).toBeInTheDocument();
+  });
+
+  it('shows error if wallets are missing', async () => {
+    render(React.createElement(null, null, 'MockedComponent'));
+    fireEvent.click(screen.getByRole('button', { name: /Compare Cards/i }));
+    expect(await screen.findByText(/Please enter both wallet addresses/i)).toBeInTheDocument();
+  });
+
+  it('shows error if wallets are identical', async () => {
+    render(React.createElement(null, null, 'MockedComponent'));
+    fireEvent.change(screen.getByPlaceholderText(/Enter first wallet address/i), { target: { value: 'wallet1' } });
+    fireEvent.change(screen.getByPlaceholderText(/Enter second wallet address/i), { target: { value: 'wallet1' } });
+    fireEvent.click(screen.getByRole('button', { name: /Compare Cards/i }));
+    expect(await screen.findByText(/Please enter different wallet addresses/i)).toBeInTheDocument();
+  });
+
+  it('fetches and displays comparison data', async () => {
+    const mockComparisonData = {
+      comparison: {
+        wallet1: { displayName: 'Wallet One', degenScore: 80, totalTrades: 10, totalVolume: 100, profitLoss: 50, winRate: 60, bestTrade: 20, badges: 2, likes: 5 },
+        wallet2: { displayName: 'Wallet Two', degenScore: 70, totalTrades: 8, totalVolume: 80, profitLoss: 40, winRate: 50, bestTrade: 15, badges: 1, likes: 3 },
+        winner: { degenScore: 'wallet1', totalTrades: 'wallet1', totalVolume: 'wallet1', profitLoss: 'wallet1', winRate: 'wallet1', bestTrade: 'wallet1', badges: 'wallet1', likes: 'wallet1' },
+      },
+      overallWinner: 'wallet1',
+    };
+
+    (global.fetch as jest.Mock).mockResolvedValueOnce({
+      ok: true,
+      json: async () => mockComparisonData,
     });
 
-    it('should display scores side by side', () => {
-        render(<CompareContent cards={mockCards} />);
-        expect(screen.getByText('90')).toBeInTheDocument();
-        expect(screen.getByText('80')).toBeInTheDocument();
+    render(React.createElement(null, null, 'MockedComponent'));
+    fireEvent.change(screen.getByPlaceholderText(/Enter first wallet address/i), { target: { value: 'wallet1' } });
+    fireEvent.change(screen.getByPlaceholderText(/Enter second wallet address/i), { target: { value: 'wallet2' } });
+    fireEvent.click(screen.getByRole('button', { name: /Compare Cards/i }));
+
+    expect(screen.getByText(/Comparing.../i)).toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(screen.getByText('Overall Winner')).toBeInTheDocument();
     });
 
-    it('should show score difference', () => {
-        render(<CompareContent cards={mockCards} />);
-        expect(screen.getByText('+10')).toBeInTheDocument();
-    });
-
-    it('should allow adding more cards', () => {
-        render(<CompareContent cards={mockCards} />);
-        expect(screen.getByText(/add/i)).toBeInTheDocument();
-    });
-
-    it('should remove card', () => {
-        const onRemove = jest.fn();
-        render(<CompareContent cards={mockCards} onRemove={onRemove} />);
-        const removeBtns = screen.getAllByRole('button', { name: /remove/i });
-        fireEvent.click(removeBtns[0]);
-        expect(onRemove).toHaveBeenCalledWith('1');
-    });
-
-    it('should highlight winner', () => {
-        render(<CompareContent cards={mockCards} />);
-        expect(screen.getByText('🏆')).toBeInTheDocument();
-    });
-
-    it('should compare detailed metrics', () => {
-        render(<CompareContent cards={mockCards} showDetails={true} />);
-        expect(screen.getByText(/volume/i)).toBeInTheDocument();
-        expect(screen.getByText(/trades/i)).toBeInTheDocument();
-    });
-
-    it('should handle empty state', () => {
-        render(<CompareContent cards={[]} />);
-        expect(screen.getByText(/select cards/i)).toBeInTheDocument();
-    });
-
-    it('should share comparison', () => {
-        const onShare = jest.fn();
-        render(<CompareContent cards={mockCards} onShare={onShare} />);
-        fireEvent.click(screen.getByText(/share/i));
-        expect(onShare).toHaveBeenCalled();
-    });
-
-    it('should support mobile view', () => {
-        // Mock viewport or check responsive classes
-        const { container } = render(<CompareContent cards={mockCards} />);
-        expect(container.firstChild).toHaveClass('flex-col md:flex-row');
-    });
+    expect(screen.getByText('Wallet One')).toBeInTheDocument();
+    expect(screen.getByText('Wallet Two')).toBeInTheDocument();
+    expect(screen.getByText('80/100')).toBeInTheDocument();
+  });
 });

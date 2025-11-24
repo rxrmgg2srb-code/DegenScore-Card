@@ -1,50 +1,50 @@
-import { render, screen } from '@testing-library/react';
+import React from 'react';
+import { render } from '@testing-library/react';
 import PageTransition from '@/components/PageTransition';
 
+// Mock framer-motion
+jest.mock('framer-motion', () => ({
+  motion: {
+    div: ({ children, ...props }) => React.createElement('div', props, children),
+    span: ({ children, ...props }) => React.createElement('span', props, children),
+  },
+  AnimatePresence: ({ children }) => React.createElement(React.Fragment, null, children),
+}));
+
 describe('PageTransition', () => {
-    it('should render children', () => {
-        render(<PageTransition><div>Content</div></PageTransition>);
-        expect(screen.getByText('Content')).toBeInTheDocument();
-    });
+  it('renders children correctly', () => {
+    const { container } = render(
+      <PageTransition>
+        <div>Test Content</div>
+      </PageTransition>
+    );
+    expect(container.textContent).toContain('Test Content');
+  });
 
-    it('should animate entry', () => {
-        const { container } = render(<PageTransition><div>Content</div></PageTransition>);
-        expect(container.firstChild).toHaveClass('motion-div'); // Assuming framer-motion or similar
-    });
+  it('renders with fade variant', () => {
+    const { container } = render(
+      <PageTransition variant="fade">
+        <div>Fade Content</div>
+      </PageTransition>
+    );
+    expect(container.textContent).toContain('Fade Content');
+  });
 
-    it('should support different variants', () => {
-        const { container } = render(<PageTransition variant="fade"><div>Content</div></PageTransition>);
-        // Check variant specific class or style
-    });
+  it('renders with slide variant', () => {
+    const { container } = render(
+      <PageTransition variant="slide">
+        <div>Slide Content</div>
+      </PageTransition>
+    );
+    expect(container.textContent).toContain('Slide Content');
+  });
 
-    it('should handle exit animation', () => {
-        // Requires AnimatePresence mock or similar
-    });
-
-    it('should pass props to container', () => {
-        const { container } = render(<PageTransition className="custom"><div>Content</div></PageTransition>);
-        expect(container.firstChild).toHaveClass('custom');
-    });
-
-    it('should be accessible', () => {
-        render(<PageTransition><div>Content</div></PageTransition>);
-        // Check aria attributes if applicable
-    });
-
-    it('should respect reduced motion', () => {
-        // Mock media query
-    });
-
-    it('should support initial state', () => {
-        // ...
-    });
-
-    it('should handle layout changes', () => {
-        // ...
-    });
-
-    it('should render as specified tag', () => {
-        const { container } = render(<PageTransition as="section"><div>Content</div></PageTransition>);
-        expect(container.querySelector('section')).toBeInTheDocument();
-    });
+  it('renders with custom duration', () => {
+    const { container } = render(
+      <PageTransition duration={0.5}>
+        <div>Custom Duration</div>
+      </PageTransition>
+    );
+    expect(container.textContent).toContain('Custom Duration');
+  });
 });

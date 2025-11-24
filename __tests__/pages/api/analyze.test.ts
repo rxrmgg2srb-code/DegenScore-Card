@@ -1,3 +1,4 @@
+import React from 'react';
 /**
  * Tests for /api/analyze endpoint
  * Testing wallet analysis flow

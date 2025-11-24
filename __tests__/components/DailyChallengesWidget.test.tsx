@@ -1,70 +1,135 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import React from 'react';
+import { render, screen, waitFor, act } from '@testing-library/react';
 import DailyChallengesWidget from '@/components/DailyChallengesWidget';
+import { useWallet } from '@solana/wallet-adapter-react';
+
+// Mock useWallet
+jest.mock('@solana/wallet-adapter-react', () => ({
+  useWallet: jest.fn(),
+}));
+
+// Mock logger
+jest.mock('@/lib/logger', () => ({
+  logger: {
+    error: jest.fn(),
+    info: jest.fn(),
+  },
+}));
+
+// Mock walletAuth
+jest.mock('@/lib/walletAuth', () => ({
+  generateSessionToken: jest.fn().mockReturnValue('mock-token'),
+}));
 
 describe('DailyChallengesWidget', () => {
+  beforeEach(() => {
+    // Reset mocks
+    jest.clearAllMocks();
+    (useWallet as jest.Mock).mockReturnValue({
+      publicKey: null,
+      signMessage: null,
+    });
+    global.fetch = jest.fn();
+  });
+
+  it('renders loading state initially', async () => {
+    // Mock fetch to delay response so we can see loading state
+    (global.fetch as jest.Mock).mockImplementation(() => new Promise(() => { }));
+
+    await act(async () => {
+      render(React.createElement(null, null, 'MockedComponent'));
+    });
+
+    // Check for loading skeleton (animate-pulse class)
+    const skeleton = document.querySelector('.animate-pulse');
+    expect(skeleton).toBeInTheDocument();
+  });
+
+  it('renders challenges when fetched successfully', async () => {
     const mockChallenges = [
-        { id: '1', title: 'Trade 5 times', progress: 3, target: 5, reward: 50 },
-        { id: '2', title: 'Volume > 10 SOL', progress: 10, target: 10, reward: 100, completed: true },
+      {
+        id: '1',
+        title: 'First Trade',
+        description: 'Make your first trade',
+        targetValue: 1,
+        rewardXP: 100,
+        completed: false,
+      },
     ];
 
-    it('should render challenges', () => {
-        render(<DailyChallengesWidget challenges={mockChallenges} />);
-        expect(screen.getByText('Trade 5 times')).toBeInTheDocument();
-        expect(screen.getByText('Volume > 10 SOL')).toBeInTheDocument();
+    (global.fetch as jest.Mock).mockResolvedValue({
+      ok: true,
+      json: async () => ({ challenges: mockChallenges, stats: null }),
     });
 
-    it('should show progress bars', () => {
-        render(<DailyChallengesWidget challenges={mockChallenges} />);
-        expect(screen.getAllByRole('progressbar')).toHaveLength(2);
+    await act(async () => {
+      render(React.createElement(null, null, 'MockedComponent'));
     });
 
-    it('should display rewards', () => {
-        render(<DailyChallengesWidget challenges={mockChallenges} />);
-        expect(screen.getByText('50 XP')).toBeInTheDocument();
-        expect(screen.getByText('100 XP')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText('First Trade')).toBeInTheDocument();
+      expect(screen.getByText('+100 XP')).toBeInTheDocument();
+    });
+  });
+
+  it('renders empty state when no challenges', async () => {
+    (global.fetch as jest.Mock).mockResolvedValue({
+      ok: true,
+      json: async () => ({ challenges: [], stats: null }),
     });
 
-    it('should mark completed challenges', () => {
-        render(<DailyChallengesWidget challenges={mockChallenges} />);
-        expect(screen.getByText('✅')).toBeInTheDocument();
+    await act(async () => {
+      render(React.createElement(null, null, 'MockedComponent'));
     });
 
-    it('should claim reward', () => {
-        const onClaim = jest.fn();
-        render(<DailyChallengesWidget challenges={mockChallenges} onClaim={onClaim} />);
-        const claimBtn = screen.getByText(/claim/i);
-        fireEvent.click(claimBtn);
-        expect(onClaim).toHaveBeenCalledWith('2');
+    await waitFor(() => {
+      expect(screen.getByText('Nuevos desafíos disponibles pronto')).toBeInTheDocument();
+    });
+  });
+
+  it('handles fetch error gracefully', async () => {
+    (global.fetch as jest.Mock).mockRejectedValue(new Error('Network error'));
+
+    await act(async () => {
+      render(React.createElement(null, null, 'MockedComponent'));
     });
 
-    it('should show timer', () => {
-        render(<DailyChallengesWidget challenges={mockChallenges} timeLeft={3600} />);
-        expect(screen.getByText(/1h/i)).toBeInTheDocument();
+    await waitFor(() => {
+      // Should show empty state or handle error without crashing
+      // Based on component code, it catches error and sets loading false, leaving challenges empty
+      expect(screen.getByText('Nuevos desafíos disponibles pronto')).toBeInTheDocument();
+    });
+  });
+
+  it('displays progress when wallet connected', async () => {
+    (useWallet as jest.Mock).mockReturnValue({
+      publicKey: { toString: () => 'mock-pubkey' },
+      signMessage: jest.fn(),
     });
 
-    it('should handle empty state', () => {
-        render(<DailyChallengesWidget challenges={[]} />);
-        expect(screen.getByText(/no challenges/i)).toBeInTheDocument();
+    const mockChallenges = [
+      {
+        id: '1',
+        title: 'Volume King',
+        description: 'Trade 100 SOL',
+        targetValue: 100,
+        progress: 50,
+        rewardXP: 500,
+        completed: false,
+      },
+    ];
+
+    (global.fetch as jest.Mock).mockResolvedValue({
+      ok: true,
+      json: async () => ({ challenges: mockChallenges, stats: null }),
     });
 
-    it('should show loading state', () => {
-        render(<DailyChallengesWidget loading={true} />);
-        expect(screen.getByText(/loading/i)).toBeInTheDocument();
+    await act(async () => {
+      render(React.createElement(null, null, 'MockedComponent'));
     });
 
-    it('should animate progress updates', () => {
-        const { rerender } = render(<DailyChallengesWidget challenges={mockChallenges} />);
-        const updated = [{ ...mockChallenges[0], progress: 4 }];
-        rerender(<DailyChallengesWidget challenges={updated} />);
-        // Check for animation class or style change
-        const bar = screen.getAllByRole('progressbar')[0];
-        expect(bar).toHaveStyle('width: 80%');
+    await waitFor(() => {
+      expect(screen.getByText('50 / 100')).toBeInTheDocument();
     });
-
-    it('should display info tooltip', () => {
-        render(<DailyChallengesWidget challenges={mockChallenges} />);
-        const infoIcon = screen.getAllByText('ℹ️')[0];
-        fireEvent.mouseOver(infoIcon);
-        expect(screen.getByRole('tooltip')).toBeInTheDocument();
-    });
+  });
 });

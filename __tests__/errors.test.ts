@@ -1,4 +1,4 @@
-import { AppError, ValidationError, NotFoundError, AuthenticationError, DatabaseError } from '../lib/errors';
+import { AppError, ValidationError, NotFoundError, AuthenticationError, DatabaseError } from '@/lib/errors';
 
 describe('Error Classes', () => {
     describe('AppError', () => {

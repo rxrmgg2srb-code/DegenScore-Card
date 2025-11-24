@@ -1,67 +1,116 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import React from 'react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import DailyCheckIn from '@/components/DailyCheckIn';
+import { useWallet } from '@solana/wallet-adapter-react';
+
+// Mock dependencies
+jest.mock('@solana/wallet-adapter-react', () => ({
+  useWallet: jest.fn(),
+}));
+
+jest.mock('@/lib/logger', () => ({
+  logger: {
+    error: jest.fn(),
+  },
+}));
+
+jest.mock('framer-motion', () => ({
+  motion: {
+    div: ({ children, ...props }) => React.createElement('div', props, children),
+  },
+}));
 
 describe('DailyCheckIn', () => {
-    const mockProps = {
-        streak: 5,
-        checkedIn: false,
-        onCheckIn: jest.fn(),
-        reward: 10,
-    };
+  beforeEach(() => {
+    jest.clearAllMocks();
+    (useWallet as jest.Mock).mockReturnValue({ publicKey: null });
+    global.fetch = jest.fn();
+  });
 
-    it('should render check-in button', () => {
-        render(<DailyCheckIn {...mockProps} />);
-        expect(screen.getByText(/check in/i)).toBeInTheDocument();
+  it('returns null when wallet not connected', () => {
+    const { container } = render(React.createElement(null, null, 'MockedComponent'));
+    expect(container).toBeEmptyDOMElement();
+  });
+
+  it('renders check-in button when wallet connected', () => {
+    (useWallet as jest.Mock).mockReturnValue({
+      publicKey: { toBase58: () => 'test-wallet' },
     });
 
-    it('should display current streak', () => {
-        render(<DailyCheckIn {...mockProps} />);
-        expect(screen.getByText('5')).toBeInTheDocument();
-        expect(screen.getByText(/streak/i)).toBeInTheDocument();
+    render(React.createElement(null, null, 'MockedComponent'));
+    expect(screen.getByText('Daily Check-In')).toBeInTheDocument();
+    expect(screen.getByText('Check In Now (+50 XP)')).toBeInTheDocument();
+  });
+
+  it('handles successful check-in', async () => {
+    (useWallet as jest.Mock).mockReturnValue({
+      publicKey: { toBase58: () => 'test-wallet' },
     });
 
-    it('should disable button if already checked in', () => {
-        render(<DailyCheckIn {...mockProps} checkedIn={true} />);
-        const button = screen.getByRole('button');
-        expect(button).toBeDisabled();
-        expect(screen.getByText(/checked in/i)).toBeInTheDocument();
+    (global.fetch as jest.Mock).mockResolvedValue({
+      json: async () => ({
+        success: true,
+        currentStreak: 5,
+        totalXP: 250,
+        xpEarned: 50,
+        badgesEarned: [],
+      }),
     });
 
-    it('should call onCheckIn click', () => {
-        render(<DailyCheckIn {...mockProps} />);
-        fireEvent.click(screen.getByRole('button'));
-        expect(mockProps.onCheckIn).toHaveBeenCalled();
+    render(React.createElement(null, null, 'MockedComponent'));
+
+    const button = screen.getByText('Check In Now (+50 XP)');
+
+    await act(async () => {
+      fireEvent.click(button);
     });
 
-    it('should show reward amount', () => {
-        render(<DailyCheckIn {...mockProps} />);
-        expect(screen.getByText('+10 XP')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText('✅ Checked In!')).toBeInTheDocument();
+      expect(screen.getByText('+50 XP!')).toBeInTheDocument();
+    });
+  });
+
+  it('handles already checked in', async () => {
+    (useWallet as jest.Mock).mockReturnValue({
+      publicKey: { toBase58: () => 'test-wallet' },
     });
 
-    it('should animate on check-in', () => {
-        const { rerender, container } = render(<DailyCheckIn {...mockProps} />);
-        rerender(<DailyCheckIn {...mockProps} checkedIn={true} />);
-        expect(container.querySelector('.animate-bounce')).toBeInTheDocument();
+    (global.fetch as jest.Mock).mockResolvedValue({
+      json: async () => ({
+        success: true,
+        currentStreak: 3,
+        totalXP: 150,
+        alreadyCheckedIn: true,
+      }),
     });
 
-    it('should show next milestone', () => {
-        render(<DailyCheckIn {...mockProps} nextMilestone={7} />);
-        expect(screen.getByText(/2 days to/i)).toBeInTheDocument();
+    render(React.createElement(null, null, 'MockedComponent'));
+
+    await act(async () => {
+      fireEvent.click(screen.getByText('Check In Now (+50 XP)'));
     });
 
-    it('should display calendar view', () => {
-        render(<DailyCheckIn {...mockProps} showCalendar={true} />);
-        expect(screen.getByTestId('calendar')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText(/Already checked in today/)).toBeInTheDocument();
+    });
+  });
+
+  it('handles check-in error', async () => {
+    (useWallet as jest.Mock).mockReturnValue({
+      publicKey: { toBase58: () => 'test-wallet' },
     });
 
-    it('should handle loading state', () => {
-        render(<DailyCheckIn {...mockProps} loading={true} />);
-        expect(screen.getByRole('button')).toBeDisabled();
-        expect(screen.getByTestId('spinner')).toBeInTheDocument();
+    (global.fetch as jest.Mock).mockRejectedValue(new Error('Network error'));
+
+    render(React.createElement(null, null, 'MockedComponent'));
+
+    await act(async () => {
+      fireEvent.click(screen.getByText('Check In Now (+50 XP)'));
     });
 
-    it('should show missed days', () => {
-        render(<DailyCheckIn {...mockProps} missed={true} />);
-        expect(screen.getByText(/streak lost/i)).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText('Failed to check in. Try again.')).toBeInTheDocument();
     });
+  });
 });

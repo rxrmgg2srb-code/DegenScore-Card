@@ -1,3 +1,4 @@
+import React from 'react';
 import { NextApiRequest, NextApiResponse } from 'next';
 import generateCardHandler from '@/pages/api/generate-card';
 

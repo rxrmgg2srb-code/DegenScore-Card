@@ -1,3 +1,4 @@
+import React from 'react';
 import { sanitizeInput, sanitizeString, sanitizeHTML, sanitizeURL } from '@/lib/sanitize';
 
 describe('sanitize', () => {

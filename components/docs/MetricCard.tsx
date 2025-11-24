@@ -32,3 +32,4 @@ export function MetricCard({ title, range, description, levels }: MetricCardProp
         </div>
     );
 }
+export default MetricCard;

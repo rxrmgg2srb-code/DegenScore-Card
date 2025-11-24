@@ -1,3 +1,4 @@
+import React from 'react';
 /**
  * Unit Tests for Input Validation
  * Tests schema validation, sanitization, and security checks

@@ -1,3 +1,4 @@
+import React from 'react';
 // Edge Case Tests: Extreme Input Scenarios
 describe('Edge Cases: Extreme Inputs', () => {
     describe('Null and Undefined Handling', () => {

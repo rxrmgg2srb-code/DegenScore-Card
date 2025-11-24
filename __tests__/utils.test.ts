@@ -1,4 +1,4 @@
-import { getTierConfig, getLevelPhrase, formatNumber, getFOMOPhrase } from '../components/leaderboard/utils';
+import { getTierConfig, getLevelPhrase, formatNumber, getFOMOPhrase } from '@/components/leaderboard/utils';
 
 describe('Leaderboard Utils', () => {
     describe('getTierConfig', () => {

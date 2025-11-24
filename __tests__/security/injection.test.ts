@@ -1,3 +1,4 @@
+import React from 'react';
 import { sanitizeInput } from '@/lib/sanitize';
 
 describe('Security: Injection Attacks', () => {

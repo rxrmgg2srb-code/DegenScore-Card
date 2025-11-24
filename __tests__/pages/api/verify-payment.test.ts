@@ -1,3 +1,4 @@
+import React from 'react';
 /**
  * Tests for Payment Verification API
  * Critical security endpoint - prevents payment fraud

@@ -1,3 +1,4 @@
+import React from 'react';
 import { NextApiRequest, NextApiResponse } from 'next';
 import trackHandler from '@/pages/api/referrals/track';
 import { prisma } from '@/lib/prisma';

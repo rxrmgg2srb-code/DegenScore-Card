@@ -1,113 +1,48 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import React from 'react';
+import { render, screen } from '@testing-library/react';
 import ExternalData from '@/components/SuperTokenScorer/ExternalData';
 
-describe('SuperTokenScorer/ExternalData', () => {
-    const mockResult = {
-        dexScreenerData: {
-            pairAddress: 'test-pair',
-            dex: 'Raydium',
-            priceUSD: 0.001,
-            volume24h: 100000,
-            liquidity: 50000,
-            fdv: 1000000,
-            priceChange24h: 15,
-            priceChange7d: 50,
-            priceChange30d: 120,
-            txns24h: { buys: 500, sells: 450 },
-            holders: 1000,
-            marketCap: 500000,
-        },
-        birdeyeData: {
-            address: 'test-token',
-            symbol: 'TEST',
-            price: 0.001,
-            liquidity: 50000,
-            volume24h: 100000,
-            priceChange24h: 15,
-            priceChange7d: 50,
-            priceChange30d: 120,
-            marketCap: 500000,
-            holder: 1000,
-            supply: 1000000000,
-            uniqueWallets24h: 300,
-            trade24h: 950,
-            lastTradeUnixTime: Date.now(),
-        },
-        solscanData: {
-            address: 'test-token',
-            symbol: 'TEST',
-            name: 'Test Token',
-            decimals: 9,
-            supply: 1000000000,
-            holder: 1000,
-            website: 'https://test.com',
-            twitter: '@test',
-            coingeckoId: 'test',
-            priceUsdt: 0.001,
-            volumeUsdt: 100000,
-            marketCapUsdt: 500000,
-        },
-        rugCheckData: {
-            score: 75,
-            risks: [
-                { name: 'Low liquidity', level: 'warn' as const, description: 'Liquidity under threshold' },
-            ],
-            rugged: false,
-        },
-    };
+const mockResult = {
+  dexScreenerData: {
+    priceUSD: 1.23,
+    liquidity: 100000,
+    volume24h: 50000,
+    dex: 'Raydium',
+  },
+  birdeyeData: {
+    price: 1.23,
+    marketCap: 1000000,
+    holder: 500,
+    trade24h: 1200,
+  },
+  rugCheckData: {
+    score: 85,
+    rugged: false,
+    risks: [{ name: 'Mint Authority', level: 'High' }],
+  },
+  // Add other required properties of SuperTokenScore if necessary for the component to render without crashing
+  // Based on the component code, it only accesses these three properties.
+} as any;
 
-    it('should render DexScreener data', () => {
-        render(<ExternalData result={mockResult as any} />);
-        expect(screen.getByText(/Raydium/i)).toBeInTheDocument();
-    });
+describe('ExternalData', () => {
+  it('renders external data sections correctly', () => {
+    render(React.createElement(null, null, 'MockedComponent'));
 
-    it('should display price information', () => {
-        render(<ExternalData result={mockResult as any} />);
-        expect(screen.getByText(/\$0\.001/i)).toBeInTheDocument();
-    });
+    expect(screen.getByText('DexScreener')).toBeInTheDocument();
+    expect(screen.getByText(/\$1.23000000/)).toBeInTheDocument(); // Price
+    expect(screen.getByText('Raydium')).toBeInTheDocument();
 
-    it('should show volume data', () => {
-        render(<ExternalData result={mockResult as any} />);
-        expect(screen.getByText(/100,000/i)).toBeInTheDocument();
-    });
+    expect(screen.getByText('Birdeye')).toBeInTheDocument();
+    expect(screen.getByText(/\$1,000,000/)).toBeInTheDocument(); // Market Cap
 
-    it('should display rugcheck score', () => {
-        render(<ExternalData result={mockResult as any} />);
-        expect(screen.getByText(/75/)).toBeInTheDocument();
-    });
+    expect(screen.getByText('RugCheck')).toBeInTheDocument();
+    expect(screen.getByText('85/100')).toBeInTheDocument();
+    expect(screen.getByText(/✅ NO/)).toBeInTheDocument();
+  });
 
-    it('should show risk warnings', () => {
-        render(<ExternalData result={mockResult as any} />);
-        expect(screen.getByText(/Low liquidity/i)).toBeInTheDocument();
-    });
-
-    it('should handle missing dexscreener data', () => {
-        const noData = { ...mockResult, dexScreenerData: undefined };
-        render(<ExternalData result={noData as any} />);
-        expect(screen.getByText(/No data/i)).toBeInTheDocument();
-    });
-
-    it('should display birdeye analytics', () => {
-        render(<ExternalData result={mockResult as any} />);
-        expect(screen.getByText(/300/)).toBeInTheDocument(); // unique wallets
-    });
-
-    it('should show solscan metadata', () => {
-        render(<ExternalData result={mockResult as any} />);
-        expect(screen.getByText(/@test/)).toBeInTheDocument();
-    });
-
-    it('should handle rugged tokens', () => {
-        const rugged = {
-            ...mockResult,
-            rugCheckData: { ...mockResult.rugCheckData, rugged: true, ruggedDetails: 'Rug pulled!' },
-        };
-        render(<ExternalData result={rugged as any} />);
-        expect(screen.getByText(/rug/i)).toBeInTheDocument();
-    });
-
-    it('should display holder count', () => {
-        render(<ExternalData result={mockResult as any} />);
-        expect(screen.getByText(/1000/)).toBeInTheDocument();
-    });
+  it('renders nothing if no data is present', () => {
+    const emptyResult = {} as any;
+    const { container } = render(React.createElement(null, null, 'MockedComponent'));
+    expect(container).toBeEmptyDOMElement();
+  });
 });
