@@ -6,10 +6,7 @@ import { logger } from '../../lib/logger';
 import { cacheGetOrSet, CacheKeys } from '../../lib/cache/redis';
 import { checkAllBadges } from '../../lib/badges-with-points';
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -20,25 +17,76 @@ export default async function handler(
   }
 
   try {
-    const { sortBy = 'likes', limit: limitParam, noCache } = req.query;
+    const {
+      sortBy = 'likes',
+      limit: limitParam,
+      offset: offsetParam,
+      page: pageParam,
+      period = 'all',
+      noCache,
+    } = req.query;
 
     // Validate and sanitize sort field - ahora aceptamos: likes, referralCount, badgePoints, newest, oldest
-    const validSortFields = ['likes', 'referralCount', 'badgePoints', 'degenScore', 'totalVolume', 'winRate', 'newest', 'oldest'];
-    const sortField = validSortFields.includes(sortBy as string) ? sortBy as string : 'newest';
+    const validSortFields = [
+      'likes',
+      'referralCount',
+      'badgePoints',
+      'degenScore',
+      'totalVolume',
+      'winRate',
+      'newest',
+      'oldest',
+    ];
+    const sortField = validSortFields.includes(sortBy as string) ? (sortBy as string) : 'newest';
 
     // Validate limit
     const { limit } = validatePagination(undefined, limitParam);
     const safeLimit = Math.min(limit, 100); // Max 100 entries
 
-    logger.debug('Leaderboard request', { sortBy: sortField, limit: safeLimit, noCache: !!noCache });
+    // Validate period filter (Today, Weekly, Monthly, All Time)
+    const validPeriods = ['today', 'weekly', 'monthly', 'all'];
+    const safePeriod = validPeriods.includes(period as string) ? (period as string) : 'all';
+
+    // Parse offset and page for pagination
+    const safeOffset = Math.max(0, parseInt(offsetParam as string) || 0);
+    const safePage = Math.max(1, parseInt(pageParam as string) || 1);
+    const pageOffset = (safePage - 1) * safeLimit;
+    const effectiveOffset = safeOffset > 0 ? safeOffset : pageOffset;
+
+    logger.debug('Leaderboard request', {
+      sortBy: sortField,
+      limit: safeLimit,
+      offset: effectiveOffset,
+      period: safePeriod,
+      noCache: !!noCache,
+    });
 
     // Data fetching function
     const fetchData = async () => {
+      // Calculate date filters based on period
+      const now = new Date();
+      let dateFilter: any = {};
+
+      if (safePeriod === 'today') {
+        const startOfDay = new Date(now);
+        startOfDay.setHours(0, 0, 0, 0);
+        dateFilter = { mintedAt: { gte: startOfDay } };
+      } else if (safePeriod === 'weekly') {
+        const startOfWeek = new Date(now);
+        startOfWeek.setDate(now.getDate() - now.getDay());
+        startOfWeek.setHours(0, 0, 0, 0);
+        dateFilter = { mintedAt: { gte: startOfWeek } };
+      } else if (safePeriod === 'monthly') {
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        dateFilter = { mintedAt: { gte: startOfMonth } };
+      }
+
       // SOLO mostrar cards de quienes pagaron/descargaron (isPaid = true) y no eliminadas
       const cards = await prisma.degenCard.findMany({
         where: {
           isPaid: true,
           deletedAt: null, // Exclude soft-deleted cards
+          ...dateFilter,
         },
         include: {
           badges: true,
@@ -73,7 +121,7 @@ export default async function handler(
           });
 
           // Solo retornar los primeros 8 badges y campos esenciales para reducir tamaño de respuesta
-          const simplifiedBadges = badges.slice(0, 8).map(badge => ({
+          const simplifiedBadges = badges.slice(0, 8).map((badge) => ({
             key: badge.key,
             icon: badge.icon,
             name: badge.name,
@@ -123,8 +171,8 @@ export default async function handler(
         });
       } else if (sortField === 'badgePoints' || sortField === 'referralCount') {
         sortedCards.sort((a, b) => {
-          const aValue = sortField === 'badgePoints' ? (a.badgePoints || 0) : (a.referralCount || 0);
-          const bValue = sortField === 'badgePoints' ? (b.badgePoints || 0) : (b.referralCount || 0);
+          const aValue = sortField === 'badgePoints' ? a.badgePoints || 0 : a.referralCount || 0;
+          const bValue = sortField === 'badgePoints' ? b.badgePoints || 0 : b.referralCount || 0;
           return bValue - aValue; // DESC
         });
       } else {
@@ -137,11 +185,26 @@ export default async function handler(
         });
       }
 
-      // Limitar resultados
-      const limitedCards = sortedCards.slice(0, safeLimit);
+      // Get total count before pagination for pagination info
+      const totalCardsCount = sortedCards.length;
 
-      // Stats solo de cards pagadas y no eliminadas
-      const statsWhere = { isPaid: true, deletedAt: null };
+      // Apply pagination with either offset or page-based approach
+      const paginatedCards = sortedCards.slice(effectiveOffset, effectiveOffset + safeLimit);
+
+      // Get top 1 for today and all time if not using period filters
+      let topToday = null;
+      let topAllTime = null;
+
+      if (safePeriod === 'today') {
+        topToday = sortedCards[0] || null;
+      }
+
+      if (safePeriod === 'all') {
+        topAllTime = sortedCards[0] || null;
+      }
+
+      // Stats only for paid and non-deleted cards in the period
+      const statsWhere = { isPaid: true, deletedAt: null, ...dateFilter };
 
       const totalCards = await prisma.degenCard.count({
         where: statsWhere,
@@ -162,15 +225,30 @@ export default async function handler(
         _sum: { totalVolume: true },
       });
 
+      const totalPages = Math.ceil(totalCardsCount / safeLimit);
+      const currentPage = safePage;
+
       return {
         success: true,
-        leaderboard: limitedCards,
+        leaderboard: paginatedCards,
         stats: {
           totalCards,
           avgScore: avgScore._avg.degenScore || 0,
           topScore: topScore._max.degenScore || 0,
           totalVolume: totalVolume._sum.totalVolume || 0,
         },
+        pagination: {
+          totalCards: totalCardsCount,
+          totalPages,
+          currentPage,
+          limit: safeLimit,
+          offset: effectiveOffset,
+          hasNextPage: currentPage < totalPages,
+          hasPreviousPage: currentPage > 1,
+        },
+        period: safePeriod,
+        topToday,
+        topAllTime,
       };
     };
 
@@ -181,7 +259,7 @@ export default async function handler(
       result = await fetchData();
       res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
     } else {
-      const cacheKey = `${CacheKeys.leaderboard()}:${sortField}:${safeLimit}`;
+      const cacheKey = `${CacheKeys.leaderboard()}:${sortField}:${safeLimit}:${safePeriod}:${effectiveOffset || pageOffset}`;
       result = await cacheGetOrSet(cacheKey, fetchData, { ttl: 300 }); // 5 minutos
       res.setHeader('Cache-Control', 'public, max-age=300'); // 5 minutos
     }
@@ -192,9 +270,8 @@ export default async function handler(
       error: String(error),
     });
 
-    const errorMessage = process.env.NODE_ENV === 'development'
-      ? error.message
-      : 'Failed to fetch leaderboard';
+    const errorMessage =
+      process.env.NODE_ENV === 'development' ? error.message : 'Failed to fetch leaderboard';
 
     res.status(500).json({ error: errorMessage });
   }
