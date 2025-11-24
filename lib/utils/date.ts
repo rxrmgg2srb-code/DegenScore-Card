@@ -52,3 +52,13 @@ export function getDaysDifference(date1: Date | string, date2: Date | string): n
     const diff = Math.abs(d2.getTime() - d1.getTime());
     return Math.floor(diff / (1000 * 60 * 60 * 24));
 }
+
+export function timeAgo(date: Date | string): string {
+    return formatRelativeTime(date);
+}
+
+export function getDateRange(days: number): { start: Date; end: Date } {
+    const end = new Date();
+    const start = new Date(end.getTime() - days * 24 * 60 * 60 * 1000);
+    return { start, end };
+}

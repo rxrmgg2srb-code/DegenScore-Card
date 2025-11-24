@@ -22,7 +22,7 @@ const customJestConfig = {
   ],
   transformIgnorePatterns: [
     // Allow transformation of specific ESM modules
-    'node_modules/(?!(@solana|jayson|uuid|@noble|@metaplex-foundation|bn\\.js|uncrypto)/)',
+    'node_modules/(?!(@solana|jayson|uuid|@noble|@metaplex-foundation|bn\\.js|uncrypto|@upstash|ioredis|bullmq|pusher)/)',
   ],
   // Enable ESM support
   extensionsToTreatAsEsm: ['.ts', '.tsx'],
