@@ -25,14 +25,14 @@ export const LeaderboardFilters = ({
                     className={`px-4 py-2 rounded-lg transition font-semibold ${sortBy === 'newest' ? 'bg-cyan-500 text-white shadow-lg' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
                         }`}
                 >
-                    🆕 Más Nuevas
+                    🆕 Newest
                 </button>
                 <button
                     onClick={() => setSortBy('oldest')}
                     className={`px-4 py-2 rounded-lg transition font-semibold ${sortBy === 'oldest' ? 'bg-cyan-500 text-white shadow-lg' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
                         }`}
                 >
-                    ⏰ Más Viejas
+                    ⏰ Oldest
                 </button>
 
                 <div className="hidden md:block w-px bg-gray-700 mx-1"></div>
@@ -49,14 +49,14 @@ export const LeaderboardFilters = ({
                     className={`px-4 py-2 rounded-lg transition font-semibold ${sortBy === 'referralCount' ? 'bg-blue-500 text-white shadow-lg' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
                         }`}
                 >
-                    👥 Referidos
+                    👥 Referrals
                 </button>
                 <button
                     onClick={() => setSortBy('badgePoints')}
                     className={`px-4 py-2 rounded-lg transition font-semibold ${sortBy === 'badgePoints' ? 'bg-yellow-500 text-white shadow-lg' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
                         }`}
                 >
-                    ⭐ Logros
+                    ⭐ Achievements
                 </button>
             </div>
 
