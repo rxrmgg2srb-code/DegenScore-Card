@@ -11,7 +11,7 @@ export function DocSidebar({ sections, activeSection, onSectionClick }: DocSideb
         <aside className="lg:w-64 flex-shrink-0">
             <div className="sticky top-24 bg-black/30 backdrop-blur-sm rounded-xl p-4 border border-purple-500/30">
                 <h2 className="text-sm font-bold text-purple-300 mb-3 uppercase tracking-wider">
-                    Contenido
+                    Contents
                 </h2>
                 <nav className="space-y-1">
                     {sections.map((section) => (
