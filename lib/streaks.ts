@@ -22,13 +22,13 @@ export interface StreakInfo {
 
 // Streak rewards configuration
 const STREAK_REWARDS = [
-  { day: 1, xp: 10, message: '¡Primera visita del día!' },
-  { day: 3, xp: 30, badge: 'consistent', message: '¡3 días consecutivos!' },
-  { day: 7, xp: 100, badge: 'dedicated', message: '¡Una semana completa!' },
-  { day: 14, xp: 250, badge: 'committed', message: '¡2 semanas seguidas!' },
-  { day: 30, xp: 500, badge: 'legendary', message: '¡Degen Legendario!' },
-  { day: 60, xp: 1000, badge: 'unstoppable', message: '¡Imparable!' },
-  { day: 100, xp: 2000, badge: 'centurion', message: '¡100 días!' },
+  { day: 1, xp: 10, message: 'First visit of the day!' },
+  { day: 3, xp: 30, badge: 'consistent', message: '3 consecutive days!' },
+  { day: 7, xp: 100, badge: 'dedicated', message: 'One complete week!' },
+  { day: 14, xp: 250, badge: 'committed', message: '2 consecutive weeks!' },
+  { day: 30, xp: 500, badge: 'legendary', message: 'Legendary Degen!' },
+  { day: 60, xp: 1000, badge: 'unstoppable', message: 'Unstoppable!' },
+  { day: 100, xp: 2000, badge: 'centurion', message: '100 days!' },
 ];
 
 /**

@@ -21,10 +21,10 @@ export default function SettingsContent() {
           <div className="flex items-center gap-4">
             <Link href="/">
               <button className="text-gray-400 hover:text-white transition">
-                ← Volver
+                ← Back
               </button>
             </Link>
-            <h1 className="text-3xl font-bold gradient-text-gold">⚙️ Configuración</h1>
+            <h1 className="text-3xl font-bold gradient-text-gold">⚙️ Settings</h1>
           </div>
           <WalletMultiButton />
         </div>
@@ -37,13 +37,13 @@ export default function SettingsContent() {
 
             {/* Additional Settings Sections */}
             <div className="bg-gray-800/50 rounded-lg p-6">
-              <h3 className="text-xl font-bold text-white mb-4">🔗 Enlaces Útiles</h3>
+              <h3 className="text-xl font-bold text-white mb-4">🔗 Useful Links</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <Link href="/following">
                   <div className="bg-gray-900/50 rounded-lg p-4 hover:bg-gray-900/70 transition cursor-pointer border border-gray-700 hover:border-purple-500">
                     <div className="text-2xl mb-2">👥</div>
-                    <h4 className="text-white font-bold">Wallets Seguidas</h4>
-                    <p className="text-gray-400 text-sm">Ver lista de wallets que sigues</p>
+                    <h4 className="text-white font-bold">Followed Wallets</h4>
+                    <p className="text-gray-400 text-sm">View list of wallets you follow</p>
                   </div>
                 </Link>
 
@@ -51,23 +51,23 @@ export default function SettingsContent() {
                   <div className="bg-gray-900/50 rounded-lg p-4 hover:bg-gray-900/70 transition cursor-pointer border border-gray-700 hover:border-purple-500">
                     <div className="text-2xl mb-2">🏆</div>
                     <h4 className="text-white font-bold">Leaderboard</h4>
-                    <p className="text-gray-400 text-sm">Ver ranking global de traders</p>
+                    <p className="text-gray-400 text-sm">View global trader rankings</p>
                   </div>
                 </Link>
 
                 <Link href="/compare">
                   <div className="bg-gray-900/50 rounded-lg p-4 hover:bg-gray-900/70 transition cursor-pointer border border-gray-700 hover:border-purple-500">
                     <div className="text-2xl mb-2">⚔️</div>
-                    <h4 className="text-white font-bold">Comparar Cards</h4>
-                    <p className="text-gray-400 text-sm">Compara stats de dos wallets</p>
+                    <h4 className="text-white font-bold">Compare Cards</h4>
+                    <p className="text-gray-400 text-sm">Compare stats of two wallets</p>
                   </div>
                 </Link>
 
                 <Link href="/documentation">
                   <div className="bg-gray-900/50 rounded-lg p-4 hover:bg-gray-900/70 transition cursor-pointer border border-gray-700 hover:border-purple-500">
                     <div className="text-2xl mb-2">📚</div>
-                    <h4 className="text-white font-bold">Documentación</h4>
-                    <p className="text-gray-400 text-sm">Aprende cómo funciona DegenScore</p>
+                    <h4 className="text-white font-bold">Documentation</h4>
+                    <p className="text-gray-400 text-sm">Learn how DegenScore works</p>
                   </div>
                 </Link>
               </div>
@@ -75,19 +75,19 @@ export default function SettingsContent() {
 
             {/* Privacy & Security */}
             <div className="bg-gray-800/50 rounded-lg p-6">
-              <h3 className="text-xl font-bold text-white mb-4">🔒 Privacidad y Seguridad</h3>
+              <h3 className="text-xl font-bold text-white mb-4">🔒 Privacy & Security</h3>
               <div className="space-y-3 text-sm text-gray-400">
                 <p>
-                  <strong className="text-white">🔐 Seguridad:</strong> Tu wallet es verificada mediante firma criptográfica.
-                  Nunca compartimos tus claves privadas.
+                  <strong className="text-white">🔐 Security:</strong> Your wallet is verified through cryptographic signature.
+                  We never share your private keys.
                 </p>
                 <p>
-                  <strong className="text-white">📊 Datos:</strong> Solo analizamos transacciones públicas de la blockchain.
-                  Tus datos de notificaciones son privados y encriptados.
+                  <strong className="text-white">📊 Data:</strong> We only analyze public transactions from the blockchain.
+                  Your notification data is private and encrypted.
                 </p>
                 <p>
-                  <strong className="text-white">🔕 Control:</strong> Puedes desactivar notificaciones en cualquier momento.
-                  Tus preferencias se guardan de forma segura.
+                  <strong className="text-white">🔕 Control:</strong> You can disable notifications at any time.
+                  Your preferences are saved securely.
                 </p>
               </div>
             </div>
@@ -95,9 +95,9 @@ export default function SettingsContent() {
             {/* Support */}
             <div className="bg-gray-800/50 rounded-lg p-6 text-center">
               <div className="text-4xl mb-3">💬</div>
-              <h3 className="text-xl font-bold text-white mb-2">¿Necesitas Ayuda?</h3>
+              <h3 className="text-xl font-bold text-white mb-2">Need Help?</h3>
               <p className="text-gray-400 mb-4">
-                Si tienes preguntas o problemas, no dudes en contactarnos
+                If you have questions or problems, don't hesitate to contact us
               </p>
               <div className="flex justify-center gap-3">
                 <a

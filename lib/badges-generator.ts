@@ -1,4 +1,4 @@
-// Define la estructura esperada para el Badge
+// Define the expected structure for Badge
 export interface Badge {
     name: string;
     description: string;
@@ -6,7 +6,7 @@ export interface Badge {
     rarity: 'COMMON' | 'RARE' | 'EPIC' | 'LEGENDARY';
 }
 
-// Define la estructura mínima de métricas requeridas
+// Define the minimal structure of required metrics
 interface Metrics {
     totalTrades: number;
     winRate: number;
@@ -16,14 +16,14 @@ interface Metrics {
 }
 
 /**
- * Genera una lista de badges basados en las métricas avanzadas de trading.
- * @param metrics Las métricas calculadas por calculateAdvancedMetrics.
- * @returns Array de objetos Badge.
+ * Generates a list of badges based on advanced trading metrics.
+ * @param metrics The metrics calculated by calculateAdvancedMetrics.
+ * @returns Array of Badge objects.
  */
 export function generateBadges(metrics: Metrics): Badge[] {
     const badges: Badge[] = [];
 
-    // Lógica de Badges (extraída de tu API handler)
+    // Badge logic (extracted from your API handler)
     
     if (metrics.totalTrades > 100) {
         badges.push({ 

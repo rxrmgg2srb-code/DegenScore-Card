@@ -129,7 +129,7 @@ function BadgeSkeleton() {
   );
 }
 
-// Progress Bar Skeleton (útil para análisis de wallet)
+// Progress Bar Skeleton (useful for wallet analysis)
 export function ProgressSkeleton({ steps = 5 }: { steps?: number }) {
   return (
     <div className="space-y-4">

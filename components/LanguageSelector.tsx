@@ -22,7 +22,7 @@ export const LanguageSelector = () => {
 
   const currentLanguage = (languages.find(lang => lang.code === i18n.language) ?? languages[0]) as Language;
 
-  // Cerrar dropdown cuando se hace clic fuera
+  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -37,7 +37,7 @@ export const LanguageSelector = () => {
   const changeLanguage = (langCode: string) => {
     i18n.changeLanguage(langCode);
     setIsOpen(false);
-    // Guardar en localStorage (automático con i18next-browser-languagedetector)
+    // Save to localStorage (automatic with i18next-browser-languagedetector)
   };
 
   return (
@@ -107,7 +107,7 @@ export const LanguageSelector = () => {
   );
 };
 
-// Versión simple sin framer-motion (si no tienes framer-motion instalado)
+// Simple version without framer-motion (if you don't have framer-motion installed)
 export const LanguageSelectorSimple = () => {
   const { i18n } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
