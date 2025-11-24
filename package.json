@@ -31,6 +31,8 @@
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:headed": "playwright test --headed",
     "test:e2e:debug": "playwright test --debug",
+    "test:workers": "jest --testPathPattern=__tests__/workers",
+    "test:programs": "cargo test --manifest-path programs/degen-token/Cargo.toml && cargo test --manifest-path programs/degen-nft/Cargo.toml && cargo test --manifest-path programs/staking/Cargo.toml",
     "test:all": "npm run test && npm run test:e2e",
     "validate": "npm run format:check && npm run lint && npm run type-check && npm run test",
     "docker:dev": "docker-compose up",
