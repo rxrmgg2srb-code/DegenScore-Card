@@ -100,6 +100,7 @@ export default function DegenCard() {
               cardImage={cardImage}
               hasPaid={hasPaid}
               downloadPremiumCard={downloadPremiumCard}
+              analysisData={analysisData}
             />
           )}
         </div>

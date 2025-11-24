@@ -1,14 +1,50 @@
 import React from 'react';
+import PremiumCard from './PremiumCard';
+
+interface Badge {
+    name: string;
+    icon?: string;
+    color?: string;
+    description?: string;
+}
+
+interface AnalysisData {
+    degenScore: number;
+    totalVolume: number;
+    totalTrades: number;
+    profitLoss: number;
+    winRate: number;
+    whaleActivity?: boolean;
+    level?: number;
+    badges?: Badge[];
+    volatilityScore?: number;
+}
 
 interface CardDisplayProps {
     cardImage: string;
     hasPaid: boolean;
     downloadPremiumCard: () => void;
+    analysisData?: AnalysisData;
 }
 
-export default function CardDisplay({ cardImage, hasPaid, downloadPremiumCard }: CardDisplayProps) {
+export default function CardDisplay({ cardImage, hasPaid, downloadPremiumCard, analysisData }: CardDisplayProps) {
     return (
-        <div className="mt-10">
+        <div className="mt-10 space-y-8">
+            {/* Premium Card Display */}
+            {analysisData && (
+                <PremiumCard
+                    degenScore={analysisData.degenScore || 0}
+                    totalVolume={analysisData.totalVolume || 0}
+                    totalTrades={analysisData.totalTrades || 0}
+                    profitLoss={analysisData.profitLoss || 0}
+                    winRate={analysisData.winRate || 0}
+                    whaleActivity={analysisData.whaleActivity || false}
+                    traderLevel={analysisData.level ? `Lvl ${analysisData.level}` : 'Legend'}
+                    badges={analysisData.badges || []}
+                    volatilityScore={analysisData.volatilityScore || 0}
+                />
+            )}
+
             <div className="flex justify-center mb-8">
                 <div className="relative group">
                     <div className="absolute -inset-4 bg-gradient-to-r from-cyan-500 via-purple-500 to-pink-500 rounded-3xl opacity-30 group-hover:opacity-50 blur-xl transition-opacity"></div>
