@@ -25,7 +25,7 @@ export default defineConfig({
 
   /* Reporter to use */
   reporter: [
-    ['html', { outputFolder: 'e2e/artifacts/html-report' }],
+    ['html', { outputFolder: 'playwright-report' }],
     ['json', { outputFile: 'e2e/artifacts/results.json' }],
     ['junit', { outputFile: 'e2e/artifacts/results.xml' }],
   ],
