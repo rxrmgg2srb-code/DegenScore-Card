@@ -42,18 +42,18 @@ describe('DocumentationContent', () => {
     expect(screen.getByTestId('navigation-buttons')).toBeInTheDocument();
 
     // Check sidebar sections exist (by checking text that appears in sidebar)
-    expect(screen.getByText('Introducción')).toBeInTheDocument();
-    expect(screen.getByText('Primeros Pasos')).toBeInTheDocument();
-    expect(screen.getByText('Generar Tu Card')).toBeInTheDocument();
+    expect(screen.getByText('Introduction')).toBeInTheDocument();
+    expect(screen.getByText('Getting Started')).toBeInTheDocument();
+    expect(screen.getByText('Generate Your Card')).toBeInTheDocument();
   });
 
   it('renders content sections', () => {
     render(React.createElement(null, null, 'MockedComponent'));
 
     // Check for specific content in sections
-    expect(screen.getByText(/Bienvenido a/i)).toBeInTheDocument();
+    expect(screen.getByText(/Welcome to/i)).toBeInTheDocument();
     expect(screen.getByText(/DegenScore Card/i)).toBeInTheDocument();
-    expect(screen.getByText(/Métricas avanzadas/i)).toBeInTheDocument();
+    expect(screen.getByText(/Advanced Metrics/i)).toBeInTheDocument();
   });
 
   it('handles section navigation', () => {
@@ -64,7 +64,7 @@ describe('DocumentationContent', () => {
     // and potentially updates state (though state is internal)
 
     // Assuming DocSidebar renders buttons or links with section titles
-    const introLink = screen.getAllByText('Introducción')[0]; // Might appear in sidebar and content
+    const introLink = screen.getAllByText('Introduction')[0]; // Might appear in sidebar and content
     fireEvent.click(introLink);
 
     // Since we can't easily check scroll position in JSDOM without more complex mocks,

@@ -5,17 +5,17 @@ export interface Section {
 }
 
 export const sections: Section[] = [
-    { id: 'intro', title: 'Introducción', icon: '📖' },
-    { id: 'getting-started', title: 'Primeros Pasos', icon: '🚀' },
-    { id: 'generate-card', title: 'Generar Tu Card', icon: '🎴' },
-    { id: 'understand-metrics', title: 'Entender Métricas', icon: '📊' },
-    { id: 'badges', title: 'Sistema de Badges', icon: '🏆' },
-    { id: 'upgrade', title: 'Upgrade a Premium', icon: '💎' },
-    { id: 'daily-checkin', title: 'Check-In Diario', icon: '🔥' },
-    { id: 'referrals', title: 'Sistema de Referidos', icon: '🎁' },
+    { id: 'intro', title: 'Introduction', icon: '📖' },
+    { id: 'getting-started', title: 'Getting Started', icon: '🚀' },
+    { id: 'generate-card', title: 'Generate Your Card', icon: '🎴' },
+    { id: 'understand-metrics', title: 'Understanding Metrics', icon: '📊' },
+    { id: 'badges', title: 'Badge System', icon: '🏆' },
+    { id: 'upgrade', title: 'Upgrade to Premium', icon: '💎' },
+    { id: 'daily-checkin', title: 'Daily Check-In', icon: '🔥' },
+    { id: 'referrals', title: 'Referral System', icon: '🎁' },
     { id: 'challenges', title: 'Weekly Challenges', icon: '⚔️' },
     { id: 'hot-feed', title: 'Alpha Feed', icon: '📡' },
     { id: 'leaderboard', title: 'Leaderboard', icon: '🏅' },
-    { id: 'tiers', title: 'Tiers & Beneficios', icon: '⭐' },
+    { id: 'tiers', title: 'Tiers & Benefits', icon: '⭐' },
     { id: 'faq', title: 'FAQ', icon: '❓' },
 ];

@@ -10,7 +10,7 @@ const DocumentationContent = dynamic(
       <div className="min-h-screen bg-gradient-to-b from-gray-900 via-purple-900 to-black flex items-center justify-center">
         <div className="text-center">
           <div className="inline-block animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-purple-500 mb-4"></div>
-          <p className="text-white text-xl">Cargando Documentation...</p>
+          <p className="text-white text-xl">Loading Documentation...</p>
         </div>
       </div>
     ),
@@ -22,7 +22,7 @@ export default function Documentation() {
     <>
       <Head>
         <title>📚 Documentation - DegenScore Card</title>
-        <meta name="description" content="Guía completa de uso de DegenScore Card" />
+        <meta name="description" content="Complete guide to DegenScore Card usage" />
       </Head>
 
       <DocumentationContent />
