@@ -7,7 +7,7 @@ export interface Section {
 export const sections: Section[] = [
     { id: 'intro', title: 'Introducción', icon: '📖' },
     { id: 'getting-started', title: 'Primeros Pasos', icon: '🚀' },
-    { id: 'generate-card', title: 'Generar Tu Card', icon: '🎴' },
+    { id: 'generate-card', title: 'Generate Your Card', icon: '🎴' },
     { id: 'understand-metrics', title: 'Entender Métricas', icon: '📊' },
     { id: 'badges', title: 'Sistema de Badges', icon: '🏆' },
     { id: 'upgrade', title: 'Upgrade a Premium', icon: '💎' },

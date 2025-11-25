@@ -140,8 +140,8 @@ export function Documentation() {
                   </div>
                 </DocSection>
 
-                {/* Generar Card */}
-                <DocSection id="generate-card" title="Generar Tu Card" icon="🎴">
+                {/* Generate Card */}
+                <DocSection id="generate-card" title="Generate Your Card" icon="🎴">
                   <p className="text-gray-300 mb-4">
                     Tu DegenScore Card es completamente <strong>GRATIS</strong> de generar. Aquí está el proceso:
                   </p>
@@ -153,7 +153,7 @@ export function Documentation() {
                         <strong>1. Conexión</strong> → Conectas tu wallet de Solana
                       </ProcessStep>
                       <ProcessStep>
-                        <strong>2. Análisis</strong> → Nuestro sistema analiza tu historial completo de trades
+                        <strong>2. Analysis</strong> → Nuestro sistema analiza tu historial completo de trades
                       </ProcessStep>
                       <ProcessStep>
                         <strong>3. Cálculo</strong> → Se calculan 30+ métricas (win rate, P&L, rugs, moonshots, etc.)

@@ -14,7 +14,7 @@ export function SuperTokenScorerPage() {
   return (
     <>
       <Head>
-        <title>Super Token Scorer - El Análisis Más Completo de Web3</title>
+        <title>Super Token Scorer - El Analysis Más Completo de Web3</title>
         <meta
           name="description"
           content="Analiza tokens de Solana con más de 50 métricas diferentes. Integra RugCheck, DexScreener, Birdeye, Jupiter y mucho más. El sistema de scoring más completo del ecosistema."

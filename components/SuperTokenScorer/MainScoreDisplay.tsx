@@ -26,7 +26,7 @@ export default function MainScoreDisplay({ result }: MainScoreDisplayProps) {
                     {result.recommendation}
                 </div>
                 <div className="mt-4 text-sm text-gray-500">
-                    Análisis completado en {result.analysisTimeMs}ms · {new Date(result.analyzedAt).toLocaleString()}
+                    Analysis completado en {result.analysisTimeMs}ms · {new Date(result.analyzedAt).toLocaleString()}
                 </div>
             </div>
         </div>

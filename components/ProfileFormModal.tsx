@@ -157,7 +157,7 @@ export default function ProfileFormModal({
         throw new Error(paymentData.error || 'Failed to verify payment');
       }
 
-      // ✅ PAGO EXITOSO - Descargar automáticamente la tarjeta premium
+      // ✅ PAGO EXITOSO - Download automáticamente la tarjeta premium
       logger.info('✅ Payment successful, downloading premium card...');
 
       try {

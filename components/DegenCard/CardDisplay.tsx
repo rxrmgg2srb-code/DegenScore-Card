@@ -44,7 +44,7 @@ export default function CardDisplay({ hasPaid, downloadPremiumCard, analysisData
                 />
             )}
 
-            {/* Tarjeta free removida - solo mostramos la premium con bordes dorados */}
+            {/* Card free removida - solo mostramos la premium con bordes dorados */}
 
             {hasPaid && (
                 <div className="text-center space-y-6">

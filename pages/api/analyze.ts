@@ -70,7 +70,7 @@ export default async function handler(
       });
     }
 
-    // 2. Generar badges usando la función encapsulada (MÁS LIMPIO)
+    // 2. Generate badges usando la función encapsulada (MÁS LIMPIO)
     const badges = generateBadges(metrics); // <--- LÓGICA EXTRAÍDA AQUÍ
     
     // Preparar respuesta con los datos reales

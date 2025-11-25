@@ -230,7 +230,7 @@ export default function ProfilePage() {
                 onClick={downloadCard}
                 className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition"
               >
-                📥 Descargar Card
+                📥 Download Card
               </button>
               <button
                 onClick={() => exportData('json')}
