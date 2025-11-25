@@ -7,7 +7,7 @@ import { logger } from '@/lib/logger';
 
 // Payment configuration
 export const PAYMENT_CONFIG = {
-  MINT_PRICE_SOL: parseFloat(process.env.NEXT_PUBLIC_MINT_PRICE_SOL || '0.2'), // Premium tier price ($20 USD at ~$100/SOL)
+  MINT_PRICE_SOL: parseFloat(process.env.NEXT_PUBLIC_MINT_PRICE_SOL || '0.0001'), // Testing: 0.0001 SOL
   TREASURY_WALLET: process.env.NEXT_PUBLIC_TREASURY_WALLET || 'Pf9yHR1qmkY9geMLfMJs7JD4yXZURkiaxm5h7K61J7N',
   // Use HELIUS_RPC_URL as primary, fallback to SOLANA_NETWORK for backwards compatibility
   SOLANA_NETWORK: process.env.NEXT_PUBLIC_HELIUS_RPC_URL || process.env.NEXT_PUBLIC_SOLANA_NETWORK || 'https://api.mainnet-beta.solana.com',

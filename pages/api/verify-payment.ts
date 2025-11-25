@@ -6,7 +6,7 @@ import { retry } from '../../lib/retryLogic';
 import { logger } from '@/lib/logger';
 
 const TREASURY_WALLET = process.env.TREASURY_WALLET!;
-const MINT_PRICE_SOL = parseFloat(process.env.MINT_PRICE_SOL || '0.2'); // Production: 0.2 SOL (~$40)
+const MINT_PRICE_SOL = parseFloat(process.env.MINT_PRICE_SOL || '0.0001'); // Testing: 0.0001 SOL
 
 export default async function handler(
   req: NextApiRequest,
