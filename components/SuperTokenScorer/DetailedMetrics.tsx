@@ -12,7 +12,7 @@ export default function DetailedMetrics({ result }: DetailedMetricsProps) {
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {/* New Wallets Analysis */}
-            <MetricCard title="Análisis de Wallets Nuevas" icon="👶">
+            <MetricCard title="New Wallets Analysis" icon="👶">
                 <MetricRow
                     label="Wallets < 10 días"
                     value={`${result.newWalletAnalysis.walletsUnder10Days} (${result.newWalletAnalysis.percentageNewWallets.toFixed(1)}%)`}
@@ -33,7 +33,7 @@ export default function DetailedMetrics({ result }: DetailedMetricsProps) {
             </MetricCard>
 
             {/* Insider Analysis */}
-            <MetricCard title="Análisis de Insiders" icon="🕵️">
+            <MetricCard title="Insider Analysis" icon="🕵️">
                 <MetricRow
                     label="Wallets insiders"
                     value={result.insiderAnalysis.insiderWallets}
@@ -54,7 +54,7 @@ export default function DetailedMetrics({ result }: DetailedMetricsProps) {
             </MetricCard>
 
             {/* Volume Analysis */}
-            <MetricCard title="Análisis de Volumen" icon="📊">
+            <MetricCard title="Volume Analysis" icon="📊">
                 <MetricRow
                     label="Volumen 24h"
                     value={`$${result.volumeAnalysis.volume24h.toLocaleString()}`}
@@ -142,7 +142,7 @@ export default function DetailedMetrics({ result }: DetailedMetricsProps) {
             </MetricCard>
 
             {/* Team Analysis */}
-            <MetricCard title="Análisis del Equipo" icon="👥">
+            <MetricCard title="Team Analysis" icon="👥">
                 <MetricRow
                     label="Tokens bloqueados"
                     value={result.teamAnalysis.teamTokensLocked ? '✅ SÍ' : '❌ NO'}
