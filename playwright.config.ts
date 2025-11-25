@@ -8,6 +8,9 @@ import { defineConfig, devices } from '@playwright/test';
 export default defineConfig({
   testDir: './e2e',
 
+  /* Output directory for test artifacts */
+  outputDir: 'e2e/artifacts',
+
   /* Run tests in files in parallel */
   fullyParallel: true,
 
@@ -22,9 +25,9 @@ export default defineConfig({
 
   /* Reporter to use */
   reporter: [
-    ['html'],
-    ['json', { outputFile: 'playwright-report/results.json' }],
-    ['junit', { outputFile: 'playwright-report/results.xml' }],
+    ['html', { outputFolder: 'playwright-report' }],
+    ['json', { outputFile: 'e2e/artifacts/results.json' }],
+    ['junit', { outputFile: 'e2e/artifacts/results.xml' }],
   ],
 
   /* Shared settings for all the projects below */
@@ -38,8 +41,14 @@ export default defineConfig({
     /* Screenshot on failure */
     screenshot: 'only-on-failure',
 
+    /* Screenshot path for debugging */
+    screenshotDir: 'e2e/artifacts/screenshots',
+
     /* Video on failure */
     video: 'retain-on-failure',
+
+    /* Video path for debugging */
+    videoDir: 'e2e/artifacts/videos',
   },
 
   /* Configure projects for major browsers */
