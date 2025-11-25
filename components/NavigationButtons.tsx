@@ -2,13 +2,13 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 
 /**
- * Componente de navegación reutilizable para todas las páginas
- * Muestra todos los botones principales de la aplicación
+ * Reusable navigation component for all pages
+ * Shows all main buttons of the application
  */
 export function NavigationButtons() {
   const router = useRouter();
 
-  // Helper para determinar si estamos en una ruta
+  // Helper to determine if we are on a route
   const isActive = (path: string) => router.pathname === path;
 
   return (
@@ -25,7 +25,7 @@ export function NavigationButtons() {
         </button>
       </Link>
 
-      {/* Temporalmente oculto - no usar de momento
+      {/* Temporarily hidden - don't use for now
       <Link href="/super-token-scorer">
         <button
           className={`px-4 py-2 rounded-lg font-bold transition hover:scale-105 shadow-lg ${

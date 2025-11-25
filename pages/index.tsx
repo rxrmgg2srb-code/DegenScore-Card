@@ -2,8 +2,8 @@ import DegenCard from '../components/DegenCard';
 import { NavigationButtons } from '../components/NavigationButtons';
 
 /**
- * ULTRA MINIMAL VERSION - Solo lo esencial
- * Sin componentes dinámicos que puedan causar problemas
+ * ULTRA MINIMAL VERSION - Only the essentials
+ * Without dynamic components that could cause problems
  */
 export default function Home() {
   return (

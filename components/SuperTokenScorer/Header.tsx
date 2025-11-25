@@ -7,10 +7,10 @@ export default function Header() {
                 🚀 SUPER TOKEN SCORER
             </h1>
             <p className="text-xl md:text-2xl text-gray-300 mb-2">
-                El Sistema de Análisis de Tokens MÁS COMPLETO de Web3
+                The MOST COMPLETE Token Analysis System in Web3
             </p>
             <p className="text-md text-gray-400">
-                Integra 15+ APIs · 50+ Métricas · Análisis en Tiempo Real
+                Integrates 15+ APIs · 50+ Metrics · Real-Time Analysis
             </p>
         </div>
     );

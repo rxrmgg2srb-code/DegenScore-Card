@@ -26,7 +26,7 @@ export default function InputSection({
                     type="text"
                     value={tokenAddress}
                     onChange={(e) => setTokenAddress(e.target.value)}
-                    placeholder="Ingresa la dirección del token (Solana)"
+                    placeholder="Enter token address (Solana)"
                     className="flex-1 px-6 py-4 bg-gray-900/50 border border-purple-500/50 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 text-lg"
                     disabled={loading}
                 />
@@ -35,7 +35,7 @@ export default function InputSection({
                     disabled={loading}
                     className="px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 disabled:from-gray-600 disabled:to-gray-700 text-white font-bold rounded-xl transition-all duration-300 transform hover:scale-105 disabled:scale-100 text-lg"
                 >
-                    {loading ? '🔍 Analizando...' : '🚀 Analizar Token'}
+                    {loading ? '🔍 Analyzing...' : '🚀 Analyze Token'}
                 </button>
             </div>
 
