@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-interface FIFACardProps {
+export interface FIFACardProps {
     rank: number;
     walletAddress: string;
     displayName?: string;

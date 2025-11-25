@@ -1,16 +1,16 @@
 import React from 'react';
 import Head from 'next/head';
 import Header from '../components/Header';
-import FIFACard from '../components/FIFACard';
+import FIFACard, { FIFACardProps } from '../components/FIFACard';
 import { motion } from 'framer-motion';
 
 // Mock data para demostración
-const mockLeaderboardData = [
+const mockLeaderboardData: FIFACardProps[] = [
     {
         rank: 1,
         walletAddress: 'B7nB9QX1KC4QXp5GMxR8xzh3yzoqp6NjxSwfNBXtgPc1',
         displayName: 'Whale King',
-        profileImage: null,
+        profileImage: undefined,
         degenScore: 98,
         tier: 'Whale',
         stats: {
@@ -35,7 +35,7 @@ const mockLeaderboardData = [
         rank: 2,
         walletAddress: '7Np41oeYqPefeNQEHSv1UDhYrehxin3NStELsSKCT4K2',
         displayName: 'Shark Master',
-        profileImage: null,
+        profileImage: undefined,
         degenScore: 95,
         tier: 'Shark',
         stats: {
@@ -58,7 +58,7 @@ const mockLeaderboardData = [
         rank: 3,
         walletAddress: 'DYw8jCTfwHNRJhhmFcbXvVDTqWMEVFBX6ZKUmG5CNSKK',
         displayName: 'Degen Pro',
-        profileImage: null,
+        profileImage: undefined,
         degenScore: 92,
         tier: 'Shark',
         stats: {
@@ -79,7 +79,7 @@ const mockLeaderboardData = [
         rank: 11,
         walletAddress: '8RtwWeqdFz4EFuZU3MAaRfaH4oL5YvPJDBXp5BqJpump',
         displayName: 'Dolphin Trader',
-        profileImage: null,
+        profileImage: undefined,
         degenScore: 75,
         tier: 'Dolphin',
         stats: {
@@ -100,7 +100,7 @@ const mockLeaderboardData = [
         rank: 51,
         walletAddress: '3FoUAsGDbvTD6YZ4wVKJgTB8HUXiGhFQc5PSa6FAzJ1M',
         displayName: 'Fish Degen',
-        profileImage: null,
+        profileImage: undefined,
         degenScore: 58,
         tier: 'Fish',
         stats: {
@@ -120,7 +120,7 @@ const mockLeaderboardData = [
         rank: 100,
         walletAddress: '5Q544fKrFoe6tsEbD7S8EmxGTJYAKtTVhAW5Q5pge4j1',
         displayName: 'Plankton',
-        profileImage: null,
+        profileImage: undefined,
         degenScore: 42,
         tier: 'Plankton',
         stats: {
