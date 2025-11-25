@@ -75,8 +75,7 @@ export default function FIFACard({
         <>
             <motion.div
                 className="relative cursor-pointer group perspective-1000"
-                onMouseEnter={() => setShowDetails(true)}
-                onMouseLeave={() => setShowDetails(false)}
+                onClick={() => setShowDetails(true)}
                 whileHover={{ scale: 1.05, rotateX: 5, rotateY: 5 }}
                 initial={{ rotateY: 90, opacity: 0 }}
                 animate={{ rotateY: isFlipped ? 0 : 90, opacity: isFlipped ? 1 : 0 }}
@@ -91,6 +90,7 @@ export default function FIFACard({
                     border-[6px] ${cardColors.border}
                     overflow-hidden
                     flex flex-col
+                    transition-all duration-300 group-hover:shadow-[0_0_50px_rgba(255,215,0,0.6)]
                 `}>
                     {/* TEXTURE OVERLAY (Sunburst) */}
                     <div className="absolute inset-0 opacity-30 bg-[repeating-conic-gradient(from_0deg,transparent_0deg_10deg,rgba(255,255,255,0.3)_10deg_20deg)]" />
@@ -178,8 +178,18 @@ export default function FIFACard({
                         exit={{ opacity: 0 }}
                         onClick={() => setShowDetails(false)}
                     >
-                        <div className="bg-gray-900 border border-yellow-500/50 p-6 rounded-xl max-w-md w-full m-4 shadow-2xl">
-                            <h3 className="text-2xl font-bold text-white mb-4 text-center">Player Stats</h3>
+                        <div className="bg-gray-900 border-2 border-yellow-500/50 p-6 rounded-2xl max-w-md w-full m-4 shadow-[0_0_100px_rgba(0,0,0,0.8)] relative">
+                            {/* Close Button */}
+                            <button
+                                onClick={(e) => { e.stopPropagation(); setShowDetails(false); }}
+                                className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors"
+                            >
+                                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+
+                            <h3 className="text-3xl font-black text-white mb-6 text-center uppercase italic tracking-wider">Player Stats</h3>
                             <div className="grid grid-cols-2 gap-4">
                                 <DetailRow label="Win Rate" value={`${stats.winRate}%`} />
                                 <DetailRow label="Volume" value={`${stats.totalVolume} SOL`} />
