@@ -21,13 +21,12 @@ interface AnalysisData {
 }
 
 interface CardDisplayProps {
-    cardImage: string;
     hasPaid: boolean;
     downloadPremiumCard: () => void;
     analysisData?: AnalysisData;
 }
 
-export default function CardDisplay({ cardImage, hasPaid, downloadPremiumCard, analysisData }: CardDisplayProps) {
+export default function CardDisplay({ hasPaid, downloadPremiumCard, analysisData }: CardDisplayProps) {
     return (
         <div className="mt-10 space-y-8">
             {/* Premium Card Display */}
@@ -45,16 +44,7 @@ export default function CardDisplay({ cardImage, hasPaid, downloadPremiumCard, a
                 />
             )}
 
-            <div className="flex justify-center mb-8">
-                <div className="relative group">
-                    <div className="absolute -inset-4 bg-gradient-to-r from-cyan-500 via-purple-500 to-pink-500 rounded-3xl opacity-30 group-hover:opacity-50 blur-xl transition-opacity"></div>
-                    <img
-                        src={cardImage}
-                        alt="Degen Card"
-                        className="relative rounded-2xl shadow-[0_0_60px_rgba(139,92,246,0.8)] border-4 border-cyan-400 max-w-full h-auto animate-flip holographic transform group-hover:scale-[1.02] transition-transform duration-300"
-                    />
-                </div>
-            </div>
+            {/* Tarjeta free removida - solo mostramos la premium con bordes dorados */}
 
             {hasPaid && (
                 <div className="text-center space-y-6">

@@ -304,15 +304,34 @@ export function useDegenCard() {
         }
     };
 
-    const downloadPremiumCard = () => {
-        if (!cardImage) return;
+    const downloadPremiumCard = async () => {
+        if (!walletAddress) return;
 
-        const link = document.createElement('a');
-        link.href = cardImage;
-        link.download = `degen-card-premium-${walletAddress.slice(0, 8)}.png`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        try {
+            logger.info('Downloading premium card with golden borders...');
+
+            const imageUrl = `/api/generate-card?walletAddress=${encodeURIComponent(walletAddress)}`;
+            const response = await fetch(imageUrl);
+
+            if (!response.ok) {
+                throw new Error('Failed to generate premium card');
+            }
+
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `degenscore-premium-${walletAddress.slice(0, 8)}.png`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(url);
+
+            logger.info('✅ Premium card downloaded');
+        } catch (error) {
+            logger.error('Failed to download premium card', error as Error);
+            alert('Failed to download premium card. Please try again.');
+        }
     };
 
     return {

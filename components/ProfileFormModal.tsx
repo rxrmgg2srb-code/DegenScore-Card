@@ -157,7 +157,36 @@ export default function ProfileFormModal({
         throw new Error(paymentData.error || 'Failed to verify payment');
       }
 
+      // ✅ PAGO EXITOSO - Descargar automáticamente la tarjeta premium
+      logger.info('✅ Payment successful, downloading premium card...');
+
+      try {
+        const imageUrl = `/api/generate-card?walletAddress=${encodeURIComponent(walletAddress)}`;
+        const imageResponse = await fetch(imageUrl);
+
+        if (imageResponse.ok) {
+          const blob = await imageResponse.blob();
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `degenscore-premium-${walletAddress.slice(0, 8)}.png`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          window.URL.revokeObjectURL(url);
+          logger.info('✅ Premium card downloaded automatically');
+        }
+      } catch (downloadError) {
+        logger.warn('Failed to auto-download card', downloadError as Error);
+        // No bloqueamos el flujo si falla la descarga
+      }
+
       onSubmit(formData);
+
+      // Redirigir al leaderboard después de 1 segundo
+      setTimeout(() => {
+        window.location.href = '/leaderboard';
+      }, 1000);
     } catch (error: any) {
       console.error('Payment error:', error);
       setPaymentError(error.message || 'Payment failed');

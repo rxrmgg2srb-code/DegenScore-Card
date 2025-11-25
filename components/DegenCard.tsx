@@ -97,7 +97,6 @@ export default function DegenCard() {
 
           {cardImage && (
             <CardDisplay
-              cardImage={cardImage}
               hasPaid={hasPaid}
               downloadPremiumCard={downloadPremiumCard}
               analysisData={analysisData}
