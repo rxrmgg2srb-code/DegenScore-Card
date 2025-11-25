@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface FIFACardProps {
@@ -38,6 +38,46 @@ export default function FIFACard({
     telegram,
 }: FIFACardProps) {
     const [showDetails, setShowDetails] = useState(false);
+    const [isFlipped, setIsFlipped] = useState(false);
+    const [particles, setParticles] = useState<Array<{ id: number; x: number; y: number }>>([]);
+
+    // Flip animation on mount
+    useEffect(() => {
+        const timer = setTimeout(() => setIsFlipped(true), 100);
+        return () => clearTimeout(timer);
+    }, []);
+
+    // Play hover sound (subtle)
+    const playHoverSound = () => {
+        try {
+            // Short "whoosh" or "pop" sound base64
+            const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFPobP8N2QQAoUXrTp66hVFApGn+DyvmwhBTGH0fPTgjMGHm7A7+OZXA0PVqzn77BdGAg+ltzzxnQpBDCFzvDejkALElux6OWXUQwKTKXh8sFuJAU2jdXzzokwBxdnuuw7pVMMDlOq5O+yYBoGPJPY88p2KwU8htDx3ZI+CRVdtOnnolQMCkil4PKvXRwFMIXO8N6PQAsSW7Ho5ZlTCwpMpeLywW8kBTaO1fPOiTAHF2i77N+lUwwOUqvk77JgGgY8k9jzynYrBTyG0PHdkj4JFV206eeiVAwKSKXg8q9dHAUwhc7w3o9ACxJbsejlmVMLCkyl4vLBbyQFNo7V886JMAcXaLvs36VTDAy5YEAAAA=');
+            audio.volume = 0.1;
+            audio.play().catch(() => { }); // Ignore if autoplay blocked
+        } catch (e) {
+            // Ignore sound errors
+        }
+    };
+
+    // Generate golden particles for #1
+    const generateParticles = () => {
+        if (rank !== 1) return;
+
+        const newParticles = Array.from({ length: 10 }, (_, i) => ({
+            id: Date.now() + i,
+            x: Math.random() * 100,
+            y: Math.random() * 100,
+        }));
+        setParticles(newParticles);
+
+        setTimeout(() => setParticles([]), 2000);
+    };
+
+    const handleMouseEnter = () => {
+        setShowDetails(true);
+        playHoverSound();
+        generateParticles();
+    };
 
     // Determinar color según ranking
     const getCardGradient = () => {
@@ -64,10 +104,13 @@ export default function FIFACard({
         <>
             <motion.div
                 className="relative cursor-pointer"
-                onHoverStart={() => setShowDetails(true)}
-                onHoverEnd={() => setShowDetails(false)}
+                onMouseEnter={handleMouseEnter}
+                onMouseLeave={() => setShowDetails(false)}
                 whileHover={{ scale: 1.05, y: -10 }}
                 transition={{ type: 'spring', stiffness: 300 }}
+                initial={{ rotateY: 90, opacity: 0 }}
+                animate={{ rotateY: isFlipped ? 0 : 90, opacity: isFlipped ? 1 : 0 }}
+                style={{ transformStyle: 'preserve-3d' }}
             >
                 {/* FIFA Card Container */}
                 <div className={`
@@ -215,6 +258,28 @@ export default function FIFACard({
                     animate={{ opacity: showDetails ? 0.6 : 0 }}
                     transition={{ duration: 0.3 }}
                 />
+
+                {/* Golden Particles for #1 */}
+                <AnimatePresence>
+                    {particles.map((particle) => (
+                        <motion.div
+                            key={particle.id}
+                            className="absolute w-3 h-3 rounded-full bg-yellow-400 shadow-lg shadow-yellow-400/50"
+                            style={{
+                                left: `${particle.x}%`,
+                                top: `${particle.y}%`,
+                            }}
+                            initial={{ scale: 0, opacity: 1 }}
+                            animate={{
+                                scale: [0, 1.5, 0],
+                                y: [-50, 0, 50],
+                                opacity: [1, 1, 0],
+                            }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 2, ease: 'easeOut' }}
+                        />
+                    ))}
+                </AnimatePresence>
             </motion.div>
 
             {/* Detailed Stats Modal */}
