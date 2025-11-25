@@ -4,7 +4,6 @@ import fs from 'fs';
 import { isValidSolanaAddress, isValidImageType } from '../../lib/validation';
 import { rateLimit } from '../../lib/rateLimitRedis';
 import { logger } from '../../lib/logger';
-import { withAuth } from '@/lib/middleware/withAuth';
 import { UPLOAD_CONFIG } from '../../lib/config';
 
 export const config = {
@@ -13,7 +12,7 @@ export const config = {
   },
 };
 
-export default withAuth(async function handler(
+export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
@@ -102,4 +101,4 @@ export default withAuth(async function handler(
 
     res.status(500).json({ error: errorMessage });
   }
-}); // ← Este paréntesis faltaba para cerrar withAuth()
+}
