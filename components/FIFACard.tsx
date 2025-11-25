@@ -48,7 +48,7 @@ export default function FIFACard({
     // Configuración visual según Ranking (Oro, Plata, Bronce)
     const isGold = rank <= 10;
     const isSilver = rank > 10 && rank <= 50;
-    const isBronze = rank > 50;
+
 
     const cardColors = isGold
         ? {
