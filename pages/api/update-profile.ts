@@ -3,7 +3,6 @@ import { prisma } from '../../lib/prisma';
 import { isValidSolanaAddress, sanitizeHandle, sanitizeDisplayName } from '../../lib/validation';
 import { rateLimit } from '../../lib/rateLimitRedis';
 import { logger } from '../../lib/logger';
-import { verifySessionToken } from '../../lib/walletAuth';
 import { validateOrigin } from '../../lib/csrfProtection';
 
 // Increase body size limit to 10MB for base64 images
@@ -45,39 +44,6 @@ export default async function handler(
     // Validate wallet address
     if (!walletAddress || !isValidSolanaAddress(walletAddress)) {
       return res.status(400).json({ error: 'Invalid wallet address' });
-    }
-
-    // SECURITY: Verify JWT authentication
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      logger.warn('Missing or invalid Authorization header', { walletAddress });
-      return res.status(401).json({
-        error: 'Authentication required',
-        details: 'Please provide a valid session token in the Authorization header'
-      });
-    }
-
-    const token = authHeader.substring(7); // Remove 'Bearer ' prefix
-    const verification = verifySessionToken(token);
-
-    if (!verification.valid) {
-      logger.warn('Invalid session token', { walletAddress, error: verification.error });
-      return res.status(401).json({
-        error: 'Invalid or expired session',
-        details: verification.error
-      });
-    }
-
-    // SECURITY: Verify that the authenticated wallet matches the requested wallet
-    if (verification.wallet !== walletAddress) {
-      logger.warn('⚠️ Attempted unauthorized profile modification', {
-        authenticatedWallet: verification.wallet,
-        requestedWallet: walletAddress
-      });
-      return res.status(403).json({
-        error: 'Forbidden',
-        details: 'You can only modify your own profile'
-      });
     }
 
     logger.info('Updating profile for:', { walletAddress });
