@@ -10,37 +10,37 @@ describe('TokenSecurityScanner/RedFlagsCard', () => {
     ];
 
     it('should render all flags', () => {
-        render(React.createElement(null, null, 'MockedComponent'));
+        render(React.createElement('div', null, 'MockedComponent'));
         expect(screen.getByText(/Honeypot detected/)).toBeInTheDocument();
         expect(screen.getByText(/LP not locked/)).toBeInTheDocument();
         expect(screen.getByText(/High concentration/)).toBeInTheDocument();
     });
 
     it('should show severity levels', () => {
-        render(React.createElement(null, null, 'MockedComponent'));
+        render(React.createElement('div', null, 'MockedComponent'));
         expect(screen.getByText('CRITICAL')).toBeInTheDocument();
         expect(screen.getByText('HIGH')).toBeInTheDocument();
         expect(screen.getByText('MEDIUM')).toBeInTheDocument();
     });
 
     it('should display categories', () => {
-        render(React.createElement(null, null, 'MockedComponent'));
+        render(React.createElement('div', null, 'MockedComponent'));
         expect(screen.getByText('Trading')).toBeInTheDocument();
         expect(screen.getByText('Liquidity')).toBeInTheDocument();
     });
 
     it('should handle empty flags', () => {
-        render(React.createElement(null, null, 'MockedComponent'));
+        render(React.createElement('div', null, 'MockedComponent'));
         expect(screen.getByText(/0/)).toBeInTheDocument(); // It shows count (0)
     });
 
     it('should color code by severity', () => {
-        const { container } = render(React.createElement(null, null, 'MockedComponent'));
+        const { container } = render(React.createElement('div', null, 'MockedComponent'));
         expect(container.querySelector('[class*="bg-red"]')).toBeInTheDocument();
     });
 
     it('should show critical flags first', () => {
-        render(React.createElement(null, null, 'MockedComponent'));
+        render(React.createElement('div', null, 'MockedComponent'));
         // The component renders in the order of the array passed.
         // It doesn't seem to sort them internally based on the code I saw.
         // But let's check if the first item is CRITICAL.
@@ -50,18 +50,18 @@ describe('TokenSecurityScanner/RedFlagsCard', () => {
     });
 
     it('should count total flags', () => {
-        render(React.createElement(null, null, 'MockedComponent'));
+        render(React.createElement('div', null, 'MockedComponent'));
         expect(screen.getByText(/3/)).toBeInTheDocument();
     });
 
     it('should display warning icons', () => {
-        render(React.createElement(null, null, 'MockedComponent'));
+        render(React.createElement('div', null, 'MockedComponent'));
         expect(screen.getByText(/🚨/)).toBeInTheDocument();
     });
 
     it('should handle low severity flags', () => {
         const lowFlags = [{ severity: 'LOW' as const, message: 'Minor issue', category: 'Other' }];
-        render(React.createElement(null, null, 'MockedComponent'));
+        render(React.createElement('div', null, 'MockedComponent'));
         // The component handles default case (blue) for unknown severities.
         // LOW is not in the switch case, so it will be blue.
         // But it renders the severity text.
@@ -73,7 +73,7 @@ describe('TokenSecurityScanner/RedFlagsCard', () => {
         // So this test is testing non-existent functionality.
         // I'll skip it or remove it.
         // I'll just render it normally.
-        render(React.createElement(null, null, 'MockedComponent'));
+        render(React.createElement('div', null, 'MockedComponent'));
         expect(screen.getAllByText(/Trading|Liquidity|Holders/).length).toBeGreaterThan(0);
     });
 });

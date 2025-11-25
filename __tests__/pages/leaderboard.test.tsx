@@ -21,18 +21,18 @@ describe('Pages/Leaderboard', () => {
     });
 
     it('should render leaderboard table', () => {
-        render(React.createElement(null, null, 'MockedComponent'));
+        render(React.createElement('div', null, 'MockedComponent'));
         expect(screen.getByRole('table')).toBeInTheDocument();
     });
 
     it('should display entries', () => {
-        render(React.createElement(null, null, 'MockedComponent'));
+        render(React.createElement('div', null, 'MockedComponent'));
         expect(screen.getByText('alice')).toBeInTheDocument();
         expect(screen.getByText('bob')).toBeInTheDocument();
     });
 
     it('should show scores', () => {
-        render(React.createElement(null, null, 'MockedComponent'));
+        render(React.createElement('div', null, 'MockedComponent'));
         expect(screen.getByText('98')).toBeInTheDocument();
         expect(screen.getByText('95')).toBeInTheDocument();
     });
@@ -43,7 +43,7 @@ describe('Pages/Leaderboard', () => {
             loading: true,
             error: null,
         });
-        render(React.createElement(null, null, 'MockedComponent'));
+        render(React.createElement('div', null, 'MockedComponent'));
         expect(screen.getByText(/loading/i)).toBeInTheDocument();
     });
 
@@ -53,38 +53,38 @@ describe('Pages/Leaderboard', () => {
             loading: false,
             error: 'Failed to load',
         });
-        render(React.createElement(null, null, 'MockedComponent'));
+        render(React.createElement('div', null, 'MockedComponent'));
         expect(screen.getByText(/failed to load/i)).toBeInTheDocument();
     });
 
     it('should handle pagination', () => {
-        render(React.createElement(null, null, 'MockedComponent'));
+        render(React.createElement('div', null, 'MockedComponent'));
         expect(screen.getByText(/next/i)).toBeInTheDocument();
         expect(screen.getByText(/prev/i)).toBeInTheDocument();
     });
 
     it('should filter by timeframe', () => {
-        render(React.createElement(null, null, 'MockedComponent'));
+        render(React.createElement('div', null, 'MockedComponent'));
         fireEvent.click(screen.getByText(/weekly/i));
         // Expect hook to be called with new filter
         expect(useLeaderboard).toHaveBeenCalled();
     });
 
     it('should search users', () => {
-        render(React.createElement(null, null, 'MockedComponent'));
+        render(React.createElement('div', null, 'MockedComponent'));
         const input = screen.getByPlaceholderText(/search/i);
         fireEvent.change(input, { target: { value: 'charlie' } });
         expect(input).toHaveValue('charlie');
     });
 
     it('should display badges', () => {
-        render(React.createElement(null, null, 'MockedComponent'));
+        render(React.createElement('div', null, 'MockedComponent'));
         expect(screen.getByText('🏆')).toBeInTheDocument();
     });
 
     it('should highlight current user', () => {
         // Mock current user context if needed
-        render(React.createElement(null, null, 'MockedComponent'));
+        render(React.createElement('div', null, 'MockedComponent'));
         // Check for highlight class
         const rows = screen.getAllByRole('row');
         expect(rows.length).toBeGreaterThan(0);

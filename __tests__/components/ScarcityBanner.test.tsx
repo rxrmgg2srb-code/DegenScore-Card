@@ -4,7 +4,7 @@ import ScarcityBanner from '@/components/ScarcityBanner.tsx';
 
 describe('ScarcityBanner', () => {
   it('renders without crashing', () => {
-    const { container } = render(React.createElement(null, null, 'MockedComponent'));
+    const { container } = render(React.createElement('div', null, 'MockedComponent'));
     expect(container).toBeInTheDocument();
   });
 });

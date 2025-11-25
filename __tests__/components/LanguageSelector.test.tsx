@@ -22,12 +22,12 @@ jest.mock('framer-motion', () => ({
 
 describe('LanguageSelector', () => {
   it('renders current language', () => {
-    render(React.createElement(null, null, 'MockedComponent'));
+    render(React.createElement('div', null, 'MockedComponent'));
     expect(screen.getByText('Español')).toBeInTheDocument();
   });
 
   it('opens dropdown when button clicked', () => {
-    render(React.createElement(null, null, 'MockedComponent'));
+    render(React.createElement('div', null, 'MockedComponent'));
 
     const button = screen.getByLabelText('Select language');
     fireEvent.click(button);
@@ -37,7 +37,7 @@ describe('LanguageSelector', () => {
   });
 
   it('shows all language options in dropdown', () => {
-    render(React.createElement(null, null, 'MockedComponent'));
+    render(React.createElement('div', null, 'MockedComponent'));
 
     const button = screen.getByLabelText('Select language');
     fireEvent.click(button);

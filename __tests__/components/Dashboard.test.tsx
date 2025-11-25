@@ -13,7 +13,7 @@ jest.mock('@/lib/logger', () => ({ logger: { error: jest.fn() } }));
 
 describe('Dashboard', () => {
   it('renders', () => {
-    const { container } = render(React.createElement(null, null, 'MockedComponent'));
+    const { container } = render(React.createElement('div', null, 'MockedComponent'));
     expect(container).toBeInTheDocument();
   });
 });

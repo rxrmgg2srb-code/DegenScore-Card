@@ -23,7 +23,7 @@ describe('SuperTokenScorerContent', () => {
   });
 
   it('renders initial state correctly', () => {
-    render(React.createElement(null, null, 'MockedComponent'));
+    render(React.createElement('div', null, 'MockedComponent'));
     const container = screen.getByRole('textbox');
     expect(container).toBeInTheDocument();
   });
@@ -61,7 +61,7 @@ describe('SuperTokenScorerContent', () => {
       analyzeToken: jest.fn(),
     });
 
-    render(React.createElement(null, null, 'MockedComponent'));
+    render(React.createElement('div', null, 'MockedComponent'));
     expect(screen.getByText(/Datos de APIs Externas/i)).toBeInTheDocument();
   });
 });

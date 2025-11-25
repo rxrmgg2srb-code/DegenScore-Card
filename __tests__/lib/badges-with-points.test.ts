@@ -1,78 +1,138 @@
-import { generateBadge, checkBadgeEligibility, awardBadge, getUserBadges } from '@/lib/badges-with-points';
-import { prisma } from '@/lib/prisma';
+import { describe, it, expect } from '@jest/globals';
+import {
+    checkAllBadges,
+    calculateBadgePoints,
+    checkVolumeBadges,
+    checkPnlBadges,
+    checkWinRateBadges,
+    checkActivityBadges,
+    checkPremiumBadges,
+    getBadgeColor,
+    getBadgeGlow,
+    BADGE_POINTS,
+    VOLUME_BADGES,
+    PNL_BADGES
+} from '@/lib/badges-with-points';
 
+describe('Badges System (Bonk Ready 🐕)', () => {
+    // Mock metrics for a "Whale" user
+    const whaleMetrics = {
+        totalVolume: 10000,
+        profitLoss: 500,
+        winRate: 95,
+        totalTrades: 6000,
+        tradingDays: 400,
+        moonshots: 10,
+        diamondHands: 20,
+        isPaid: true,
+        twitter: 'degentrader',
+        telegram: 'degentrader_tg',
+        profileImage: 'avatar.png',
+        displayName: 'Degen King'
+    };
 
-jest.mock('@/lib/logger');
+    // Mock metrics for a "Rookie" user
+    const rookieMetrics = {
+        totalVolume: 2,
+        profitLoss: -2,
+        winRate: 40,
+        totalTrades: 5,
+        tradingDays: 2,
+        moonshots: 0,
+        diamondHands: 0,
+        isPaid: false
+    };
 
-describe('badges-with-points', () => {
-    const mockWallet = 'test-wallet';
+    describe('Point System', () => {
+        it('should have correct point values defined', () => {
+            expect(BADGE_POINTS.COMMON).toBe(1);
+            expect(BADGE_POINTS.RARE).toBe(3);
+            expect(BADGE_POINTS.EPIC).toBe(5);
+            expect(BADGE_POINTS.LEGENDARY).toBe(10);
+            expect(BADGE_POINTS.MYTHIC).toBe(25);
+        });
 
-    it('should generate badge for achievement', () => {
-        const badge = generateBadge('first-trade', mockWallet);
-        expect(badge).toHaveProperty('name');
-        expect(badge).toHaveProperty('description');
+        it('should calculate total points correctly', () => {
+            const badges = [
+                VOLUME_BADGES[0], // COMMON (1)
+                VOLUME_BADGES[3], // RARE (3)
+                PNL_BADGES[6]     // LEGENDARY (10)
+            ];
+            const points = calculateBadgePoints(badges);
+            expect(points).toBe(1 + 3 + 10);
+        });
     });
 
-    it('should check eligibility for badges', async () => {
-        (prisma.degenScoreCard.findMany as jest.Mock).mockResolvedValue([{ id: '1' }]);
-        const eligible = await checkBadgeEligibility(mockWallet, 'first-card');
-        expect(eligible).toBe(true);
+    describe('Badge Checking Logic', () => {
+        it('should award volume badges correctly', () => {
+            const badges = checkVolumeBadges(whaleMetrics);
+            // Should have all volume badges up to max threshold
+            expect(badges.length).toBeGreaterThan(10);
+            expect(badges.some(b => b.key === 'god_volume')).toBe(true);
+
+            const rookieBadges = checkVolumeBadges(rookieMetrics);
+            expect(rookieBadges.some(b => b.key === 'mini_degen')).toBe(true);
+            expect(rookieBadges.some(b => b.key === 'whale')).toBe(false);
+        });
+
+        it('should award PnL badges correctly (Profit & Loss)', () => {
+            const profitBadges = checkPnlBadges(whaleMetrics);
+            expect(profitBadges.some(b => b.key === 'profit_titan')).toBe(true);
+
+            const lossBadges = checkPnlBadges(rookieMetrics); // -2 SOL
+            expect(lossBadges.some(b => b.key === 'rug_victim')).toBe(true); // -1 SOL threshold
+        });
+
+        it('should award Win Rate badges correctly', () => {
+            const badges = checkWinRateBadges(whaleMetrics); // 95%
+            expect(badges.some(b => b.key === 'zen_trader')).toBe(true);
+
+            const rookieBadges = checkWinRateBadges(rookieMetrics); // 40%
+            expect(rookieBadges.length).toBe(0);
+        });
+
+        it('should award Activity badges correctly', () => {
+            const badges = checkActivityBadges(whaleMetrics);
+            expect(badges.some(b => b.key === 'degen_god')).toBe(true); // 5000+ trades
+            expect(badges.some(b => b.key === 'eternal_degen')).toBe(true); // 365+ days
+            expect(badges.some(b => b.key === 'moonshot_hunter')).toBe(true);
+            expect(badges.some(b => b.key === 'diamond_hands')).toBe(true);
+        });
+
+        it('should award Premium/Social badges correctly', () => {
+            const badges = checkPremiumBadges(whaleMetrics);
+            expect(badges.some(b => b.key === 'premium_trader')).toBe(true);
+            expect(badges.some(b => b.key === 'social_flex')).toBe(true);
+            expect(badges.some(b => b.key === 'full_profile')).toBe(true);
+
+            const rookieBadges = checkPremiumBadges(rookieMetrics);
+            expect(rookieBadges.length).toBe(0);
+        });
     });
 
-    it('should award badge and XP', async () => {
-        (prisma.userBadge.create as jest.Mock).mockResolvedValue({ id: '1' });
-        await awardBadge(mockWallet, 'whale-watcher');
-        expect(prisma.userBadge.create).toHaveBeenCalled();
-        expect(prisma.userAnalytics.update).toHaveBeenCalled();
+    describe('Integration: checkAllBadges', () => {
+        it('should aggregate all badges and calculate total score', () => {
+            const result = checkAllBadges(whaleMetrics);
+
+            expect(result.badges.length).toBeGreaterThan(20);
+            expect(result.totalPoints).toBeGreaterThan(100);
+
+            // Ensure no duplicates
+            const keys = result.badges.map(b => b.key);
+            const uniqueKeys = new Set(keys);
+            expect(keys.length).toBe(uniqueKeys.size);
+        });
     });
 
-    it('should not award duplicate badges', async () => {
-        (prisma.userBadge.findFirst as jest.Mock).mockResolvedValue({ id: '1' });
-        await awardBadge(mockWallet, 'first-card');
-        expect(prisma.userBadge.create).not.toHaveBeenCalled();
-    });
+    describe('UI Helpers', () => {
+        it('should return correct colors for rarity', () => {
+            expect(getBadgeColor('COMMON')).toContain('gray');
+            expect(getBadgeColor('MYTHIC')).toContain('pink');
+        });
 
-    it('should get user badges', async () => {
-        const mockBadges = [
-            { badgeId: 'first-card', awardedAt: new Date() },
-            { badgeId: 'whale-watcher', awardedAt: new Date() },
-        ];
-        (prisma.userBadge.findMany as jest.Mock).mockResolvedValue(mockBadges);
-
-        const badges = await getUserBadges(mockWallet);
-        expect(badges).toHaveLength(2);
-    });
-
-    it('should check high score badge', async () => {
-        (prisma.degenScoreCard.findFirst as jest.Mock).mockResolvedValue({ degenScore: 95 });
-        const eligible = await checkBadgeEligibility(mockWallet, 'high-score');
-        expect(eligible).toBe(true);
-    });
-
-    it('should check streak milestone badges', async () => {
-        (prisma.userAnalytics.findUnique as jest.Mock).mockResolvedValue({ currentStreak: 30 });
-        const eligible = await checkBadgeEligibility(mockWallet, 'streak-30');
-        expect(eligible).toBe(true);
-    });
-
-    it('should handle badge tiers', () => {
-        const bronze = generateBadge('trader-bronze', mockWallet);
-        const silver = generateBadge('trader-silver', mockWallet);
-        expect(bronze.tier).toBe('bronze');
-        expect(silver.tier).toBe('silver');
-    });
-
-    it('should award correct XP for badge', async () => {
-        await awardBadge(mockWallet, 'legendary');
-        expect(prisma.userAnalytics.update).toHaveBeenCalledWith(
-            expect.objectContaining({
-                data: expect.objectContaining({ totalXP: { increment: expect.any(Number) } }),
-            })
-        );
-    });
-
-    it('should handle errors gracefully', async () => {
-        (prisma.userBadge.create as jest.Mock).mockRejectedValue(new Error('DB error'));
-        await expect(awardBadge(mockWallet, 'test')).rejects.toThrow();
+        it('should return correct glows for rarity', () => {
+            expect(getBadgeGlow('LEGENDARY')).toContain('yellow');
+            expect(getBadgeGlow('EPIC')).toContain('purple');
+        });
     });
 });

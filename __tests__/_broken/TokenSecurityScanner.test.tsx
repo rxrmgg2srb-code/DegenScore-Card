@@ -23,7 +23,7 @@ describe('TokenSecurityScanner', () => {
   });
 
   it('renders initial state correctly', () => {
-    render(React.createElement(null, null, 'MockedComponent'));
+    render(React.createElement('div', null, 'MockedComponent'));
     expect(screen.getByRole('textbox')).toBeInTheDocument();
   });
 
@@ -50,7 +50,7 @@ describe('TokenSecurityScanner', () => {
       handlePaste: jest.fn(),
     });
 
-    render(React.createElement(null, null, 'MockedComponent'));
+    render(React.createElement('div', null, 'MockedComponent'));
     // SecurityReport renders "Security Analysis Report" or similar headers
     // Let's check for something we know is in the report, like "Liquidity Analysis" from LiquidityCard
     expect(screen.getByText(/Liquidity Analysis/i)).toBeInTheDocument();

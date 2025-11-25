@@ -74,6 +74,7 @@ export default function ProfileFormModal({
       const response = await fetch('/api/upload-profile-image', {
         method: 'POST',
         body: formDataUpload,
+        credentials: 'include', // Enviar cookies de autenticación
       });
       const data = await response.json();
       if (data.success) {

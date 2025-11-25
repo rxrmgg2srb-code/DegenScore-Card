@@ -4,7 +4,7 @@ import BadgeComponents from '@/components/docs/BadgeComponents.tsx';
 
 describe('BadgeComponents', () => {
   it('renders without crashing', () => {
-    const { container } = render(React.createElement(null, null, 'MockedComponent'));
+    const { container } = render(React.createElement('div', null, 'MockedComponent'));
     expect(container).toBeInTheDocument();
   });
 });

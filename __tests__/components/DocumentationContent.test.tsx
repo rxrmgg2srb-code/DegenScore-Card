@@ -34,7 +34,7 @@ window.HTMLElement.prototype.scrollIntoView = jest.fn();
 
 describe('DocumentationContent', () => {
   it('renders the documentation page structure', () => {
-    render(React.createElement(null, null, 'MockedComponent'));
+    render(React.createElement('div', null, 'MockedComponent'));
 
     // Check header
     expect(screen.getByText('📚 DegenScore Documentation')).toBeInTheDocument();
@@ -48,7 +48,7 @@ describe('DocumentationContent', () => {
   });
 
   it('renders content sections', () => {
-    render(React.createElement(null, null, 'MockedComponent'));
+    render(React.createElement('div', null, 'MockedComponent'));
 
     // Check for specific content in sections
     expect(screen.getByText(/Bienvenido a/i)).toBeInTheDocument();
@@ -57,7 +57,7 @@ describe('DocumentationContent', () => {
   });
 
   it('handles section navigation', () => {
-    render(React.createElement(null, null, 'MockedComponent'));
+    render(React.createElement('div', null, 'MockedComponent'));
 
     // Find a sidebar link and click it
     // Note: Since we mocked scrollIntoView, we just verify the click doesn't crash

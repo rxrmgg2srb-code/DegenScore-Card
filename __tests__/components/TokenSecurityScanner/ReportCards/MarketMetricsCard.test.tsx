@@ -10,7 +10,7 @@ const mockMetrics = {
 
 describe('MarketMetricsCard', () => {
   it('renders market metrics correctly', () => {
-    render(React.createElement(null, null, 'MockedComponent'));
+    render(React.createElement('div', null, 'MockedComponent'));
     expect(screen.getByText(/Market Metrics/i)).toBeInTheDocument();
     expect(screen.getByText('10.5 days')).toBeInTheDocument();
     expect(screen.getByText('✅ No')).toBeInTheDocument();
@@ -18,7 +18,7 @@ describe('MarketMetricsCard', () => {
 
   it('shows warning for pump and dump', () => {
     const riskyMetrics = { ...mockMetrics, isPumpAndDump: true };
-    render(React.createElement(null, null, 'MockedComponent'));
+    render(React.createElement('div', null, 'MockedComponent'));
     expect(screen.getByText('⚠️ Detected')).toBeInTheDocument();
   });
 });

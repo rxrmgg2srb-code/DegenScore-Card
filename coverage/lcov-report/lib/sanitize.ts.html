@@ -23,9 +23,9 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">68.96% </span>
+                <span class="strong">78.18% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>40/58</span>
+                <span class='fraction'>43/55</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line high'></div>
+    <div class='status-line medium'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -173,25 +173,25 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">22x</span>
-<span class="cline-any cline-yes">30x</span>
-<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">17x</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">25x</span>
+<span class="cline-any cline-yes">15x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">25x</span>
+<span class="cline-any cline-yes">15x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">25x</span>
+<span class="cline-any cline-yes">15x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">25x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">15x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-yes">5x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -206,7 +206,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-yes">6x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -229,7 +229,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">7x</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-yes">15x</span>
 <span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -248,20 +248,20 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">5x</span>
-<span class="cline-any cline-yes">5x</span>
-<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">5x</span>
-<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -349,20 +349,20 @@ export function sanitizeInput&lt;T&gt;(input: T): T {
 }
 &nbsp;
 // Backwards‑compatible aliases for existing codebase
-export const <span class="cstat-no" title="statement not covered" >sanitizeHtml </span>= sanitizeHTML;
-export const <span class="cstat-no" title="statement not covered" >sanitizeText </span>= sanitizeString;
-export const <span class="cstat-no" title="statement not covered" >sanitizeDisplayName </span>= <span class="fstat-no" title="function not covered" >(n</span>ame: string) =&gt; {
+export const sanitizeHtml = sanitizeHTML;
+export const sanitizeText = sanitizeString;
+export const sanitizeDisplayName = <span class="fstat-no" title="function not covered" >(n</span>ame: string) =&gt; {
   const cleaned = <span class="cstat-no" title="statement not covered" >sanitizeString(name);</span>
 <span class="cstat-no" title="statement not covered" >  return cleaned.length &gt; 50 ? cleaned.substring(0, 50) : cleaned;</span>
 };
-export const <span class="cstat-no" title="statement not covered" >sanitizeUrl </span>= sanitizeURL;
-export const <span class="cstat-no" title="statement not covered" >sanitizeSocialHandle </span>= <span class="fstat-no" title="function not covered" >(h</span>andle: string) =&gt; {
+export const sanitizeUrl = sanitizeURL;
+export const sanitizeSocialHandle = <span class="fstat-no" title="function not covered" >(h</span>andle: string) =&gt; {
 <span class="cstat-no" title="statement not covered" >  <span class="missing-if-branch" title="if path not taken" >I</span>if (!handle) <span class="cstat-no" title="statement not covered" >return '';</span></span>
   let sanitized = <span class="cstat-no" title="statement not covered" >handle.replace(/^@/, '');</span>
 <span class="cstat-no" title="statement not covered" >  sanitized = sanitized.replace(/[^a-zA-Z0-9_-]/g, '');</span>
 <span class="cstat-no" title="statement not covered" >  return sanitized.length &gt; 30 ? sanitized.slice(0, 30) : sanitized;</span>
 };
-export const <span class="cstat-no" title="statement not covered" >sanitizePromoCode </span>= <span class="fstat-no" title="function not covered" >(c</span>ode: string) =&gt; {
+export const sanitizePromoCode = <span class="fstat-no" title="function not covered" >(c</span>ode: string) =&gt; {
 <span class="cstat-no" title="statement not covered" >  <span class="missing-if-branch" title="if path not taken" >I</span>if (!code) <span class="cstat-no" title="statement not covered" >return '';</span></span>
 <span class="cstat-no" title="statement not covered" >  return code.toUpperCase().replace(/[^A-Z0-9]/g, '');</span>
 };
@@ -373,7 +373,7 @@ export const <span class="cstat-no" title="statement not covered" >sanitizePromo
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-11-24T09:55:13.476Z
+                at 2025-11-24T23:17:22.883Z
             </div>
         <script src="../prettify.js"></script>
         <script>

@@ -4,10 +4,7 @@ import type { AppProps } from 'next/app';
 import { useMemo, useEffect } from 'react';
 import { ConnectionProvider, WalletProvider } from '@solana/wallet-adapter-react';
 import { WalletModalProvider } from '@solana/wallet-adapter-react-ui';
-// 🛑 IMPORTACIÓN MANUAL ELIMINADA:
-// Ya no necesitamos importar PhantomWalletAdapter o SolflareWalletAdapter,
-// ya que el paquete @solana/wallet-adapter-wallets los detecta automáticamente.
-import { PhantomWalletAdapter, SolflareWalletAdapter } from '@solana/wallet-adapter-wallets';
+// Phantom y Solflare se auto-detectan como Standard Wallets (no necesitan adapters)
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import { I18nextProvider } from 'react-i18next';
 import i18n from '../lib/i18n';
@@ -23,16 +20,8 @@ export default function App({ Component, pageProps }: AppProps) {
     []
   );
 
-  // Configure supported wallets
-  // Re-habilitamos los adaptadores explícitos para asegurar que el Deep Linking
-  // funcione correctamente en dispositivos móviles (Chrome/Safari en iOS/Android).
-  const wallets = useMemo(
-    () => [
-      new PhantomWalletAdapter(),
-      new SolflareWalletAdapter(),
-    ],
-    []
-  );
+  // Configure supported wallets - dejamos vacío para usar Standard Wallet auto-detection
+  const wallets = useMemo(() => [], []);
 
   // Initialize i18n on client side
   useEffect(() => {

@@ -51,19 +51,19 @@ jest.mock('next/router', () => ({
 
   describe('Rendering', () => {
     it('renders without crashing', () => {
-      const { container } = render(React.createElement(null, null, 'MockedComponent'));
+      const { container } = render(React.createElement('div', null, 'MockedComponent'));
       expect(container).toBeInTheDocument();
     });
 
     it('renders with correct structure', () => {
-      const { container } = render(React.createElement(null, null, 'MockedComponent'));
+      const { container } = render(React.createElement('div', null, 'MockedComponent'));
       expect(container.firstChild).toBeTruthy();
     });
   });
 
   describe('Functionality', () => {
     it('handles user interactions', async () => {
-      render(React.createElement(null, null, 'MockedComponent'));
+      render(React.createElement('div', null, 'MockedComponent'));
       // Add specific interaction tests based on component
       expect(screen.getByRole('button', { hidden: true })).toBeDefined();
     });
@@ -73,20 +73,20 @@ jest.mock('next/router', () => ({
 
   describe('Edge Cases', () => {
     it('handles empty state', () => {
-      render(React.createElement(null, null, 'MockedComponent'));
+      render(React.createElement('div', null, 'MockedComponent'));
       expect(screen.queryByText(/no data/i)).toBeDefined();
     });
 
     it('handles error state', () => {
       
-      render(React.createElement(null, null, 'MockedComponent'));
+      render(React.createElement('div', null, 'MockedComponent'));
       expect(console.error).toBeDefined();
     });
   });
 
   describe('Accessibility', () => {
     it('has proper ARIA labels', () => {
-      const { container } = render(React.createElement(null, null, 'MockedComponent'));
+      const { container } = render(React.createElement('div', null, 'MockedComponent'));
       expect(container.querySelector('[aria-label]')).toBeTruthy();
     });
   });

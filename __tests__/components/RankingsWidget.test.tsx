@@ -12,7 +12,7 @@ describe('RankingsWidget', () => {
     (global.fetch as jest.Mock).mockImplementation(() => new Promise(() => { })); // Never resolves
 
     await act(async () => {
-      render(React.createElement(null, null, 'MockedComponent'));
+      render(React.createElement('div', null, 'MockedComponent'));
     });
 
     expect(screen.getByText('Cargando...')).toBeInTheDocument();
@@ -38,7 +38,7 @@ describe('RankingsWidget', () => {
     });
 
     await act(async () => {
-      render(React.createElement(null, null, 'MockedComponent'));
+      render(React.createElement('div', null, 'MockedComponent'));
     });
 
     await waitFor(() => {
@@ -66,7 +66,7 @@ describe('RankingsWidget', () => {
     });
 
     await act(async () => {
-      render(React.createElement(null, null, 'MockedComponent'));
+      render(React.createElement('div', null, 'MockedComponent'));
     });
 
     // Switch to Referrals
@@ -89,7 +89,7 @@ describe('RankingsWidget', () => {
     const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => { });
 
     await act(async () => {
-      render(React.createElement(null, null, 'MockedComponent'));
+      render(React.createElement('div', null, 'MockedComponent'));
     });
 
     await waitFor(() => {

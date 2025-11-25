@@ -23,32 +23,32 @@ describe('AnimatedToast', () => {
   });
 
   it('renders success toast', () => {
-    render(React.createElement(null, null, 'MockedComponent'));
+    render(React.createElement('div', null, 'MockedComponent'));
     expect(screen.getByText('Success message')).toBeInTheDocument();
     expect(screen.getByText('✓')).toBeInTheDocument();
   });
 
   it('renders error toast', () => {
-    render(React.createElement(null, null, 'MockedComponent'));
+    render(React.createElement('div', null, 'MockedComponent'));
     expect(screen.getByText('Error message')).toBeInTheDocument();
     expect(screen.getByText('✕')).toBeInTheDocument();
   });
 
   it('renders warning toast', () => {
-    render(React.createElement(null, null, 'MockedComponent'));
+    render(React.createElement('div', null, 'MockedComponent'));
     expect(screen.getByText('Warning message')).toBeInTheDocument();
     expect(screen.getByText('⚠')).toBeInTheDocument();
   });
 
   it('renders info toast by default', () => {
-    render(React.createElement(null, null, 'MockedComponent'));
+    render(React.createElement('div', null, 'MockedComponent'));
     expect(screen.getByText('Info message')).toBeInTheDocument();
     expect(screen.getByText('ℹ')).toBeInTheDocument();
   });
 
   it('calls onClose when close button clicked', () => {
     const onClose = jest.fn();
-    render(React.createElement(null, null, 'MockedComponent'));
+    render(React.createElement('div', null, 'MockedComponent'));
 
     const closeButton = screen.getByRole('button');
     fireEvent.click(closeButton);
@@ -60,7 +60,7 @@ describe('AnimatedToast', () => {
 
   it('auto-closes after duration', () => {
     const onClose = jest.fn();
-    render(React.createElement(null, null, 'MockedComponent'));
+    render(React.createElement('div', null, 'MockedComponent'));
 
     jest.advanceTimersByTime(3300);
     expect(onClose).toHaveBeenCalled();

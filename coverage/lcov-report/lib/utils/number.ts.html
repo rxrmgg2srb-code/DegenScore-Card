@@ -23,9 +23,9 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">12.5% </span>
+                <span class="strong">37.5% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>2/16</span>
+                <span class='fraction'>6/16</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">12.5% </span>
+                <span class="strong">37.5% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>2/16</span>
+                <span class='fraction'>6/16</span>
             </div>
         
             
@@ -102,25 +102,22 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -128,31 +125,34 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">/**
  * Number utility functions
  */
 &nbsp;
-export function <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >formatNumber(</span></span>value: number, decimals: number = <span class="branch-0 cbranch-no" title="branch not covered" >2)</span>: string {
+export function <span class="fstat-no" title="function not covered" >formatNumber(</span>value: number, decimals: number = <span class="branch-0 cbranch-no" title="branch not covered" >2)</span>: string {
 <span class="cstat-no" title="statement not covered" >    return value.toFixed(decimals);</span>
 }
 &nbsp;
-export function <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >formatCurrency(</span></span>value: number, currency: string = <span class="branch-0 cbranch-no" title="branch not covered" >'USD')</span>: string {
+export function <span class="fstat-no" title="function not covered" >formatCurrency(</span>value: number, currency: string = <span class="branch-0 cbranch-no" title="branch not covered" >'USD')</span>: string {
 <span class="cstat-no" title="statement not covered" >    return new Intl.NumberFormat('en-US', {</span>
         style: 'currency',
         currency,
     }).format(value);
 }
 &nbsp;
-export function <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >formatPercentage(</span></span>value: number, decimals: number = <span class="branch-0 cbranch-no" title="branch not covered" >2)</span>: string {
+export function <span class="fstat-no" title="function not covered" >formatPercentage(</span>value: number, decimals: number = <span class="branch-0 cbranch-no" title="branch not covered" >2)</span>: string {
 <span class="cstat-no" title="statement not covered" >    return `${(value * 100).toFixed(decimals)}%`;</span>
 }
 &nbsp;
-export function <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >abbreviateNumber(</span></span>value: number): string {
+export function <span class="fstat-no" title="function not covered" >abbreviateNumber(</span>value: number): string {
 <span class="cstat-no" title="statement not covered" >    <span class="missing-if-branch" title="if path not taken" >I</span>if (value &gt;= 1_000_000_000) {</span>
 <span class="cstat-no" title="statement not covered" >        return `${(value / 1_000_000_000).toFixed(1)}B`;</span>
     }
@@ -175,7 +175,7 @@ export function clamp(value: number, min: number, max: number): number {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-11-24T09:55:13.476Z
+                at 2025-11-24T23:17:22.883Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

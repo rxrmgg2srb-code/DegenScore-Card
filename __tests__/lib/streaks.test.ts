@@ -1,114 +1,137 @@
-import { getStreakData, updateStreak, checkStreakEligibility } from '@/lib/streaks';
-import { prisma } from '@/lib/prisma';
+import { describe, it, expect, jest, beforeEach } from '@jest/globals';
+import { checkDailyStreak, getStreakLeaderboard } from '@/lib/streaks';
 
+// Mock Prisma inline
+jest.mock('@/lib/prisma', () => ({
+    prisma: {
+        userStreak: {
+            findUnique: jest.fn(),
+            create: jest.fn(),
+            update: jest.fn(),
+            findMany: jest.fn(),
+        },
+        badge: {
+            findFirst: jest.fn(),
+            create: jest.fn(),
+        },
+        degenCard: {
+            findUnique: jest.fn(),
+        },
+    },
+}));
 
-jest.mock('@/lib/logger');
+jest.mock('@/lib/logger', () => ({
+    logger: {
+        info: jest.fn(),
+        error: jest.fn(),
+    },
+}));
 
-describe('streaks', () => {
-    const mockWallet = 'test-wallet';
+describe('streaks (comprehensive)', () => {
+    const mockWalletAddress = 'So11111111111111111111111111111111111111112';
 
     beforeEach(() => {
         jest.clearAllMocks();
     });
 
-    it('should get streak data', async () => {
-        (prisma.userAnalytics.findUnique as jest.Mock).mockResolvedValue({
-            currentStreak: 5,
-            longestStreak: 10,
-            lastCheckIn: new Date(),
+    describe('checkDailyStreak', () => {
+        it('should create new streak for first-time user', async () => {
+            const { prisma } = require('@/lib/prisma');
+
+            (prisma.userStreak.findUnique as jest.Mock).mockResolvedValue(null);
+            (prisma.userStreak.create as jest.Mock).mockResolvedValue({
+                walletAddress: mockWalletAddress,
+                currentStreak: 1,
+                longestStreak: 1,
+                lastLoginDate: new Date(),
+                totalLogins: 1,
+                streakPoints: 10,
+            });
+
+            const result = await checkDailyStreak(mockWalletAddress);
+
+            expect(result).toBeDefined();
+            expect(result.currentStreak).toBe(1);
+            expect(result.todayCheckedIn).toBe(true);
+            expect(prisma.userStreak.create).toHaveBeenCalled();
         });
 
-        const data = await getStreakData(mockWallet);
-        expect(data.currentStreak).toBe(5);
-    });
+        it('should return existing streak if already checked in today', async () => {
+            const { prisma } = require('@/lib/prisma');
+            const today = new Date();
 
-    it('should update streak on check-in', async () => {
-        (prisma.userAnalytics.update as jest.Mock).mockResolvedValue({});
-        await updateStreak(mockWallet);
-        expect(prisma.userAnalytics.update).toHaveBeenCalled();
-    });
+            (prisma.userStreak.findUnique as jest.Mock).mockResolvedValue({
+                walletAddress: mockWalletAddress,
+                currentStreak: 5,
+                longestStreak: 10,
+                lastLoginDate: today,
+                totalLogins: 20,
+                streakPoints: 150,
+            });
 
-    it('should reset streak if missed day', async () => {
-        const yesterday = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000);
-        (prisma.userAnalytics.findUnique as jest.Mock).mockResolvedValue({
-            lastCheckIn: yesterday,
-            currentStreak: 5,
+            const result = await checkDailyStreak(mockWalletAddress);
+
+            expect(result.currentStreak).toBe(5);
+            expect(result.todayCheckedIn).toBe(true);
+            expect(prisma.userStreak.update).not.toHaveBeenCalled();
         });
 
-        await updateStreak(mockWallet);
-        expect(prisma.userAnalytics.update).toHaveBeenCalledWith(
-            expect.objectContaining({ data: expect.objectContaining({ currentStreak: 1 }) })
-        );
+        it('should continue streak from yesterday', async () => {
+            const { prisma } = require('@/lib/prisma');
+            const yesterday = new Date();
+            yesterday.setDate(yesterday.getDate() - 1);
+
+            (prisma.userStreak.findUnique as jest.Mock).mockResolvedValue({
+                walletAddress: mockWalletAddress,
+                currentStreak: 6,
+                longestStreak: 10,
+                lastLoginDate: yesterday,
+                totalLogins: 20,
+                streakPoints: 150,
+            });
+
+            (prisma.userStreak.update as jest.Mock).mockResolvedValue({
+                walletAddress: mockWalletAddress,
+                currentStreak: 7,
+                longestStreak: 10,
+                lastLoginDate: new Date(),
+                totalLogins: 21,
+                streakPoints: 260,
+            });
+
+            (prisma.degenCard.findUnique as jest.Mock).mockResolvedValue({ id: 'card123' });
+            (prisma.badge.findFirst as jest.Mock).mockResolvedValue(null);
+
+            const result = await checkDailyStreak(mockWalletAddress);
+
+            expect(result.currentStreak).toBe(7);
+            expect(prisma.userStreak.update).toHaveBeenCalled();
+        });
     });
 
-    it('should increment streak on consecutive days', async () => {
-        const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000);
-        (prisma.userAnalytics.findUnique as jest.Mock).mockResolvedValue({
-            lastCheckIn: yesterday,
-            currentStreak: 5,
+    describe('getStreakLeaderboard', () => {
+        it('should return streak leaderboard', async () => {
+            const { prisma } = require('@/lib/prisma');
+            const mockLeaderboard = [
+                { walletAddress: 'whale1', currentStreak: 100 },
+                { walletAddress: 'whale2', currentStreak: 75 },
+            ];
+
+            (prisma.userStreak.findMany as jest.Mock).mockResolvedValue(mockLeaderboard);
+
+            const result = await getStreakLeaderboard(10);
+
+            expect(result).toHaveLength(2);
+            expect(prisma.userStreak.findMany).toHaveBeenCalled();
         });
 
-        await updateStreak(mockWallet);
-        expect(prisma.userAnalytics.update).toHaveBeenCalledWith(
-            expect.objectContaining({ data: expect.objectContaining({ currentStreak: 6 }) })
-        );
-    });
+        it('should handle errors gracefully', async () => {
+            const { prisma } = require('@/lib/prisma');
+            (prisma.userStreak.findMany as jest.Mock).mockRejectedValue(new Error('DB Error'));
 
-    it('should update longest streak', async () => {
-        (prisma.userAnalytics.findUnique as jest.Mock).mockResolvedValue({
-            currentStreak: 10,
-            longestStreak: 5,
+            const result = await getStreakLeaderboard();
+
+            expect(result).toEqual([]);
         });
-
-        await updateStreak(mockWallet);
-        expect(prisma.userAnalytics.update).toHaveBeenCalledWith(
-            expect.objectContaining({ data: expect.objectContaining({ longestStreak: 11 }) })
-        );
-    });
-
-    it('should check eligibility for check-in', async () => {
-        const today = new Date();
-        (prisma.userAnalytics.findUnique as jest.Mock).mockResolvedValue({
-            lastCheckIn: today,
-        });
-
-        const eligible = await checkStreakEligibility(mockWallet);
-        expect(eligible).toBe(false);
-    });
-
-    it('should allow check-in after 24 hours', async () => {
-        const yesterday = new Date(Date.now() - 25 * 60 * 60 * 1000);
-        (prisma.userAnalytics.findUnique as jest.Mock).mockResolvedValue({
-            lastCheckIn: yesterday,
-        });
-
-        const eligible = await checkStreakEligibility(mockWallet);
-        expect(eligible).toBe(true);
-    });
-
-    it('should handle first check-in', async () => {
-        (prisma.userAnalytics.findUnique as jest.Mock).mockResolvedValue(null);
-
-        await updateStreak(mockWallet);
-        expect(prisma.userAnalytics.create).toHaveBeenCalledWith(
-            expect.objectContaining({ data: expect.objectContaining({ currentStreak: 1 }) })
-        );
-    });
-
-    it('should award XP for streaks', async () => {
-        (prisma.userAnalytics.findUnique as jest.Mock).mockResolvedValue({
-            currentStreak: 6,
-        });
-
-        await updateStreak(mockWallet);
-        expect(prisma.userAnalytics.update).toHaveBeenCalledWith(
-            expect.objectContaining({ data: expect.objectContaining({ totalXP: expect.any(Number) }) })
-        );
-    });
-
-    it('should handle database errors', async () => {
-        (prisma.userAnalytics.findUnique as jest.Mock).mockRejectedValue(new Error('DB error'));
-
-        await expect(getStreakData(mockWallet)).rejects.toThrow();
     });
 });

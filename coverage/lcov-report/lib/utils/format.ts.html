@@ -23,9 +23,9 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">24% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/25</span>
+                <span class='fraction'>6/25</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">30% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/20</span>
+                <span class='fraction'>6/20</span>
             </div>
         
             
@@ -108,27 +108,27 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -138,7 +138,7 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -149,27 +149,27 @@
  * Format utility functions
  */
 &nbsp;
-export function <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >truncate(</span></span>text: string, length: number): string {
+export function <span class="fstat-no" title="function not covered" >truncate(</span>text: string, length: number): string {
 <span class="cstat-no" title="statement not covered" >    <span class="missing-if-branch" title="if path not taken" >I</span>if (text.length &lt;= length) <span class="cstat-no" title="statement not covered" >return text;</span></span>
 <span class="cstat-no" title="statement not covered" >    return `${text.substring(0, length)}...`;</span>
 }
 &nbsp;
-export function <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >capitalize(</span></span>text: string): string {
+export function <span class="fstat-no" title="function not covered" >capitalize(</span>text: string): string {
 <span class="cstat-no" title="statement not covered" >    return text.charAt(0).toUpperCase() + text.slice(1);</span>
 }
 &nbsp;
-export function <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >formatAddress(</span></span>address: string, chars: number = <span class="branch-0 cbranch-no" title="branch not covered" >4)</span>: string {
+export function <span class="fstat-no" title="function not covered" >formatAddress(</span>address: string, chars: number = <span class="branch-0 cbranch-no" title="branch not covered" >4)</span>: string {
 <span class="cstat-no" title="statement not covered" >    <span class="missing-if-branch" title="if path not taken" >I</span>if (!address) <span class="cstat-no" title="statement not covered" >return '';</span></span>
 <span class="cstat-no" title="statement not covered" >    <span class="missing-if-branch" title="if path not taken" >I</span>if (address.length &lt;= chars * 2) <span class="cstat-no" title="statement not covered" >return address;</span></span>
 <span class="cstat-no" title="statement not covered" >    return `${address.substring(0, chars)}...${address.substring(address.length - chars)}`;</span>
 }
 &nbsp;
-export function <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >pluralize(</span></span>count: number, singular: string, plural?: string): string {
+export function <span class="fstat-no" title="function not covered" >pluralize(</span>count: number, singular: string, plural?: string): string {
 <span class="cstat-no" title="statement not covered" >    <span class="missing-if-branch" title="if path not taken" >I</span>if (count === 1) <span class="cstat-no" title="statement not covered" >return singular;</span></span>
 <span class="cstat-no" title="statement not covered" >    return plural || `${singular}s`;</span>
 }
 &nbsp;
-export function <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >formatBytes(</span></span>bytes: number, decimals: number = <span class="branch-0 cbranch-no" title="branch not covered" >2)</span>: string {
+export function <span class="fstat-no" title="function not covered" >formatBytes(</span>bytes: number, decimals: number = <span class="branch-0 cbranch-no" title="branch not covered" >2)</span>: string {
 <span class="cstat-no" title="statement not covered" >    <span class="missing-if-branch" title="if path not taken" >I</span>if (bytes === 0) <span class="cstat-no" title="statement not covered" >return '0 Bytes';</span></span>
 &nbsp;
     const k = <span class="cstat-no" title="statement not covered" >1024;</span>
@@ -179,7 +179,7 @@ export function <span class="cstat-no" title="statement not covered" ><span clas
 <span class="cstat-no" title="statement not covered" >    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(decimals))} ${sizes[i]}`;</span>
 }
 &nbsp;
-export function <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >slugify(</span></span>text: string): string {
+export function <span class="fstat-no" title="function not covered" >slugify(</span>text: string): string {
 <span class="cstat-no" title="statement not covered" >    return text</span>
         .toLowerCase()
         .replace(/[^\w\s-]/g, '')
@@ -193,7 +193,7 @@ export function <span class="cstat-no" title="statement not covered" ><span clas
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-11-24T09:55:13.476Z
+                at 2025-11-24T23:17:22.883Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

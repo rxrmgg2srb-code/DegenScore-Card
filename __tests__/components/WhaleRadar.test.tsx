@@ -59,7 +59,7 @@ describe('WhaleRadar', () => {
       loading: true,
       topWhales: [],
     });
-    const { container } = render(React.createElement(null, null, 'MockedComponent'));
+    const { container } = render(React.createElement('div', null, 'MockedComponent'));
     expect(container.querySelector('.animate-pulse')).toBeInTheDocument();
   });
 
@@ -68,12 +68,12 @@ describe('WhaleRadar', () => {
       ...useWhaleRadar(),
       topWhales: [{ id: '1', name: 'Moby Dick' }],
     });
-    render(React.createElement(null, null, 'MockedComponent'));
+    render(React.createElement('div', null, 'MockedComponent'));
     expect(screen.getByText('Whale: Moby Dick')).toBeInTheDocument();
   });
 
   it('renders empty state for top whales', () => {
-    render(React.createElement(null, null, 'MockedComponent'));
+    render(React.createElement('div', null, 'MockedComponent'));
     expect(screen.getByText('No whales detected yet')).toBeInTheDocument();
   });
 
@@ -82,7 +82,7 @@ describe('WhaleRadar', () => {
       ...useWhaleRadar(),
       activeTab: 'following',
     });
-    render(React.createElement(null, null, 'MockedComponent'));
+    render(React.createElement('div', null, 'MockedComponent'));
     expect(screen.getByText('Connect your wallet to follow whales')).toBeInTheDocument();
   });
 
@@ -93,7 +93,7 @@ describe('WhaleRadar', () => {
       activeTab: 'following',
       followedWhales: [{ id: '2', name: 'Friendly Whale' }],
     });
-    render(React.createElement(null, null, 'MockedComponent'));
+    render(React.createElement('div', null, 'MockedComponent'));
     expect(screen.getByText('Whale: Friendly Whale')).toBeInTheDocument();
   });
 
@@ -104,7 +104,7 @@ describe('WhaleRadar', () => {
       activeTab: 'alerts',
       alerts: [{ id: '1', message: 'Big Buy!' }],
     });
-    render(React.createElement(null, null, 'MockedComponent'));
+    render(React.createElement('div', null, 'MockedComponent'));
     expect(screen.getByText('Alert: Big Buy!')).toBeInTheDocument();
   });
 });

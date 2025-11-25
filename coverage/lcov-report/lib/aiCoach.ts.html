@@ -30,9 +30,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">5% </span>
+                <span class="strong">4.16% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>3/60</span>
+                <span class='fraction'>3/72</span>
             </div>
         
             
@@ -429,10 +429,10 @@
 <a name='L364'></a><a href='#L364'>364</a>
 <a name='L365'></a><a href='#L365'>365</a>
 <a name='L366'></a><a href='#L366'>366</a>
-<a name='L367'></a><a href='#L367'>367</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
+<a name='L367'></a><a href='#L367'>367</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -443,17 +443,17 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -824,7 +824,7 @@ const COST_PER_OUTPUT_TOKEN = 0.00003; // $0.03 / 1000
 /**
  * Check if we're within daily AI budget
  */
-async function <span class="fstat-no" title="function not covered" >checkAIBudget(e</span>stimatedInputTokens: number): Promise&lt;void&gt; {
+async function <span class="fstat-no" title="function not covered" >checkAIBudget(</span>estimatedInputTokens: number): Promise&lt;void&gt; {
   const today = <span class="cstat-no" title="statement not covered" >new Date().toISOString().split('T')[0];</span>
   const costKey = <span class="cstat-no" title="statement not covered" >`ai:cost:${today}`;</span>
 &nbsp;
@@ -848,7 +848,7 @@ async function <span class="fstat-no" title="function not covered" >checkAIBudge
 /**
  * Track actual cost after API call
  */
-async function <span class="fstat-no" title="function not covered" >trackAICost(u</span>sage: OpenAI.CompletionUsage | undefined): Promise&lt;void&gt; {
+async function <span class="fstat-no" title="function not covered" >trackAICost(</span>usage: OpenAI.CompletionUsage | undefined): Promise&lt;void&gt; {
 <span class="cstat-no" title="statement not covered" >  <span class="missing-if-branch" title="if path not taken" >I</span>if (!usage) <span class="cstat-no" title="statement not covered" >return;</span></span>
 &nbsp;
   const today = <span class="cstat-no" title="statement not covered" >new Date().toISOString().split('T')[0];</span>
@@ -864,7 +864,7 @@ async function <span class="fstat-no" title="function not covered" >trackAICost(
   const newCost = <span class="cstat-no" title="statement not covered" >currentCost + actualCost;</span>
 &nbsp;
   // Store new cost with 25-hour TTL (covers timezone shifts)
-  const redis = <span class="cstat-no" title="statement not covered" >(await <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >import('</span>./cache/redis')</span>).default;</span>
+  const redis = <span class="cstat-no" title="statement not covered" >(<span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >await import('</span>./cache/redis'))</span>.default;</span>
 <span class="cstat-no" title="statement not covered" >  <span class="missing-if-branch" title="if path not taken" >I</span>if (redis) {</span>
 <span class="cstat-no" title="statement not covered" >    await redis.set(costKey, newCost.toString(), { ex: 25 * 60 * 60 });</span>
   }
@@ -925,7 +925,7 @@ export async function <span class="fstat-no" title="function not covered" >analy
     const prompt = <span class="cstat-no" title="statement not covered" >buildAnalysisPrompt(card, recentTrades, tradingStats);</span>
 &nbsp;
     // 4.5. Check AI budget before making expensive API call
-    const estimatedInputTokens = <span class="cstat-no" title="statement not covered" >Math.ceil(prompt.length / 4); /</span>/ Rough estimate: 1 token ≈ 4 chars
+    const estimatedInputTokens = <span class="cstat-no" title="statement not covered" >Math.ceil(prompt.length / 4);</span> // Rough estimate: 1 token ≈ 4 chars
 <span class="cstat-no" title="statement not covered" >    await checkAIBudget(estimatedInputTokens);</span>
 &nbsp;
 <span class="cstat-no" title="statement not covered" >    logger.debug('Sending to OpenAI:', { tradesCount: recentTrades.length, estimatedTokens: estimatedInputTokens });</span>
@@ -1005,13 +1005,13 @@ export async function <span class="fstat-no" title="function not covered" >analy
 /**
  * Calculate trading statistics from card and trades
  */
-function <span class="fstat-no" title="function not covered" >calculateTradingStats(c</span>ard: any, trades: any[]) {
+function <span class="fstat-no" title="function not covered" >calculateTradingStats(</span>card: any, trades: any[]) {
   const now = <span class="cstat-no" title="statement not covered" >new Date();</span>
   const oneDayAgo = <span class="cstat-no" title="statement not covered" >new Date(now.getTime() - 24 * 60 * 60 * 1000);</span>
   const oneWeekAgo = <span class="cstat-no" title="statement not covered" >new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);</span>
 &nbsp;
-  const tradesLast24h = <span class="cstat-no" title="statement not covered" >trades.filter(<span class="fstat-no" title="function not covered" >(t</span>) =&gt; <span class="cstat-no" title="statement not covered" >new Date(t.timestamp) &gt; oneDayAgo);</span></span>
-  const tradesLastWeek = <span class="cstat-no" title="statement not covered" >trades.filter(<span class="fstat-no" title="function not covered" >(t</span>) =&gt; <span class="cstat-no" title="statement not covered" >new Date(t.timestamp) &gt; oneWeekAgo);</span></span>
+  const tradesLast24h = <span class="cstat-no" title="statement not covered" >trades.filter(<span class="fstat-no" title="function not covered" >(t</span>) =&gt; <span class="cstat-no" title="statement not covered" >new Date(t.timestamp) &gt; oneDayAgo)</span>;</span>
+  const tradesLastWeek = <span class="cstat-no" title="statement not covered" >trades.filter(<span class="fstat-no" title="function not covered" >(t</span>) =&gt; <span class="cstat-no" title="statement not covered" >new Date(t.timestamp) &gt; oneWeekAgo)</span>;</span>
 &nbsp;
   // Calculate time-based patterns
   const hourlyDistribution = <span class="cstat-no" title="statement not covered" >trades.reduce(<span class="fstat-no" title="function not covered" >(a</span>cc, trade) =&gt; {</span>
@@ -1022,9 +1022,9 @@ function <span class="fstat-no" title="function not covered" >calculateTradingSt
 &nbsp;
   // Find most active hours
   const mostActiveHours = <span class="cstat-no" title="statement not covered" >Object.entries(hourlyDistribution)</span>
-    .sort(<span class="fstat-no" title="function not covered" >([</span>, a], [, b]) =&gt; <span class="cstat-no" title="statement not covered" >(b as number) - (a as number))</span>
+    .sort(<span class="fstat-no" title="function not covered" >([</span>, a], [, b]) =&gt; (<span class="cstat-no" title="statement not covered" >b as number) - (a as number))</span>
     .slice(0, 3)
-    .map(<span class="fstat-no" title="function not covered" >([</span>hour]) =&gt; <span class="cstat-no" title="statement not covered" >parseInt(hour));</span>
+    .map(<span class="fstat-no" title="function not covered" >([</span>hour]) =&gt; <span class="cstat-no" title="statement not covered" >parseInt(hour))</span>;
 &nbsp;
   // Token diversity
   const uniqueTokens = <span class="cstat-no" title="statement not covered" >new Set(trades.map(<span class="fstat-no" title="function not covered" >(t</span>) =&gt; <span class="cstat-no" title="statement not covered" >t.tokenSymbol)</span>).size;</span>
@@ -1045,7 +1045,7 @@ function <span class="fstat-no" title="function not covered" >calculateTradingSt
 /**
  * Build comprehensive prompt for AI analysis
  */
-function <span class="fstat-no" title="function not covered" >buildAnalysisPrompt(c</span>ard: any, trades: any[], stats: any): string {
+function <span class="fstat-no" title="function not covered" >buildAnalysisPrompt(</span>card: any, trades: any[], stats: any): string {
 <span class="cstat-no" title="statement not covered" >  return `Analyze this Solana trader's performance and provide coaching insights.</span>
 &nbsp;
 TRADER PROFILE:
@@ -1140,7 +1140,7 @@ export async function <span class="fstat-no" title="function not covered" >needs
     });
 &nbsp;
 <span class="cstat-no" title="statement not covered" >    <span class="missing-if-branch" title="if path not taken" >I</span>if (!latestAnalysis) {</span>
-<span class="cstat-no" title="statement not covered" >      return true; /</span>/ No analysis yet
+<span class="cstat-no" title="statement not covered" >      return true; </span>// No analysis yet
     }
 &nbsp;
     // Free users: 1 analysis per week
@@ -1150,7 +1150,7 @@ export async function <span class="fstat-no" title="function not covered" >needs
       select: { isPaid: true },
     });
 &nbsp;
-    const cooldownHours = <span class="cstat-no" title="statement not covered" >card?.isPaid ? 24 : 168; /</span>/ 24h for premium, 168h (7 days) for free
+    const cooldownHours = <span class="cstat-no" title="statement not covered" >card?.isPaid ? 24 : 168;</span> // 24h for premium, 168h (7 days) for free
 &nbsp;
     const hoursSinceLastAnalysis =
 <span class="cstat-no" title="statement not covered" >      (Date.now() - latestAnalysis.analyzedAt.getTime()) / (1000 * 60 * 60);</span>
@@ -1168,7 +1168,7 @@ export async function <span class="fstat-no" title="function not covered" >needs
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-11-24T09:55:13.476Z
+                at 2025-11-24T23:17:22.883Z
             </div>
         <script src="../prettify.js"></script>
         <script>

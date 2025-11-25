@@ -32,7 +32,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/22</span>
+                <span class='fraction'>0/34</span>
             </div>
         
             
@@ -330,8 +330,8 @@
 <a name='L265'></a><a href='#L265'>265</a>
 <a name='L266'></a><a href='#L266'>266</a>
 <a name='L267'></a><a href='#L267'>267</a>
-<a name='L268'></a><a href='#L268'>268</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-yes">3x</span>
+<a name='L268'></a><a href='#L268'>268</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -353,7 +353,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -366,7 +366,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -577,7 +577,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -764,9 +764,9 @@ export async function <span class="fstat-no" title="function not covered" >check
 /**
  * Get reward for a specific streak day
  */
-function <span class="fstat-no" title="function not covered" >getStreakReward(d</span>ay: number) {
+function <span class="fstat-no" title="function not covered" >getStreakReward(</span>day: number) {
   // Find the highest reward tier that applies
-  const rewards = <span class="cstat-no" title="statement not covered" >STREAK_REWARDS.filter(<span class="fstat-no" title="function not covered" >(r</span>) =&gt; <span class="cstat-no" title="statement not covered" >r.day &lt;= day).s</span>ort(<span class="fstat-no" title="function not covered" >(a</span>, b) =&gt; <span class="cstat-no" title="statement not covered" >b.day - a.day)</span>;</span>
+  const rewards = <span class="cstat-no" title="statement not covered" >STREAK_REWARDS.filter(<span class="fstat-no" title="function not covered" >(r</span>) =&gt; <span class="cstat-no" title="statement not covered" >r.day &lt;= day)</span>.sort(<span class="fstat-no" title="function not covered" >(a</span>, b) =&gt; <span class="cstat-no" title="statement not covered" >b.day - a.day)</span>;</span>
 &nbsp;
 <span class="cstat-no" title="statement not covered" >  <span class="missing-if-branch" title="if path not taken" >I</span>if (rewards.length &gt; 0 &amp;&amp; rewards[0] &amp;&amp; rewards[0].day === day) {</span>
     // Exact match - special reward
@@ -780,15 +780,15 @@ function <span class="fstat-no" title="function not covered" >getStreakReward(d<
 /**
  * Get next reward milestone
  */
-function <span class="fstat-no" title="function not covered" >getNextReward(c</span>urrentStreak: number) {
-  const next = <span class="cstat-no" title="statement not covered" >STREAK_REWARDS.find(<span class="fstat-no" title="function not covered" >(r</span>) =&gt; <span class="cstat-no" title="statement not covered" >r.day &gt; currentStreak);</span></span>
+function <span class="fstat-no" title="function not covered" >getNextReward(</span>currentStreak: number) {
+  const next = <span class="cstat-no" title="statement not covered" >STREAK_REWARDS.find(<span class="fstat-no" title="function not covered" >(r</span>) =&gt; <span class="cstat-no" title="statement not covered" >r.day &gt; currentStreak)</span>;</span>
 <span class="cstat-no" title="statement not covered" >  return next;</span>
 }
 &nbsp;
 /**
  * Award streak badge
  */
-async function <span class="fstat-no" title="function not covered" >awardStreakBadge(w</span>alletAddress: string, badgeKey: string, streakDays: number) {
+async function <span class="fstat-no" title="function not covered" >awardStreakBadge(</span>walletAddress: string, badgeKey: string, streakDays: number) {
 <span class="cstat-no" title="statement not covered" >  try {</span>
     // Check if badge already exists
     const existingBadge = <span class="cstat-no" title="statement not covered" >await prisma.badge.findFirst({</span>
@@ -801,7 +801,7 @@ async function <span class="fstat-no" title="function not covered" >awardStreakB
     });
 &nbsp;
 <span class="cstat-no" title="statement not covered" >    <span class="missing-if-branch" title="if path not taken" >I</span>if (existingBadge) {</span>
-<span class="cstat-no" title="statement not covered" >      return; /</span>/ Already has this badge
+<span class="cstat-no" title="statement not covered" >      return; </span>// Already has this badge
     }
 &nbsp;
     // Get user's card
@@ -810,7 +810,7 @@ async function <span class="fstat-no" title="function not covered" >awardStreakB
     });
 &nbsp;
 <span class="cstat-no" title="statement not covered" >    <span class="missing-if-branch" title="if path not taken" >I</span>if (!card) {</span>
-<span class="cstat-no" title="statement not covered" >      return; /</span>/ No card yet
+<span class="cstat-no" title="statement not covered" >      return; </span>// No card yet
     }
 &nbsp;
     // Award badge
@@ -833,7 +833,7 @@ async function <span class="fstat-no" title="function not covered" >awardStreakB
 /**
  * Get badge rarity based on streak length
  */
-function <span class="fstat-no" title="function not covered" >getBadgeRarity(d</span>ays: number): string {
+function <span class="fstat-no" title="function not covered" >getBadgeRarity(</span>days: number): string {
 <span class="cstat-no" title="statement not covered" >  <span class="missing-if-branch" title="if path not taken" >I</span>if (days &gt;= 100) <span class="cstat-no" title="statement not covered" >return 'Legendary';</span></span>
 <span class="cstat-no" title="statement not covered" >  <span class="missing-if-branch" title="if path not taken" >I</span>if (days &gt;= 60) <span class="cstat-no" title="statement not covered" >return 'Epic';</span></span>
 <span class="cstat-no" title="statement not covered" >  <span class="missing-if-branch" title="if path not taken" >I</span>if (days &gt;= 30) <span class="cstat-no" title="statement not covered" >return 'Rare';</span></span>
@@ -871,7 +871,7 @@ export async function <span class="fstat-no" title="function not covered" >getSt
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-11-24T09:55:13.476Z
+                at 2025-11-24T23:17:22.883Z
             </div>
         <script src="../prettify.js"></script>
         <script>

@@ -37,7 +37,7 @@ describe('FollowButton', () => {
   });
 
   it('renders counts only when not connected', () => {
-    render(React.createElement(null, null, 'MockedComponent'));
+    render(React.createElement('div', null, 'MockedComponent'));
     expect(screen.getByText(/followers/)).toBeInTheDocument();
     expect(screen.queryByRole('button')).not.toBeInTheDocument();
   });
@@ -47,7 +47,7 @@ describe('FollowButton', () => {
       publicKey: { toBase58: () => 'my-wallet' },
       connected: true,
     });
-    const { container } = render(React.createElement(null, null, 'MockedComponent'));
+    const { container } = render(React.createElement('div', null, 'MockedComponent'));
     expect(container).toBeEmptyDOMElement();
   });
 
@@ -67,7 +67,7 @@ describe('FollowButton', () => {
     });
 
     await act(async () => {
-      render(React.createElement(null, null, 'MockedComponent'));
+      render(React.createElement('div', null, 'MockedComponent'));
     });
 
     await waitFor(() => {
@@ -91,7 +91,7 @@ describe('FollowButton', () => {
     });
 
     await act(async () => {
-      render(React.createElement(null, null, 'MockedComponent'));
+      render(React.createElement('div', null, 'MockedComponent'));
     });
 
     await waitFor(() => {
@@ -120,7 +120,7 @@ describe('FollowButton', () => {
       });
 
     await act(async () => {
-      render(React.createElement(null, null, 'MockedComponent'));
+      render(React.createElement('div', null, 'MockedComponent'));
     });
 
     const button = screen.getByText('+ Follow');

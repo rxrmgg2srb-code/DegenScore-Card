@@ -32,7 +32,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/21</span>
+                <span class='fraction'>0/23</span>
             </div>
         
             
@@ -350,8 +350,8 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -378,7 +378,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -415,7 +415,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -479,7 +479,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -711,7 +711,7 @@ export async function getActiveFlashSales(): Promise&lt;FlashSale[]&gt; {
     });
 &nbsp;
     // Filter out sales that have reached max redemptions
-<span class="cstat-no" title="statement not covered" >    return sales.filter(<span class="fstat-no" title="function not covered" >sale =&gt; {</span></span>
+<span class="cstat-no" title="statement not covered" >    return sales.filter(<span class="fstat-no" title="function not covered" >sale </span>=&gt; {</span>
 <span class="cstat-no" title="statement not covered" >      <span class="missing-if-branch" title="if path not taken" >I</span>if (!sale.maxRedemptions) <span class="cstat-no" title="statement not covered" >return true;</span></span>
 <span class="cstat-no" title="statement not covered" >      return sale.currentRedemptions &lt; sale.maxRedemptions;</span>
     }) as FlashSale[];
@@ -729,7 +729,7 @@ export async function <span class="fstat-no" title="function not covered" >creat
     const startTime = <span class="cstat-no" title="statement not covered" >new Date();</span>
     const endTime = <span class="cstat-no" title="statement not covered" >new Date(startTime.getTime() + config.durationHours * 60 * 60 * 1000);</span>
 &nbsp;
-    const originalPrice = <span class="cstat-no" title="statement not covered" >0.05; /</span>/ 0.05 SOL base price
+    const originalPrice = <span class="cstat-no" title="statement not covered" >0.05;</span> // 0.05 SOL base price
     const salePrice = <span class="cstat-no" title="statement not covered" >originalPrice * (1 - config.discountPercent / 100);</span>
 &nbsp;
     const sale = <span class="cstat-no" title="statement not covered" >await prisma.flashSale.create({</span>
@@ -888,7 +888,7 @@ export function <span class="fstat-no" title="function not covered" >getRecommen
   const userTierValue = <span class="cstat-no" title="statement not covered" >tierPriority[userTier as keyof typeof tierPriority] ?? 999;</span>
 &nbsp;
   // Find the best sale for user's tier
-  const filteredSales = <span class="cstat-no" title="statement not covered" >FLASH_SALE_PRESETS.filter(<span class="fstat-no" title="function not covered" >sale =&gt; {</span></span>
+  const filteredSales = <span class="cstat-no" title="statement not covered" >FLASH_SALE_PRESETS.filter(<span class="fstat-no" title="function not covered" >sale </span>=&gt; {</span>
 <span class="cstat-no" title="statement not covered" >    <span class="missing-if-branch" title="if path not taken" >I</span>if (!sale.tier) <span class="cstat-no" title="statement not covered" >return true;</span></span>
     const saleTierValue = <span class="cstat-no" title="statement not covered" >tierPriority[sale.tier];</span>
 <span class="cstat-no" title="statement not covered" >    return saleTierValue &gt;= userTierValue;</span>
@@ -910,7 +910,7 @@ export { FLASH_SALE_PRESETS };
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-11-24T09:55:13.476Z
+                at 2025-11-24T23:17:22.883Z
             </div>
         <script src="../prettify.js"></script>
         <script>

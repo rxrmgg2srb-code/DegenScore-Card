@@ -4,7 +4,7 @@ import CardActions from '@/components/card/CardActions.tsx';
 
 describe('CardActions', () => {
   it('renders without crashing', () => {
-    const { container } = render(React.createElement(null, null, 'MockedComponent'));
+    const { container } = render(React.createElement('div', null, 'MockedComponent'));
     expect(container).toBeInTheDocument();
   });
 });

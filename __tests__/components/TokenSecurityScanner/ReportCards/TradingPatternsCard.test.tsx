@@ -13,7 +13,7 @@ const mockPatterns = {
 
 describe('TradingPatternsCard', () => {
   it('renders trading patterns correctly', () => {
-    render(React.createElement(null, null, 'MockedComponent'));
+    render(React.createElement('div', null, 'MockedComponent'));
     expect(screen.getByText(/Trading Patterns/i)).toBeInTheDocument();
     expect(screen.getByText('5')).toBeInTheDocument(); // Bundle Bots
     expect(screen.getByText('2')).toBeInTheDocument(); // Snipers
@@ -29,7 +29,7 @@ describe('TradingPatternsCard', () => {
       honeypotDetected: true,
       canSell: false,
     };
-    render(React.createElement(null, null, 'MockedComponent'));
+    render(React.createElement('div', null, 'MockedComponent'));
     expect(screen.getByText('⚠️ Detected')).toBeInTheDocument();
     expect(screen.getByText('🚨 DETECTED')).toBeInTheDocument();
     expect(screen.getByText('⛔ NO')).toBeInTheDocument();

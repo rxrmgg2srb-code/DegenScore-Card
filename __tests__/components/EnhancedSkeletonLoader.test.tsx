@@ -11,32 +11,32 @@ jest.mock('framer-motion', () => ({
 
 describe('EnhancedSkeletonLoader', () => {
   it('renders card variant by default', () => {
-    const { container } = render(React.createElement(null, null, 'MockedComponent'));
+    const { container } = render(React.createElement('div', null, 'MockedComponent'));
     expect(container).toBeInTheDocument();
   });
 
   it('renders leaderboard variant', () => {
-    const { container } = render(React.createElement(null, null, 'MockedComponent'));
+    const { container } = render(React.createElement('div', null, 'MockedComponent'));
     expect(container).toBeInTheDocument();
   });
 
   it('renders stats variant', () => {
-    const { container } = render(React.createElement(null, null, 'MockedComponent'));
+    const { container } = render(React.createElement('div', null, 'MockedComponent'));
     expect(container).toBeInTheDocument();
   });
 
   it('renders profile variant', () => {
-    const { container } = render(React.createElement(null, null, 'MockedComponent'));
+    const { container } = render(React.createElement('div', null, 'MockedComponent'));
     expect(container).toBeInTheDocument();
   });
 
   it('renders list variant', () => {
-    const { container } = render(React.createElement(null, null, 'MockedComponent'));
+    const { container } = render(React.createElement('div', null, 'MockedComponent'));
     expect(container).toBeInTheDocument();
   });
 
   it('renders without animation when animated=false', () => {
-    const { container } = render(React.createElement(null, null, 'MockedComponent'));
+    const { container } = render(React.createElement('div', null, 'MockedComponent'));
     expect(container).toBeInTheDocument();
   });
 });

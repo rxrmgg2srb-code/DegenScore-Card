@@ -4,7 +4,7 @@ import HeroButton from '@/components/HeroButton';
 
 describe('HeroButton', () => {
   it('renders with default text', () => {
-    render(React.createElement(null, null, 'MockedComponent'));
+    render(React.createElement('div', null, 'MockedComponent'));
     expect(screen.getByText(/Mint Your DegenCard Now/)).toBeInTheDocument();
   });
 
@@ -14,7 +14,7 @@ describe('HeroButton', () => {
   });
 
   it('renders with default href', () => {
-    const { container } = render(React.createElement(null, null, 'MockedComponent'));
+    const { container } = render(React.createElement('div', null, 'MockedComponent'));
     const link = container.querySelector('a');
     expect(link).toHaveAttribute('href', '/api/generate-card');
   });

@@ -24,7 +24,7 @@ jest.mock('next/head', () => {
 
 describe('TokenScannerPage', () => {
   it('renders page structure correctly', () => {
-    render(React.createElement(null, null, 'MockedComponent'));
+    render(React.createElement('div', null, 'MockedComponent'));
 
     expect(screen.getByTestId('header')).toBeInTheDocument();
     expect(screen.getByTestId('scanner')).toBeInTheDocument();

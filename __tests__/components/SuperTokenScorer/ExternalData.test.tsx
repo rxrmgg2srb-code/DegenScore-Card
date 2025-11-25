@@ -26,7 +26,7 @@ const mockResult = {
 
 describe('ExternalData', () => {
   it('renders external data sections correctly', () => {
-    render(React.createElement(null, null, 'MockedComponent'));
+    render(React.createElement('div', null, 'MockedComponent'));
 
     expect(screen.getByText('DexScreener')).toBeInTheDocument();
     expect(screen.getByText(/\$1.23000000/)).toBeInTheDocument(); // Price
@@ -42,7 +42,7 @@ describe('ExternalData', () => {
 
   it('renders nothing if no data is present', () => {
     const emptyResult = {} as any;
-    const { container } = render(React.createElement(null, null, 'MockedComponent'));
+    const { container } = render(React.createElement('div', null, 'MockedComponent'));
     expect(container).toBeEmptyDOMElement();
   });
 });

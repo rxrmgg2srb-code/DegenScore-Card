@@ -30,30 +30,30 @@ describe('BadgesDisplay', () => {
   ];
 
   it('renders badges correctly', () => {
-    render(React.createElement(null, null, 'MockedComponent'));
+    render(React.createElement('div', null, 'MockedComponent'));
     expect(screen.getByText('First Trade')).toBeInTheDocument();
     expect(screen.getByText('Whale Hunter')).toBeInTheDocument();
   });
 
   it('displays total points when showPoints is true', () => {
-    render(React.createElement(null, null, 'MockedComponent'));
+    render(React.createElement('div', null, 'MockedComponent'));
     expect(screen.getByText('110')).toBeInTheDocument();
     expect(screen.getByText('Achievement Points')).toBeInTheDocument();
   });
 
   it('hides points when showPoints is false', () => {
-    render(React.createElement(null, null, 'MockedComponent'));
+    render(React.createElement('div', null, 'MockedComponent'));
     expect(screen.queryByText('Achievement Points')).not.toBeInTheDocument();
   });
 
   it('limits displayed badges when maxDisplay is set', () => {
-    render(React.createElement(null, null, 'MockedComponent'));
+    render(React.createElement('div', null, 'MockedComponent'));
     expect(screen.getByText('First Trade')).toBeInTheDocument();
     expect(screen.queryByText('Whale Hunter')).not.toBeInTheDocument();
   });
 
   it('handles empty badges array', () => {
-    const { container } = render(React.createElement(null, null, 'MockedComponent'));
+    const { container } = render(React.createElement('div', null, 'MockedComponent'));
     expect(container).toBeInTheDocument();
   });
 });

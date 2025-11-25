@@ -35,7 +35,7 @@ describe('FollowingContent', () => {
   });
 
   it('renders connect wallet state when not connected', () => {
-    render(React.createElement(null, null, 'MockedComponent'));
+    render(React.createElement('div', null, 'MockedComponent'));
     expect(screen.getByText('Connect Your Wallet')).toBeInTheDocument();
     expect(screen.getByText('Conecta tu wallet para ver las wallets que sigues')).toBeInTheDocument();
   });
@@ -48,7 +48,7 @@ describe('FollowingContent', () => {
     (global.fetch as jest.Mock).mockImplementation(() => new Promise(() => { })); // Never resolves
 
     await act(async () => {
-      render(React.createElement(null, null, 'MockedComponent'));
+      render(React.createElement('div', null, 'MockedComponent'));
     });
 
     // Check for loading skeleton (animate-pulse)
@@ -86,7 +86,7 @@ describe('FollowingContent', () => {
     });
 
     await act(async () => {
-      render(React.createElement(null, null, 'MockedComponent'));
+      render(React.createElement('div', null, 'MockedComponent'));
     });
 
     await waitFor(() => {
@@ -109,7 +109,7 @@ describe('FollowingContent', () => {
     });
 
     await act(async () => {
-      render(React.createElement(null, null, 'MockedComponent'));
+      render(React.createElement('div', null, 'MockedComponent'));
     });
 
     await waitFor(() => {
@@ -127,7 +127,7 @@ describe('FollowingContent', () => {
     (global.fetch as jest.Mock).mockRejectedValue(new Error('API Error'));
 
     await act(async () => {
-      render(React.createElement(null, null, 'MockedComponent'));
+      render(React.createElement('div', null, 'MockedComponent'));
     });
 
     await waitFor(() => {

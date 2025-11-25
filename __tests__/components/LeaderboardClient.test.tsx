@@ -20,12 +20,12 @@ jest.mock('next/dynamic', () => ({
 
 describe('LeaderboardClient', () => {
   it('renders container correctly', () => {
-    const { container } = render(React.createElement(null, null, 'MockedComponent'));
+    const { container } = render(React.createElement('div', null, 'MockedComponent'));
     expect(container.querySelector('.container')).toBeInTheDocument();
   });
 
   it('renders grid layout', () => {
-    const { container } = render(React.createElement(null, null, 'MockedComponent'));
+    const { container } = render(React.createElement('div', null, 'MockedComponent'));
     const grid = container.querySelector('.grid');
     expect(grid).toBeInTheDocument();
     expect(grid).toHaveClass('grid-cols-1', 'lg:grid-cols-2');

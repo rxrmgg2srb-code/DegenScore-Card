@@ -4,7 +4,7 @@ import AlertCard from '@/components/WhaleRadar/AlertCard.tsx';
 
 describe('AlertCard', () => {
   it('renders without crashing', () => {
-    const { container } = render(React.createElement(null, null, 'MockedComponent'));
+    const { container } = render(React.createElement('div', null, 'MockedComponent'));
     expect(container).toBeInTheDocument();
   });
 });

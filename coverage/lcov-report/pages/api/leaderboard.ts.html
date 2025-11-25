@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">18.33% </span>
+                <span class="strong">5% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>11/60</span>
+                <span class='fraction'>3/60</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">3.5% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>2/57</span>
+                <span class='fraction'>0/57</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">12.5% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>1/8</span>
+                <span class='fraction'>0/8</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">18.64% </span>
+                <span class="strong">5.08% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>11/59</span>
+                <span class='fraction'>3/59</span>
             </div>
         
             
@@ -267,22 +267,22 @@
 <a name='L202'></a><a href='#L202'>202</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">12x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">12x</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">11x</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -468,22 +468,22 @@
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import type { NextApiRequest, NextApiResponse } from 'next';
 import { prisma } from '../../lib/prisma';
 import { validatePagination } from '../../lib/validation';
-import { rateLimit } from '../../lib/rateLimitRedis';
-import { logger } from '../../lib/logger';
-import { cacheGetOrSet, CacheKeys } from '../../lib/cache/redis';
-import { checkAllBadges } from '../../lib/badges-with-points';
+<span class="cstat-no" title="statement not covered" >import { rateLimit } from '../../lib/rateLimitRedis';</span>
+<span class="cstat-no" title="statement not covered" >import { logger } from '../../lib/logger';</span>
+<span class="cstat-no" title="statement not covered" >import { cacheGetOrSet, CacheKeys } from '../../lib/cache/redis';</span>
+<span class="cstat-no" title="statement not covered" >import { checkAllBadges } from '../../lib/badges-with-points';</span>
 &nbsp;
-export default async function handler(
+export default async function <span class="fstat-no" title="function not covered" >handler(</span>
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  if (req.method !== 'GET') {
-    return res.status(405).json({ error: 'Method not allowed' });
+<span class="cstat-no" title="statement not covered" >  <span class="missing-if-branch" title="if path not taken" >I</span>if (req.method !== 'GET') {</span>
+<span class="cstat-no" title="statement not covered" >    return res.status(405).json({ error: 'Method not allowed' });</span>
   }
 &nbsp;
   // Apply rate limiting
-  if (!(await rateLimit(req, res))) {
-    return;
+<span class="cstat-no" title="statement not covered" >  <span class="missing-if-branch" title="if path not taken" >I</span>if (!(await rateLimit(req, res))) {</span>
+<span class="cstat-no" title="statement not covered" >    return;</span>
   }
 &nbsp;
 <span class="cstat-no" title="statement not covered" >  try {</span>
@@ -495,12 +495,12 @@ export default async function handler(
 &nbsp;
     // Validate limit
     const { limit } = <span class="cstat-no" title="statement not covered" >validatePagination(undefined, limitParam);</span>
-    const safeLimit = <span class="cstat-no" title="statement not covered" >Math.min(limit, 100); /</span>/ Max 100 entries
+    const safeLimit = <span class="cstat-no" title="statement not covered" >Math.min(limit, 100);</span> // Max 100 entries
 &nbsp;
 <span class="cstat-no" title="statement not covered" >    logger.debug('Leaderboard request', { sortBy: sortField, limit: safeLimit, noCache: !!noCache });</span>
 &nbsp;
     // Data fetching function
-    const fetchData = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >async () =&gt; {</span></span>
+    const fetchData = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >async </span>() =&gt; {</span>
       // SOLO mostrar cards de quienes pagaron/descargaron (isPaid = true) y no eliminadas
       const cards = <span class="cstat-no" title="statement not covered" >await prisma.degenCard.findMany({</span>
         where: {
@@ -514,7 +514,7 @@ export default async function handler(
 &nbsp;
       // Calcular badgePoints y referralCount para cada card
       const cardsWithExtras = <span class="cstat-no" title="statement not covered" >await Promise.all(</span>
-        cards.map(<span class="fstat-no" title="function not covered" >async (c</span>ard) =&gt; {
+        cards.map(<span class="fstat-no" title="function not covered" >async </span>(card) =&gt; {
           // Calcular badge points y obtener badges desbloqueados
           const { badges, totalPoints } = <span class="cstat-no" title="statement not covered" >checkAllBadges({</span>
             totalVolume: card.totalVolume || 0,
@@ -540,7 +540,7 @@ export default async function handler(
           });
 &nbsp;
           // Solo retornar los primeros 8 badges y campos esenciales para reducir tamaño de respuesta
-          const simplifiedBadges = <span class="cstat-no" title="statement not covered" >badges.slice(0, 8).map(<span class="fstat-no" title="function not covered" >badge =&gt; (<span class="cstat-no" title="statement not covered" >{</span></span></span>
+          const simplifiedBadges = <span class="cstat-no" title="statement not covered" >badges.slice(0, 8).map(<span class="fstat-no" title="function not covered" >badge </span>=&gt; (<span class="cstat-no" title="statement not covered" >{</span></span>
             key: badge.key,
             icon: badge.icon,
             name: badge.name,
@@ -592,15 +592,15 @@ export default async function handler(
 <span class="cstat-no" title="statement not covered" >        sortedCards.sort(<span class="fstat-no" title="function not covered" >(a</span>, b) =&gt; {</span>
           const aValue = <span class="cstat-no" title="statement not covered" >sortField === 'badgePoints' ? (a.badgePoints || 0) : (a.referralCount || 0);</span>
           const bValue = <span class="cstat-no" title="statement not covered" >sortField === 'badgePoints' ? (b.badgePoints || 0) : (b.referralCount || 0);</span>
-<span class="cstat-no" title="statement not covered" >          return bValue - aValue; /</span>/ DESC
+<span class="cstat-no" title="statement not covered" >          return bValue - aValue; </span>// DESC
         });
       } else {
         // Para otros campos (likes, degenScore, etc.), ya vienen ordenados de Prisma
         // pero los re-ordenamos por si acaso después de añadir los campos extra
 <span class="cstat-no" title="statement not covered" >        sortedCards.sort(<span class="fstat-no" title="function not covered" >(a</span>, b) =&gt; {</span>
-          const aValue = <span class="cstat-no" title="statement not covered" >(a as any)[sortField] || 0;</span>
-          const bValue = <span class="cstat-no" title="statement not covered" >(b as any)[sortField] || 0;</span>
-<span class="cstat-no" title="statement not covered" >          return bValue - aValue; /</span>/ DESC
+          const aValue = (<span class="cstat-no" title="statement not covered" >a as any)[sortField] || 0;</span>
+          const bValue = (<span class="cstat-no" title="statement not covered" >b as any)[sortField] || 0;</span>
+<span class="cstat-no" title="statement not covered" >          return bValue - aValue; </span>// DESC
         });
       }
 &nbsp;
@@ -649,8 +649,8 @@ export default async function handler(
 <span class="cstat-no" title="statement not covered" >      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');</span>
     } else {
       const cacheKey = <span class="cstat-no" title="statement not covered" >`${CacheKeys.leaderboard()}:${sortField}:${safeLimit}`;</span>
-<span class="cstat-no" title="statement not covered" >      result = await cacheGetOrSet(cacheKey, fetchData, { ttl: 300 }); /</span>/ 5 minutos
-<span class="cstat-no" title="statement not covered" >      res.setHeader('Cache-Control', 'public, max-age=300'); /</span>/ 5 minutos
+<span class="cstat-no" title="statement not covered" >      result = await cacheGetOrSet(cacheKey, fetchData, { ttl: 300 }); </span>// 5 minutos
+<span class="cstat-no" title="statement not covered" >      res.setHeader('Cache-Control', 'public, max-age=300'); </span>// 5 minutos
     }
 &nbsp;
 <span class="cstat-no" title="statement not covered" >    res.status(200).json(result);</span>
@@ -673,7 +673,7 @@ export default async function handler(
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-11-24T09:55:13.476Z
+                at 2025-11-24T23:17:22.883Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

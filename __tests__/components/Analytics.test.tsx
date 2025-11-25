@@ -11,7 +11,7 @@ describe('Analytics', () => {
       activeUsers: 500,
       transactions: 250,
     };
-    render(React.createElement(null, null, 'MockedComponent'));
+    render(React.createElement('div', null, 'MockedComponent'));
     expect(screen.getByText('1000')).toBeInTheDocument();
   });
 });

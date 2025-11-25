@@ -14,18 +14,18 @@ jest.mock('next/head', () => {
 
 describe('SEOHead', () => {
   it('renders with default title', () => {
-    render(React.createElement(null, null, 'MockedComponent'));
+    render(React.createElement('div', null, 'MockedComponent'));
     // Component renders without errors
     expect(document.title).toBeDefined();
   });
 
   it('renders with custom title', () => {
-    render(React.createElement(null, null, 'MockedComponent'));
+    render(React.createElement('div', null, 'MockedComponent'));
     expect(document.title).toBeDefined();
   });
 
   it('renders with custom description', () => {
-    render(React.createElement(null, null, 'MockedComponent'));
+    render(React.createElement('div', null, 'MockedComponent'));
     expect(document.querySelector('meta[name="description"]')).toBeDefined();
   });
 });

@@ -20,7 +20,7 @@ jest.mock('next/link', () => {
 
 describe('NavigationButtons', () => {
   it('renders navigation buttons', () => {
-    render(React.createElement(null, null, 'MockedComponent'));
+    render(React.createElement('div', null, 'MockedComponent'));
 
     expect(screen.getByText('🏠 Home')).toBeInTheDocument();
     expect(screen.getByText('⚔️ Compare')).toBeInTheDocument();
@@ -29,7 +29,7 @@ describe('NavigationButtons', () => {
   });
 
   it('renders with correct href attributes', () => {
-    const { container } = render(React.createElement(null, null, 'MockedComponent'));
+    const { container } = render(React.createElement('div', null, 'MockedComponent'));
 
     const links = container.querySelectorAll('a');
     const hrefs = Array.from(links).map(link => link.getAttribute('href'));

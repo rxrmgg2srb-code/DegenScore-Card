@@ -4,7 +4,7 @@ import AnalyticsDashboard from '@/components/AnalyticsDashboard.tsx';
 
 describe('AnalyticsDashboard', () => {
   it('renders without crashing', () => {
-    const { container } = render(React.createElement(null, null, 'MockedComponent'));
+    const { container } = render(React.createElement('div', null, 'MockedComponent'));
     expect(container).toBeInTheDocument();
   });
 });

@@ -28,19 +28,19 @@ describe('GlobalStats', () => {
       trend: 5,
     };
 
-    render(React.createElement(null, null, 'MockedComponent'));
+    render(React.createElement('div', null, 'MockedComponent'));
     expect(screen.getByText('1000')).toBeInTheDocument();
   });
 
   it('renders loading state', () => {
-    render(React.createElement(null, null, 'MockedComponent'));
+    render(React.createElement('div', null, 'MockedComponent'));
     // Component should show loading indicators (skeletons or similar)
-    const { container } = render(React.createElement(null, null, 'MockedComponent'));
+    const { container } = render(React.createElement('div', null, 'MockedComponent'));
     expect(container).toBeInTheDocument();
   });
 
   it('renders error state', () => {
-    render(React.createElement(null, null, 'MockedComponent'));
+    render(React.createElement('div', null, 'MockedComponent'));
     expect(screen.getByText(/Failed to load stats/i)).toBeInTheDocument();
   });
 
@@ -55,7 +55,7 @@ describe('GlobalStats', () => {
     });
 
     await act(async () => {
-      render(React.createElement(null, null, 'MockedComponent'));
+      render(React.createElement('div', null, 'MockedComponent'));
     });
 
     await waitFor(() => {

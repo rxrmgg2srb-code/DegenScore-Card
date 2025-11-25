@@ -4,13 +4,13 @@ import ProfilePage from '@/pages/profile';
 
 describe('Pages/Profile', () => {
     it('should render profile page', () => {
-        render(React.createElement(null, null, 'MockedComponent'));
+        render(React.createElement('div', null, 'MockedComponent'));
         expect(screen.getByText(/profile/i)).toBeInTheDocument();
     });
 
     it('should show user info', () => {
         // Mock user data
-        render(React.createElement(null, null, 'MockedComponent'));
+        render(React.createElement('div', null, 'MockedComponent'));
         // ...
     });
 
@@ -23,7 +23,7 @@ describe('Pages/Profile', () => {
     });
 
     it('should allow editing', () => {
-        render(React.createElement(null, null, 'MockedComponent'));
+        render(React.createElement('div', null, 'MockedComponent'));
         expect(screen.getByText(/edit/i)).toBeInTheDocument();
     });
 

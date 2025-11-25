@@ -1,115 +1,167 @@
-import React from 'react';
-/**
- * Tests for /api/analyze endpoint
- * Testing wallet analysis flow
- */
+import { createMocks } from 'node-mocks-http';
+import { describe, it, expect, jest, beforeEach } from '@jest/globals';
+import handler from '@/pages/api/analyze';
+import { calculateAdvancedMetrics } from '@/lib/metrics';
+import { strictRateLimit } from '@/lib/rateLimitRedis';
+import { isValidSolanaAddress } from '@/lib/validation';
 
-import { NextApiRequest, NextApiResponse } from 'next';
+// Mocks
+jest.mock('@/lib/metrics', () => ({
+  calculateAdvancedMetrics: jest.fn(),
+}));
 
-describe('/api/analyze', () => {
-  let req: Partial<NextApiRequest>;
-  let res: Partial<NextApiResponse>;
+jest.mock('@/lib/badges-generator', () => ({
+  generateBadges: jest.fn().mockReturnValue([{ id: 'test-badge', name: 'Test Badge' }]),
+}));
 
+jest.mock('@/lib/validation', () => ({
+  isValidSolanaAddress: jest.fn(),
+}));
+
+jest.mock('@/lib/rateLimitRedis', () => ({
+  strictRateLimit: jest.fn(),
+}));
+
+jest.mock('@/lib/logger', () => ({
+  logger: {
+    info: jest.fn(),
+    error: jest.fn(),
+    warn: jest.fn(),
+  },
+}));
+
+describe('API: /api/analyze', () => {
   beforeEach(() => {
-    req = {
+    jest.clearAllMocks();
+    (strictRateLimit as jest.Mock).mockResolvedValue(true);
+    (isValidSolanaAddress as jest.Mock).mockReturnValue(true);
+    (calculateAdvancedMetrics as jest.Mock).mockResolvedValue({
+      degenScore: 85,
+      totalTrades: 100,
+      totalVolume: 5000,
+      profitLoss: 1000,
+      winRate: 0.6,
+      bestTrade: 500,
+      worstTrade: -100,
+      avgTradeSize: 50,
+      totalFees: 10,
+      tradingDays: 30,
+      rugsSurvived: 2,
+      rugsCaught: 1,
+      totalRugValue: 100,
+      moonshots: 5,
+      avgHoldTime: 3600,
+      quickFlips: 10,
+      diamondHands: 5,
+      realizedPnL: 800,
+      unrealizedPnL: 200,
+      firstTradeDate: 1600000000,
+      longestWinStreak: 5,
+      longestLossStreak: 2,
+      volatilityScore: 0.5,
+    });
+  });
+
+  it('should return 405 for non-POST requests', async () => {
+    const { req, res } = createMocks({
+      method: 'GET',
+    });
+
+    await handler(req, res);
+
+    expect(res._getStatusCode()).toBe(405);
+    expect(res._getJSONData()).toEqual({ error: 'Method not allowed' });
+  });
+
+  it('should return 400 if wallet address is missing', async () => {
+    const { req, res } = createMocks({
       method: 'POST',
       body: {},
-    };
-    res = {
-      status: jest.fn().mockReturnThis(),
-      json: jest.fn().mockReturnThis(),
-    };
+    });
+
+    await handler(req, res);
+
+    expect(res._getStatusCode()).toBe(400);
+    expect(res._getJSONData()).toEqual({ error: 'Wallet address is required' });
   });
 
-  describe('Request Validation', () => {
-    it('should reject non-POST requests', () => {
-      req.method = 'GET';
+  it('should return 400 if wallet address is invalid', async () => {
+    (isValidSolanaAddress as jest.Mock).mockReturnValue(false);
 
-      expect(req.method).not.toBe('POST');
+    const { req, res } = createMocks({
+      method: 'POST',
+      body: { walletAddress: 'invalid-address' },
     });
 
-    it('should require walletAddress in body', () => {
-      req.body = {};
+    await handler(req, res);
 
-      expect(req.body.walletAddress).toBeUndefined();
-    });
-
-    it('should validate Solana address format', () => {
-      const validAddress = '7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU';
-      const invalidAddress = 'invalid';
-
-      expect(validAddress.length).toBe(44);
-      expect(invalidAddress.length).not.toBe(44);
-    });
+    expect(res._getStatusCode()).toBe(400);
+    expect(res._getJSONData()).toEqual({ error: 'Invalid Solana wallet address' });
   });
 
-  describe('Rate Limiting', () => {
-    it('should enforce rate limits per wallet', () => {
-      const maxRequests = 10;
-      const timeWindow = 60 * 1000; // 1 minute
-
-      expect(maxRequests).toBe(10);
-      expect(timeWindow).toBe(60000);
+  it('should return 200 with analysis data for valid request', async () => {
+    const { req, res } = createMocks({
+      method: 'POST',
+      body: { walletAddress: 'valid-address' },
     });
 
-    it('should track request timestamps', () => {
-      const now = Date.now();
-      const requests = [now - 5000, now - 3000, now - 1000];
+    await handler(req, res);
 
-      const recentRequests = requests.filter(
-        time => now - time < 60000
-      );
-
-      expect(recentRequests.length).toBe(3);
-    });
+    expect(res._getStatusCode()).toBe(200);
+    const data = res._getJSONData();
+    expect(data.degenScore).toBe(85);
+    expect(data.badges).toBeDefined();
+    expect(data.level).toBe(9); // 85/10 + 1
   });
 
-  describe('Error Handling', () => {
-    it('should handle missing API keys gracefully', () => {
-      const apiKey = process.env.HELIUS_API_KEY;
+  it('should handle rate limiting', async () => {
+    (strictRateLimit as jest.Mock).mockResolvedValue(false);
 
-      if (!apiKey) {
-        expect(apiKey).toBeUndefined();
-      } else {
-        expect(apiKey).toBeTruthy();
-      }
+    const { req, res } = createMocks({
+      method: 'POST',
+      body: { walletAddress: 'valid-address' },
     });
 
-    it('should return 400 for invalid wallet addresses', () => {
-      const statusCode = 400;
+    await handler(req, res);
 
-      expect(statusCode).toBe(400);
-    });
-
-    it('should return 429 when rate limited', () => {
-      const statusCode = 429;
-
-      expect(statusCode).toBe(429);
-    });
-
-    it('should return 500 for internal errors', () => {
-      const statusCode = 500;
-
-      expect(statusCode).toBe(500);
-    });
+    // strictRateLimit handles the response itself
+    expect(calculateAdvancedMetrics).not.toHaveBeenCalled();
   });
 
-  describe('Response Format', () => {
-    it('should return metrics in correct format', () => {
-      const mockResponse = {
-        success: true,
-        metrics: {
-          degenScore: 75,
-          totalTrades: 100,
-          winRate: 60,
-          profitLoss: 5.5,
-        },
-      };
+  it('should handle analysis errors', async () => {
+    (calculateAdvancedMetrics as jest.Mock).mockRejectedValue(new Error('Analysis failed'));
 
-      expect(mockResponse.success).toBe(true);
-      expect(mockResponse.metrics).toHaveProperty('degenScore');
-      expect(mockResponse.metrics.degenScore).toBeGreaterThanOrEqual(0);
-      expect(mockResponse.metrics.degenScore).toBeLessThanOrEqual(100);
+    const { req, res } = createMocks({
+      method: 'POST',
+      body: { walletAddress: 'valid-address' },
     });
+
+    await handler(req, res);
+
+    expect(res._getStatusCode()).toBe(500);
+    expect(res._getJSONData()).toHaveProperty('error');
+  });
+
+  it('should handle timeout errors', async () => {
+    // Mock timeout error
+    (calculateAdvancedMetrics as jest.Mock).mockImplementation(() => {
+      return new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('timeout')), 100);
+      });
+    });
+
+    const { req, res } = createMocks({
+      method: 'POST',
+      body: { walletAddress: 'valid-address' },
+    });
+
+    // We need to wait for the promise race in the handler
+    // This is tricky to test perfectly without real timers, but we can simulate the rejection
+    (calculateAdvancedMetrics as jest.Mock).mockRejectedValue(new Error('Analysis timeout'));
+
+    await handler(req, res);
+
+    expect(res._getStatusCode()).toBe(504);
+    expect(res._getJSONData().details).toBe('Wallet analysis timeout');
   });
 });

@@ -13,7 +13,7 @@ const mockLiquidity = {
 
 describe('LiquidityCard', () => {
   it('renders liquidity metrics correctly', () => {
-    render(React.createElement(null, null, 'MockedComponent'));
+    render(React.createElement('div', null, 'MockedComponent'));
     expect(screen.getByText(/Liquidity Analysis/i)).toBeInTheDocument();
     expect(screen.getByText(/500.00 SOL/)).toBeInTheDocument();
     expect(screen.getByText(/\$50000/)).toBeInTheDocument();
@@ -28,7 +28,7 @@ describe('LiquidityCard', () => {
       lpLocked: false,
       riskLevel: 'CRITICAL',
     };
-    render(React.createElement(null, null, 'MockedComponent'));
+    render(React.createElement('div', null, 'MockedComponent'));
     expect(screen.getAllByText(/❌ No/)).toHaveLength(2);
     expect(screen.getByText('CRITICAL')).toBeInTheDocument();
   });

@@ -12,7 +12,7 @@ const mockRedFlags = {
 
 describe('RedFlagsCard', () => {
   it('renders red flags correctly', () => {
-    render(React.createElement(null, null, 'MockedComponent'));
+    render(React.createElement('div', null, 'MockedComponent'));
     expect(screen.getByText(/Security Warnings/i)).toBeInTheDocument();
     expect(screen.getByText('(3)')).toBeInTheDocument();
 

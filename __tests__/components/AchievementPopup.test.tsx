@@ -21,7 +21,7 @@ describe('AchievementPopup', () => {
   });
 
   it('returns null when no achievement', () => {
-    const { container } = render(React.createElement(null, null, 'MockedComponent'));
+    const { container } = render(React.createElement('div', null, 'MockedComponent'));
     expect(container).toBeEmptyDOMElement();
   });
 
@@ -34,7 +34,7 @@ describe('AchievementPopup', () => {
       rarity: 'common',
     };
 
-    render(React.createElement(null, null, 'MockedComponent'));
+    render(React.createElement('div', null, 'MockedComponent'));
     expect(screen.getByText('First Trade')).toBeInTheDocument();
     expect(screen.getByText('Complete your first trade')).toBeInTheDocument();
   });
@@ -48,7 +48,7 @@ describe('AchievementPopup', () => {
       rarity: 'legendary',
     };
 
-    render(React.createElement(null, null, 'MockedComponent'));
+    render(React.createElement('div', null, 'MockedComponent'));
     expect(screen.getByText('Perfect Score')).toBeInTheDocument();
   });
 
@@ -62,7 +62,7 @@ describe('AchievementPopup', () => {
       rarity: 'common',
     };
 
-    render(React.createElement(null, null, 'MockedComponent'));
+    render(React.createElement('div', null, 'MockedComponent'));
 
     jest.advanceTimersByTime(4300);
     expect(onClose).toHaveBeenCalled();

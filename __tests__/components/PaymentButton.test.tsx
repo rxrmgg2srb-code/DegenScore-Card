@@ -49,7 +49,7 @@ describe('PaymentButton', () => {
   });
 
   it('shows connect wallet message when not connected', () => {
-    render(React.createElement(null, null, 'MockedComponent'));
+    render(React.createElement('div', null, 'MockedComponent'));
     expect(screen.getByText('Connect your wallet to mint this card')).toBeInTheDocument();
   });
 
@@ -59,7 +59,7 @@ describe('PaymentButton', () => {
       sendTransaction: jest.fn(),
     });
 
-    render(React.createElement(null, null, 'MockedComponent'));
+    render(React.createElement('div', null, 'MockedComponent'));
     expect(screen.getByText(/Mint Card for/)).toBeInTheDocument();
   });
 
@@ -74,7 +74,7 @@ describe('PaymentButton', () => {
       json: async () => ({ success: true }),
     });
 
-    render(React.createElement(null, null, 'MockedComponent'));
+    render(React.createElement('div', null, 'MockedComponent'));
 
     const button = screen.getByText(/Mint Card for/);
 
@@ -99,7 +99,7 @@ describe('PaymentButton', () => {
       sendTransaction: jest.fn(),
     });
 
-    render(React.createElement(null, null, 'MockedComponent'));
+    render(React.createElement('div', null, 'MockedComponent'));
 
     // This test is more complex, we'd need to simulate the actual flow
     // For now, just verify the component renders

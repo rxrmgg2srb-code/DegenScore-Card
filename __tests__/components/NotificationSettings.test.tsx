@@ -20,13 +20,13 @@ describe('NotificationSettings', () => {
   });
 
   it('renders notification settings', () => {
-    render(React.createElement(null, null, 'MockedComponent'));
+    render(React.createElement('div', null, 'MockedComponent'));
     expect(screen.getByText(/Notification/i)).toBeInTheDocument();
   });
 
   it('renders when wallet not connected', () => {
     (useWallet as jest.Mock).mockReturnValue({ publicKey: null });
-    const { container } = render(React.createElement(null, null, 'MockedComponent'));
+    const { container } = render(React.createElement('div', null, 'MockedComponent'));
     expect(container).toBeInTheDocument();
   });
 });

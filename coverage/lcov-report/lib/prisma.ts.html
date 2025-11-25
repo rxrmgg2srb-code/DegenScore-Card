@@ -23,9 +23,9 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">83.33% </span>
+                <span class="strong">82.6% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>20/24</span>
+                <span class='fraction'>19/23</span>
             </div>
         
             
@@ -116,59 +116,59 @@
 <a name='L51'></a><a href='#L51'>51</a>
 <a name='L52'></a><a href='#L52'>52</a>
 <a name='L53'></a><a href='#L53'>53</a>
-<a name='L54'></a><a href='#L54'>54</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">18x</span>
+<a name='L54'></a><a href='#L54'>54</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">7x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">18x</span>
+<span class="cline-any cline-yes">7x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">18x</span>
-<span class="cline-any cline-yes">15x</span>
+<span class="cline-any cline-yes">7x</span>
+<span class="cline-any cline-yes">5x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">15x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">5x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">15x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">5x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">15x</span>
-<span class="cline-any cline-yes">15x</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-yes">5x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">15x</span>
+<span class="cline-any cline-yes">5x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">15x</span>
-<span class="cline-any cline-yes">15x</span>
-<span class="cline-any cline-yes">15x</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-yes">5x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">15x</span>
-<span class="cline-any cline-yes">15x</span>
-<span class="cline-any cline-yes">15x</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-yes">5x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">15x</span>
+<span class="cline-any cline-yes">5x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">89x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">7x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">18x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">7x</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { PrismaClient } from '@prisma/client';
 &nbsp;
 // Prevent multiple instances of Prisma Client in development
@@ -183,23 +183,23 @@ const getOptimalDatabaseUrl = () =&gt; {
     // 🚀 AUTOMATIC OPTIMIZATION FOR SUPABASE + VERCEL
     // If we are in production and using Supabase on port 5432 (Session Pooler),
     // we automatically switch to port 6543 (Transaction Pooler) which is designed for Serverless.
-    <span class="missing-if-branch" title="if path not taken" >I</span>if (process.env.NODE_ENV === 'production' &amp;&amp; <span class="branch-1 cbranch-no" title="branch not covered" >url.includes('supabase.com') &amp;&amp; <span class="branch-2 cbranch-no" title="branch not covered" >u</span>rl.includes(':5432')) {</span>
+    <span class="missing-if-branch" title="if path not taken" >I</span>if (process.env.NODE_ENV === 'production' &amp;&amp; <span class="branch-1 cbranch-no" title="branch not covered" >url.includes('supabase.com') </span>&amp;&amp; <span class="branch-2 cbranch-no" title="branch not covered" >url.includes(':5432'))</span> {
 <span class="cstat-no" title="statement not covered" >        console.log('⚡ Auto-optimizing Supabase connection: Switching to Transaction Pooler (port 6543)');</span>
 <span class="cstat-no" title="statement not covered" >        url = url.replace(':5432', ':6543');</span>
     }
 &nbsp;
     // Ensure query parameters exist
     const hasQueryParams = url.includes('?');
-    const separator = hasQueryParams ? <span class="branch-0 cbranch-no" title="branch not covered" >'&amp;' : '</span>?';
+    const separator = hasQueryParams ? <span class="branch-0 cbranch-no" title="branch not covered" >'&amp;' </span>: '?';
 &nbsp;
     // Append pgbouncer=true if using port 6543 (Transaction Pooler)
-    <span class="missing-if-branch" title="if path not taken" >I</span>if (url.includes(':6543') &amp;&amp; <span class="branch-1 cbranch-no" title="branch not covered" >!url.includes('pgbouncer=true')) {</span>
+    <span class="missing-if-branch" title="if path not taken" >I</span>if (url.includes(':6543') &amp;&amp; <span class="branch-1 cbranch-no" title="branch not covered" >!url.includes('pgbouncer=true'))</span> {
 <span class="cstat-no" title="statement not covered" >        url += `${separator}pgbouncer=true`;</span>
     }
 &nbsp;
     // Append connection_limit=1 for Serverless (prevent exhaustion)
     if (!url.includes('connection_limit=')) {
-        const sep = url.includes('?') ? <span class="branch-0 cbranch-no" title="branch not covered" >'&amp;' : '</span>?';
+        const sep = url.includes('?') ? <span class="branch-0 cbranch-no" title="branch not covered" >'&amp;' </span>: '?';
         url += `${sep}connection_limit=1`;
     }
 &nbsp;
@@ -218,7 +218,7 @@ export const prisma = globalForPrisma.prisma || new PrismaClient({
             url: getOptimalDatabaseUrl(),
         },
     },
-    log: process.env.NODE_ENV === 'development' ? <span class="branch-0 cbranch-no" title="branch not covered" >['error', 'warn'] : [</span>'error'],
+    log: process.env.NODE_ENV === 'development' ? <span class="branch-0 cbranch-no" title="branch not covered" >['error', 'warn'] </span>: ['error'],
 });
 &nbsp;
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
@@ -229,7 +229,7 @@ if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-11-24T09:55:13.476Z
+                at 2025-11-24T23:17:22.883Z
             </div>
         <script src="../prettify.js"></script>
         <script>

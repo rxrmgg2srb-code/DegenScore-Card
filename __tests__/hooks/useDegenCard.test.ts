@@ -1,119 +1,120 @@
-import React from 'react';
+import { describe, it, expect, jest, beforeEach } from '@jest/globals';
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { useDegenCard } from '@/hooks/useDegenCard';
-import { useWallet } from '@solana/wallet-adapter-react';
-import { PublicKey } from '@solana/web3.js';
-import { logger } from '@/lib/logger';
 
-// Mock dependencies 
-jest.mock('@solana/wallet-adapter-react');
-jest.mock('@/lib/logger');
+// Mock wallet
+const mockWallet = {
+    publicKey: { toBase58: () => 'So11111111111111111111111111111111111111112' },
+    connected: true,
+    disconnect: jest.fn(),
+};
 
-const mockUseWallet = useWallet as jest.MockedFunction<typeof useWallet>;
+jest.mock('@solana/wallet-adapter-react', () => ({
+    useWallet: () => mockWallet,
+}));
+
+jest.mock('@/lib/logger', () => ({
+    logger: {
+        info: jest.fn(),
+        error: jest.fn(),
+    },
+}));
+
+jest.mock('@/components/AchievementPopup', () => ({
+    achievements: {
+        legendary: { id: 'legendary', title: 'Legendary Degen' },
+        highScore: { id: 'highScore', title: 'High Scorer' },
+        firstCard: { id: 'firstCard', title: 'First Card' },
+        premiumUnlock: { id: 'premiumUnlock', title: 'Premium Member' },
+    },
+}));
+
 global.fetch = jest.fn();
 global.URL.createObjectURL = jest.fn(() => 'blob:mock-url');
 
-describe('useDegenCard', () => {
-    const mockPublicKey = new PublicKey('7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU');
-
+describe('useDegenCard (comprehensive)', () => {
     beforeEach(() => {
         jest.clearAllMocks();
-        mockUseWallet.mockReturnValue({
-            publicKey: mockPublicKey,
-            connected: true,
-        } as any);
+        jest.useFakeTimers();
+
+        // Default successful responses
+        (global.fetch as jest.Mock).mockImplementation((url) => {
+            if (url.includes('/api/analyze')) {
+                return Promise.resolve({
+                    ok: true,
+                    json: () => Promise.resolve({ degenScore: 85, badges: [], level: 5 }),
+                });
+            }
+            if (url.includes('/api/save-card')) {
+                return Promise.resolve({
+                    ok: true,
+                    json: () => Promise.resolve({ success: true }),
+                });
+            }
+            if (url.includes('/api/generate-card')) {
+                return Promise.resolve({
+                    ok: true,
+                    blob: () => Promise.resolve(new Blob(['fake image'], { type: 'image/png' })),
+                });
+            }
+            if (url.includes('/api/update-profile')) {
+                return Promise.resolve({
+                    ok: true,
+                    json: () => Promise.resolve({ success: true }),
+                });
+            }
+            return Promise.resolve({ ok: true, json: () => Promise.resolve({}) });
+        });
     });
 
-    describe('Initialization', () => {
+    afterEach(() => {
+        jest.runOnlyPendingTimers();
+        jest.useRealTimers();
+    });
+
+    describe('initialization', () => {
         it('should initialize with default state', () => {
             const { result } = renderHook(() => useDegenCard());
 
-            expect(result.current.walletAddress).toBe('');
-            expect(result.current.cardImage).toBe(null);
             expect(result.current.loading).toBe(false);
-            expect(result.current.error).toBe(null);
-            expect(result.current.hasPaid).toBe(false);
+            expect(result.current.error).toBeNull();
+            expect(result.current.cardImage).toBeNull();
+            expect(result.current.analyzing).toBe(false);
         });
 
-        it('should set mounted state on mount', () => {
+        it('should track wallet connection', () => {
             const { result } = renderHook(() => useDegenCard());
 
-            waitFor(() => {
-                expect(result.current.mounted).toBe(true);
-            });
+            expect(result.current.connected).toBe(true);
+            expect(result.current.publicKey).toBeDefined();
         });
     });
 
-    describe('generateCard - Connected Wallet', () => {
-        const mockAnalysisData = {
-            degenScore: 75,
-            totalTrades: 100,
-            winRate: 0.6,
-        };
-
-        beforeEach(() => {
-            (global.fetch as jest.Mock)
-                .mockResolvedValueOnce({
-                    ok: true,
-                    json: async () => mockAnalysisData,
-                })
-                .mockResolvedValueOnce({
-                    ok: true,
-                    json: async () => ({ success: true }),
-                })
-                .mockResolvedValueOnce({
-                    ok: true,
-                    blob: async () => new Blob(['image'], { type: 'image/png' }),
-                });
-        });
-
+    describe('generateCard', () => {
         it('should generate card successfully', async () => {
             const { result } = renderHook(() => useDegenCard());
 
             await act(async () => {
                 await result.current.generateCard();
+                jest.advanceTimersByTime(1000);
             });
 
-            await waitFor(() => {
-                expect(result.current.cardImage).toBe('blob:mock-url');
-            });
-
-            expect(result.current.walletAddress).toBe(mockPublicKey.toBase58());
-            expect(result.current.loading).toBe(false);
-            expect(result.current.error).toBe(null);
+            expect(global.fetch).toHaveBeenCalledWith(
+                '/api/analyze',
+                expect.objectContaining({ method: 'POST' })
+            );
+            expect(global.fetch).toHaveBeenCalledWith(
+                '/api/save-card',
+                expect.objectContaining({ method: 'POST' })
+            );
+            expect(global.fetch).toHaveBeenCalledWith(
+                '/api/generate-card',
+                expect.objectContaining({ method: 'POST' })
+            );
         });
 
-        it('should show celebration for high score', async () => {
-            (global.fetch as jest.Mock).mockClear().mockResolvedValueOnce({
-                ok: true,
-                json: async () => ({ ...mockAnalysisData, degenScore: 92 }),
-            }).mockResolvedValueOnce({
-                ok: true,
-                json: async () => ({ success: true }),
-            }).mockResolvedValueOnce({
-                ok: true,
-                blob: async () => new Blob(['img'], { type: 'image/png' }),
-            });
-
-            const { result } = renderHook(() => useDegenCard());
-
-            await act(async () => {
-                await result.current.generateCard();
-            });
-
-            await waitFor(() => {
-                expect(result.current.celebrationType).toBe('legendary');
-            }, { timeout: 3000 });
-        });
-    });
-
-    describe('generateCard - Disconnected Wallet', () => {
-        it('should show error when wallet not connected', async () => {
-            mockUseWallet.mockReturnValue({
-                publicKey: null,
-                connected: false,
-            } as any);
-
+        it('should handle disconnected wallet', async () => {
+            mockWallet.connected = false;
             const { result } = renderHook(() => useDegenCard());
 
             await act(async () => {
@@ -121,206 +122,171 @@ describe('useDegenCard', () => {
             });
 
             expect(result.current.error).toBe('Please connect your wallet first');
-            expect(fetch).not.toHaveBeenCalled();
+            mockWallet.connected = true;
+        });
+
+        it('should handle analysis errors', async () => {
+            (global.fetch as jest.Mock).mockImplementationOnce(() =>
+                Promise.resolve({
+                    ok: false,
+                    json: () => Promise.resolve({ error: 'Analysis failed' }),
+                })
+            );
+
+            const { result } = renderHook(() => useDegenCard());
+
+            await act(async () => {
+                await result.current.generateCard();
+            });
+
+            expect(result.current.error).toContain('Analysis failed');
+            expect(result.current.loading).toBe(false);
+        });
+
+        it('should update progress during generation', async () => {
+            const { result } = renderHook(() => useDegenCard());
+
+            await act(async () => {
+                const promise = result.current.generateCard();
+
+                await waitFor(() => {
+                    expect(result.current.analysisProgress).toBeGreaterThan(0);
+                });
+
+                await promise;
+            });
+
+            expect(result.current.analysisProgress).toBe(100);
+        });
+
+        it('should trigger celebration for high scores', async () => {
+            (global.fetch as jest.Mock).mockImplementation((url) => {
+                if (url.includes('/api/analyze')) {
+                    return Promise.resolve({
+                        ok: true,
+                        json: () => Promise.resolve({ degenScore: 95, badges: [] }),
+                    });
+                }
+                return Promise.resolve({
+                    ok: true,
+                    blob: () => Promise.resolve(new Blob()),
+                    json: () => Promise.resolve({ success: true }),
+                });
+            });
+
+            const { result } = renderHook(() => useDegenCard());
+
+            await act(async () => {
+                await result.current.generateCard();
+                jest.advanceTimersByTime(2000);
+            });
+
+            expect(result.current.celebrationType).toBe('legendary');
         });
     });
 
     describe('handleUpgrade', () => {
-        it('should set hasPaid and trigger celebration', () => {
+        it('should process upgrade correctly', () => {
             const { result } = renderHook(() => useDegenCard());
+
+            act(() => {
+                result.current.setShowUpgradeModal(true);
+            });
 
             act(() => {
                 result.current.handleUpgrade();
             });
 
-            expect(result.current.hasPaid).toBe(true);
             expect(result.current.showUpgradeModal).toBe(false);
-            expect(result.current.showCelebration).toBe(true);
+            expect(result.current.hasPaid).toBe(true);
             expect(result.current.celebrationType).toBe('premium-unlock');
-        });
-
-        it('should show profile modal after celebration', async () => {
-            const { result } = renderHook(() => useDegenCard());
-
-            act(() => {
-                result.current.handleUpgrade();
-            });
-
-            await waitFor(() => {
-                expect(result.current.showProfileModal).toBe(true);
-            }, { timeout: 2000 });
         });
     });
 
     describe('handleProfileSubmit', () => {
-        const mockProfileData = {
-            displayName: 'Test User',
-            bio: 'Test bio',
-            twitter: '@testuser',
-        };
-
         it('should save profile and regenerate card', async () => {
-            (global.fetch as jest.Mock)
-                .mockResolvedValueOnce({
-                    ok: true,
-                    json: async () => ({ success: true }),
-                })
-                .mockResolvedValueOnce({
-                    ok: true,
-                    blob: async () => new Blob(['premium-image'], { type: 'image/png' }),
-                });
-
             const { result } = renderHook(() => useDegenCard());
 
-            act(() => {
-                result.current.setShowProfileModal(true);
+            // First generate a card to set wallet address
+            await act(async () => {
+                await result.current.generateCard();
             });
+
+            const profileData = {
+                displayName: 'Test User',
+                bio: 'Test bio',
+                twitter: '@testuser',
+            };
 
             await act(async () => {
-                await result.current.handleProfileSubmit(mockProfileData);
+                await result.current.handleProfileSubmit(profileData);
             });
 
-            await waitFor(() => {
-                expect(result.current.hasPaid).toBe(true);
-            });
-
-            expect(fetch).toHaveBeenCalledWith('/api/update-profile', expect.any(Object));
-            expect(fetch).toHaveBeenCalledWith('/api/generate-card?nocache=true', expect.any(Object));
+            expect(global.fetch).toHaveBeenCalledWith(
+                '/api/update-profile',
+                expect.objectContaining({
+                    method: 'POST',
+                    body: expect.stringContaining('Test User'),
+                })
+            );
         });
 
         it('should handle profile save errors', async () => {
-            (global.fetch as jest.Mock).mockResolvedValueOnce({
-                ok: false,
-                json: async () => ({ error: 'Profile save failed' }),
-            });
-
-            const mockAlert = jest.spyOn(window, 'alert').mockImplementation();
-
             const { result } = renderHook(() => useDegenCard());
 
             await act(async () => {
-                await result.current.handleProfileSubmit(mockProfileData);
+                await result.current.generateCard();
             });
 
-            expect(mockAlert).toHaveBeenCalledWith(expect.stringContaining('Profile save failed'));
-            mockAlert.mockRestore();
+            (global.fetch as jest.Mock).mockImplementationOnce(() =>
+                Promise.resolve({
+                    ok: false,
+                    json: () => Promise.resolve({ error: 'Save failed' }),
+                })
+            );
+
+            // Mock alert
+            const alertMock = jest.spyOn(window, 'alert').mockImplementation();
+
+            await act(async () => {
+                await result.current.handleProfileSubmit({
+                    displayName: 'Test',
+                    bio: 'Test',
+                });
+            });
+
+            expect(alertMock).toHaveBeenCalled();
+            alertMock.mockRestore();
         });
     });
 
-    describe('Download Functions', () => {
-        it('should download premium card', () => {
+    describe('handleSkip', () => {
+        it('should enable free download mode', () => {
             const { result } = renderHook(() => useDegenCard());
-            const mockClick = jest.fn();
-
-            jest.spyOn(document.body, 'appendChild').mockImplementation();
-            jest.spyOn(document.body, 'removeChild').mockImplementation();
-            jest.spyOn(document, 'createElement').mockReturnValue({
-                click: mockClick,
-                download: '',
-                href: '',
-            } as any);
 
             act(() => {
-                result.current.downloadPremiumCard();
+                result.current.handleSkip();
+                jest.advanceTimersByTime(600);
             });
 
-            expect(mockClick).toHaveBeenCalled();
+            expect(result.current.showUpgradeModal).toBe(false);
+            expect(result.current.showShareModal).toBe(true);
         });
     });
 
-    describe('Share and Skip Flows', () => {
-        it('should handle shared action', () => {
+    describe('handleShared', () => {
+        it('should close share modal after sharing', () => {
             const { result } = renderHook(() => useDegenCard());
+
+            act(() => {
+                result.current.setShowShareModal(true);
+            });
 
             act(() => {
                 result.current.handleShared();
             });
 
             expect(result.current.showShareModal).toBe(false);
-        });
-
-        it('should handle skip share', () => {
-            const { result } = renderHook(() => useDegenCard());
-
-            act(() => {
-                result.current.handleSkipShare();
-            });
-
-            expect(result.current.showShareModal).toBe(false);
-        });
-
-        it('should handle skip upgrade and show share modal', async () => {
-            const { result } = renderHook(() => useDegenCard());
-
-            act(() => {
-                result.current.handleSkip();
-            });
-
-            expect(result.current.showUpgradeModal).toBe(false);
-
-            await waitFor(() => {
-                expect(result.current.showShareModal).toBe(true);
-            }, { timeout: 1000 });
-        });
-    });
-
-    describe('Promo Code Flow', () => {
-        it('should handle promo code users', () => {
-            const { result } = renderHook(() => useDegenCard());
-
-            act(() => {
-                result.current.setHasPromoCode(true);
-                result.current.setPromoCodeApplied('PROMO123');
-            });
-
-            expect(result.current.hasPromoCode).toBe(true);
-            expect(result.current.promoCodeApplied).toBe('PROMO123');
-        });
-    });
-
-    describe('Error Handling', () => {
-        it('should handle analyze API error', async () => {
-            (global.fetch as jest.Mock).mockResolvedValueOnce({
-                ok: false,
-                json: async () => ({ error: 'Analysis failed' }),
-            });
-
-            const { result } = renderHook(() => useDegenCard());
-
-            await act(async () => {
-                await result.current.generateCard();
-            });
-
-            expect(result.current.error).toBe('Analysis failed');
-            expect(result.current.loading).toBe(false);
-        });
-    });
-
-    describe('Achievement System', () => {
-        it('should trigger first card achievement', async () => {
-            (global.fetch as jest.Mock)
-                .mockResolvedValueOnce({
-                    ok: true,
-                    json: async () => ({ degenScore: 50 }),
-                })
-                .mockResolvedValueOnce({
-                    ok: true,
-                    json: async () => ({ success: true }),
-                })
-                .mockResolvedValueOnce({
-                    ok: true,
-                    blob: async () => new Blob(['img'], { type: 'image/png' }),
-                });
-
-            const { result } = renderHook(() => useDegenCard());
-
-            await act(async () => {
-                await result.current.generateCard();
-            });
-
-            await waitFor(() => {
-                expect(result.current.currentAchievement).toBeTruthy();
-            }, { timeout: 3000 });
         });
     });
 });

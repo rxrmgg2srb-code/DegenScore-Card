@@ -16,7 +16,7 @@ describe('CompareContent', () => {
   });
 
   it('renders input fields and compare button', () => {
-    render(React.createElement(null, null, 'MockedComponent'));
+    render(React.createElement('div', null, 'MockedComponent'));
     expect(screen.getByText(/Card Comparison/i)).toBeInTheDocument();
     expect(screen.getByPlaceholderText(/Enter first wallet address/i)).toBeInTheDocument();
     expect(screen.getByPlaceholderText(/Enter second wallet address/i)).toBeInTheDocument();
@@ -24,13 +24,13 @@ describe('CompareContent', () => {
   });
 
   it('shows error if wallets are missing', async () => {
-    render(React.createElement(null, null, 'MockedComponent'));
+    render(React.createElement('div', null, 'MockedComponent'));
     fireEvent.click(screen.getByRole('button', { name: /Compare Cards/i }));
     expect(await screen.findByText(/Please enter both wallet addresses/i)).toBeInTheDocument();
   });
 
   it('shows error if wallets are identical', async () => {
-    render(React.createElement(null, null, 'MockedComponent'));
+    render(React.createElement('div', null, 'MockedComponent'));
     fireEvent.change(screen.getByPlaceholderText(/Enter first wallet address/i), { target: { value: 'wallet1' } });
     fireEvent.change(screen.getByPlaceholderText(/Enter second wallet address/i), { target: { value: 'wallet1' } });
     fireEvent.click(screen.getByRole('button', { name: /Compare Cards/i }));
@@ -52,7 +52,7 @@ describe('CompareContent', () => {
       json: async () => mockComparisonData,
     });
 
-    render(React.createElement(null, null, 'MockedComponent'));
+    render(React.createElement('div', null, 'MockedComponent'));
     fireEvent.change(screen.getByPlaceholderText(/Enter first wallet address/i), { target: { value: 'wallet1' } });
     fireEvent.change(screen.getByPlaceholderText(/Enter second wallet address/i), { target: { value: 'wallet2' } });
     fireEvent.click(screen.getByRole('button', { name: /Compare Cards/i }));

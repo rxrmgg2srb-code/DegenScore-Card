@@ -24,17 +24,17 @@ const mockResult = {
 
 describe('MainScoreDisplay', () => {
   it('renders without crashing', () => {
-    const { container } = render(React.createElement(null, null, 'MockedComponent'));
+    const { container } = render(React.createElement('div', null, 'MockedComponent'));
     expect(container).toBeInTheDocument();
   });
 
   it('displays the token score', () => {
-    const { getByText } = render(React.createElement(null, null, 'MockedComponent'));
+    const { getByText } = render(React.createElement('div', null, 'MockedComponent'));
     expect(getByText('75')).toBeInTheDocument();
   });
 
   it('displays the token name and symbol', () => {
-    const { getByText } = render(React.createElement(null, null, 'MockedComponent'));
+    const { getByText } = render(React.createElement('div', null, 'MockedComponent'));
     expect(getByText(/TEST - Test Token/i)).toBeInTheDocument();
   });
 });

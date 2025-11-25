@@ -19,7 +19,7 @@ describe('HotFeedWidget', () => {
     (global.fetch as jest.Mock).mockImplementation(() => new Promise(() => { })); // Never resolves
 
     await act(async () => {
-      render(React.createElement(null, null, 'MockedComponent'));
+      render(React.createElement('div', null, 'MockedComponent'));
     });
 
     const skeleton = document.querySelector('.animate-pulse');
@@ -51,7 +51,7 @@ describe('HotFeedWidget', () => {
     });
 
     await act(async () => {
-      render(React.createElement(null, null, 'MockedComponent'));
+      render(React.createElement('div', null, 'MockedComponent'));
     });
 
     await waitFor(() => {
@@ -77,7 +77,7 @@ describe('HotFeedWidget', () => {
     });
 
     await act(async () => {
-      render(React.createElement(null, null, 'MockedComponent'));
+      render(React.createElement('div', null, 'MockedComponent'));
     });
 
     await waitFor(() => {
@@ -100,7 +100,7 @@ describe('HotFeedWidget', () => {
     });
 
     await act(async () => {
-      render(React.createElement(null, null, 'MockedComponent'));
+      render(React.createElement('div', null, 'MockedComponent'));
     });
 
     await waitFor(() => {
@@ -115,7 +115,7 @@ describe('HotFeedWidget', () => {
     (global.fetch as jest.Mock).mockRejectedValue(new Error('API Error'));
 
     await act(async () => {
-      render(React.createElement(null, null, 'MockedComponent'));
+      render(React.createElement('div', null, 'MockedComponent'));
     });
 
     // Should return null (render nothing) on error based on component logic

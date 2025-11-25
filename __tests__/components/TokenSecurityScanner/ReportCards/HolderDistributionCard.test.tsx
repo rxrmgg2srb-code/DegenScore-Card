@@ -14,7 +14,7 @@ const mockDistribution = {
 
 describe('HolderDistributionCard', () => {
   it('renders distribution metrics correctly', () => {
-    render(React.createElement(null, null, 'MockedComponent'));
+    render(React.createElement('div', null, 'MockedComponent'));
     expect(screen.getByText(/Holder Distribution/i)).toBeInTheDocument();
     expect(screen.getByText('1,500')).toBeInTheDocument();
     expect(screen.getByText('15.5%')).toBeInTheDocument();
@@ -28,7 +28,7 @@ describe('HolderDistributionCard', () => {
       bundleDetected: true,
       bundleWallets: 5,
     };
-    render(React.createElement(null, null, 'MockedComponent'));
+    render(React.createElement('div', null, 'MockedComponent'));
     expect(screen.getByText(/⚠️ 5 detected/)).toBeInTheDocument();
   });
 });

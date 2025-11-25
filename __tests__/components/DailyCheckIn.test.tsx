@@ -28,7 +28,7 @@ describe('DailyCheckIn', () => {
   });
 
   it('returns null when wallet not connected', () => {
-    const { container } = render(React.createElement(null, null, 'MockedComponent'));
+    const { container } = render(React.createElement('div', null, 'MockedComponent'));
     expect(container).toBeEmptyDOMElement();
   });
 
@@ -37,7 +37,7 @@ describe('DailyCheckIn', () => {
       publicKey: { toBase58: () => 'test-wallet' },
     });
 
-    render(React.createElement(null, null, 'MockedComponent'));
+    render(React.createElement('div', null, 'MockedComponent'));
     expect(screen.getByText('Daily Check-In')).toBeInTheDocument();
     expect(screen.getByText('Check In Now (+50 XP)')).toBeInTheDocument();
   });
@@ -57,7 +57,7 @@ describe('DailyCheckIn', () => {
       }),
     });
 
-    render(React.createElement(null, null, 'MockedComponent'));
+    render(React.createElement('div', null, 'MockedComponent'));
 
     const button = screen.getByText('Check In Now (+50 XP)');
 
@@ -85,7 +85,7 @@ describe('DailyCheckIn', () => {
       }),
     });
 
-    render(React.createElement(null, null, 'MockedComponent'));
+    render(React.createElement('div', null, 'MockedComponent'));
 
     await act(async () => {
       fireEvent.click(screen.getByText('Check In Now (+50 XP)'));
@@ -103,7 +103,7 @@ describe('DailyCheckIn', () => {
 
     (global.fetch as jest.Mock).mockRejectedValue(new Error('Network error'));
 
-    render(React.createElement(null, null, 'MockedComponent'));
+    render(React.createElement('div', null, 'MockedComponent'));
 
     await act(async () => {
       fireEvent.click(screen.getByText('Check In Now (+50 XP)'));

@@ -4,7 +4,7 @@ import StreakWidget from '@/components/Widgets/StreakWidget';
 
 describe('StreakWidget', () => {
   it('renders streak information correctly', () => {
-    render(React.createElement(null, null, 'MockedComponent'));
+    render(React.createElement('div', null, 'MockedComponent'));
 
     expect(screen.getByText('Current Streak')).toBeInTheDocument();
     expect(screen.getByText('5 days')).toBeInTheDocument();
@@ -13,7 +13,7 @@ describe('StreakWidget', () => {
   });
 
   it('renders zero streaks correctly', () => {
-    render(React.createElement(null, null, 'MockedComponent'));
+    render(React.createElement('div', null, 'MockedComponent'));
     expect(screen.getByText('0 days')).toBeInTheDocument();
   });
 });

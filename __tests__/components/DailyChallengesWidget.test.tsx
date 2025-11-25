@@ -37,7 +37,7 @@ describe('DailyChallengesWidget', () => {
     (global.fetch as jest.Mock).mockImplementation(() => new Promise(() => { }));
 
     await act(async () => {
-      render(React.createElement(null, null, 'MockedComponent'));
+      render(React.createElement('div', null, 'MockedComponent'));
     });
 
     // Check for loading skeleton (animate-pulse class)
@@ -63,7 +63,7 @@ describe('DailyChallengesWidget', () => {
     });
 
     await act(async () => {
-      render(React.createElement(null, null, 'MockedComponent'));
+      render(React.createElement('div', null, 'MockedComponent'));
     });
 
     await waitFor(() => {
@@ -79,7 +79,7 @@ describe('DailyChallengesWidget', () => {
     });
 
     await act(async () => {
-      render(React.createElement(null, null, 'MockedComponent'));
+      render(React.createElement('div', null, 'MockedComponent'));
     });
 
     await waitFor(() => {
@@ -91,7 +91,7 @@ describe('DailyChallengesWidget', () => {
     (global.fetch as jest.Mock).mockRejectedValue(new Error('Network error'));
 
     await act(async () => {
-      render(React.createElement(null, null, 'MockedComponent'));
+      render(React.createElement('div', null, 'MockedComponent'));
     });
 
     await waitFor(() => {
@@ -125,7 +125,7 @@ describe('DailyChallengesWidget', () => {
     });
 
     await act(async () => {
-      render(React.createElement(null, null, 'MockedComponent'));
+      render(React.createElement('div', null, 'MockedComponent'));
     });
 
     await waitFor(() => {
