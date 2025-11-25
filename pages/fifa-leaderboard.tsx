@@ -136,6 +136,10 @@ const mockLeaderboardData: FIFACardProps[] = [
 ];
 
 export default function FIFALeaderboard() {
+    const firstPlace = mockLeaderboardData[0];
+    const secondPlace = mockLeaderboardData[1];
+    const thirdPlace = mockLeaderboardData[2];
+
     return (
         <>
             <Head>
@@ -174,7 +178,7 @@ export default function FIFALeaderboard() {
                                 <div className="text-6xl mb-2">🥈</div>
                                 <div className="text-gray-400 font-bold">2nd Place</div>
                             </div>
-                            <FIFACard {...mockLeaderboardData[1]} />
+                            {secondPlace && <FIFACard {...secondPlace} />}
                         </motion.div>
 
                         {/* 1st Place (Taller) */}
@@ -188,7 +192,7 @@ export default function FIFALeaderboard() {
                                 <div className="text-8xl mb-2">🥇</div>
                                 <div className="text-yellow-400 font-black text-xl">CHAMPION</div>
                             </div>
-                            <FIFACard {...mockLeaderboardData[0]} />
+                            {firstPlace && <FIFACard {...firstPlace} />}
                         </motion.div>
 
                         {/* 3rd Place */}
@@ -201,7 +205,7 @@ export default function FIFALeaderboard() {
                                 <div className="text-6xl mb-2">🥉</div>
                                 <div className="text-gray-400 font-bold">3rd Place</div>
                             </div>
-                            <FIFACard {...mockLeaderboardData[2]} />
+                            {thirdPlace && <FIFACard {...thirdPlace} />}
                         </motion.div>
                     </div>
 
