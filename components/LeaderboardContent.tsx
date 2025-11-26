@@ -4,7 +4,7 @@ import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { LanguageSelector } from '../components/LanguageSelector';
 import { LeaderboardEntry, Stats, ViewMode, SortBy } from './leaderboard/types';
-import { LeaderboardCard } from './leaderboard/LeaderboardCard';
+import { FIFALeaderboardCard } from './leaderboard/FIFALeaderboardCard';
 import { LeaderboardTable } from './leaderboard/LeaderboardTable';
 import { LeaderboardStats } from './leaderboard/LeaderboardStats';
 import { LeaderboardFilters } from './leaderboard/LeaderboardFilters';
@@ -178,9 +178,9 @@ export function Leaderboard() {
                   {filteredLeaderboard.length > 0 ? (
                     <>
                       {viewMode === 'cards' && (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 justify-items-center">
                           {filteredLeaderboard.map((entry, index) => (
-                            <LeaderboardCard
+                            <FIFALeaderboardCard
                               key={entry.id}
                               entry={entry}
                               index={index}

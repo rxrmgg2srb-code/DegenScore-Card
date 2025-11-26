@@ -13,16 +13,23 @@ export interface FIFACardProps {
         totalVolume: number;
         profitLoss: number;
         totalTrades: number;
-        avgHoldTime: number;
+        avgHoldTime?: number;
         level: number;
     };
     badges: Array<{
         name: string;
         icon: string;
-        rarity: string;
+        rarity?: string;
     }>;
     twitter?: string;
     telegram?: string;
+    // Leaderboard specific props
+    id?: string;
+    likes?: number;
+    referralCount?: number;
+    badgePoints?: number;
+    onLike?: (cardId: string) => void;
+    userHasLiked?: boolean;
 }
 
 export default function FIFACard({
@@ -36,6 +43,12 @@ export default function FIFACard({
     badges,
     twitter,
     telegram,
+    id,
+    likes,
+    referralCount,
+    badgePoints,
+    onLike,
+    userHasLiked,
 }: FIFACardProps) {
     const [showDetails, setShowDetails] = useState(false);
     const [isFlipped, setIsFlipped] = useState(false);
@@ -150,14 +163,48 @@ export default function FIFACard({
                             <StatRow label="TRD" value={stats.totalTrades.toString()} color={cardColors.text} />
 
                             <StatRow label="VOL" value={abbreviateNumber(stats.totalVolume)} color={cardColors.text} />
-                            <StatRow label="HOD" value={Math.round(stats.avgHoldTime).toString()} color={cardColors.text} />
+                            <StatRow label="HOD" value={stats.avgHoldTime ? Math.round(stats.avgHoldTime).toString() : 'N/A'} color={cardColors.text} />
 
                             <StatRow label="P&L" value={abbreviateNumber(stats.profitLoss)} color={cardColors.text} />
                             <StatRow label="LVL" value={stats.level.toString()} color={cardColors.text} />
                         </div>
 
+                        {/* Social Stats (if leaderboard mode) */}
+                        {(likes !== undefined || referralCount !== undefined || badgePoints !== undefined) && (
+                            <div className="grid grid-cols-3 gap-1 mt-2 px-2">
+                                {likes !== undefined && (
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            if (onLike && id) onLike(id);
+                                        }}
+                                        className={`flex flex-col items-center justify-center py-1 rounded-lg transition-all ${
+                                            userHasLiked
+                                                ? 'bg-red-500/20 text-red-400'
+                                                : 'bg-black/30 text-gray-400 hover:bg-black/50'
+                                        }`}
+                                    >
+                                        <span className="text-sm">{userHasLiked ? '❤️' : '🤍'}</span>
+                                        <span className="text-[10px] font-bold">{likes}</span>
+                                    </button>
+                                )}
+                                {referralCount !== undefined && (
+                                    <div className="flex flex-col items-center justify-center py-1 rounded-lg bg-blue-500/10">
+                                        <span className="text-sm">👥</span>
+                                        <span className="text-[10px] font-bold text-blue-300">{referralCount}</span>
+                                    </div>
+                                )}
+                                {badgePoints !== undefined && (
+                                    <div className="flex flex-col items-center justify-center py-1 rounded-lg bg-yellow-500/10">
+                                        <span className="text-sm">⭐</span>
+                                        <span className="text-[10px] font-bold text-yellow-300">{badgePoints}</span>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
                         {/* Badges / Chemistry */}
-                        <div className="mt-auto flex gap-2 pt-2">
+                        <div className="mt-auto flex gap-2 pt-2 justify-center">
                             {badges.slice(0, 3).map((badge, i) => (
                                 <div key={i} className="text-lg filter drop-shadow-md" title={badge.name}>
                                     {badge.icon}
