@@ -58,9 +58,9 @@ export default function FIFACard({
         return () => clearTimeout(timer);
     }, []);
 
-    // Configuración visual según Ranking (Oro, Plata, Bronce)
-    const isGold = rank <= 10;
-    const isSilver = rank > 10 && rank <= 50;
+    // Configuración visual según DegenScore (Oro, Plata, Bronce)
+    const isGold = degenScore >= 80;
+    const isSilver = degenScore >= 60 && degenScore < 80;
 
 
     const cardColors = isGold

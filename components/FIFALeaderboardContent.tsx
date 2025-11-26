@@ -207,7 +207,7 @@ export default function FIFALeaderboardContent() {
                     <h2 className="text-4xl font-black text-white text-center mb-8">
                         Top 100 Traders
                     </h2>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 justify-items-center">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 justify-items-center">
                         {mockLeaderboardData.slice(3).map((trader, index) => (
                             <motion.div
                                 key={trader.walletAddress}
