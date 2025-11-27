@@ -4,6 +4,7 @@ import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import Head from 'next/head';
 import { Header } from '@/components/Header';
 import FIFACard from '@/components/FIFACard';
+import { logger } from '@/lib/logger';
 
 // 🔒 Admin wallet con acceso exclusivo al modo espía
 const ADMIN_WALLET = 'B7nB9QX1KC4QXp5GMxR8xzh3yzoqp6NjxSwfNBXtgPc1';
@@ -27,12 +28,31 @@ interface WalletCardData {
   telegram?: string;
 }
 
+interface ProfileFormData {
+  displayName: string;
+  twitter: string;
+  telegram: string;
+  profileImage: string | null;
+}
+
 export function SpyModeContent() {
   const { publicKey, connected } = useWallet();
   const [targetWallet, setTargetWallet] = useState('');
   const [cardData, setCardData] = useState<WalletCardData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [analysisData, setAnalysisData] = useState<any>(null); // Datos completos del análisis
+  const [showProfileForm, setShowProfileForm] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
+  const [profileForm, setProfileForm] = useState<ProfileFormData>({
+    displayName: '',
+    twitter: '',
+    telegram: '',
+    profileImage: null,
+  });
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
 
   // Verificar si el usuario es el admin
   const isAdmin = connected && publicKey?.toBase58() === ADMIN_WALLET;
@@ -46,6 +66,8 @@ export function SpyModeContent() {
     setLoading(true);
     setError('');
     setCardData(null);
+    setAnalysisData(null);
+    setSaveSuccess(false);
 
     try {
       const response = await fetch('/api/analyze', {
@@ -74,6 +96,9 @@ export function SpyModeContent() {
           return 'Bronze';
         };
 
+        // Guardar datos completos del análisis para usarlos al guardar
+        setAnalysisData(data.metrics);
+
         setCardData({
           walletAddress: targetWallet.trim(),
           displayName: data.metrics.displayName || undefined,
@@ -98,6 +123,113 @@ export function SpyModeContent() {
       console.error('Error analyzing wallet:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validar tamaño (5MB max)
+    if (file.size > 5 * 1024 * 1024) {
+      setError('La imagen debe ser menor a 5MB');
+      return;
+    }
+
+    // Validar tipo
+    if (!file.type.startsWith('image/')) {
+      setError('El archivo debe ser una imagen');
+      return;
+    }
+
+    setIsUploadingImage(true);
+    setError('');
+
+    try {
+      // Preview local
+      const reader = new FileReader();
+      reader.onloadend = () => setImagePreview(reader.result as string);
+      reader.readAsDataURL(file);
+
+      // Upload to server
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('walletAddress', targetWallet);
+
+      const response = await fetch('/api/upload-profile-image', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || 'Error al subir la imagen');
+      }
+
+      setProfileForm({ ...profileForm, profileImage: data.imageUrl });
+      logger.info('Image uploaded successfully', { imageUrl: data.imageUrl });
+    } catch (err: any) {
+      setError(err.message || 'Error al subir la imagen');
+      logger.error('Error uploading image', err);
+    } finally {
+      setIsUploadingImage(false);
+    }
+  };
+
+  const handleSaveToLeaderboard = async () => {
+    if (!profileForm.displayName.trim()) {
+      setError('El nombre es requerido');
+      return;
+    }
+
+    if (!analysisData || !cardData) {
+      setError('Primero debes analizar una wallet');
+      return;
+    }
+
+    setIsSaving(true);
+    setError('');
+
+    try {
+      const response = await fetch('/api/spy-mode/save-card', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          adminWallet: publicKey?.toBase58(),
+          targetWallet: targetWallet,
+          analysisData: analysisData,
+          profileData: profileForm,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Error al guardar la card');
+      }
+
+      setSaveSuccess(true);
+      setShowProfileForm(false);
+      logger.info('Card saved successfully to leaderboard', { cardId: data.card?.id });
+
+      // Resetear el formulario
+      setTimeout(() => {
+        setProfileForm({
+          displayName: '',
+          twitter: '',
+          telegram: '',
+          profileImage: null,
+        });
+        setImagePreview(null);
+      }, 2000);
+    } catch (err: any) {
+      setError(err.message || 'Error al guardar la card');
+      logger.error('Error saving card', err);
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -276,6 +408,162 @@ export function SpyModeContent() {
                       </div>
                     </div>
                   </div>
+
+                  {/* Mensaje de éxito */}
+                  {saveSuccess && (
+                    <div className="mt-6 p-6 bg-green-900/20 border border-green-500/50 rounded-lg text-center">
+                      <div className="text-5xl mb-3">✅</div>
+                      <h4 className="text-xl font-bold text-green-400 mb-2">
+                        ¡Card Premium Guardada!
+                      </h4>
+                      <p className="text-gray-300">
+                        La card se ha subido al leaderboard exitosamente
+                      </p>
+                      <a
+                        href="/leaderboard"
+                        className="inline-block mt-4 px-6 py-2 bg-green-500 hover:bg-green-600 text-white font-bold rounded-lg transition"
+                      >
+                        Ver en Leaderboard
+                      </a>
+                    </div>
+                  )}
+
+                  {/* Botón para guardar en leaderboard */}
+                  {!saveSuccess && (
+                    <div className="mt-8">
+                      {!showProfileForm ? (
+                        <button
+                          onClick={() => setShowProfileForm(true)}
+                          className="w-full bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white font-bold py-4 px-6 rounded-lg transition-all transform hover:scale-105"
+                        >
+                          💾 Guardar en Leaderboard (Gratis - Solo Admin)
+                        </button>
+                      ) : (
+                        <div className="bg-gray-800/50 backdrop-blur-lg rounded-2xl p-8 border border-green-500/20">
+                          <h4 className="text-2xl font-bold text-green-400 mb-6 text-center">
+                            📝 Datos del Influencer
+                          </h4>
+
+                          {/* Profile Image Upload */}
+                          <div className="flex flex-col items-center mb-6">
+                            <label className="text-gray-300 text-sm font-medium mb-3">
+                              Foto de Perfil
+                            </label>
+                            <div className="relative">
+                              <div className="w-32 h-32 rounded-full border-4 border-green-500/50 overflow-hidden bg-gray-800 flex items-center justify-center">
+                                {imagePreview ? (
+                                  <img
+                                    src={imagePreview}
+                                    alt="Profile preview"
+                                    className="w-full h-full object-cover"
+                                  />
+                                ) : (
+                                  <div className="text-gray-500 text-center">
+                                    <div className="text-4xl mb-2">📷</div>
+                                    <div className="text-xs">Subir</div>
+                                  </div>
+                                )}
+                              </div>
+                              <label
+                                htmlFor="spy-profile-image"
+                                className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 hover:opacity-100 transition cursor-pointer"
+                              >
+                                <span className="text-white text-sm font-bold">
+                                  {isUploadingImage ? '⏳' : '📸 Cambiar'}
+                                </span>
+                              </label>
+                              <input
+                                id="spy-profile-image"
+                                type="file"
+                                accept="image/*"
+                                onChange={handleImageUpload}
+                                disabled={isUploadingImage}
+                                className="hidden"
+                              />
+                            </div>
+                          </div>
+
+                          {/* Form Fields */}
+                          <div className="space-y-4">
+                            <div>
+                              <label className="block text-gray-300 text-sm font-medium mb-2">
+                                Nombre del Influencer *
+                              </label>
+                              <input
+                                type="text"
+                                value={profileForm.displayName}
+                                onChange={(e) =>
+                                  setProfileForm({ ...profileForm, displayName: e.target.value })
+                                }
+                                placeholder="Ej: CryptoGuru"
+                                className="w-full px-4 py-3 bg-gray-900/50 border border-green-500/30 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-green-500"
+                                required
+                              />
+                            </div>
+
+                            <div>
+                              <label className="block text-gray-300 text-sm font-medium mb-2">
+                                Twitter/X (opcional)
+                              </label>
+                              <input
+                                type="text"
+                                value={profileForm.twitter}
+                                onChange={(e) =>
+                                  setProfileForm({ ...profileForm, twitter: e.target.value })
+                                }
+                                placeholder="@username"
+                                className="w-full px-4 py-3 bg-gray-900/50 border border-green-500/30 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-green-500"
+                              />
+                            </div>
+
+                            <div>
+                              <label className="block text-gray-300 text-sm font-medium mb-2">
+                                Telegram (opcional)
+                              </label>
+                              <input
+                                type="text"
+                                value={profileForm.telegram}
+                                onChange={(e) =>
+                                  setProfileForm({ ...profileForm, telegram: e.target.value })
+                                }
+                                placeholder="@username"
+                                className="w-full px-4 py-3 bg-gray-900/50 border border-green-500/30 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-green-500"
+                              />
+                            </div>
+                          </div>
+
+                          {/* Action Buttons */}
+                          <div className="flex gap-4 mt-6">
+                            <button
+                              onClick={() => setShowProfileForm(false)}
+                              disabled={isSaving}
+                              className="flex-1 bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800 text-white font-bold py-3 px-6 rounded-lg transition"
+                            >
+                              Cancelar
+                            </button>
+                            <button
+                              onClick={handleSaveToLeaderboard}
+                              disabled={isSaving || !profileForm.displayName.trim()}
+                              className="flex-1 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 disabled:from-gray-600 disabled:to-gray-700 disabled:cursor-not-allowed text-white font-bold py-3 px-6 rounded-lg transition"
+                            >
+                              {isSaving ? (
+                                <div className="flex items-center justify-center gap-2">
+                                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                  <span>Guardando...</span>
+                                </div>
+                              ) : (
+                                '💾 Guardar Gratis'
+                              )}
+                            </button>
+                          </div>
+
+                          <p className="text-xs text-gray-500 mt-4 text-center">
+                            🎁 Modo Espía: Gratis solo para admin
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
