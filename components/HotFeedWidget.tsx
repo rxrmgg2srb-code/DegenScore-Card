@@ -31,13 +31,11 @@ export default function HotFeedWidget({ walletAddress }: { walletAddress?: strin
 
   const fetchHotFeed = async () => {
     try {
-      const url = walletAddress 
-        ? `/api/hot-feed?walletAddress=${walletAddress}`
-        : '/api/hot-feed';
-        
+      const url = walletAddress ? `/api/hot-feed?walletAddress=${walletAddress}` : '/api/hot-feed';
+
       const response = await fetch(url);
       const data = await response.json();
-      
+
       if (data.success) {
         setFeedData(data);
       }
@@ -56,7 +54,7 @@ export default function HotFeedWidget({ walletAddress }: { walletAddress?: strin
         <div className="animate-pulse">
           <div className="h-6 bg-gray-700 rounded w-1/2 mb-4"></div>
           <div className="space-y-3">
-            {[1, 2, 3].map(i => (
+            {[1, 2, 3].map((i) => (
               <div key={i} className="h-16 bg-gray-700 rounded"></div>
             ))}
           </div>
@@ -65,7 +63,9 @@ export default function HotFeedWidget({ walletAddress }: { walletAddress?: strin
     );
   }
 
-  if (!feedData) {return null;}
+  if (!feedData) {
+    return null;
+  }
 
   return (
     <div className="bg-gray-800/50 backdrop-blur-lg rounded-2xl p-6 border border-gray-700 shadow-xl">
@@ -79,7 +79,7 @@ export default function HotFeedWidget({ walletAddress }: { walletAddress?: strin
             {feedData.tier} • {feedData.delay} delay
           </p>
         </div>
-        
+
         {feedData.upgradeAvailable && (
           <button
             onClick={() => setShowUpgrade(true)}
@@ -93,11 +93,9 @@ export default function HotFeedWidget({ walletAddress }: { walletAddress?: strin
       {/* TRADES LIST */}
       <div className="space-y-3">
         {feedData.trades.length === 0 ? (
-          <div className="text-center text-gray-400 py-8">
-            No recent trades from top degens
-          </div>
+          <div className="text-center text-gray-400 py-8">No recent trades from top degens</div>
         ) : (
-          feedData.trades.map(trade => (
+          feedData.trades.map((trade) => (
             <div
               key={trade.id}
               className="bg-gray-900/50 rounded-xl p-4 border border-gray-600/50 hover:border-cyan-500/50 transition-all"
@@ -106,33 +104,35 @@ export default function HotFeedWidget({ walletAddress }: { walletAddress?: strin
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">
                     <span className="text-white font-bold">{trade.degen}</span>
-                    <span className={`px-2 py-0.5 rounded text-xs font-bold ${
-                      trade.degenScore >= 80 ? 'bg-yellow-500/20 text-yellow-300' :
-                      trade.degenScore >= 60 ? 'bg-cyan-500/20 text-cyan-300' :
-                      'bg-gray-500/20 text-gray-300'
-                    }`}>
+                    <span
+                      className={`px-2 py-0.5 rounded text-xs font-bold ${
+                        trade.degenScore >= 80
+                          ? 'bg-yellow-500/20 text-yellow-300'
+                          : trade.degenScore >= 60
+                            ? 'bg-cyan-500/20 text-cyan-300'
+                            : 'bg-gray-500/20 text-gray-300'
+                      }`}
+                    >
                       {trade.degenScore}
                     </span>
                   </div>
-                  
+
                   <div className="flex items-center gap-2 text-sm">
-                    <span className={`font-bold ${
-                      trade.type === 'buy' ? 'text-green-400' : 'text-red-400'
-                    }`}>
+                    <span
+                      className={`font-bold ${
+                        trade.type === 'buy' ? 'text-green-400' : 'text-red-400'
+                      }`}
+                    >
                       {trade.type === 'buy' ? '🟢 BUY' : '🔴 SELL'}
                     </span>
                     <span className="text-gray-400">•</span>
-                    <span className="text-white font-mono">
-                      {trade.solAmount} SOL
-                    </span>
+                    <span className="text-white font-mono">{trade.solAmount} SOL</span>
                     <span className="text-gray-400">•</span>
                     <span className="text-cyan-400">{trade.tokenSymbol}</span>
                   </div>
                 </div>
-                
-                <div className="text-xs text-gray-500">
-                  {trade.timeAgo}
-                </div>
+
+                <div className="text-xs text-gray-500">{trade.timeAgo}</div>
               </div>
             </div>
           ))
@@ -141,34 +141,39 @@ export default function HotFeedWidget({ walletAddress }: { walletAddress?: strin
 
       {/* UPGRADE MODAL */}
       {showUpgrade && (
-        <UpgradeModalHotFeed 
-          onClose={() => setShowUpgrade(false)}
-          currentTier={feedData.tier}
-        />
+        <UpgradeModalHotFeed onClose={() => setShowUpgrade(false)} currentTier={feedData.tier} />
       )}
     </div>
   );
 }
 
-function UpgradeModalHotFeed({ onClose, currentTier }: { onClose: () => void; currentTier: string }) {
+function UpgradeModalHotFeed({
+  onClose,
+  currentTier,
+}: {
+  onClose: () => void;
+  currentTier: string;
+}) {
   return (
-    <div 
-  className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4 pt-32"
-  onClick={onClose}
->
-      <div 
+    <div
+      className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4 pt-32"
+      onClick={onClose}
+    >
+      <div
         className="bg-gray-800 rounded-2xl max-w-md w-full p-6 border-2 border-orange-500"
         onClick={(e) => e.stopPropagation()}
       >
         <h2 className="text-2xl font-bold text-white mb-4 text-center">
           ⚡ Upgrade Hot Feed Access
         </h2>
-        
+
         <div className="space-y-3 mb-6">
           {/* FREE TIER */}
-          <div className={`p-3 rounded-xl border-2 ${
-            currentTier === 'FREE' ? 'border-gray-500 bg-gray-700/50' : 'border-gray-600'
-          }`}>
+          <div
+            className={`p-3 rounded-xl border-2 ${
+              currentTier === 'FREE' ? 'border-gray-500 bg-gray-700/50' : 'border-gray-600'
+            }`}
+          >
             <div className="flex justify-between items-center mb-2">
               <h3 className="text-lg font-bold text-gray-300">FREE</h3>
               <span className="text-xl font-black text-gray-300">$0</span>
@@ -181,9 +186,11 @@ function UpgradeModalHotFeed({ onClose, currentTier }: { onClose: () => void; cu
           </div>
 
           {/* BASIC TIER */}
-          <div className={`p-3 rounded-xl border-2 ${
-            currentTier === 'BASIC' ? 'border-cyan-500 bg-cyan-500/10' : 'border-cyan-600'
-          }`}>
+          <div
+            className={`p-3 rounded-xl border-2 ${
+              currentTier === 'BASIC' ? 'border-cyan-500 bg-cyan-500/10' : 'border-cyan-600'
+            }`}
+          >
             <div className="flex justify-between items-center mb-2">
               <h3 className="text-lg font-bold text-cyan-400">BASIC</h3>
               <span className="text-xl font-black text-cyan-400">0.1 SOL</span>
@@ -196,9 +203,11 @@ function UpgradeModalHotFeed({ onClose, currentTier }: { onClose: () => void; cu
           </div>
 
           {/* PRO TIER */}
-          <div className={`p-3 rounded-xl border-2 ${
-            currentTier === 'PRO' ? 'border-orange-500 bg-orange-500/10' : 'border-orange-600'
-          }`}>
+          <div
+            className={`p-3 rounded-xl border-2 ${
+              currentTier === 'PRO' ? 'border-orange-500 bg-orange-500/10' : 'border-orange-600'
+            }`}
+          >
             <div className="flex justify-between items-center mb-2">
               <h3 className="text-lg font-bold text-orange-400">PRO</h3>
               <span className="text-xl font-black text-orange-400">0.5 SOL/mo</span>

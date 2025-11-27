@@ -37,8 +37,12 @@ export function WalletConnectionHandler() {
 
       // Warn if multiple connection attempts detected
       if (connecting && connectingRef.current) {
-        console.warn('⚠️ Multiple connection attempts detected. This may cause "Connection declined" error.');
-        console.warn('💡 Close all tabs and try again, or wait for current connection to complete.');
+        console.warn(
+          '⚠️ Multiple connection attempts detected. This may cause "Connection declined" error.'
+        );
+        console.warn(
+          '💡 Close all tabs and try again, or wait for current connection to complete.'
+        );
       }
     }
   }, [wallet, connecting, connected, publicKey]);
@@ -60,6 +64,5 @@ export function WalletConnectionHandler() {
   // This component doesn't render anything
   return null;
 }
-
 
 export default WalletConnectionHandler;

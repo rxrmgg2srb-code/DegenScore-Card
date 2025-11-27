@@ -20,9 +20,7 @@ export default function SettingsContent() {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
           <div className="flex items-center gap-4">
             <Link href="/">
-              <button className="text-gray-400 hover:text-white transition">
-                ← Volver
-              </button>
+              <button className="text-gray-400 hover:text-white transition">← Volver</button>
             </Link>
             <h1 className="text-3xl font-bold gradient-text-gold">⚙️ Configuración</h1>
           </div>
@@ -78,16 +76,16 @@ export default function SettingsContent() {
               <h3 className="text-xl font-bold text-white mb-4">🔒 Privacidad y Seguridad</h3>
               <div className="space-y-3 text-sm text-gray-400">
                 <p>
-                  <strong className="text-white">🔐 Seguridad:</strong> Tu wallet es verificada mediante firma criptográfica.
-                  Nunca compartimos tus claves privadas.
+                  <strong className="text-white">🔐 Seguridad:</strong> Tu wallet es verificada
+                  mediante firma criptográfica. Nunca compartimos tus claves privadas.
                 </p>
                 <p>
-                  <strong className="text-white">📊 Datos:</strong> Solo analizamos transacciones públicas de la blockchain.
-                  Tus datos de notificaciones son privados y encriptados.
+                  <strong className="text-white">📊 Datos:</strong> Solo analizamos transacciones
+                  públicas de la blockchain. Tus datos de notificaciones son privados y encriptados.
                 </p>
                 <p>
-                  <strong className="text-white">🔕 Control:</strong> You can disable notifications at any time.
-                  Tus preferencias se guardan de forma segura.
+                  <strong className="text-white">🔕 Control:</strong> You can disable notifications
+                  at any time. Tus preferencias se guardan de forma segura.
                 </p>
               </div>
             </div>

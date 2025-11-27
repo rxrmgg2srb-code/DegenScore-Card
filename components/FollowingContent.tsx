@@ -37,7 +37,9 @@ export default function FollowingContent() {
   }, [connected, publicKey]);
 
   const fetchFollowedWallets = async () => {
-    if (!publicKey) {return;}
+    if (!publicKey) {
+      return;
+    }
 
     setLoading(true);
     setError(null);
@@ -55,7 +57,7 @@ export default function FollowingContent() {
       setFollowedWallets(data.wallets);
     } catch (err: any) {
       logger.error('Error fetching followed wallets', err instanceof Error ? err : undefined, {
-        error: String(err)
+        error: String(err),
       });
       setError(err.message);
     } finally {
@@ -82,9 +84,7 @@ export default function FollowingContent() {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
           <div className="flex items-center gap-4">
             <Link href="/">
-              <button className="text-gray-400 hover:text-white transition">
-                ← Volver
-              </button>
+              <button className="text-gray-400 hover:text-white transition">← Volver</button>
             </Link>
             <h1 className="text-3xl font-bold gradient-text-gold">Following</h1>
           </div>
@@ -96,9 +96,7 @@ export default function FollowingContent() {
           <div className="text-center bg-gray-800/50 rounded-lg p-12 max-w-2xl mx-auto">
             <div className="text-6xl mb-4">🔒</div>
             <h2 className="text-2xl font-bold text-white mb-2">Connect Your Wallet</h2>
-            <p className="text-gray-400 mb-6">
-              Connect your wallet to see the wallets you follow
-            </p>
+            <p className="text-gray-400 mb-6">Connect your wallet to see the wallets you follow</p>
             <WalletMultiButton />
           </div>
         ) : loading ? (
@@ -142,8 +140,12 @@ export default function FollowingContent() {
             <div className="bg-gray-800/50 rounded-lg p-4 mb-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-lg font-bold text-white">Siguiendo {followedWallets.length} wallets</h3>
-                  <p className="text-sm text-gray-400">Trackea su progreso y recibe notificaciones</p>
+                  <h3 className="text-lg font-bold text-white">
+                    Siguiendo {followedWallets.length} wallets
+                  </h3>
+                  <p className="text-sm text-gray-400">
+                    Trackea su progreso y recibe notificaciones
+                  </p>
                 </div>
                 <button
                   onClick={fetchFollowedWallets}
@@ -159,10 +161,7 @@ export default function FollowingContent() {
               {followedWallets.map((followed) => {
                 const { card } = followed;
                 return (
-                  <Link
-                    key={followed.walletAddress}
-                    href={`/profile/${followed.walletAddress}`}
-                  >
+                  <Link key={followed.walletAddress} href={`/profile/${followed.walletAddress}`}>
                     <div className="bg-gray-800/50 rounded-lg p-4 hover:bg-gray-800/70 transition cursor-pointer border border-gray-700 hover:border-purple-500">
                       {/* Profile Header */}
                       <div className="flex items-center gap-3 mb-3">
@@ -202,15 +201,11 @@ export default function FollowingContent() {
                         </div>
                         <div className="bg-gray-900/50 rounded p-2">
                           <div className="text-xs text-gray-400">Win Rate</div>
-                          <div className="text-lg font-bold text-green-400">
-                            {card.winRate}%
-                          </div>
+                          <div className="text-lg font-bold text-green-400">{card.winRate}%</div>
                         </div>
                         <div className="bg-gray-900/50 rounded p-2">
                           <div className="text-xs text-gray-400">Trades</div>
-                          <div className="text-sm font-bold text-blue-400">
-                            {card.totalTrades}
-                          </div>
+                          <div className="text-sm font-bold text-blue-400">{card.totalTrades}</div>
                         </div>
                         <div className="bg-gray-900/50 rounded p-2">
                           <div className="text-xs text-gray-400">Volume</div>

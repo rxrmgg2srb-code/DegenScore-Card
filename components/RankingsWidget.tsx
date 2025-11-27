@@ -44,24 +44,27 @@ export default function RankingsWidget() {
       ]);
 
       setRankings({
-        likes: likesData.leaderboard?.map((entry: any) => ({
-          walletAddress: entry.walletAddress,
-          displayName: entry.displayName,
-          profileImage: entry.profileImage,
-          value: entry.likes || 0,
-        })) || [],
-        referrals: referralsData.leaderboard?.map((entry: any) => ({
-          walletAddress: entry.walletAddress,
-          displayName: entry.displayName,
-          profileImage: entry.profileImage,
-          value: entry.referralCount || 0,
-        })) || [],
-        badges: badgesData.leaderboard?.map((entry: any) => ({
-          walletAddress: entry.walletAddress,
-          displayName: entry.displayName,
-          profileImage: entry.profileImage,
-          value: entry.badgePoints || 0,
-        })) || [],
+        likes:
+          likesData.leaderboard?.map((entry: any) => ({
+            walletAddress: entry.walletAddress,
+            displayName: entry.displayName,
+            profileImage: entry.profileImage,
+            value: entry.likes || 0,
+          })) || [],
+        referrals:
+          referralsData.leaderboard?.map((entry: any) => ({
+            walletAddress: entry.walletAddress,
+            displayName: entry.displayName,
+            profileImage: entry.profileImage,
+            value: entry.referralCount || 0,
+          })) || [],
+        badges:
+          badgesData.leaderboard?.map((entry: any) => ({
+            walletAddress: entry.walletAddress,
+            displayName: entry.displayName,
+            profileImage: entry.profileImage,
+            value: entry.badgePoints || 0,
+          })) || [],
       });
     } catch (error) {
       console.error('Error fetching rankings:', error);
@@ -138,7 +141,9 @@ export default function RankingsWidget() {
       </div>
 
       {/* Título de categoría */}
-      <div className={`mb-4 p-3 rounded-lg ${currentConfig.bgColor} border ${currentConfig.borderColor}`}>
+      <div
+        className={`mb-4 p-3 rounded-lg ${currentConfig.bgColor} border ${currentConfig.borderColor}`}
+      >
         <div className="text-center">
           <div className="text-2xl mb-1">{currentConfig.emoji}</div>
           <div className="text-white font-bold text-sm">{currentConfig.title}</div>
@@ -159,7 +164,9 @@ export default function RankingsWidget() {
               <div
                 key={entry.walletAddress}
                 className={`flex items-center gap-3 p-3 rounded-lg ${
-                  index < 3 ? 'bg-gradient-to-r from-yellow-900/30 to-orange-900/20 border border-yellow-500/30' : 'bg-gray-700/50'
+                  index < 3
+                    ? 'bg-gradient-to-r from-yellow-900/30 to-orange-900/20 border border-yellow-500/30'
+                    : 'bg-gray-700/50'
                 } hover:bg-gray-700 transition`}
               >
                 {/* Ranking number */}
@@ -199,15 +206,15 @@ export default function RankingsWidget() {
                 </div>
 
                 {/* Value */}
-                <div className={`flex-shrink-0 px-3 py-1 rounded-full bg-gradient-to-r ${currentConfig.color} text-white font-bold text-sm`}>
+                <div
+                  className={`flex-shrink-0 px-3 py-1 rounded-full bg-gradient-to-r ${currentConfig.color} text-white font-bold text-sm`}
+                >
                   {entry.value}
                 </div>
               </div>
             ))
           ) : (
-            <div className="text-center py-8 text-gray-400 text-sm">
-              No data available
-            </div>
+            <div className="text-center py-8 text-gray-400 text-sm">No data available</div>
           )}
         </div>
       )}

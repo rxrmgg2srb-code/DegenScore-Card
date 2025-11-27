@@ -17,7 +17,7 @@ interface PageTransitionProps {
 export default function PageTransition({
   children,
   variant = 'fade',
-  duration = 0.3
+  duration = 0.3,
 }: PageTransitionProps) {
   const variants = {
     fade: {
@@ -61,7 +61,7 @@ export default function PageTransition({
 // Stagger Children Animation
 export function StaggerContainer({
   children,
-  staggerDelay = 0.1
+  staggerDelay = 0.1,
 }: {
   children: ReactNode;
   staggerDelay?: number;
@@ -84,13 +84,7 @@ export function StaggerContainer({
 }
 
 // Stagger Item
-export function StaggerItem({
-  children,
-  delay = 0
-}: {
-  children: ReactNode;
-  delay?: number;
-}) {
+export function StaggerItem({ children, delay = 0 }: { children: ReactNode; delay?: number }) {
   return (
     <motion.div
       variants={{
@@ -107,7 +101,7 @@ export function StaggerItem({
 // Fade In On Scroll
 export function FadeInOnScroll({
   children,
-  threshold = 0.1
+  threshold = 0.1,
 }: {
   children: ReactNode;
   threshold?: number;
@@ -125,13 +119,7 @@ export function FadeInOnScroll({
 }
 
 // Scale On Hover
-export function ScaleOnHover({
-  children,
-  scale = 1.05
-}: {
-  children: ReactNode;
-  scale?: number;
-}) {
+export function ScaleOnHover({ children, scale = 1.05 }: { children: ReactNode; scale?: number }) {
   return (
     <motion.div
       whileHover={{ scale }}
@@ -144,13 +132,7 @@ export function ScaleOnHover({
 }
 
 // Bounce Animation
-export function BounceAnimation({
-  children,
-  delay = 0
-}: {
-  children: ReactNode;
-  delay?: number;
-}) {
+export function BounceAnimation({ children, delay = 0 }: { children: ReactNode; delay?: number }) {
   return (
     <motion.div
       initial={{ y: -20, opacity: 0 }}
@@ -168,13 +150,7 @@ export function BounceAnimation({
 }
 
 // Pulse Animation (for notifications, badges)
-export function PulseAnimation({
-  children,
-  scale = 1.1
-}: {
-  children: ReactNode;
-  scale?: number;
-}) {
+export function PulseAnimation({ children, scale = 1.1 }: { children: ReactNode; scale?: number }) {
   return (
     <motion.div
       animate={{
@@ -194,7 +170,7 @@ export function PulseAnimation({
 // Shake Animation (for errors, warnings)
 export function ShakeAnimation({
   children,
-  trigger = false
+  trigger = false,
 }: {
   children: ReactNode;
   trigger?: boolean;
@@ -219,7 +195,7 @@ export function ShakeAnimation({
 export function SlideInFromSide({
   children,
   direction = 'left',
-  delay = 0
+  delay = 0,
 }: {
   children: ReactNode;
   direction?: 'left' | 'right' | 'top' | 'bottom';
@@ -246,17 +222,9 @@ export function SlideInFromSide({
 }
 
 // Count Up Animation (for numbers)
-export function CountUpAnimation({
-  value
-}: {
-  value: number;
-}) {
+export function CountUpAnimation({ value }: { value: number }) {
   return (
-    <motion.span
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.3 }}
-    >
+    <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
       <motion.span
         initial={{ scale: 0 }}
         animate={{ scale: 1 }}
@@ -269,13 +237,7 @@ export function CountUpAnimation({
 }
 
 // Progress Bar Animation
-export function ProgressBar({
-  progress,
-  color = 'cyan'
-}: {
-  progress: number;
-  color?: string;
-}) {
+export function ProgressBar({ progress, color = 'cyan' }: { progress: number; color?: string }) {
   const colors = {
     cyan: 'from-cyan-500 to-blue-500',
     green: 'from-green-500 to-emerald-500',

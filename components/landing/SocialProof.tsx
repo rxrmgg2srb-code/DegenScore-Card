@@ -46,7 +46,9 @@ function StatCard({ icon, value, label, gradient }: StatCardProps) {
   return (
     <div className="text-center group hover:scale-105 transition-transform duration-300">
       <div className="text-5xl mb-3 animate-float group-hover:animate-bounce">{icon}</div>
-      <div className={`text-4xl md:text-5xl font-black mb-2 bg-clip-text text-transparent bg-gradient-to-r ${gradient}`}>
+      <div
+        className={`text-4xl md:text-5xl font-black mb-2 bg-clip-text text-transparent bg-gradient-to-r ${gradient}`}
+      >
         {value}
       </div>
       <div className="text-gray-400 text-sm md:text-base font-medium">{label}</div>

@@ -66,8 +66,8 @@ export function Documentation() {
                 {/* Introduction */}
                 <DocSection id="intro" title="Introduction" icon="📖">
                   <p className="text-gray-300 text-lg mb-4">
-                    Welcome to <strong className="text-purple-400">DegenScore Card</strong>, the ultimate platform to analyze,
-                    gamify, and share your Solana trades.
+                    Welcome to <strong className="text-purple-400">DegenScore Card</strong>, the
+                    ultimate platform to analyze, gamify, and share your Solana trades.
                   </p>
                   <div className="bg-purple-900/30 border border-purple-500/30 rounded-lg p-6">
                     <h4 className="text-xl font-bold mb-3">What is DegenScore?</h4>
@@ -77,23 +77,35 @@ export function Documentation() {
                     <ul className="space-y-2 text-gray-300">
                       <li className="flex items-start">
                         <span className="text-purple-400 mr-2">✓</span>
-                        <span><strong>Advanced Metrics</strong>: 30+ trading statistics (volume, P&L, win rate, rugs, moonshots, etc.)</span>
+                        <span>
+                          <strong>Advanced Metrics</strong>: 30+ trading statistics (volume, P&L,
+                          win rate, rugs, moonshots, etc.)
+                        </span>
                       </li>
                       <li className="flex items-start">
                         <span className="text-purple-400 mr-2">✓</span>
-                        <span><strong>DegenScore</strong>: A 0-100 score evaluating your trading skills</span>
+                        <span>
+                          <strong>DegenScore</strong>: A 0-100 score evaluating your trading skills
+                        </span>
                       </li>
                       <li className="flex items-start">
                         <span className="text-purple-400 mr-2">✓</span>
-                        <span><strong>Badges</strong>: Unlockable achievements based on your accomplishments</span>
+                        <span>
+                          <strong>Badges</strong>: Unlockable achievements based on your
+                          accomplishments
+                        </span>
                       </li>
                       <li className="flex items-start">
                         <span className="text-purple-400 mr-2">✓</span>
-                        <span><strong>Rankings</strong>: Compete on global leaderboards</span>
+                        <span>
+                          <strong>Rankings</strong>: Compete on global leaderboards
+                        </span>
                       </li>
                       <li className="flex items-start">
                         <span className="text-purple-400 mr-2">✓</span>
-                        <span><strong>Alpha Feed</strong>: See top wallet trades in real-time</span>
+                        <span>
+                          <strong>Alpha Feed</strong>: See top wallet trades in real-time
+                        </span>
                       </li>
                     </ul>
                   </div>
@@ -104,7 +116,9 @@ export function Documentation() {
                   <div className="space-y-4">
                     <Step number={1} title="Connect Your Wallet">
                       <p className="text-gray-300 mb-3">
-                        Click the <code className="bg-purple-900/50 px-2 py-1 rounded">Select Wallet</code> button in the top right corner.
+                        Click the{' '}
+                        <code className="bg-purple-900/50 px-2 py-1 rounded">Select Wallet</code>{' '}
+                        button in the top right corner.
                       </p>
                       <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-4">
                         <p className="text-sm text-gray-400 mb-2">Supported wallets:</p>
@@ -136,7 +150,8 @@ export function Documentation() {
 
                     <Step number={3} title="Explore Your Card">
                       <p className="text-gray-300">
-                        Review your metrics, badges, and leaderboard position. Your card is your trader identity!
+                        Review your metrics, badges, and leaderboard position. Your card is your
+                        trader identity!
                       </p>
                     </Step>
                   </div>
@@ -145,7 +160,8 @@ export function Documentation() {
                 {/* Generate Card */}
                 <DocSection id="generate-card" title="Generate Your Card" icon="🎴">
                   <p className="text-gray-300 mb-4">
-                    Your DegenScore Card is completely <strong>FREE</strong> to generate. Here's the process:
+                    Your DegenScore Card is completely <strong>FREE</strong> to generate. Here's the
+                    process:
                   </p>
 
                   <div className="bg-gradient-to-r from-purple-900/30 to-pink-900/30 border border-purple-500/30 rounded-xl p-6 mb-6">
@@ -155,10 +171,12 @@ export function Documentation() {
                         <strong>1. Connection</strong> → Connect your Solana wallet
                       </ProcessStep>
                       <ProcessStep>
-                        <strong>2. Analysis</strong> → Our system analyzes your complete trade history
+                        <strong>2. Analysis</strong> → Our system analyzes your complete trade
+                        history
                       </ProcessStep>
                       <ProcessStep>
-                        <strong>3. Calculation</strong> → 30+ metrics are calculated (win rate, P&L, rugs, moonshots, etc.)
+                        <strong>3. Calculation</strong> → 30+ metrics are calculated (win rate, P&L,
+                        rugs, moonshots, etc.)
                       </ProcessStep>
                       <ProcessStep>
                         <strong>4. Scoring</strong> → Your DegenScore from 0-100 is generated
@@ -174,8 +192,8 @@ export function Documentation() {
 
                   <div className="bg-blue-900/20 border border-blue-500/30 rounded-lg p-4">
                     <p className="text-blue-200">
-                      💡 <strong>Tip:</strong> Your card updates automatically each time you re-analyze it.
-                      Come back regularly to see how your DegenScore improves!
+                      💡 <strong>Tip:</strong> Your card updates automatically each time you
+                      re-analyze it. Come back regularly to see how your DegenScore improves!
                     </p>
                   </div>
                 </DocSection>
@@ -241,13 +259,15 @@ export function Documentation() {
                 {/* Badges & Achievement Points */}
                 <DocSection id="badges" title="Badges & Achievement Points" icon="🏆">
                   <p className="text-gray-300 mb-6">
-                    Badges are achievements you unlock based on your activities. There are <strong>60+ badges</strong> available across 6 categories.
+                    Badges are achievements you unlock based on your activities. There are{' '}
+                    <strong>60+ badges</strong> available across 6 categories.
                   </p>
 
                   <div className="bg-gradient-to-r from-purple-900/50 to-pink-900/50 border-2 border-purple-500 rounded-xl p-6 mb-6">
                     <h4 className="text-2xl font-black mb-4">Achievement Points System</h4>
                     <p className="text-gray-200 mb-4">
-                      Each badge you unlock adds points to your total <strong>Badge Points</strong> score. Higher rarity badges give more points:
+                      Each badge you unlock adds points to your total <strong>Badge Points</strong>{' '}
+                      score. Higher rarity badges give more points:
                     </p>
                     <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
                       <div className="bg-gray-800/50 border border-gray-600 rounded-lg p-3 text-center">
@@ -278,7 +298,10 @@ export function Documentation() {
                     </div>
                     <div className="mt-4 bg-black/30 rounded-lg p-3 text-sm text-gray-300">
                       💡 <strong>Tip:</strong> View all 60+ badges with full details on the{' '}
-                      <Link href="/achievements" className="text-purple-400 hover:text-purple-300 underline">
+                      <Link
+                        href="/achievements"
+                        className="text-purple-400 hover:text-purple-300 underline"
+                      >
                         Achievements Page
                       </Link>
                     </div>
@@ -286,15 +309,31 @@ export function Documentation() {
 
                   <div className="space-y-4">
                     <BadgeCategory title="🎯 Trading Badges">
-                      <BadgeItem name="First Trade" description="Execute your first trade" rarity="COMMON" />
-                      <BadgeItem name="Moon Hunter" description="Get a moonshot (10x+)" rarity="RARE" />
+                      <BadgeItem
+                        name="First Trade"
+                        description="Execute your first trade"
+                        rarity="COMMON"
+                      />
+                      <BadgeItem
+                        name="Moon Hunter"
+                        description="Get a moonshot (10x+)"
+                        rarity="RARE"
+                      />
                       <BadgeItem name="Rug Survivor" description="Survive 5+ rugs" rarity="EPIC" />
-                      <BadgeItem name="Volume King" description="$1M+ in total volume" rarity="LEGENDARY" />
+                      <BadgeItem
+                        name="Volume King"
+                        description="$1M+ in total volume"
+                        rarity="LEGENDARY"
+                      />
                       <BadgeItem name="Diamond Hands" description="Hold 30+ days" rarity="RARE" />
                     </BadgeCategory>
 
                     <BadgeCategory title="🔥 Engagement Badges">
-                      <BadgeItem name="Consistent Degen" description="3 consecutive check-in days" rarity="COMMON" />
+                      <BadgeItem
+                        name="Consistent Degen"
+                        description="3 consecutive check-in days"
+                        rarity="COMMON"
+                      />
                       <BadgeItem name="Weekly Warrior" description="7-day streak" rarity="RARE" />
                       <BadgeItem name="Diamond Streak" description="30-day streak" rarity="EPIC" />
                       <BadgeItem name="Immortal" description="180-day streak" rarity="MYTHIC" />
@@ -371,7 +410,11 @@ export function Documentation() {
                   <div className="bg-gradient-to-r from-purple-900/50 to-pink-900/50 border-2 border-purple-500 rounded-xl p-6">
                     <h4 className="text-2xl font-bold mb-3">🎉 Launch Offer</h4>
                     <p className="text-gray-200 mb-4">
-                      Use code <code className="bg-purple-600 px-3 py-1 rounded font-bold">DEGENLAUNCH2024</code> para:
+                      Use code{' '}
+                      <code className="bg-purple-600 px-3 py-1 rounded font-bold">
+                        DEGENLAUNCH2024
+                      </code>{' '}
+                      para:
                     </p>
                     <ul className="space-y-2 text-gray-200">
                       <li>✓ Free PREMIUM access</li>
@@ -390,10 +433,20 @@ export function Documentation() {
                   <div className="bg-gradient-to-r from-orange-900/30 to-red-900/30 border border-orange-500/30 rounded-xl p-6 mb-6">
                     <h4 className="text-xl font-bold mb-4">How It Works</h4>
                     <div className="space-y-3 text-gray-200">
-                      <p>1. <strong>Visit daily</strong> and click on "Check In"</p>
-                      <p>2. <strong>Earn XP</strong>: +50 XP base + streak bonus</p>
-                      <p>3. <strong>Maintain your streak</strong>: Cada día consecutivo aumenta el bonus</p>
-                      <p>4. <strong>Unlock badges</strong> at milestones (3, 7, 14, 30, 60, 90, 180 days)</p>
+                      <p>
+                        1. <strong>Visit daily</strong> and click on "Check In"
+                      </p>
+                      <p>
+                        2. <strong>Earn XP</strong>: +50 XP base + streak bonus
+                      </p>
+                      <p>
+                        3. <strong>Maintain your streak</strong>: Cada día consecutivo aumenta el
+                        bonus
+                      </p>
+                      <p>
+                        4. <strong>Unlock badges</strong> at milestones (3, 7, 14, 30, 60, 90, 180
+                        days)
+                      </p>
                     </div>
                   </div>
 
@@ -426,7 +479,8 @@ export function Documentation() {
 
                     <div className="bg-red-900/20 border border-red-500/30 rounded-lg p-4">
                       <p className="text-red-200 text-sm">
-                        ⚠️ <strong>Warning:</strong> Si no checkeas por 24+ horas, pierdes tu racha y vuelves a empezar desde 1 día.
+                        ⚠️ <strong>Warning:</strong> Si no checkeas por 24+ horas, pierdes tu racha
+                        y vuelves a empezar desde 1 día.
                       </p>
                     </div>
                   </div>
@@ -435,7 +489,10 @@ export function Documentation() {
                 {/* Referidos */}
                 <DocSection id="referrals" title="Referral System" icon="🎁">
                   <p className="text-gray-300 mb-6">
-                    Invite friends and earn incredible rewards. Your referral link: <code className="bg-purple-900/50 px-2 py-1 rounded">degenscore.xyz?ref=YOUR_WALLET</code>
+                    Invite friends and earn incredible rewards. Your referral link:{' '}
+                    <code className="bg-purple-900/50 px-2 py-1 rounded">
+                      degenscore.xyz?ref=YOUR_WALLET
+                    </code>
                   </p>
 
                   <div className="grid md:grid-cols-2 gap-6 mb-6">
@@ -464,11 +521,22 @@ export function Documentation() {
                   <div className="bg-purple-900/30 border border-purple-500/30 rounded-xl p-6">
                     <h4 className="text-xl font-bold mb-4">Step by Step</h4>
                     <div className="space-y-3 text-gray-200">
-                      <p><strong>1.</strong> Copy your referral link from your dashboard</p>
-                      <p><strong>2.</strong> Share it on Twitter, Discord, Telegram, etc.</p>
-                      <p><strong>3.</strong> When someone uses your link and pays for PREMIUM, they count as a referral!</p>
-                      <p><strong>4.</strong> Check your rewards at /api/referrals/check-rewards</p>
-                      <p><strong>5.</strong> Claim rewards when you reach a milestone</p>
+                      <p>
+                        <strong>1.</strong> Copy your referral link from your dashboard
+                      </p>
+                      <p>
+                        <strong>2.</strong> Share it on Twitter, Discord, Telegram, etc.
+                      </p>
+                      <p>
+                        <strong>3.</strong> When someone uses your link and pays for PREMIUM, they
+                        count as a referral!
+                      </p>
+                      <p>
+                        <strong>4.</strong> Check your rewards at /api/referrals/check-rewards
+                      </p>
+                      <p>
+                        <strong>5.</strong> Claim rewards when you reach a milestone
+                      </p>
                     </div>
                   </div>
                 </DocSection>
@@ -476,18 +544,24 @@ export function Documentation() {
                 {/* Weekly Challenges */}
                 <DocSection id="challenges" title="Weekly Challenges" icon="⚔️">
                   <p className="text-gray-300 mb-6">
-                    Compete weekly for <strong className="text-yellow-400">1 SOL</strong>. The challenge activates when there are <strong>100 cards generadas</strong>.
+                    Compete weekly for <strong className="text-yellow-400">1 SOL</strong>. The
+                    challenge activates when there are <strong>100 cards generadas</strong>.
                   </p>
 
                   <div className="bg-gradient-to-r from-yellow-900/30 to-orange-900/30 border-2 border-yellow-500 rounded-xl p-6 mb-6">
-                    <h4 className="text-2xl font-bold text-yellow-400 mb-3">❤️ Most Loved Card Challenge</h4>
+                    <h4 className="text-2xl font-bold text-yellow-400 mb-3">
+                      ❤️ Most Loved Card Challenge
+                    </h4>
                     <p className="text-gray-200 mb-4">
                       Get the most likes on your card and win <strong>1 SOL</strong>.
                     </p>
                     <div className="bg-black/30 rounded-lg p-4">
                       <p className="text-sm text-gray-300">Permanent challenge:</p>
                       <p className="text-lg font-bold text-white mt-2">"❤️ Más Likes en tu Card"</p>
-                      <p className="text-sm text-gray-400 mt-1">Whoever has the most likes at the end of each week wins. Activates when there are 100 cards generated.</p>
+                      <p className="text-sm text-gray-400 mt-1">
+                        Whoever has the most likes at the end of each week wins. Activates when
+                        there are 100 cards generated.
+                      </p>
                     </div>
                   </div>
 
@@ -498,28 +572,36 @@ export function Documentation() {
                         <span className="text-2xl">1️⃣</span>
                         <div>
                           <p className="font-bold text-white">Genera tu Card</p>
-                          <p className="text-sm text-gray-400">Connect your wallet and generate your DegenScore Card</p>
+                          <p className="text-sm text-gray-400">
+                            Connect your wallet and generate your DegenScore Card
+                          </p>
                         </div>
                       </div>
                       <div className="flex items-start gap-3">
                         <span className="text-2xl">2️⃣</span>
                         <div>
                           <p className="font-bold text-white">Upgrade a PREMIUM o PRO</p>
-                          <p className="text-sm text-gray-400">Solo usuarios pagos pueden participar</p>
+                          <p className="text-sm text-gray-400">
+                            Solo usuarios pagos pueden participar
+                          </p>
                         </div>
                       </div>
                       <div className="flex items-start gap-3">
                         <span className="text-2xl">3️⃣</span>
                         <div>
                           <p className="font-bold text-white">Comparte tu Card</p>
-                          <p className="text-sm text-gray-400">Promociona tu card en Twitter, Discord, Telegram</p>
+                          <p className="text-sm text-gray-400">
+                            Promociona tu card en Twitter, Discord, Telegram
+                          </p>
                         </div>
                       </div>
                       <div className="flex items-start gap-3">
                         <span className="text-2xl">4️⃣</span>
                         <div>
                           <p className="font-bold text-white">Consigue Likes ❤️</p>
-                          <p className="text-sm text-gray-400">El que tenga más likes al domingo gana 1 SOL</p>
+                          <p className="text-sm text-gray-400">
+                            El que tenga más likes al domingo gana 1 SOL
+                          </p>
                         </div>
                       </div>
                     </div>
@@ -527,7 +609,8 @@ export function Documentation() {
 
                   <div className="mt-6 bg-blue-900/20 border border-blue-500/30 rounded-lg p-4">
                     <p className="text-blue-200">
-                      💡 <strong>Nota:</strong> Solo usuarios PREMIUM o PRO pueden participar en challenges.
+                      💡 <strong>Nota:</strong> Solo usuarios PREMIUM o PRO pueden participar en
+                      challenges.
                     </p>
                   </div>
                 </DocSection>
@@ -535,7 +618,8 @@ export function Documentation() {
                 {/* Hot Feed */}
                 <DocSection id="hot-feed" title="Alpha Feed (Hot Trades)" icon="📡">
                   <p className="text-gray-300 mb-6">
-                    El Alpha Feed muestra trades en tiempo real de las mejores wallets de Solana. ¡Copia a los winners!
+                    El Alpha Feed muestra trades en tiempo real de las mejores wallets de Solana.
+                    ¡Copia a los winners!
                   </p>
 
                   <div className="grid md:grid-cols-3 gap-4 mb-6">
@@ -568,8 +652,8 @@ export function Documentation() {
 
                   <div className="mt-6 bg-yellow-900/20 border border-yellow-500/30 rounded-lg p-4">
                     <p className="text-yellow-200 text-sm">
-                      ⚠️ <strong>Disclaimer:</strong> El Alpha Feed es informativo. No somos asesores financieros.
-                      DYOR (Do Your Own Research) before copying any trade.
+                      ⚠️ <strong>Disclaimer:</strong> El Alpha Feed es informativo. No somos
+                      asesores financieros. DYOR (Do Your Own Research) before copying any trade.
                     </p>
                   </div>
                 </DocSection>
@@ -577,7 +661,8 @@ export function Documentation() {
                 {/* Leaderboard */}
                 <DocSection id="leaderboard" title="Leaderboard" icon="🏅">
                   <p className="text-gray-300 mb-6">
-                    Compete globally and prove who's the best degen. The leaderboard has multiple categories:
+                    Compete globally and prove who's the best degen. The leaderboard has multiple
+                    categories:
                   </p>
 
                   <div className="grid md:grid-cols-2 gap-4">
@@ -606,11 +691,23 @@ export function Documentation() {
                   <div className="mt-6 bg-purple-900/30 border border-purple-500/30 rounded-lg p-6">
                     <h5 className="font-bold mb-3">How to Climb the Rankings:</h5>
                     <ul className="space-y-2 text-gray-300">
-                      <li>• <strong>Trade consistently</strong>: More trades = more data = better score</li>
-                      <li>• <strong>Improve your win rate</strong>: Quality over quantity</li>
-                      <li>• <strong>Avoid rugs</strong>: Each rug negatively affects your score</li>
-                      <li>• <strong>Share your card</strong>: More likes = better ranking in that category</li>
-                      <li>• <strong>Hold winners</strong>: Diamond hands are rewarded</li>
+                      <li>
+                        • <strong>Trade consistently</strong>: More trades = more data = better
+                        score
+                      </li>
+                      <li>
+                        • <strong>Improve your win rate</strong>: Quality over quantity
+                      </li>
+                      <li>
+                        • <strong>Avoid rugs</strong>: Each rug negatively affects your score
+                      </li>
+                      <li>
+                        • <strong>Share your card</strong>: More likes = better ranking in that
+                        category
+                      </li>
+                      <li>
+                        • <strong>Hold winners</strong>: Diamond hands are rewarded
+                      </li>
                     </ul>
                   </div>
                 </DocSection>
@@ -638,7 +735,12 @@ export function Documentation() {
                         <TierRow feature="Sistema de Referidos" free="—" premium="✓" pro="✓" />
                         <TierRow feature="Weekly Challenges" free="—" premium="✓" pro="✓" />
                         <TierRow feature="Alpha Feed Delay" free="72h" premium="6h" pro="1h" />
-                        <TierRow feature="Trades Visibles" free="5 (hidden)" premium="10" pro="20" />
+                        <TierRow
+                          feature="Trades Visibles"
+                          free="5 (hidden)"
+                          premium="10"
+                          pro="20"
+                        />
                         <TierRow feature="Advanced Dashboard" free="—" premium="—" pro="✓" />
                         <TierRow feature="Priority Support" free="—" premium="—" pro="✓" />
                       </tbody>
@@ -699,10 +801,16 @@ export function Documentation() {
                   Still have questions? Join our Discord or write to us on Twitter.
                 </p>
                 <div className="flex justify-center gap-4">
-                  <a href="#" className="bg-purple-600 hover:bg-purple-700 px-6 py-2 rounded-lg font-medium transition-colors">
+                  <a
+                    href="#"
+                    className="bg-purple-600 hover:bg-purple-700 px-6 py-2 rounded-lg font-medium transition-colors"
+                  >
                     Discord
                   </a>
-                  <a href="#" className="bg-blue-600 hover:bg-blue-700 px-6 py-2 rounded-lg font-medium transition-colors">
+                  <a
+                    href="#"
+                    className="bg-blue-600 hover:bg-blue-700 px-6 py-2 rounded-lg font-medium transition-colors"
+                  >
                     Twitter
                   </a>
                 </div>

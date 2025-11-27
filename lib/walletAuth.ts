@@ -4,7 +4,6 @@ import bs58 from 'bs58';
 import * as jwt from 'jsonwebtoken';
 import { logger } from '@/lib/logger';
 
-
 /**
  * Wallet Authentication Utility
  * Provides cryptographic verification of wallet ownership

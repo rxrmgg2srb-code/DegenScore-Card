@@ -43,7 +43,9 @@ export default function NotificationSettings() {
   }, [sessionToken]);
 
   const generateToken = () => {
-    if (!publicKey) {return;}
+    if (!publicKey) {
+      return;
+    }
 
     try {
       const token = generateSessionToken(publicKey.toBase58());
@@ -55,7 +57,9 @@ export default function NotificationSettings() {
   };
 
   const fetchPreferences = async () => {
-    if (!sessionToken) {return;}
+    if (!sessionToken) {
+      return;
+    }
 
     setLoading(true);
 
@@ -164,7 +168,9 @@ export default function NotificationSettings() {
               <div className="text-2xl">💬</div>
               <div>
                 <h4 className="text-white font-bold">Discord</h4>
-                <p className="text-gray-400 text-xs">Receive notifications on your Discord server</p>
+                <p className="text-gray-400 text-xs">
+                  Receive notifications on your Discord server
+                </p>
               </div>
             </div>
             <label className="relative inline-flex items-center cursor-pointer">

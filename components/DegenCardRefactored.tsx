@@ -41,7 +41,7 @@ export default function DegenCardRefactored() {
   };
 
   const handleUpgrade = () => {
-    setModalState(prev => ({ ...prev, showUpgradeModal: false, hasPaid: true }));
+    setModalState((prev) => ({ ...prev, showUpgradeModal: false, hasPaid: true }));
 
     setCelebrationState({
       showCelebration: true,
@@ -51,26 +51,26 @@ export default function DegenCardRefactored() {
     });
 
     setTimeout(() => {
-      setModalState(prev => ({ ...prev, showShareModal: true }));
+      setModalState((prev) => ({ ...prev, showShareModal: true }));
     }, 1500);
   };
 
   const handleShared = () => {
-    setModalState(prev => ({ ...prev, showShareModal: false }));
+    setModalState((prev) => ({ ...prev, showShareModal: false }));
     setTimeout(() => {
-      setModalState(prev => ({ ...prev, showProfileModal: true }));
+      setModalState((prev) => ({ ...prev, showProfileModal: true }));
     }, 500);
   };
 
   const handleSkipShare = () => {
-    setModalState(prev => ({ ...prev, showShareModal: false }));
+    setModalState((prev) => ({ ...prev, showShareModal: false }));
     setTimeout(() => {
-      setModalState(prev => ({ ...prev, showProfileModal: true }));
+      setModalState((prev) => ({ ...prev, showProfileModal: true }));
     }, 500);
   };
 
   const handleSkip = () => {
-    setModalState(prev => ({ ...prev, showUpgradeModal: false }));
+    setModalState((prev) => ({ ...prev, showUpgradeModal: false }));
     downloadCard(false);
   };
 
@@ -93,11 +93,11 @@ export default function DegenCardRefactored() {
       }
 
       logger.info('✅ Profile saved');
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 1000));
 
       await regenerateCard();
 
-      setModalState(prev => ({ ...prev, showProfileModal: false, hasPaid: true }));
+      setModalState((prev) => ({ ...prev, showProfileModal: false, hasPaid: true }));
 
       // 🎉 Auto-descargar la card premium
       logger.info('📥 Auto-downloading premium card...');
@@ -110,7 +110,6 @@ export default function DegenCardRefactored() {
       setTimeout(() => {
         window.location.href = '/leaderboard';
       }, 2000);
-
     } catch (error) {
       logger.error('Payment error', error instanceof Error ? error : undefined, {
         error: String(error),
@@ -169,7 +168,7 @@ export default function DegenCardRefactored() {
       {/* Modals */}
       <UpgradeModal
         isOpen={modalState.showUpgradeModal}
-        onClose={() => setModalState(prev => ({ ...prev, showUpgradeModal: false }))}
+        onClose={() => setModalState((prev) => ({ ...prev, showUpgradeModal: false }))}
         onUpgrade={handleUpgrade}
         onSkip={handleSkip}
       />
@@ -184,19 +183,22 @@ export default function DegenCardRefactored() {
 
       <ProfileFormModal
         isOpen={modalState.showProfileModal}
-        onClose={() => setModalState(prev => ({ ...prev, showProfileModal: false }))}
+        onClose={() => setModalState((prev) => ({ ...prev, showProfileModal: false }))}
         onSubmit={handleProfileSubmit}
         walletAddress={state.walletAddress}
       />
 
       {/* Celebrations */}
       {celebrationState.showCelebration && (
-        <Celebration type={celebrationState.celebrationType} score={celebrationState.celebrationScore} />
+        <Celebration
+          type={celebrationState.celebrationType}
+          score={celebrationState.celebrationScore}
+        />
       )}
 
       <AchievementPopup
         achievement={celebrationState.currentAchievement}
-        onClose={() => setCelebrationState(prev => ({ ...prev, currentAchievement: null }))}
+        onClose={() => setCelebrationState((prev) => ({ ...prev, currentAchievement: null }))}
       />
     </div>
   );
@@ -287,7 +289,9 @@ function ConnectedWalletView({
         </div>
       )}
 
-      {analyzing && <CardGenerationProgress message={analysisMessage} progress={analysisProgress} />}
+      {analyzing && (
+        <CardGenerationProgress message={analysisMessage} progress={analysisProgress} />
+      )}
 
       <GenerateCardButton onClick={onGenerateCard} loading={loading} />
     </div>

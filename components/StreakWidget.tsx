@@ -35,7 +35,9 @@ export default function StreakWidget() {
   }, [sessionToken]);
 
   const generateToken = async () => {
-    if (!publicKey || !signMessage) {return;}
+    if (!publicKey || !signMessage) {
+      return;
+    }
 
     try {
       const token = generateSessionToken(publicKey.toString());
@@ -46,7 +48,9 @@ export default function StreakWidget() {
   };
 
   const checkStreak = async () => {
-    if (!sessionToken) {return;}
+    if (!sessionToken) {
+      return;
+    }
 
     setLoading(true);
 
@@ -94,11 +98,11 @@ export default function StreakWidget() {
           <div>
             <div className="flex items-center gap-2">
               <span className="text-2xl font-bold text-orange-400">{streak.currentStreak}</span>
-              <span className="text-gray-400 text-sm">día{streak.currentStreak !== 1 ? 's' : ''}</span>
+              <span className="text-gray-400 text-sm">
+                día{streak.currentStreak !== 1 ? 's' : ''}
+              </span>
             </div>
-            <div className="text-xs text-gray-500">
-              Récord: {streak.longestStreak} días
-            </div>
+            <div className="text-xs text-gray-500">Récord: {streak.longestStreak} días</div>
           </div>
         </div>
 
@@ -107,7 +111,9 @@ export default function StreakWidget() {
           <div className="text-right">
             <div className="text-xs text-gray-400">Siguiente premio:</div>
             <div className="text-sm font-bold text-yellow-400">
-              {daysUntilNext === 0 ? '¡Hoy!' : `En ${daysUntilNext} día${daysUntilNext !== 1 ? 's' : ''}`}
+              {daysUntilNext === 0
+                ? '¡Hoy!'
+                : `En ${daysUntilNext} día${daysUntilNext !== 1 ? 's' : ''}`}
             </div>
             <div className="text-xs text-gray-500">
               +{streak.nextReward.xp} XP

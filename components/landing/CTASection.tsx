@@ -8,8 +8,8 @@ export function CTASection() {
       </h2>
 
       <p className="text-gray-300 text-xl md:text-2xl max-w-3xl mx-auto mb-8">
-        Join <span className="text-cyan-400 font-black">10,000+ traders</span> who&apos;ve
-        generated their DegenScore cards
+        Join <span className="text-cyan-400 font-black">10,000+ traders</span> who&apos;ve generated
+        their DegenScore cards
       </p>
 
       <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">

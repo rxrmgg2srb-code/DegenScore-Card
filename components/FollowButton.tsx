@@ -37,7 +37,9 @@ export default function FollowButton({
   }, [publicKey]);
 
   const generateToken = () => {
-    if (!publicKey) {return;}
+    if (!publicKey) {
+      return;
+    }
 
     try {
       const token = generateSessionToken(publicKey.toBase58());
@@ -48,7 +50,9 @@ export default function FollowButton({
   };
 
   const checkFollowStatus = async () => {
-    if (!publicKey || !sessionToken) {return;}
+    if (!publicKey || !sessionToken) {
+      return;
+    }
 
     try {
       const response = await fetch(`/api/follows/status?walletAddress=${walletAddress}`, {

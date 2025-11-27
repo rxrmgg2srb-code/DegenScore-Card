@@ -18,9 +18,10 @@ export function LiveActivityFeed() {
     const generateActivity = (): Activity => {
       const types: Activity['type'][] = ['card-generated', 'premium-unlock', 'high-score'];
       const type = types[Math.floor(Math.random() * types.length)] as Activity['type'];
-      const score = type === 'card-generated' || type === 'high-score'
-        ? Math.floor(Math.random() * 40) + 60
-        : undefined;
+      const score =
+        type === 'card-generated' || type === 'high-score'
+          ? Math.floor(Math.random() * 40) + 60
+          : undefined;
 
       return {
         id: Math.random().toString(36),
@@ -36,10 +37,13 @@ export function LiveActivityFeed() {
     setActivities(initial);
 
     // Add new activity every 5-10 seconds
-    const interval = setInterval(() => {
-      const newActivity = generateActivity();
-      setActivities((prev) => [newActivity, ...prev].slice(0, 10));
-    }, Math.random() * 5000 + 5000);
+    const interval = setInterval(
+      () => {
+        const newActivity = generateActivity();
+        setActivities((prev) => [newActivity, ...prev].slice(0, 10));
+      },
+      Math.random() * 5000 + 5000
+    );
 
     return () => clearInterval(interval);
   }, []);
@@ -58,7 +62,9 @@ export function LiveActivityFeed() {
 
   const currentActivity = activities[currentIndex];
 
-  if (!currentActivity) {return null;}
+  if (!currentActivity) {
+    return null;
+  }
 
   const getActivityMessage = (activity: Activity) => {
     switch (activity.type) {
@@ -109,9 +115,7 @@ export function LiveActivityFeed() {
                 <span className="font-semibold text-white truncate">
                   {currentActivity.walletAddress}
                 </span>
-                <span className={`${activityInfo.color} font-medium`}>
-                  {activityInfo.message}
-                </span>
+                <span className={`${activityInfo.color} font-medium`}>{activityInfo.message}</span>
               </div>
             </div>
             <div className="flex items-center gap-1 text-gray-400 text-xs">
@@ -141,6 +145,5 @@ export function LiveActivityFeed() {
     </div>
   );
 }
-
 
 export default LiveActivityFeed;

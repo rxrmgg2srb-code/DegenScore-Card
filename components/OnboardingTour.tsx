@@ -26,8 +26,8 @@ export default function OnboardingTour({ onComplete }: OnboardingTourProps) {
         <div className="p-4">
           <h3 className="text-2xl font-bold mb-3 text-gray-900">Welcome to DegenScore! 🚀</h3>
           <p className="text-gray-700 mb-4">
-            Let's take a quick tour to show you how to generate your personalized trading card
-            and unlock premium features!
+            Let's take a quick tour to show you how to generate your personalized trading card and
+            unlock premium features!
           </p>
           <div className="flex items-center gap-2 text-sm text-gray-600">
             <span>⏱️</span>
@@ -44,8 +44,8 @@ export default function OnboardingTour({ onComplete }: OnboardingTourProps) {
         <div className="p-3">
           <h4 className="text-lg font-bold mb-2 text-gray-900">Connect Your Wallet 👛</h4>
           <p className="text-gray-700">
-            First, connect your Solana wallet to analyze your trading history.
-            We support Phantom, Solflare, and other popular wallets!
+            First, connect your Solana wallet to analyze your trading history. We support Phantom,
+            Solflare, and other popular wallets!
           </p>
         </div>
       ),
@@ -58,8 +58,8 @@ export default function OnboardingTour({ onComplete }: OnboardingTourProps) {
         <div className="p-3">
           <h4 className="text-lg font-bold mb-2 text-gray-900">Generate Your Card 🎴</h4>
           <p className="text-gray-700">
-            Click here to analyze your trading history and generate your personalized
-            DegenScore card with real on-chain metrics!
+            Click here to analyze your trading history and generate your personalized DegenScore
+            card with real on-chain metrics!
           </p>
         </div>
       ),
@@ -71,8 +71,8 @@ export default function OnboardingTour({ onComplete }: OnboardingTourProps) {
         <div className="p-3">
           <h4 className="text-lg font-bold mb-2 text-gray-900">Your Trading Card ✨</h4>
           <p className="text-gray-700">
-            Your card will display here with your DegenScore, trading stats, badges,
-            and achievements. Each card is unique!
+            Your card will display here with your DegenScore, trading stats, badges, and
+            achievements. Each card is unique!
           </p>
         </div>
       ),
@@ -84,11 +84,11 @@ export default function OnboardingTour({ onComplete }: OnboardingTourProps) {
         <div className="p-3">
           <h4 className="text-lg font-bold mb-2 text-gray-900">Upgrade to Premium 💎</h4>
           <p className="text-gray-700 mb-3">
-            Unlock exclusive features like custom profiles, advanced analytics,
-            and special badges!
+            Unlock exclusive features like custom profiles, advanced analytics, and special badges!
           </p>
           <div className="bg-purple-50 border border-purple-200 rounded-lg p-2 text-sm text-purple-800">
-            <span className="font-semibold">Pro tip:</span> Premium users get priority leaderboard placement!
+            <span className="font-semibold">Pro tip:</span> Premium users get priority leaderboard
+            placement!
           </div>
         </div>
       ),
@@ -100,8 +100,8 @@ export default function OnboardingTour({ onComplete }: OnboardingTourProps) {
         <div className="p-3">
           <h4 className="text-lg font-bold mb-2 text-gray-900">Global Stats 📊</h4>
           <p className="text-gray-700">
-            See real-time stats of the entire DegenScore community, including
-            total cards generated and trading volume!
+            See real-time stats of the entire DegenScore community, including total cards generated
+            and trading volume!
           </p>
         </div>
       ),
@@ -113,8 +113,8 @@ export default function OnboardingTour({ onComplete }: OnboardingTourProps) {
         <div className="p-3">
           <h4 className="text-lg font-bold mb-2 text-gray-900">Live Activity 🔥</h4>
           <p className="text-gray-700">
-            Watch as other traders generate their cards in real-time.
-            Get inspired by high scores and achievements!
+            Watch as other traders generate their cards in real-time. Get inspired by high scores
+            and achievements!
           </p>
         </div>
       ),
@@ -225,12 +225,7 @@ export default function OnboardingTour({ onComplete }: OnboardingTourProps) {
         className="fixed bottom-6 right-6 bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-600 hover:to-purple-600 text-white p-4 rounded-full shadow-2xl transition-all z-50 group"
         title="Restart Tour"
       >
-        <svg
-          className="w-6 h-6"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
+        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path
             strokeLinecap="round"
             strokeLinejoin="round"

@@ -5,10 +5,7 @@ interface SkeletonLoaderProps {
   count?: number;
 }
 
-export default function SkeletonLoader({
-  variant = 'card',
-  count = 1,
-}: SkeletonLoaderProps) {
+export default function SkeletonLoader({ variant = 'card', count = 1 }: SkeletonLoaderProps) {
   const renderSkeleton = () => {
     switch (variant) {
       case 'card':
@@ -66,10 +63,7 @@ function CardSkeleton() {
       {/* Badges */}
       <div className="flex space-x-2">
         {[1, 2, 3].map((i) => (
-          <div
-            key={i}
-            className="w-12 h-12 bg-gray-700 rounded animate-pulse"
-          />
+          <div key={i} className="w-12 h-12 bg-gray-700 rounded animate-pulse" />
         ))}
       </div>
     </motion.div>

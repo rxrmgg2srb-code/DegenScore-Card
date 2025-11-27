@@ -140,12 +140,7 @@ export default function DegenCard() {
       />
 
       {/* Premium Features */}
-      {showCelebration && (
-        <Celebration
-          type={celebrationType}
-          score={celebrationScore}
-        />
-      )}
+      {showCelebration && <Celebration type={celebrationType} score={celebrationScore} />}
 
       <AchievementPopup
         achievement={currentAchievement}

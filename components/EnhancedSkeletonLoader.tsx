@@ -16,7 +16,7 @@ interface SkeletonProps {
 export default function EnhancedSkeletonLoader({
   variant = 'card',
   count = 1,
-  animated = true
+  animated = true,
 }: SkeletonProps) {
   const variants = {
     card: <CardSkeleton animated={animated} />,
@@ -54,7 +54,7 @@ function CardSkeleton({ animated }: { animated: boolean }) {
 
           {/* Stats Grid */}
           <div className="grid grid-cols-2 gap-3">
-            {[1, 2, 3, 4].map(i => (
+            {[1, 2, 3, 4].map((i) => (
               <div key={i} className="space-y-1">
                 <Skeleton className="h-6 w-16" animated={animated} />
                 <Skeleton className="h-3 w-20" animated={animated} />
@@ -93,7 +93,7 @@ function LeaderboardSkeleton({ animated, count }: { animated: boolean; count: nu
 function StatsSkeleton({ animated }: { animated: boolean }) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-      {[1, 2, 3, 4].map(i => (
+      {[1, 2, 3, 4].map((i) => (
         <div
           key={i}
           className="p-6 bg-gradient-to-br from-gray-800/30 to-gray-900/30 rounded-xl border border-gray-700/30"
@@ -123,7 +123,7 @@ function ProfileSkeleton({ animated }: { animated: boolean }) {
 
       {/* Stats */}
       <div className="grid grid-cols-3 gap-4">
-        {[1, 2, 3].map(i => (
+        {[1, 2, 3].map((i) => (
           <div key={i} className="text-center space-y-2">
             <Skeleton className="h-8 w-16 mx-auto" animated={animated} />
             <Skeleton className="h-3 w-20 mx-auto" animated={animated} />
@@ -160,13 +160,7 @@ function ListSkeleton({ animated, count }: { animated: boolean; count: number })
 }
 
 // Base Skeleton Component
-function Skeleton({
-  className = '',
-  animated = true
-}: {
-  className?: string;
-  animated?: boolean;
-}) {
+function Skeleton({ className = '', animated = true }: { className?: string; animated?: boolean }) {
   return (
     <div
       className={`relative overflow-hidden bg-gray-700/30 ${className} ${
@@ -196,10 +190,4 @@ function ShimmerEffect() {
 }
 
 // Export individual components
-export {
-  CardSkeleton,
-  LeaderboardSkeleton,
-  StatsSkeleton,
-  ProfileSkeleton,
-  ListSkeleton,
-};
+export { CardSkeleton, LeaderboardSkeleton, StatsSkeleton, ProfileSkeleton, ListSkeleton };

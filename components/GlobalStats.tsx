@@ -123,12 +123,7 @@ export function GlobalStats({
         <div className="relative">
           <div className="text-purple-400 text-sm font-medium mb-1">Total Volume</div>
           <div className="text-3xl font-bold text-white">
-            <CountUp
-              end={display.totalVolume ?? 0}
-              duration={2}
-              separator=","
-              prefix="$"
-            />
+            <CountUp end={display.totalVolume ?? 0} duration={2} separator="," prefix="$" />
           </div>
           <div className="text-xs text-gray-400 mt-1">tracked</div>
         </div>

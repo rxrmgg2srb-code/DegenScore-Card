@@ -13,7 +13,13 @@ interface UpgradeModalProps {
   onPromoCodeApplied?: (code: string) => void;
 }
 
-export default function UpgradeModal({ isOpen, onClose, onUpgrade, onSkip, onPromoCodeApplied }: UpgradeModalProps) {
+export default function UpgradeModal({
+  isOpen,
+  onClose,
+  onUpgrade,
+  onSkip,
+  onPromoCodeApplied,
+}: UpgradeModalProps) {
   const { publicKey } = useWallet();
   const [upgradesCount, setUpgradesCount] = useState(0);
 
@@ -35,7 +41,9 @@ export default function UpgradeModal({ isOpen, onClose, onUpgrade, onSkip, onPro
     return () => clearInterval(interval);
   }, []);
 
-  if (!isOpen) {return null;}
+  if (!isOpen) {
+    return null;
+  }
 
   const handlePromoCode = async () => {
     if (!publicKey) {
@@ -58,7 +66,7 @@ export default function UpgradeModal({ isOpen, onClose, onUpgrade, onSkip, onPro
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           walletAddress: publicKey.toString(),
-          promoCode: promoCode.trim()
+          promoCode: promoCode.trim(),
         }),
       });
 
@@ -78,7 +86,6 @@ export default function UpgradeModal({ isOpen, onClose, onUpgrade, onSkip, onPro
           onPromoCodeApplied(promoCode.trim().toUpperCase());
         }, 1000);
       }
-
     } catch (error: any) {
       logger.error('Promo code error:', error);
       setPromoError(error.message || 'Invalid promo code');
@@ -99,12 +106,8 @@ export default function UpgradeModal({ isOpen, onClose, onUpgrade, onSkip, onPro
 
         <div className="text-center mb-8">
           <div className="text-6xl mb-4">🎨</div>
-          <h2 className="text-3xl font-bold text-white mb-2">
-            Customize & Join Leaderboard
-          </h2>
-          <p className="text-gray-400">
-            Unlock premium features and appear on the leaderboard
-          </p>
+          <h2 className="text-3xl font-bold text-white mb-2">Customize & Join Leaderboard</h2>
+          <p className="text-gray-400">Unlock premium features and appear on the leaderboard</p>
         </div>
 
         <div className="bg-gray-800/50 rounded-xl p-6 mb-6">
@@ -116,7 +119,7 @@ export default function UpgradeModal({ isOpen, onClose, onUpgrade, onSkip, onPro
                 <div className="text-gray-400 text-sm">Add your photo to the card</div>
               </div>
             </div>
-            
+
             <div className="flex items-center gap-3">
               <div className="text-2xl">✅</div>
               <div>
@@ -124,7 +127,7 @@ export default function UpgradeModal({ isOpen, onClose, onUpgrade, onSkip, onPro
                 <div className="text-gray-400 text-sm">Display Twitter & Telegram</div>
               </div>
             </div>
-            
+
             <div className="flex items-center gap-3">
               <div className="text-2xl">🏆</div>
               <div>
@@ -132,7 +135,7 @@ export default function UpgradeModal({ isOpen, onClose, onUpgrade, onSkip, onPro
                 <div className="text-gray-400 text-sm">Compete with other degens</div>
               </div>
             </div>
-            
+
             <div className="flex items-center gap-3">
               <div className="text-2xl">⬇️</div>
               <div>
@@ -148,7 +151,9 @@ export default function UpgradeModal({ isOpen, onClose, onUpgrade, onSkip, onPro
           <div className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">
             {PAYMENT_CONFIG.MINT_PRICE_SOL} SOL
           </div>
-          <div className="text-gray-400 text-xs mt-1">≈ ${(PAYMENT_CONFIG.MINT_PRICE_SOL * 200).toFixed(2)} USD</div>
+          <div className="text-gray-400 text-xs mt-1">
+            ≈ ${(PAYMENT_CONFIG.MINT_PRICE_SOL * 200).toFixed(2)} USD
+          </div>
         </div>
 
         {/* FOMO Triggers */}
@@ -176,14 +181,21 @@ export default function UpgradeModal({ isOpen, onClose, onUpgrade, onSkip, onPro
               <span className="text-orange-400 text-xs font-bold">87% CLAIMED</span>
             </div>
             <div className="w-full bg-gray-700 rounded-full h-2 overflow-hidden">
-              <div className="bg-gradient-to-r from-orange-500 to-red-500 h-full rounded-full transition-all duration-1000" style={{ width: '87%' }}></div>
+              <div
+                className="bg-gradient-to-r from-orange-500 to-red-500 h-full rounded-full transition-all duration-1000"
+                style={{ width: '87%' }}
+              ></div>
             </div>
           </div>
 
           {/* Value Props */}
           <div className="flex items-center gap-2 text-xs text-gray-400">
             <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"/>
+              <path
+                fillRule="evenodd"
+                d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                clipRule="evenodd"
+              />
             </svg>
             <span>Instant access • No recurring fees • Lifetime features</span>
           </div>
@@ -227,9 +239,7 @@ export default function UpgradeModal({ isOpen, onClose, onUpgrade, onSkip, onPro
             </div>
           )}
 
-          <p className="text-gray-500 text-xs mt-2">
-            Get 100% free upgrade with valid promo code
-          </p>
+          <p className="text-gray-500 text-xs mt-2">Get 100% free upgrade with valid promo code</p>
         </div>
 
         {/* Divider */}

@@ -43,7 +43,9 @@ export default function DailyChallengesWidget() {
   }, [sessionToken]);
 
   const generateToken = async () => {
-    if (!publicKey || !signMessage) {return;}
+    if (!publicKey || !signMessage) {
+      return;
+    }
 
     try {
       const token = generateSessionToken(publicKey.toString());
