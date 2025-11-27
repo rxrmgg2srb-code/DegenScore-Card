@@ -245,6 +245,7 @@ function getEndpointConfig(
 
 /**
  * Check if user has premium status
+ * ✅ COMPLETED: Now queries database for subscription status
  */
 async function checkPremiumStatus(req: NextApiRequest): Promise<boolean> {
   try {
@@ -260,15 +261,44 @@ async function checkPremiumStatus(req: NextApiRequest): Promise<boolean> {
       const cached = await redis.get(cacheKey);
 
       if (cached !== null) {
+        logger.debug('Premium status from cache', { walletAddress: walletAddress.slice(0, 8), isPremium: cached === '1' });
         return cached === '1';
       }
     }
 
-    // TODO: Query database for premium status
-    // For now, return false
-    return false;
+    // ✅ Query database for premium status
+    const { prisma } = await import('./prisma');
+    const subscription = await prisma.subscription.findUnique({
+      where: { walletAddress },
+      select: {
+        tier: true,
+        expiresAt: true,
+      },
+    });
+
+    // Check if subscription is active and not expired
+    const isPremium =
+      subscription &&
+      (subscription.tier === 'BASIC' || subscription.tier === 'PRO') &&
+      subscription.expiresAt &&
+      subscription.expiresAt > new Date();
+
+    // Cache result in Redis (TTL: 5 minutes)
+    if (isRedisEnabled && redis) {
+      const cacheKey = `premium:${walletAddress}`;
+      await redis.set(cacheKey, isPremium ? '1' : '0', { ex: 300 });
+    }
+
+    logger.debug('Premium status from DB', {
+      walletAddress: walletAddress.slice(0, 8),
+      isPremium: !!isPremium,
+      tier: subscription?.tier,
+    });
+
+    return !!isPremium;
   } catch (error) {
     logger.error('Failed to check premium status', error as Error);
+    // Fail safe - assume not premium on error
     return false;
   }
 }

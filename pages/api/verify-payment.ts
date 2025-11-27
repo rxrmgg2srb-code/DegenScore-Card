@@ -4,6 +4,7 @@ import { Connection, PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { paymentRateLimit } from '../../lib/rateLimitRedis';
 import { retry } from '../../lib/retryLogic';
 import { logger } from '@/lib/logger';
+import { redactWallet, redactSignature, sanitizeAmount } from '@/lib/sanitize';
 
 const TREASURY_WALLET = process.env.TREASURY_WALLET!;
 const MINT_PRICE_SOL = parseFloat(process.env.MINT_PRICE_SOL || '0.0001'); // Testing: 0.0001 SOL
@@ -30,8 +31,9 @@ export default async function handler(
       });
     }
 
-    logger.info(`💰 Verifying payment for: ${walletAddress}`);
-    logger.info(`📝 Payment signature: ${paymentSignature}`);
+    // ✅ SECURITY: Redact sensitive info in logs
+    logger.info(`💰 Verifying payment for: ${redactWallet(walletAddress)}`);
+    logger.info(`📝 Payment signature: ${redactSignature(paymentSignature)}`);
 
     const connection = new Connection(
       process.env.HELIUS_RPC_URL || 'https://api.mainnet-beta.solana.com',
@@ -110,35 +112,52 @@ export default async function handler(
     const senderPaidAmount = Math.abs(senderBalanceChange);
     const treasuryReceivedAmount = treasuryBalanceChange;
 
+    // ✅ SECURITY: Redacted payment verification logs
     logger.info(`💰 Payment verification:`);
-    logger.info(`   Sender (${walletAddress}) balance change: ${senderBalanceChange.toFixed(4)} SOL`);
-    logger.info(`   Treasury balance change: ${treasuryBalanceChange.toFixed(4)} SOL`);
+    logger.info(`   Sender (${redactWallet(walletAddress)}) balance change: ${sanitizeAmount(senderBalanceChange)}`);
+    logger.info(`   Treasury balance change: ${sanitizeAmount(treasuryBalanceChange)}`);
 
     // CRITICAL VALIDATION: Sender must have sent money (negative balance change)
     if (senderBalanceChange >= 0) {
+      // ✅ SECURITY: Generic error, detailed log
+      logger.warn('Invalid payment - sender did not send SOL', {
+        wallet: redactWallet(walletAddress),
+        balanceChange: senderBalanceChange
+      });
       return res.status(400).json({
-        error: 'Invalid payment. Sender did not send any SOL in this transaction.'
+        error: 'Payment verification failed'
       });
     }
 
     // CRITICAL VALIDATION: Treasury must have received money (positive balance change)
     if (treasuryBalanceChange < MINT_PRICE_SOL) {
+      // ✅ SECURITY: Generic error, detailed log
+      logger.warn('Invalid payment - treasury received insufficient amount', {
+        received: treasuryBalanceChange,
+        expected: MINT_PRICE_SOL
+      });
       return res.status(400).json({
-        error: `Invalid payment. Treasury received ${treasuryBalanceChange.toFixed(4)} SOL, expected at least ${MINT_PRICE_SOL} SOL.`
+        error: 'Payment verification failed'
       });
     }
 
     // CRITICAL VALIDATION: Sender must have sent at least MINT_PRICE_SOL
     // (accounting for transaction fees, they might have sent slightly more)
     if (senderPaidAmount < MINT_PRICE_SOL) {
+      // ✅ SECURITY: Generic error, detailed log
+      logger.warn('Invalid payment - amount too low', {
+        wallet: redactWallet(walletAddress),
+        paid: senderPaidAmount,
+        expected: MINT_PRICE_SOL
+      });
       return res.status(400).json({
-        error: `Invalid payment amount. Sender paid ${senderPaidAmount.toFixed(4)} SOL, expected at least ${MINT_PRICE_SOL} SOL.`
+        error: 'Payment verification failed'
       });
     }
 
     const paidAmount = treasuryReceivedAmount;
 
-    logger.info(`✅ Valid payment received: ${paidAmount} SOL`);
+    logger.info(`✅ Valid payment received: ${sanitizeAmount(paidAmount)}`);
 
     // Use transaction to ensure atomicity and prevent race conditions
     const result = await prisma.$transaction(async (tx) => {
@@ -161,7 +180,7 @@ export default async function handler(
         },
       });
 
-      logger.info(`✅ Payment saved: ${paymentSignature}`);
+      logger.info(`✅ Payment saved: ${redactSignature(paymentSignature)}`);
 
       // Update card as paid
       const updatedCard = await tx.degenCard.update({
@@ -173,7 +192,7 @@ export default async function handler(
         },
       });
 
-      logger.info(`✅ Card marked as paid for wallet: ${walletAddress}`);
+      logger.info(`✅ Card marked as paid for wallet: ${redactWallet(walletAddress)}`);
 
       // Create or update subscription with 30-day PRO trial
       const trialEndDate = new Date();

@@ -88,14 +88,30 @@ export function isAuthChallengeValid(timestamp: number): boolean {
 
 /**
  * Complete authentication flow verification
+ *
+ * ✅ SECURITY: Now includes replay attack protection
  */
-export function verifyAuthentication(authResponse: WalletAuthResponse): {
+export async function verifyAuthentication(
+  authResponse: WalletAuthResponse & { nonce: string }
+): Promise<{
   valid: boolean;
   error?: string;
-} {
+}> {
   // Check if timestamp is valid (not too old)
   if (!isAuthChallengeValid(authResponse.timestamp)) {
     return { valid: false, error: 'Authentication challenge expired' };
+  }
+
+  // ✅ SECURITY: Check for replay attack - import dynamically to avoid circular deps
+  const { isNonceUsed, markNonceAsUsed } = await import('./nonceStore');
+  const nonceAlreadyUsed = await isNonceUsed(authResponse.nonce);
+
+  if (nonceAlreadyUsed) {
+    logger.warn('Replay attack detected', {
+      nonce: authResponse.nonce.slice(0, 8),
+      publicKey: authResponse.publicKey.slice(0, 8)
+    });
+    return { valid: false, error: 'Authentication request already used (replay attack detected)' };
   }
 
   // Verify the signature
@@ -113,6 +129,9 @@ export function verifyAuthentication(authResponse: WalletAuthResponse): {
   if (!authResponse.message.includes(authResponse.publicKey)) {
     return { valid: false, error: 'Message does not match public key' };
   }
+
+  // ✅ SECURITY: Mark nonce as used to prevent replay
+  await markNonceAsUsed(authResponse.nonce);
 
   return { valid: true };
 }

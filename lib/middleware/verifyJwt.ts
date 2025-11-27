@@ -14,20 +14,46 @@ export function verifyJwt(req: NextApiRequest, res: NextApiResponse, next: () =>
         return;
     }
     const token = authHeader.split(' ')[1];
+
+    // ✅ SECURITY: Use JWT_SECRET (server-only), not NEXT_PUBLIC_JWT_SECRET
+    const secret = process.env.JWT_SECRET;
+
+    // ✅ SECURITY: No fallback secret - fail fast if not configured
+    if (!secret || secret.length < 32) {
+        logger.error('JWT_SECRET not configured or too short (min 32 chars)');
+        res.status(500).json({ error: 'Server misconfiguration' });
+        return;
+    }
+
     try {
-        const secret = process.env.NEXT_PUBLIC_JWT_SECRET;
-        if (!secret) {
-            logger.error('JWT secret not configured');
-            res.status(500).json({ error: 'Server misconfiguration' });
+        // ✅ SECURITY: Verify with proper typing, no fallback
+        const payload = jwt.verify(token, secret, {
+            algorithms: ['HS256'],
+            issuer: 'degenscore-card'
+        }) as jwt.JwtPayload & { walletAddress?: string; wallet?: string };
+
+        // Extract wallet address (support both 'wallet' and 'walletAddress' for compatibility)
+        const walletAddress = payload.walletAddress || payload.wallet;
+
+        if (!walletAddress) {
+            logger.warn('JWT payload missing wallet address');
+            res.status(401).json({ error: 'Invalid token payload' });
             return;
         }
-        // @ts-ignore
-        const payload = jwt.verify(token, secret || 'fallback_secret') as { walletAddress: string };
+
         // Attach wallet address to request for downstream handlers
-        (req as any).walletAddress = payload.walletAddress;
+        (req as NextApiRequest & { walletAddress: string }).walletAddress = walletAddress;
         next();
     } catch (err) {
-        logger.warn('Invalid JWT', err as Error);
-        res.status(401).json({ error: 'Invalid token' });
+        if (err instanceof jwt.TokenExpiredError) {
+            logger.warn('JWT expired', { error: err.message });
+            res.status(401).json({ error: 'Session expired' });
+        } else if (err instanceof jwt.JsonWebTokenError) {
+            logger.warn('Invalid JWT signature', { error: err.message });
+            res.status(401).json({ error: 'Invalid token' });
+        } else {
+            logger.warn('JWT verification failed', err as Error);
+            res.status(401).json({ error: 'Authentication failed' });
+        }
     }
 }
