@@ -3,10 +3,7 @@ import { prisma } from '../../lib/prisma';
 import { isValidSolanaAddress } from '../../lib/services/helius';
 import { logger } from '@/lib/logger';
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -90,14 +87,50 @@ export default async function handler(
         likes: card1.likes - card2.likes,
       },
       winner: {
-        degenScore: card1.degenScore > card2.degenScore ? 'wallet1' : card1.degenScore < card2.degenScore ? 'wallet2' : 'tie',
-        totalTrades: card1.totalTrades > card2.totalTrades ? 'wallet1' : card1.totalTrades < card2.totalTrades ? 'wallet2' : 'tie',
-        totalVolume: card1.totalVolume > card2.totalVolume ? 'wallet1' : card1.totalVolume < card2.totalVolume ? 'wallet2' : 'tie',
-        profitLoss: card1.profitLoss > card2.profitLoss ? 'wallet1' : card1.profitLoss < card2.profitLoss ? 'wallet2' : 'tie',
-        winRate: card1.winRate > card2.winRate ? 'wallet1' : card1.winRate < card2.winRate ? 'wallet2' : 'tie',
-        bestTrade: card1.bestTrade > card2.bestTrade ? 'wallet1' : card1.bestTrade < card2.bestTrade ? 'wallet2' : 'tie',
-        badges: card1.badges.length > card2.badges.length ? 'wallet1' : card1.badges.length < card2.badges.length ? 'wallet2' : 'tie',
-        likes: card1.likes > card2.likes ? 'wallet1' : card1.likes < card2.likes ? 'wallet2' : 'tie',
+        degenScore:
+          card1.degenScore > card2.degenScore
+            ? 'wallet1'
+            : card1.degenScore < card2.degenScore
+              ? 'wallet2'
+              : 'tie',
+        totalTrades:
+          card1.totalTrades > card2.totalTrades
+            ? 'wallet1'
+            : card1.totalTrades < card2.totalTrades
+              ? 'wallet2'
+              : 'tie',
+        totalVolume:
+          card1.totalVolume > card2.totalVolume
+            ? 'wallet1'
+            : card1.totalVolume < card2.totalVolume
+              ? 'wallet2'
+              : 'tie',
+        profitLoss:
+          card1.profitLoss > card2.profitLoss
+            ? 'wallet1'
+            : card1.profitLoss < card2.profitLoss
+              ? 'wallet2'
+              : 'tie',
+        winRate:
+          card1.winRate > card2.winRate
+            ? 'wallet1'
+            : card1.winRate < card2.winRate
+              ? 'wallet2'
+              : 'tie',
+        bestTrade:
+          card1.bestTrade > card2.bestTrade
+            ? 'wallet1'
+            : card1.bestTrade < card2.bestTrade
+              ? 'wallet2'
+              : 'tie',
+        badges:
+          card1.badges.length > card2.badges.length
+            ? 'wallet1'
+            : card1.badges.length < card2.badges.length
+              ? 'wallet2'
+              : 'tie',
+        likes:
+          card1.likes > card2.likes ? 'wallet1' : card1.likes < card2.likes ? 'wallet2' : 'tie',
       },
     };
 
@@ -106,8 +139,8 @@ export default async function handler(
       card1.degenScore > card2.degenScore
         ? 'wallet1'
         : card1.degenScore < card2.degenScore
-        ? 'wallet2'
-        : 'tie';
+          ? 'wallet2'
+          : 'tie';
 
     res.status(200).json({
       success: true,

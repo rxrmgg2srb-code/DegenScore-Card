@@ -41,7 +41,9 @@ async function updateChallengePrize() {
 
     console.log('\n📊 Recent challenges:');
     challenges.forEach((challenge) => {
-      console.log(`  - Week ${challenge.week}/${challenge.year}: ${challenge.prizeSOL} SOL (min ${challenge.minCardsRequired} cards)`);
+      console.log(
+        `  - Week ${challenge.week}/${challenge.year}: ${challenge.prizeSOL} SOL (min ${challenge.minCardsRequired} cards)`
+      );
     });
 
     console.log('\n✨ Done!');

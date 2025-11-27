@@ -17,6 +17,7 @@ Build comprehensive testing infrastructure for asynchronous job processing, smar
 Create `__tests__/workers/card-generation.test.ts` with comprehensive unit tests:
 
 1. **Job Processing Tests** (~30 tests)
+
    ```typescript
    describe('CardGenerationWorker', () => {
      it('should process valid card generation job', async () => {
@@ -68,6 +69,7 @@ Create `__tests__/workers/card-generation.test.ts` with comprehensive unit tests
 #### Additional Worker Tests
 
 Create tests for other workers (if they exist or plan to):
+
 - Email notification worker
 - Webhook delivery worker
 - Analytics aggregation worker
@@ -105,19 +107,19 @@ Create `programs/tests/` directory with Anchor test framework:
 
 ```typescript
 // programs/tests/token.test.ts
-import * as anchor from "@project-serum/anchor";
-import { Program } from "@project-serum/anchor";
+import * as anchor from '@project-serum/anchor';
+import { Program } from '@project-serum/anchor';
 
-describe("Token Program", () => {
+describe('Token Program', () => {
   const provider = anchor.AnchorProvider.env();
   anchor.setProvider(provider);
 
-  it("initializes token mint", async () => {
+  it('initializes token mint', async () => {
     const program = anchor.workspace.Token as Program;
     // Test implementation
   });
 
-  it("enforces authority for minting", async () => {
+  it('enforces authority for minting', async () => {
     // Test unauthorized minting attempt
   });
 });
@@ -215,6 +217,7 @@ Current E2E coverage is minimal. Add comprehensive user journey tests:
    - Seed data for consistent tests
 
 2. **Page Objects** (`e2e/pages/`)
+
    ```typescript
    // e2e/pages/WalletConnectionPage.ts
    export class WalletConnectionPage {
@@ -276,6 +279,7 @@ Optional but recommended:
 ## Acceptance Criteria
 
 ### BullMQ Worker Tests
+
 - [ ] `__tests__/workers/card-generation.test.ts` created with 100+ tests
 - [ ] Tests cover:
   - [ ] Job processing lifecycle
@@ -288,6 +292,7 @@ Optional but recommended:
 - [ ] Worker tests run in under 3 minutes
 
 ### Smart Contract Tests
+
 - [ ] Anchor test framework configured
 - [ ] 50+ tests for programs:
   - [ ] Token program: 20+ tests
@@ -298,6 +303,7 @@ Optional but recommended:
 - [ ] Smoke tests for deployment readiness
 
 ### E2E Tests (Playwright)
+
 - [ ] 150+ new E2E tests covering:
   - [ ] Wallet connection: 20 tests
   - [ ] Trading analytics: 25 tests
@@ -316,6 +322,7 @@ Optional but recommended:
 - [ ] Video recordings for failed tests
 
 ### Infrastructure
+
 - [ ] NPM scripts added:
   ```json
   {
@@ -332,6 +339,7 @@ Optional but recommended:
 - [ ] Test reports published
 
 ### Quality Metrics
+
 - [ ] All 300+ new tests pass consistently
 - [ ] E2E test suite completes in under 15 minutes
 - [ ] Worker tests complete in under 3 minutes

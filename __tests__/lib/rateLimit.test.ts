@@ -30,12 +30,10 @@ describe('Rate Limiting', () => {
       const requests = [
         now - 70000, // 70 seconds ago (should be removed)
         now - 30000, // 30 seconds ago (should stay)
-        now - 5000,  // 5 seconds ago (should stay)
+        now - 5000, // 5 seconds ago (should stay)
       ];
 
-      const validRequests = requests.filter(
-        time => now - time < timeWindow
-      );
+      const validRequests = requests.filter((time) => now - time < timeWindow);
 
       expect(validRequests.length).toBe(2);
     });
@@ -53,9 +51,9 @@ describe('Rate Limiting', () => {
 
     it('should have different limits for different endpoints', () => {
       const limits = {
-        analyze: 10,    // 10 per minute
+        analyze: 10, // 10 per minute
         leaderboard: 60, // 60 per minute
-        like: 30,       // 30 per minute
+        like: 30, // 30 per minute
       };
 
       expect(limits.analyze).toBeLessThan(limits.leaderboard);
@@ -74,12 +72,10 @@ describe('Rate Limiting', () => {
         now - 55000, // Inside window
         now - 30000, // Inside window
         now - 10000, // Inside window
-        now - 1000,  // Inside window
+        now - 1000, // Inside window
       ];
 
-      const validRequests = requests.filter(
-        time => now - time < windowSize
-      );
+      const validRequests = requests.filter((time) => now - time < windowSize);
 
       const canMakeRequest = validRequests.length < maxRequests;
 

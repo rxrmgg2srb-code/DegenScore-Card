@@ -43,7 +43,9 @@ export default function DailyChallengesWidget() {
   }, [sessionToken]);
 
   const generateToken = async () => {
-    if (!publicKey || !signMessage) return;
+    if (!publicKey || !signMessage) {
+      return;
+    }
 
     try {
       const token = generateSessionToken(publicKey.toString());
@@ -103,7 +105,7 @@ export default function DailyChallengesWidget() {
           {stats && (
             <p className="text-sm text-gray-400 mt-1">
               {stats.todayCompleted} / {challenges.length} completados hoy
-              {stats.streakDays > 0 && ` • ${stats.streakDays} días consecutivos`}
+              {stats.streakDays > 0 && ` • ${stats.streakDays} consecutive days`}
             </p>
           )}
         </div>
@@ -180,7 +182,7 @@ export default function DailyChallengesWidget() {
       {!publicKey && challenges.length > 0 && (
         <div className="mt-4 text-center bg-purple-900/20 border border-purple-500/30 rounded-lg p-4">
           <p className="text-sm text-gray-400">
-            Conecta tu wallet para trackear tu progreso y ganar recompensas
+            Connect your wallet to track your progress and earn rewards
           </p>
         </div>
       )}
@@ -199,7 +201,7 @@ export default function DailyChallengesWidget() {
             </div>
             <div>
               <div className="text-2xl font-bold text-orange-400">{stats.streakDays}</div>
-              <div className="text-xs text-gray-500">Racha (días)</div>
+              <div className="text-xs text-gray-500">Streak (days)</div>
             </div>
           </div>
         </div>

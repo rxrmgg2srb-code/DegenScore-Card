@@ -1,5 +1,13 @@
 import { useState, useEffect } from 'react';
-import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart } from 'recharts';
+import {
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  Area,
+  AreaChart,
+} from 'recharts';
 import { logger } from '../lib/logger';
 
 interface ScoreHistoryData {
@@ -44,7 +52,10 @@ const PERIODS = [
   { label: '90D', days: 90 },
 ];
 
-export default function ScoreHistoryChart({ walletAddress, className = '' }: ScoreHistoryChartProps) {
+export default function ScoreHistoryChart({
+  walletAddress,
+  className = '',
+}: ScoreHistoryChartProps) {
   const [selectedPeriod, setSelectedPeriod] = useState(30);
   const [data, setData] = useState<ScoreHistoryResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -59,7 +70,9 @@ export default function ScoreHistoryChart({ walletAddress, className = '' }: Sco
     setError(null);
 
     try {
-      const response = await fetch(`/api/score-history?walletAddress=${walletAddress}&days=${selectedPeriod}`);
+      const response = await fetch(
+        `/api/score-history?walletAddress=${walletAddress}&days=${selectedPeriod}`
+      );
       const json = await response.json();
 
       if (!response.ok) {
@@ -76,16 +89,17 @@ export default function ScoreHistoryChart({ walletAddress, className = '' }: Sco
   };
 
   // Format data for recharts
-  const chartData = data?.history.map(point => ({
-    date: new Date(point.timestamp).toLocaleDateString('es-ES', {
-      month: 'short',
-      day: 'numeric'
-    }),
-    score: point.score,
-    rank: point.rank,
-    volume: point.totalVolume,
-    winRate: point.winRate,
-  })) || [];
+  const chartData =
+    data?.history.map((point) => ({
+      date: new Date(point.timestamp).toLocaleDateString('es-ES', {
+        month: 'short',
+        day: 'numeric',
+      }),
+      score: point.score,
+      rank: point.rank,
+      volume: point.totalVolume,
+      winRate: point.winRate,
+    })) || [];
 
   // Custom tooltip
   const CustomTooltip = ({ active, payload }: any) => {
@@ -149,10 +163,15 @@ export default function ScoreHistoryChart({ walletAddress, className = '' }: Sco
             <div className="text-3xl font-bold gradient-text-gold">
               {statistics.current.toLocaleString()}
             </div>
-            <div className={`flex items-center gap-1 text-sm font-bold ${isPositiveChange ? 'text-green-400' : 'text-red-400'}`}>
+            <div
+              className={`flex items-center gap-1 text-sm font-bold ${isPositiveChange ? 'text-green-400' : 'text-red-400'}`}
+            >
               {isPositiveChange ? '↑' : '↓'}
               {Math.abs(statistics.change).toLocaleString()}
-              <span className="text-xs">({statistics.changePercent > 0 ? '+' : ''}{statistics.changePercent}%)</span>
+              <span className="text-xs">
+                ({statistics.changePercent > 0 ? '+' : ''}
+                {statistics.changePercent}%)
+              </span>
             </div>
           </div>
         </div>
@@ -187,7 +206,9 @@ export default function ScoreHistoryChart({ walletAddress, className = '' }: Sco
         </div>
         <div className="bg-gray-900/50 rounded-lg p-3 border border-gray-700">
           <div className="text-xs text-gray-400 mb-1">Promedio</div>
-          <div className="text-lg font-bold text-blue-400">{statistics.average.toLocaleString()}</div>
+          <div className="text-lg font-bold text-blue-400">
+            {statistics.average.toLocaleString()}
+          </div>
         </div>
         <div className="bg-gray-900/50 rounded-lg p-3 border border-gray-700">
           <div className="text-xs text-gray-400 mb-1">Mejor Rank</div>
@@ -203,20 +224,13 @@ export default function ScoreHistoryChart({ walletAddress, className = '' }: Sco
           <AreaChart data={chartData}>
             <defs>
               <linearGradient id="colorScore" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#9945FF" stopOpacity={0.8}/>
-                <stop offset="95%" stopColor="#9945FF" stopOpacity={0.1}/>
+                <stop offset="5%" stopColor="#9945FF" stopOpacity={0.8} />
+                <stop offset="95%" stopColor="#9945FF" stopOpacity={0.1} />
               </linearGradient>
             </defs>
             <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-            <XAxis
-              dataKey="date"
-              stroke="#9CA3AF"
-              style={{ fontSize: '12px' }}
-            />
-            <YAxis
-              stroke="#9CA3AF"
-              style={{ fontSize: '12px' }}
-            />
+            <XAxis dataKey="date" stroke="#9CA3AF" style={{ fontSize: '12px' }} />
+            <YAxis stroke="#9CA3AF" style={{ fontSize: '12px' }} />
             <Tooltip content={<CustomTooltip />} />
             <Area
               type="monotone"

@@ -11,6 +11,7 @@
 ## 📋 Prerequisites
 
 Before starting, ensure you have completed:
+
 - [x] Merged PR #18 (Sprint 1 complete)
 - [x] Updated Render with new credentials
 - [x] Verified production is working
@@ -49,12 +50,12 @@ npm list lottie-react @react-spring/web
 
 ### What Each Library Does
 
-| Library | Purpose | When to Use |
-|---------|---------|-------------|
+| Library           | Purpose                                        | When to Use                                        |
+| ----------------- | ---------------------------------------------- | -------------------------------------------------- |
 | **Framer Motion** | React animation library (already installed ✅) | Page transitions, hover effects, layout animations |
-| **Lottie** | Complex animations from After Effects | Achievement popups, loading states, celebrations |
-| **React Spring** | Physics-based animations | Natural motion, spring effects, smooth transitions |
-| **Three.js** | 3D graphics (optional) | Holographic cards, 3D backgrounds (advanced) |
+| **Lottie**        | Complex animations from After Effects          | Achievement popups, loading states, celebrations   |
+| **React Spring**  | Physics-based animations                       | Natural motion, spring effects, smooth transitions |
+| **Three.js**      | 3D graphics (optional)                         | Holographic cards, 3D backgrounds (advanced)       |
 
 ---
 
@@ -244,7 +245,7 @@ import { NumberCounter } from './animations/NumberCounter';
 >
   {/* Replace static score with animated counter */}
   <NumberCounter value={score} duration={2} className="text-6xl font-bold" />
-  
+
   {/* Rest of card content */}
 </motion.div>
 ```
@@ -488,6 +489,7 @@ npm run dev
 ## 📊 Week 1 Progress Checklist
 
 ### Day 1-2: Setup & Basic Animations
+
 - [ ] Install animation libraries
 - [ ] Create animation component folder structure
 - [ ] Build FadeInUp component
@@ -496,18 +498,21 @@ npm run dev
 - [ ] Create test page
 
 ### Day 3-4: Enhance Existing Components
+
 - [ ] Add animations to DegenCard
 - [ ] Add page transitions
 - [ ] Add stagger animations to leaderboard
 - [ ] Test on mobile (responsive)
 
 ### Day 5: Polish & Effects
+
 - [ ] Add ParticleEffect component
 - [ ] Integrate confetti on achievements
 - [ ] Add loading state animations
 - [ ] Test cross-browser (Chrome, Firefox, Safari)
 
 ### Day 6-7: Review & Document
+
 - [ ] Code review (check performance)
 - [ ] Screenshot before/after
 - [ ] Show to ChatGPT for feedback
@@ -518,11 +523,13 @@ npm run dev
 ## 🎯 Expected Results
 
 **Before**:
+
 - Static UI
 - No animations
 - Basic interactions
 
 **After**:
+
 - Smooth page transitions
 - Animated score counters
 - Glowing buttons with hover effects
@@ -536,18 +543,22 @@ npm run dev
 ## 📚 Resources
 
 ### Framer Motion Docs
+
 - https://www.framer.com/motion/
 - Examples: https://www.framer.com/motion/examples/
 
 ### Lottie Animations
+
 - Free animations: https://lottiefiles.com/
 - React integration: https://github.com/Gamote/lottie-react
 
 ### React Spring
+
 - Docs: https://www.react-spring.dev/
 - Examples: https://www.react-spring.dev/examples
 
 ### Inspiration
+
 - Phantom Wallet: https://phantom.app/
 - Uniswap: https://app.uniswap.org/
 - Zed.run: https://zed.run/
@@ -559,6 +570,7 @@ npm run dev
 ### Issue: "Module not found: framer-motion"
 
 **Solution**:
+
 ```bash
 npm install framer-motion --legacy-peer-deps
 ```
@@ -566,6 +578,7 @@ npm install framer-motion --legacy-peer-deps
 ### Issue: Animations are laggy
 
 **Solution**:
+
 - Use `will-change: transform` CSS
 - Reduce particle count in confetti
 - Use `transform` instead of `left/top` for animations
@@ -573,6 +586,7 @@ npm install framer-motion --legacy-peer-deps
 ### Issue: Build fails with animation imports
 
 **Solution**:
+
 - Check that all animation components are in `components/animations/`
 - Verify import paths use `@/` alias correctly
 - Clear `.next/` folder: `rm -rf .next && npm run build`

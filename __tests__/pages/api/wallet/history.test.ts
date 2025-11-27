@@ -5,55 +5,55 @@ import { getWalletHistory } from '@/lib/wallet';
 jest.mock('@/lib/wallet');
 
 describe('/api/wallet/history', () => {
-    it('should return wallet history', async () => {
-        const { req, res } = createMocks({
-            method: 'GET',
-            query: { wallet: 'test-wallet' },
-        });
-
-        (getWalletHistory as jest.Mock).mockResolvedValue([{ tx: '1' }]);
-
-        await handler(req, res);
-
-        expect(res._getStatusCode()).toBe(200);
-        expect(res._getJSONData()).toHaveLength(1);
+  it('should return wallet history', async () => {
+    const { req, res } = createMocks({
+      method: 'GET',
+      query: { wallet: 'test-wallet' },
     });
 
-    it('should handle missing wallet', async () => {
-        const { req, res } = createMocks({ method: 'GET' });
-        await handler(req, res);
-        expect(res._getStatusCode()).toBe(400);
-    });
+    (getWalletHistory as jest.Mock).mockResolvedValue([{ tx: '1' }]);
 
-    it('should handle errors', async () => {
-        // ...
-    });
+    await handler(req, res);
 
-    it('should support pagination', async () => {
-        // ...
-    });
+    expect(res._getStatusCode()).toBe(200);
+    expect(res._getJSONData()).toHaveLength(1);
+  });
 
-    it('should filter by type', async () => {
-        // ...
-    });
+  it('should handle missing wallet', async () => {
+    const { req, res } = createMocks({ method: 'GET' });
+    await handler(req, res);
+    expect(res._getStatusCode()).toBe(400);
+  });
 
-    it('should cache response', async () => {
-        // ...
-    });
+  it('should handle errors', async () => {
+    // ...
+  });
 
-    it('should only allow GET', async () => {
-        // ...
-    });
+  it('should support pagination', async () => {
+    // ...
+  });
 
-    it('should validate wallet', async () => {
-        // ...
-    });
+  it('should filter by type', async () => {
+    // ...
+  });
 
-    it('should log access', async () => {
-        // ...
-    });
+  it('should cache response', async () => {
+    // ...
+  });
 
-    it('should return summary stats', async () => {
-        // ...
-    });
+  it('should only allow GET', async () => {
+    // ...
+  });
+
+  it('should validate wallet', async () => {
+    // ...
+  });
+
+  it('should log access', async () => {
+    // ...
+  });
+
+  it('should return summary stats', async () => {
+    // ...
+  });
 });

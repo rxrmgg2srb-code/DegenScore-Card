@@ -9,16 +9,16 @@ const apiResponseTime = new Trend('api_response_time');
 // Test configuration
 export const options = {
   stages: [
-    { duration: '30s', target: 20 },  // Ramp up to 20 users
-    { duration: '1m', target: 50 },   // Ramp up to 50 users
-    { duration: '2m', target: 50 },   // Stay at 50 users for 2 minutes
+    { duration: '30s', target: 20 }, // Ramp up to 20 users
+    { duration: '1m', target: 50 }, // Ramp up to 50 users
+    { duration: '2m', target: 50 }, // Stay at 50 users for 2 minutes
     { duration: '30s', target: 100 }, // Spike to 100 users
-    { duration: '1m', target: 0 },    // Ramp down to 0 users
+    { duration: '1m', target: 0 }, // Ramp down to 0 users
   ],
   thresholds: {
-    http_req_duration: ['p(95)<500'],  // 95% of requests must complete below 500ms
-    http_req_failed: ['rate<0.01'],     // Error rate must be below 1%
-    errors: ['rate<0.05'],              // Custom error rate must be below 5%
+    http_req_duration: ['p(95)<500'], // 95% of requests must complete below 500ms
+    http_req_failed: ['rate<0.01'], // Error rate must be below 1%
+    errors: ['rate<0.05'], // Custom error rate must be below 5%
   },
 };
 
@@ -120,7 +120,7 @@ export default function () {
 
 export function handleSummary(data) {
   return {
-    'stdout': textSummary(data, { indent: '→', enableColors: true }),
+    stdout: textSummary(data, { indent: '→', enableColors: true }),
     'load-test-results.json': JSON.stringify(data, null, 2),
   };
 }

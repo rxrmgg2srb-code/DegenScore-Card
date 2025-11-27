@@ -1,6 +1,10 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { verifySessionToken } from '../../../lib/walletAuth';
-import { getDailyChallenges, updateChallengeProgress, getUserChallengeStats } from '../../../lib/challenges';
+import {
+  getDailyChallenges,
+  updateChallengeProgress,
+  getUserChallengeStats,
+} from '../../../lib/challenges';
 import { logger } from '../../../lib/logger';
 
 /**
@@ -8,10 +12,7 @@ import { logger } from '../../../lib/logger';
  * GET: Get today's challenges (with user progress if authenticated)
  * POST: Update challenge progress
  */
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === 'GET') {
     return handleGet(req, res);
   } else if (req.method === 'POST') {
@@ -54,13 +55,11 @@ async function handleGet(req: NextApiRequest, res: NextApiResponse) {
       challenges,
       stats,
     });
-
   } catch (error: any) {
     logger.error('Error fetching daily challenges:', error);
 
-    const errorMessage = process.env.NODE_ENV === 'development'
-      ? error.message
-      : 'Failed to fetch challenges';
+    const errorMessage =
+      process.env.NODE_ENV === 'development' ? error.message : 'Failed to fetch challenges';
 
     res.status(500).json({ error: errorMessage });
   }
@@ -106,13 +105,11 @@ async function handlePost(req: NextApiRequest, res: NextApiResponse) {
       challenges,
       stats,
     });
-
   } catch (error: any) {
     logger.error('Error updating challenge progress:', error);
 
-    const errorMessage = process.env.NODE_ENV === 'development'
-      ? error.message
-      : 'Failed to update challenge';
+    const errorMessage =
+      process.env.NODE_ENV === 'development' ? error.message : 'Failed to update challenge';
 
     res.status(500).json({ error: errorMessage });
   }

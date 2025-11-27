@@ -41,10 +41,7 @@ function calculateDelay(
 /**
  * Retry a function with exponential backoff
  */
-export async function retry<T>(
-  fn: () => Promise<T>,
-  options: RetryOptions = {}
-): Promise<T> {
+export async function retry<T>(fn: () => Promise<T>, options: RetryOptions = {}): Promise<T> {
   const opts = { ...DEFAULT_OPTIONS, ...options };
   let lastError: Error;
 
@@ -74,9 +71,12 @@ export async function retry<T>(
         opts.backoffMultiplier
       );
 
-      logger.warn(`[Retry] Attempt ${attempt + 1}/${opts.maxRetries} failed, retrying in ${Math.round(delay)}ms...`, {
-        error: lastError.message,
-      });
+      logger.warn(
+        `[Retry] Attempt ${attempt + 1}/${opts.maxRetries} failed, retrying in ${Math.round(delay)}ms...`,
+        {
+          error: lastError.message,
+        }
+      );
 
       opts.onRetry(attempt + 1, lastError);
 
@@ -163,11 +163,12 @@ export class CircuitBreaker {
     // Only count server errors (5xx) and network errors as failures
     // Client errors (4xx) should not open the circuit breaker
     const isServerError = error?.status >= 500 && error?.status < 600;
-    const isNetworkError = error?.code === 'ECONNRESET' ||
-                          error?.code === 'ETIMEDOUT' ||
-                          error?.code === 'ENOTFOUND' ||
-                          error?.message?.includes('timeout') ||
-                          error?.message?.includes('network');
+    const isNetworkError =
+      error?.code === 'ECONNRESET' ||
+      error?.code === 'ETIMEDOUT' ||
+      error?.code === 'ENOTFOUND' ||
+      error?.message?.includes('timeout') ||
+      error?.message?.includes('network');
 
     if (!isServerError && !isNetworkError) {
       // Don't count client errors (4xx) as circuit breaker failures

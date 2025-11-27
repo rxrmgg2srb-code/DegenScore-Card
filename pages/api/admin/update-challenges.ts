@@ -3,10 +3,7 @@ import { prisma } from '../../../lib/prisma';
 import { verifyAdminAuth } from '../../../lib/adminAuth';
 import { logger } from '@/lib/logger';
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -24,7 +21,7 @@ export default async function handler(
     logger.info(`🔐 Admin authorized: ${authResult.wallet}`);
     logger.info('🔄 Updating weekly challenge prizes...');
 
-    // Actualizar todos los challenges que tengan 3.0 SOL a 1.0 SOL
+    // Update all challenges que tengan 3.0 SOL a 1.0 SOL
     const result = await prisma.weeklyChallenge.updateMany({
       where: {
         prizeSOL: 3.0,

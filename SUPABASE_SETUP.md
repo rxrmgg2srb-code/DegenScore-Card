@@ -3,6 +3,7 @@
 ## Problem Solved ✅
 
 The Prisma connection was stuck because:
+
 1. No `.env.local` file existed
 2. Missing proper Supabase PgBouncer connection parameters
 
@@ -34,6 +35,7 @@ DATABASE_URL="postgresql://postgres.YOUR-PROJECT-REF:YOUR-PASSWORD@aws-1-eu-west
 ```
 
 **⚠️ CRITICAL:** Make sure to include:
+
 - `?pgbouncer=true` - Required for Supabase pooler
 - `&connection_limit=1` - Required for Prisma with PgBouncer
 
@@ -70,11 +72,13 @@ Make sure to add these environment variables in **Vercel Dashboard**:
 ## Connection String Formats
 
 ### ✅ CORRECT (Connection Pooling - Port 6543)
+
 ```
 postgresql://postgres.xxxxx:password@aws-1-eu-west-1.pooler.supabase.com:6543/postgres?pgbouncer=true&connection_limit=1
 ```
 
 ### ❌ WRONG (Direct Connection - Port 5432)
+
 ```
 postgresql://postgres:password@db.xxxxx.supabase.co:5432/postgres
 ```

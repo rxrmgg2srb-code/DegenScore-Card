@@ -50,16 +50,24 @@ export default function WeeklyChallengeBanner() {
   }
 
   const { challenge, currentLeader } = challengeData;
-  if (!challenge) return null;
+  if (!challenge) {
+    return null;
+  }
 
   const getMetricIcon = (metric: string) => {
     switch (metric) {
-      case 'likes': return '❤️';
-      case 'profit': return '💰';
-      case 'winRate': return '🎯';
-      case 'volume': return '📊';
-      case 'bestTrade': return '🚀';
-      default: return '🏆';
+      case 'likes':
+        return '❤️';
+      case 'profit':
+        return '💰';
+      case 'winRate':
+        return '🎯';
+      case 'volume':
+        return '📊';
+      case 'bestTrade':
+        return '🚀';
+      default:
+        return '🏆';
     }
   };
 
@@ -109,9 +117,7 @@ export default function WeeklyChallengeBanner() {
               <div className="flex items-center justify-between">
                 <div>
                   <div className="text-gray-400 text-xs mb-1">🔥 Current Leader</div>
-                  <div className="text-white font-bold text-lg">
-                    {currentLeader.displayName}
-                  </div>
+                  <div className="text-white font-bold text-lg">{currentLeader.displayName}</div>
                   <div className="text-gray-500 text-xs font-mono">
                     {currentLeader.address.slice(0, 6)}...{currentLeader.address.slice(-4)}
                   </div>
@@ -129,8 +135,16 @@ export default function WeeklyChallengeBanner() {
           )}
 
           <div className="mt-4 flex items-center justify-center gap-2 text-xs text-gray-400">
-            <svg className="w-4 h-4 text-green-500 animate-pulse" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"/>
+            <svg
+              className="w-4 h-4 text-green-500 animate-pulse"
+              fill="currentColor"
+              viewBox="0 0 20 20"
+            >
+              <path
+                fillRule="evenodd"
+                d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                clipRule="evenodd"
+              />
             </svg>
             <span>Premium users only • Updated every 5 minutes • Winner announced weekly</span>
           </div>

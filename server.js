@@ -43,10 +43,12 @@ const server = http.createServer(async (req, res) => {
     if (!nextReady) {
       // Return simple health check while Next.js is preparing
       res.writeHead(200, { 'Content-Type': 'application/json' });
-      return res.end(JSON.stringify({
-        status: 'preparing',
-        timestamp: new Date().toISOString()
-      }));
+      return res.end(
+        JSON.stringify({
+          status: 'preparing',
+          timestamp: new Date().toISOString(),
+        })
+      );
     }
   }
 

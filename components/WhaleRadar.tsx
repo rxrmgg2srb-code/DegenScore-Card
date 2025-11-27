@@ -50,7 +50,7 @@ export default function WhaleRadar() {
               />
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {topWhales.map(whale => (
+                {topWhales.map((whale) => (
                   <WhaleCard
                     key={whale.id}
                     whale={whale}
@@ -81,7 +81,7 @@ export default function WhaleRadar() {
               />
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {followedWhales.map(whale => (
+                {followedWhales.map((whale) => (
                   <WhaleCard
                     key={whale.id}
                     whale={whale}
@@ -112,7 +112,7 @@ export default function WhaleRadar() {
               />
             ) : (
               <div className="space-y-2">
-                {alerts.map(alert => (
+                {alerts.map((alert) => (
                   <AlertCard key={alert.id} alert={alert} />
                 ))}
               </div>

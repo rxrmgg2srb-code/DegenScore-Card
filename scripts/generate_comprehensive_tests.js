@@ -8,14 +8,20 @@ const fs = require('fs');
 const path = require('path');
 
 // Comprehensive test template
-const generateComprehensiveTest = (componentPath, componentName, hasProps, usesWallet, usesFetch) => {
-    const imports = `import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
+const generateComprehensiveTest = (
+  componentPath,
+  componentName,
+  hasProps,
+  usesWallet,
+  usesFetch
+) => {
+  const imports = `import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import ${componentName} from '${componentPath}';`;
 
-    const mocks = [];
+  const mocks = [];
 
-    if (usesWallet) {
-        mocks.push(`
+  if (usesWallet) {
+    mocks.push(`
 // Mock Solana Wallet
 jest.mock('@solana/wallet-adapter-react', () => ({
   useWallet: jest.fn(() => ({
@@ -30,9 +36,9 @@ jest.mock('@solana/wallet-adapter-react', () => ({
 jest.mock('@solana/wallet-adapter-react-ui', () => ({
   WalletMultiButton: () => <button>Connect Wallet</button>,
 }));`);
-    }
+  }
 
-    mocks.push(`
+  mocks.push(`
 // Mock common dependencies
 jest.mock('framer-motion', () => ({
   motion: {
@@ -59,8 +65,8 @@ jest.mock('next/router', () => ({
   })),
 }));`);
 
-    if (usesFetch) {
-        mocks.push(`
+  if (usesFetch) {
+    mocks.push(`
 beforeEach(() => {
   global.fetch = jest.fn(() =>
     Promise.resolve({
@@ -69,9 +75,9 @@ beforeEach(() => {
     })
   );
 });`);
-    }
+  }
 
-    const tests = `
+  const tests = `
 describe('${componentName}', () => {
   ${mocks.join('\n')}
 
@@ -98,7 +104,9 @@ describe('${componentName}', () => {
       expect(screen.getByRole('button', { hidden: true })).toBeDefined();
     });
 
-    ${usesFetch ? `
+    ${
+      usesFetch
+        ? `
     it('handles data fetching', async () => {
       await act(async () => {
         render(<${componentName} ${hasProps ? 'data={{}}' : ''} />);
@@ -107,7 +115,9 @@ describe('${componentName}', () => {
         expect(global.fetch).toHaveBeenCalled();
       });
     });
-    ` : ''}
+    `
+        : ''
+    }
   });
 
   describe('Edge Cases', () => {
@@ -131,49 +141,53 @@ describe('${componentName}', () => {
   });
 });`;
 
-    return `${imports}\n${tests}`;
+  return `${imports}\n${tests}`;
 };
 
 // Analyze component to determine features
 const analyzeComponent = (filePath) => {
-    const content = fs.readFileSync(filePath, 'utf-8');
-    return {
-        usesWallet: content.includes('useWallet'),
-        usesFetch: content.includes('fetch('),
-        hasProps: content.includes('interface') && content.includes('Props'),
-        usesRouter: content.includes('useRouter'),
-        usesMotion: content.includes('framer-motion'),
-    };
+  const content = fs.readFileSync(filePath, 'utf-8');
+  return {
+    usesWallet: content.includes('useWallet'),
+    usesFetch: content.includes('fetch('),
+    hasProps: content.includes('interface') && content.includes('Props'),
+    usesRouter: content.includes('useRouter'),
+    usesMotion: content.includes('framer-motion'),
+  };
 };
 
 // Find all components without tests
 const findComponentsNeedingTests = (dir, baseDir = dir) => {
-    const components = [];
-    const files = fs.readdirSync(dir);
+  const components = [];
+  const files = fs.readdirSync(dir);
 
-    files.forEach(file => {
-        const fullPath = path.join(dir, file);
-        const stat = fs.statSync(fullPath);
+  files.forEach((file) => {
+    const fullPath = path.join(dir, file);
+    const stat = fs.statSync(fullPath);
 
-        if (stat.isDirectory() && !file.startsWith('.') && !file.startsWith('_')) {
-            components.push(...findComponentsNeedingTests(fullPath, baseDir));
-        } else if (file.endsWith('.tsx') && !file.endsWith('.test.tsx')) {
-            const componentName = file.replace('.tsx', '');
-            const relativePath = path.relative(baseDir, fullPath);
-            const testPath = path.join('__tests__', path.dirname(relativePath), `${componentName}.test.tsx`);
+    if (stat.isDirectory() && !file.startsWith('.') && !file.startsWith('_')) {
+      components.push(...findComponentsNeedingTests(fullPath, baseDir));
+    } else if (file.endsWith('.tsx') && !file.endsWith('.test.tsx')) {
+      const componentName = file.replace('.tsx', '');
+      const relativePath = path.relative(baseDir, fullPath);
+      const testPath = path.join(
+        '__tests__',
+        path.dirname(relativePath),
+        `${componentName}.test.tsx`
+      );
 
-            if (!fs.existsSync(testPath)) {
-                components.push({
-                    componentPath: fullPath,
-                    componentName,
-                    testPath,
-                    relativePath,
-                });
-            }
-        }
-    });
+      if (!fs.existsSync(testPath)) {
+        components.push({
+          componentPath: fullPath,
+          componentName,
+          testPath,
+          relativePath,
+        });
+      }
+    }
+  });
 
-    return components;
+  return components;
 };
 
 // Main execution
@@ -187,24 +201,24 @@ console.log(`Found ${componentsNeedingTests.length} components without tests\n`)
 let generated = 0;
 
 componentsNeedingTests.forEach(({ componentPath, componentName, testPath, relativePath }) => {
-    const analysis = analyzeComponent(componentPath);
-    const testContent = generateComprehensiveTest(
-        `@/components/${relativePath.replace(/\\/g, '/').replace('.tsx', '')}`,
-        componentName,
-        analysis.hasProps,
-        analysis.usesWallet,
-        analysis.usesFetch
-    );
+  const analysis = analyzeComponent(componentPath);
+  const testContent = generateComprehensiveTest(
+    `@/components/${relativePath.replace(/\\/g, '/').replace('.tsx', '')}`,
+    componentName,
+    analysis.hasProps,
+    analysis.usesWallet,
+    analysis.usesFetch
+  );
 
-    // Create directory if it doesn't exist
-    const testDir = path.dirname(testPath);
-    if (!fs.existsSync(testDir)) {
-        fs.mkdirSync(testDir, { recursive: true });
-    }
+  // Create directory if it doesn't exist
+  const testDir = path.dirname(testPath);
+  if (!fs.existsSync(testDir)) {
+    fs.mkdirSync(testDir, { recursive: true });
+  }
 
-    fs.writeFileSync(testPath, testContent);
-    console.log(`✅ Generated: ${testPath}`);
-    generated++;
+  fs.writeFileSync(testPath, testContent);
+  console.log(`✅ Generated: ${testPath}`);
+  generated++;
 });
 
 console.log(`\n🎉 Generated ${generated} comprehensive test files!`);

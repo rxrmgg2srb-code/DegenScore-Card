@@ -25,8 +25,8 @@ const securityCircuitBreaker = new CircuitBreaker(5, 60000);
 
 // 🔥 FIX: Correct burn addresses on Solana (as base58 strings)
 const BURN_ADDRESSES = new Set([
-  '1111111111111111111111111111111111111111111',  // Solana burn address
-  '11111111111111111111111111111111',             // System program (sometimes used)
+  '1111111111111111111111111111111111111111111', // Solana burn address
+  '11111111111111111111111111111111', // System program (sometimes used)
 ]);
 
 // ============================================================================
@@ -150,30 +150,46 @@ export async function analyzeTokenSecurity(
   try {
     logger.info('🔒 Token Security Analysis Started', { tokenAddress });
 
-    if (onProgress) onProgress(5, 'Validating token address...');
+    if (onProgress) {
+      onProgress(5, 'Validating token address...');
+    }
 
     // Validate address (throws if invalid)
     new PublicKey(tokenAddress);
 
-    if (onProgress) onProgress(10, 'Fetching token metadata...');
+    if (onProgress) {
+      onProgress(10, 'Fetching token metadata...');
+    }
     const metadata = await getTokenMetadata(tokenAddress);
 
-    if (onProgress) onProgress(25, 'Analyzing token authorities...');
+    if (onProgress) {
+      onProgress(25, 'Analyzing token authorities...');
+    }
     const authorities = await analyzeTokenAuthorities(tokenAddress);
 
-    if (onProgress) onProgress(40, 'Analyzing holder distribution...');
+    if (onProgress) {
+      onProgress(40, 'Analyzing holder distribution...');
+    }
     const holderDist = await analyzeHolderDistribution(tokenAddress);
 
-    if (onProgress) onProgress(55, 'Analyzing liquidity...');
+    if (onProgress) {
+      onProgress(55, 'Analyzing liquidity...');
+    }
     const liquidity = await analyzeLiquidity(tokenAddress);
 
-    if (onProgress) onProgress(70, 'Detecting trading patterns...');
+    if (onProgress) {
+      onProgress(70, 'Detecting trading patterns...');
+    }
     const tradingPatterns = await analyzeTradingPatterns(tokenAddress);
 
-    if (onProgress) onProgress(85, 'Analyzing market metrics...');
+    if (onProgress) {
+      onProgress(85, 'Analyzing market metrics...');
+    }
     const marketMetrics = await analyzeMarketMetrics(tokenAddress);
 
-    if (onProgress) onProgress(95, 'Calculating security score...');
+    if (onProgress) {
+      onProgress(95, 'Calculating security score...');
+    }
 
     // Detect red flags
     const redFlags = detectRedFlags(
@@ -198,7 +214,9 @@ export async function analyzeTokenSecurity(
     const riskLevel = getRiskLevel(securityScore);
     const recommendation = getRecommendation(securityScore, redFlags);
 
-    if (onProgress) onProgress(100, 'Analysis complete!');
+    if (onProgress) {
+      onProgress(100, 'Analysis complete!');
+    }
 
     const report: TokenSecurityReport = {
       tokenAddress,
@@ -218,11 +236,10 @@ export async function analyzeTokenSecurity(
     logger.info('✅ Token Security Analysis Complete', {
       tokenAddress,
       securityScore,
-      riskLevel
+      riskLevel,
     });
 
     return report;
-
   } catch (error) {
     logger.error('❌ Token Security Analysis Failed', error instanceof Error ? error : undefined, {
       tokenAddress,
@@ -238,53 +255,56 @@ export async function analyzeTokenSecurity(
 
 async function analyzeTokenAuthorities(tokenAddress: string): Promise<TokenAuthorities> {
   return securityCircuitBreaker.execute(() =>
-    retry(async () => {
-      const connection = new Connection(HELIUS_RPC_URL, 'confirmed');
-      const mintPubkey = new PublicKey(tokenAddress);
+    retry(
+      async () => {
+        const connection = new Connection(HELIUS_RPC_URL, 'confirmed');
+        const mintPubkey = new PublicKey(tokenAddress);
 
-      // Get mint account info
-      const mintInfo = await connection.getParsedAccountInfo(mintPubkey);
+        // Get mint account info
+        const mintInfo = await connection.getParsedAccountInfo(mintPubkey);
 
-      if (!mintInfo.value) {
-        throw new Error('Token mint not found');
+        if (!mintInfo.value) {
+          throw new Error('Token mint not found');
+        }
+
+        const data = (mintInfo.value.data as any).parsed.info;
+
+        const mintAuthority = data.mintAuthority;
+        const freezeAuthority = data.freezeAuthority;
+        const hasMintAuthority = !!mintAuthority;
+        const hasFreezeAuthority = !!freezeAuthority;
+        const isRevoked = !hasMintAuthority && !hasFreezeAuthority;
+
+        // Calculate risk level and score
+        let score = 25; // Max score
+        let riskLevel: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL' = 'LOW';
+
+        if (hasMintAuthority && hasFreezeAuthority) {
+          riskLevel = 'CRITICAL';
+          score = 0;
+        } else if (hasMintAuthority || hasFreezeAuthority) {
+          riskLevel = hasMintAuthority ? 'HIGH' : 'MEDIUM';
+          score = hasMintAuthority ? 5 : 15;
+        } else {
+          riskLevel = 'LOW';
+          score = 25;
+        }
+
+        return {
+          mintAuthority,
+          freezeAuthority,
+          hasMintAuthority,
+          hasFreezeAuthority,
+          isRevoked,
+          riskLevel,
+          score,
+        };
+      },
+      {
+        maxRetries: 3,
+        retryableStatusCodes: [408, 429, 500, 502, 503, 504],
       }
-
-      const data = (mintInfo.value.data as any).parsed.info;
-
-      const mintAuthority = data.mintAuthority;
-      const freezeAuthority = data.freezeAuthority;
-      const hasMintAuthority = !!mintAuthority;
-      const hasFreezeAuthority = !!freezeAuthority;
-      const isRevoked = !hasMintAuthority && !hasFreezeAuthority;
-
-      // Calculate risk level and score
-      let score = 25; // Max score
-      let riskLevel: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL' = 'LOW';
-
-      if (hasMintAuthority && hasFreezeAuthority) {
-        riskLevel = 'CRITICAL';
-        score = 0;
-      } else if (hasMintAuthority || hasFreezeAuthority) {
-        riskLevel = hasMintAuthority ? 'HIGH' : 'MEDIUM';
-        score = hasMintAuthority ? 5 : 15;
-      } else {
-        riskLevel = 'LOW';
-        score = 25;
-      }
-
-      return {
-        mintAuthority,
-        freezeAuthority,
-        hasMintAuthority,
-        hasFreezeAuthority,
-        isRevoked,
-        riskLevel,
-        score,
-      };
-    }, {
-      maxRetries: 3,
-      retryableStatusCodes: [408, 429, 500, 502, 503, 504],
-    })
+    )
   );
 }
 
@@ -293,107 +313,115 @@ async function analyzeTokenAuthorities(tokenAddress: string): Promise<TokenAutho
 // ============================================================================
 
 async function analyzeHolderDistribution(tokenAddress: string): Promise<HolderDistribution> {
-  return securityCircuitBreaker.execute(() =>
-    retry(async () => {
-      // Get token holders using Helius DAS API
-      const url = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_API_KEY}`;
+  return securityCircuitBreaker
+    .execute(() =>
+      retry(
+        async () => {
+          // Get token holders using Helius DAS API
+          const url = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_API_KEY}`;
 
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          jsonrpc: '2.0',
-          id: 'holder-analysis',
-          method: 'getTokenAccounts',
-          params: {
-            mint: tokenAddress,
-            limit: 1000,
-            options: {
-              showZeroBalance: false,
-            }
-          },
-        }),
-      });
+          const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              jsonrpc: '2.0',
+              id: 'holder-analysis',
+              method: 'getTokenAccounts',
+              params: {
+                mint: tokenAddress,
+                limit: 1000,
+                options: {
+                  showZeroBalance: false,
+                },
+              },
+            }),
+          });
 
-      if (!response.ok) {
-        throw new Error(`Failed to fetch holders: ${response.statusText}`);
-      }
+          if (!response.ok) {
+            throw new Error(`Failed to fetch holders: ${response.statusText}`);
+          }
 
-      const data = await response.json();
-      const holders = data.result?.token_accounts || [];
+          const data = await response.json();
+          const holders = data.result?.token_accounts || [];
 
-      const totalHolders = holders.length;
+          const totalHolders = holders.length;
 
-      // Calculate top holders percentage
-      const sortedHolders = holders
-        .map((h: any) => ({
-          owner: h.owner,
-          amount: parseFloat(h.amount),
-        }))
-        .sort((a: any, b: any) => b.amount - a.amount);
+          // Calculate top holders percentage
+          const sortedHolders = holders
+            .map((h: any) => ({
+              owner: h.owner,
+              amount: parseFloat(h.amount),
+            }))
+            .sort((a: any, b: any) => b.amount - a.amount);
 
-      const totalSupply = sortedHolders.reduce((sum: number, h: any) => sum + h.amount, 0);
-      const top10Amount = sortedHolders.slice(0, 10).reduce((sum: number, h: any) => sum + h.amount, 0);
-      const top10HoldersPercent = (top10Amount / totalSupply) * 100;
+          const totalSupply = sortedHolders.reduce((sum: number, h: any) => sum + h.amount, 0);
+          const top10Amount = sortedHolders
+            .slice(0, 10)
+            .reduce((sum: number, h: any) => sum + h.amount, 0);
+          const top10HoldersPercent = (top10Amount / totalSupply) * 100;
 
-      // Creator is typically the first holder
-      const creatorPercent = totalSupply > 0 ? (sortedHolders[0]?.amount / totalSupply) * 100 : 0;
+          // Creator is typically the first holder
+          const creatorPercent =
+            totalSupply > 0 ? (sortedHolders[0]?.amount / totalSupply) * 100 : 0;
 
-      // Calculate Gini coefficient (wealth inequality)
-      const giniCoefficient = calculateGini(sortedHolders.map((h: any) => h.amount));
+          // Calculate Gini coefficient (wealth inequality)
+          const giniCoefficient = calculateGini(sortedHolders.map((h: any) => h.amount));
 
-      // Detect bundle wallets (wallets that received tokens in the same transaction)
-      const bundleWallets = await detectBundleWallets(tokenAddress);
-      const bundleDetected = bundleWallets > 5;
+          // Detect bundle wallets (wallets that received tokens in the same transaction)
+          const bundleWallets = await detectBundleWallets(tokenAddress);
+          const bundleDetected = bundleWallets > 5;
 
-      // Calculate risk
-      let score = 20;
-      let concentrationRisk: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL' = 'LOW';
+          // Calculate risk
+          let score = 20;
+          let concentrationRisk: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL' = 'LOW';
 
-      if (top10HoldersPercent > 80 || creatorPercent > 50) {
-        concentrationRisk = 'CRITICAL';
-        score = 0;
-      } else if (top10HoldersPercent > 60 || creatorPercent > 30) {
-        concentrationRisk = 'HIGH';
-        score = 5;
-      } else if (top10HoldersPercent > 40 || creatorPercent > 20) {
-        concentrationRisk = 'MEDIUM';
-        score = 12;
-      } else {
-        concentrationRisk = 'LOW';
-        score = 20;
-      }
+          if (top10HoldersPercent > 80 || creatorPercent > 50) {
+            concentrationRisk = 'CRITICAL';
+            score = 0;
+          } else if (top10HoldersPercent > 60 || creatorPercent > 30) {
+            concentrationRisk = 'HIGH';
+            score = 5;
+          } else if (top10HoldersPercent > 40 || creatorPercent > 20) {
+            concentrationRisk = 'MEDIUM';
+            score = 12;
+          } else {
+            concentrationRisk = 'LOW';
+            score = 20;
+          }
 
-      // Penalty for bundle detection
-      if (bundleDetected) {
-        score = Math.max(0, score - 5);
-      }
+          // Penalty for bundle detection
+          if (bundleDetected) {
+            score = Math.max(0, score - 5);
+          }
 
-      return {
-        totalHolders,
-        top10HoldersPercent,
-        creatorPercent,
-        giniCoefficient,
-        concentrationRisk,
-        bundleDetected,
-        bundleWallets,
-        score,
-      };
-    }, {
-      maxRetries: 3,
-      retryableStatusCodes: [408, 429, 500, 502, 503, 504],
-    })
-  ).catch(() => ({
-    // Fallback on error
-    totalHolders: 0,
-    top10HoldersPercent: 100,
-    creatorPercent: 100,
-    giniCoefficient: 1,
-    concentrationRisk: 'CRITICAL' as const,
-    bundleDetected: false,
-    bundleWallets: 0,
-    score: 0,
-  }));
+          return {
+            totalHolders,
+            top10HoldersPercent,
+            creatorPercent,
+            giniCoefficient,
+            concentrationRisk,
+            bundleDetected,
+            bundleWallets,
+            score,
+          };
+        },
+        {
+          maxRetries: 3,
+          retryableStatusCodes: [408, 429, 500, 502, 503, 504],
+        }
+      )
+    )
+    .catch(() => ({
+      // Fallback on error
+      totalHolders: 0,
+      top10HoldersPercent: 100,
+      creatorPercent: 100,
+      giniCoefficient: 1,
+      concentrationRisk: 'CRITICAL' as const,
+      bundleDetected: false,
+      bundleWallets: 0,
+      score: 0,
+    }));
 }
 
 // ============================================================================
@@ -401,72 +429,77 @@ async function analyzeHolderDistribution(tokenAddress: string): Promise<HolderDi
 // ============================================================================
 
 async function analyzeLiquidity(tokenAddress: string): Promise<LiquidityAnalysis> {
-  return securityCircuitBreaker.execute(() =>
-    retry(async () => {
-      // Fetch liquidity pools from Jupiter/Raydium/Orca
-      const poolsData = await fetchLiquidityPools(tokenAddress);
+  return securityCircuitBreaker
+    .execute(() =>
+      retry(
+        async () => {
+          // Fetch liquidity pools from Jupiter/Raydium/Orca
+          const poolsData = await fetchLiquidityPools(tokenAddress);
 
-      const totalLiquiditySOL = poolsData.reduce((sum, pool) => sum + pool.liquiditySOL, 0);
-      const liquidityUSD = totalLiquiditySOL * await getSOLPrice(); // Get SOL price
+          const totalLiquiditySOL = poolsData.reduce((sum, pool) => sum + pool.liquiditySOL, 0);
+          const liquidityUSD = totalLiquiditySOL * (await getSOLPrice()); // Get SOL price
 
-      // Check if LP tokens are burned or locked
-      const lpBurned = poolsData.some(pool => pool.lpBurned);
-      const lpLocked = poolsData.some(pool => pool.lpLocked);
-      const lpLockEnd = poolsData.find(pool => pool.lpLockEnd)?.lpLockEnd;
+          // Check if LP tokens are burned or locked
+          const lpBurned = poolsData.some((pool) => pool.lpBurned);
+          const lpLocked = poolsData.some((pool) => pool.lpLocked);
+          const lpLockEnd = poolsData.find((pool) => pool.lpLockEnd)?.lpLockEnd;
 
-      // Calculate liquidity to market cap ratio (if available)
-      const liquidityToMarketCapRatio = 0.5; // Placeholder - would need market cap data
+          // Calculate liquidity to market cap ratio (if available)
+          const liquidityToMarketCapRatio = 0.5; // Placeholder - would need market cap data
 
-      let score = 20;
-      let riskLevel: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL' = 'LOW';
+          let score = 20;
+          let riskLevel: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL' = 'LOW';
 
-      if (totalLiquiditySOL < 5) {
-        riskLevel = 'CRITICAL';
-        score = 0;
-      } else if (totalLiquiditySOL < 20 && !lpBurned && !lpLocked) {
-        riskLevel = 'HIGH';
-        score = 5;
-      } else if (totalLiquiditySOL < 50 && !lpBurned && !lpLocked) {
-        riskLevel = 'MEDIUM';
-        score = 10;
-      } else if (lpBurned || lpLocked) {
-        riskLevel = 'LOW';
-        score = 20;
-      } else {
-        riskLevel = 'MEDIUM';
-        score = 15;
-      }
+          if (totalLiquiditySOL < 5) {
+            riskLevel = 'CRITICAL';
+            score = 0;
+          } else if (totalLiquiditySOL < 20 && !lpBurned && !lpLocked) {
+            riskLevel = 'HIGH';
+            score = 5;
+          } else if (totalLiquiditySOL < 50 && !lpBurned && !lpLocked) {
+            riskLevel = 'MEDIUM';
+            score = 10;
+          } else if (lpBurned || lpLocked) {
+            riskLevel = 'LOW';
+            score = 20;
+          } else {
+            riskLevel = 'MEDIUM';
+            score = 15;
+          }
 
-      return {
-        totalLiquiditySOL,
-        liquidityUSD,
-        lpBurned,
-        lpLocked,
-        lpLockEnd,
-        liquidityToMarketCapRatio,
-        majorPools: poolsData.map(pool => ({
-          dex: pool.dex,
-          liquiditySOL: pool.liquiditySOL,
-          lpBurned: pool.lpBurned,
-        })),
-        riskLevel,
-        score,
-      };
-    }, {
-      maxRetries: 3,
-      retryableStatusCodes: [408, 429, 500, 502, 503, 504],
-    })
-  ).catch(() => ({
-    // Fallback on error
-    totalLiquiditySOL: 0,
-    liquidityUSD: 0,
-    lpBurned: false,
-    lpLocked: false,
-    liquidityToMarketCapRatio: 0,
-    majorPools: [],
-    riskLevel: 'CRITICAL' as const,
-    score: 0,
-  }));
+          return {
+            totalLiquiditySOL,
+            liquidityUSD,
+            lpBurned,
+            lpLocked,
+            lpLockEnd,
+            liquidityToMarketCapRatio,
+            majorPools: poolsData.map((pool) => ({
+              dex: pool.dex,
+              liquiditySOL: pool.liquiditySOL,
+              lpBurned: pool.lpBurned,
+            })),
+            riskLevel,
+            score,
+          };
+        },
+        {
+          maxRetries: 3,
+          retryableStatusCodes: [408, 429, 500, 502, 503, 504],
+        }
+      )
+    )
+    .catch(() => ({
+      // Fallback on error
+      totalLiquiditySOL: 0,
+      liquidityUSD: 0,
+      lpBurned: false,
+      lpLocked: false,
+      liquidityToMarketCapRatio: 0,
+      majorPools: [],
+      riskLevel: 'CRITICAL' as const,
+      score: 0,
+    }));
 }
 
 // ============================================================================
@@ -474,82 +507,87 @@ async function analyzeLiquidity(tokenAddress: string): Promise<LiquidityAnalysis
 // ============================================================================
 
 async function analyzeTradingPatterns(tokenAddress: string): Promise<TradingPatterns> {
-  return securityCircuitBreaker.execute(() =>
-    retry(async () => {
-      // Analyze first 100 transactions to detect patterns
-      const url = `https://api.helius.xyz/v0/addresses/${tokenAddress}/transactions?api-key=${HELIUS_API_KEY}&limit=100`;
+  return securityCircuitBreaker
+    .execute(() =>
+      retry(
+        async () => {
+          // Analyze first 100 transactions to detect patterns
+          const url = `https://api.helius.xyz/v0/addresses/${tokenAddress}/transactions?api-key=${HELIUS_API_KEY}&limit=100`;
 
-      const response = await fetch(url);
-      if (!response.ok) {
-        throw new Error('Failed to fetch transactions');
-      }
+          const response = await fetch(url);
+          if (!response.ok) {
+            throw new Error('Failed to fetch transactions');
+          }
 
-      const transactions = await response.json();
+          const transactions = await response.json();
 
-      // Detect bundle bots (multiple buys in same block/slot)
-      const bundleBots = detectBundleBots(transactions);
+          // Detect bundle bots (multiple buys in same block/slot)
+          const bundleBots = detectBundleBots(transactions);
 
-      // Detect snipers (bought in first 10 transactions)
-      const snipers = Math.min(10, transactions.length);
+          // Detect snipers (bought in first 10 transactions)
+          const snipers = Math.min(10, transactions.length);
 
-      // Detect wash trading
-      const washTrading = detectWashTrading(transactions);
+          // Detect wash trading
+          const washTrading = detectWashTrading(transactions);
 
-      // Detect honeypot (nobody can sell)
-      const { canSell, honeypotDetected } = detectHoneypot(transactions);
+          // Detect honeypot (nobody can sell)
+          const { canSell, honeypotDetected } = detectHoneypot(transactions);
 
-      // Estimate taxes (would need more sophisticated analysis)
-      const avgBuyTax = 0;
-      const avgSellTax = 0;
+          // Estimate taxes (would need more sophisticated analysis)
+          const avgBuyTax = 0;
+          const avgSellTax = 0;
 
-      const suspiciousVolume = washTrading || bundleBots > 10;
+          const suspiciousVolume = washTrading || bundleBots > 10;
 
-      let score = 15;
-      let riskLevel: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL' = 'LOW';
+          let score = 15;
+          let riskLevel: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL' = 'LOW';
 
-      if (honeypotDetected) {
-        riskLevel = 'CRITICAL';
-        score = 0;
-      } else if (bundleBots > 20 || (washTrading && !canSell)) {
-        riskLevel = 'HIGH';
-        score = 3;
-      } else if (bundleBots > 10 || washTrading) {
-        riskLevel = 'MEDIUM';
-        score = 8;
-      } else {
-        riskLevel = 'LOW';
-        score = 15;
-      }
+          if (honeypotDetected) {
+            riskLevel = 'CRITICAL';
+            score = 0;
+          } else if (bundleBots > 20 || (washTrading && !canSell)) {
+            riskLevel = 'HIGH';
+            score = 3;
+          } else if (bundleBots > 10 || washTrading) {
+            riskLevel = 'MEDIUM';
+            score = 8;
+          } else {
+            riskLevel = 'LOW';
+            score = 15;
+          }
 
-      return {
-        bundleBots,
-        snipers,
-        washTrading,
-        suspiciousVolume,
-        honeypotDetected,
-        canSell,
-        avgBuyTax,
-        avgSellTax,
-        riskLevel,
-        score,
-      };
-    }, {
-      maxRetries: 3,
-      retryableStatusCodes: [408, 429, 500, 502, 503, 504],
-    })
-  ).catch(() => ({
-    // Fallback
-    bundleBots: 0,
-    snipers: 0,
-    washTrading: false,
-    suspiciousVolume: false,
-    honeypotDetected: false,
-    canSell: true,
-    avgBuyTax: 0,
-    avgSellTax: 0,
-    riskLevel: 'MEDIUM' as const,
-    score: 8,
-  }));
+          return {
+            bundleBots,
+            snipers,
+            washTrading,
+            suspiciousVolume,
+            honeypotDetected,
+            canSell,
+            avgBuyTax,
+            avgSellTax,
+            riskLevel,
+            score,
+          };
+        },
+        {
+          maxRetries: 3,
+          retryableStatusCodes: [408, 429, 500, 502, 503, 504],
+        }
+      )
+    )
+    .catch(() => ({
+      // Fallback
+      bundleBots: 0,
+      snipers: 0,
+      washTrading: false,
+      suspiciousVolume: false,
+      honeypotDetected: false,
+      canSell: true,
+      avgBuyTax: 0,
+      avgSellTax: 0,
+      riskLevel: 'MEDIUM' as const,
+      score: 8,
+    }));
 }
 
 // ============================================================================
@@ -557,74 +595,85 @@ async function analyzeTradingPatterns(tokenAddress: string): Promise<TradingPatt
 // ============================================================================
 
 async function getTokenMetadata(tokenAddress: string): Promise<TokenMetadata> {
-  return securityCircuitBreaker.execute(() =>
-    retry(async () => {
-      const url = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_API_KEY}`;
+  return securityCircuitBreaker
+    .execute(() =>
+      retry(
+        async () => {
+          const url = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_API_KEY}`;
 
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          jsonrpc: '2.0',
-          id: 'metadata',
-          method: 'getAsset',
-          params: { id: tokenAddress },
-        }),
-      });
+          const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              jsonrpc: '2.0',
+              id: 'metadata',
+              method: 'getAsset',
+              params: { id: tokenAddress },
+            }),
+          });
 
-      if (!response.ok) {
-        throw new Error('Failed to fetch metadata');
-      }
+          if (!response.ok) {
+            throw new Error('Failed to fetch metadata');
+          }
 
-      const data = await response.json();
-      const asset = data.result;
+          const data = await response.json();
+          const asset = data.result;
 
-      // Get token account info for supply
-      const connection = new Connection(HELIUS_RPC_URL, 'confirmed');
-      const mintPubkey = new PublicKey(tokenAddress);
-      const mintInfo = await connection.getParsedAccountInfo(mintPubkey);
-      const mintData = (mintInfo.value?.data as any)?.parsed?.info;
+          // Get token account info for supply
+          const connection = new Connection(HELIUS_RPC_URL, 'confirmed');
+          const mintPubkey = new PublicKey(tokenAddress);
+          const mintInfo = await connection.getParsedAccountInfo(mintPubkey);
+          const mintData = (mintInfo.value?.data as any)?.parsed?.info;
 
-      const symbol = asset?.content?.metadata?.symbol || 'UNKNOWN';
-      const name = asset?.content?.metadata?.name || 'Unknown Token';
-      const decimals = mintData?.decimals || 9;
-      const supply = parseInt(mintData?.supply || '0') / Math.pow(10, decimals);
+          const symbol = asset?.content?.metadata?.symbol || 'UNKNOWN';
+          const name = asset?.content?.metadata?.name || 'Unknown Token';
+          const decimals = mintData?.decimals || 9;
+          const supply = parseInt(mintData?.supply || '0') / Math.pow(10, decimals);
 
-      const hasWebsite = !!asset?.content?.links?.external_url;
-      const hasSocials = !!(asset?.content?.links?.twitter || asset?.content?.links?.telegram);
-      const verified = asset?.grouping?.some((g: any) => g.group_key === 'verified') || false;
+          const hasWebsite = !!asset?.content?.links?.external_url;
+          const hasSocials = !!(asset?.content?.links?.twitter || asset?.content?.links?.telegram);
+          const verified = asset?.grouping?.some((g: any) => g.group_key === 'verified') || false;
 
-      let score = 0;
-      if (verified) score += 5;
-      if (hasWebsite) score += 3;
-      if (hasSocials) score += 2;
+          let score = 0;
+          if (verified) {
+            score += 5;
+          }
+          if (hasWebsite) {
+            score += 3;
+          }
+          if (hasSocials) {
+            score += 2;
+          }
 
-      return {
-        symbol,
-        name,
-        decimals,
-        supply,
-        verified,
-        hasWebsite,
-        hasSocials,
-        imageUrl: asset?.content?.links?.image,
-        description: asset?.content?.metadata?.description,
-        score,
-      };
-    }, {
-      maxRetries: 3,
-      retryableStatusCodes: [408, 429, 500, 502, 503, 504],
-    })
-  ).catch(() => ({
-    symbol: 'UNKNOWN',
-    name: 'Unknown Token',
-    decimals: 9,
-    supply: 0,
-    verified: false,
-    hasWebsite: false,
-    hasSocials: false,
-    score: 0,
-  }));
+          return {
+            symbol,
+            name,
+            decimals,
+            supply,
+            verified,
+            hasWebsite,
+            hasSocials,
+            imageUrl: asset?.content?.links?.image,
+            description: asset?.content?.metadata?.description,
+            score,
+          };
+        },
+        {
+          maxRetries: 3,
+          retryableStatusCodes: [408, 429, 500, 502, 503, 504],
+        }
+      )
+    )
+    .catch(() => ({
+      symbol: 'UNKNOWN',
+      name: 'Unknown Token',
+      decimals: 9,
+      supply: 0,
+      verified: false,
+      hasWebsite: false,
+      hasSocials: false,
+      score: 0,
+    }));
 }
 
 // ============================================================================
@@ -632,69 +681,81 @@ async function getTokenMetadata(tokenAddress: string): Promise<TokenMetadata> {
 // ============================================================================
 
 async function analyzeMarketMetrics(tokenAddress: string): Promise<MarketMetrics> {
-  return securityCircuitBreaker.execute(() =>
-    retry(async () => {
-      // This would ideally fetch from CoinGecko/Jupiter/Birdeye
-      // For now, we'll use transaction history to estimate age
-      const url = `https://api.helius.xyz/v0/addresses/${tokenAddress}/transactions?api-key=${HELIUS_API_KEY}&limit=1000`;
+  return securityCircuitBreaker
+    .execute(() =>
+      retry(
+        async () => {
+          // This would ideally fetch from CoinGecko/Jupiter/Birdeye
+          // For now, we'll use transaction history to estimate age
+          const url = `https://api.helius.xyz/v0/addresses/${tokenAddress}/transactions?api-key=${HELIUS_API_KEY}&limit=1000`;
 
-      const response = await fetch(url);
-      if (!response.ok) {
-        throw new Error('Failed to fetch market data');
-      }
+          const response = await fetch(url);
+          if (!response.ok) {
+            throw new Error('Failed to fetch market data');
+          }
 
-      const transactions = await response.json();
+          const transactions = await response.json();
 
-      // Calculate age from first transaction
-      const oldestTx = transactions[transactions.length - 1];
-      const ageInDays = oldestTx ? (Date.now() / 1000 - oldestTx.timestamp) / 86400 : 0;
+          // Calculate age from first transaction
+          const oldestTx = transactions[transactions.length - 1];
+          const ageInDays = oldestTx ? (Date.now() / 1000 - oldestTx.timestamp) / 86400 : 0;
 
-      // Estimate volume (this is very rough, would need proper DEX data)
-      const volume24h = 0; // Placeholder
-      const volumeChange24h = 0;
-      const priceChange24h = 0;
-      const priceChange7d = 0;
-      const marketCap = 0;
-      const allTimeHigh = 0;
+          // Estimate volume (this is very rough, would need proper DEX data)
+          const volume24h = 0; // Placeholder
+          const volumeChange24h = 0;
+          const priceChange24h = 0;
+          const priceChange7d = 0;
+          const marketCap = 0;
+          const allTimeHigh = 0;
 
-      // Detect pump and dump pattern
-      const isPumpAndDump = ageInDays < 1 && transactions.length > 500;
+          // Detect pump and dump pattern
+          const isPumpAndDump = ageInDays < 1 && transactions.length > 500;
 
-      let score = 10;
-      if (ageInDays > 30) score = 10;
-      else if (ageInDays > 7) score = 7;
-      else if (ageInDays > 1) score = 5;
-      else score = 2;
+          let score = 10;
+          if (ageInDays > 30) {
+            score = 10;
+          } else if (ageInDays > 7) {
+            score = 7;
+          } else if (ageInDays > 1) {
+            score = 5;
+          } else {
+            score = 2;
+          }
 
-      if (isPumpAndDump) score = Math.max(0, score - 5);
+          if (isPumpAndDump) {
+            score = Math.max(0, score - 5);
+          }
 
-      return {
-        ageInDays,
-        volume24h,
-        volumeChange24h,
-        priceChange24h,
-        priceChange7d,
-        marketCap,
-        allTimeHigh,
-        athDate: oldestTx?.timestamp,
-        isPumpAndDump,
-        score,
-      };
-    }, {
-      maxRetries: 3,
-      retryableStatusCodes: [408, 429, 500, 502, 503, 504],
-    })
-  ).catch(() => ({
-    ageInDays: 0,
-    volume24h: 0,
-    volumeChange24h: 0,
-    priceChange24h: 0,
-    priceChange7d: 0,
-    marketCap: 0,
-    allTimeHigh: 0,
-    isPumpAndDump: false,
-    score: 0,
-  }));
+          return {
+            ageInDays,
+            volume24h,
+            volumeChange24h,
+            priceChange24h,
+            priceChange7d,
+            marketCap,
+            allTimeHigh,
+            athDate: oldestTx?.timestamp,
+            isPumpAndDump,
+            score,
+          };
+        },
+        {
+          maxRetries: 3,
+          retryableStatusCodes: [408, 429, 500, 502, 503, 504],
+        }
+      )
+    )
+    .catch(() => ({
+      ageInDays: 0,
+      volume24h: 0,
+      volumeChange24h: 0,
+      priceChange24h: 0,
+      priceChange7d: 0,
+      marketCap: 0,
+      allTimeHigh: 0,
+      isPumpAndDump: false,
+      score: 0,
+    }));
 }
 
 // ============================================================================
@@ -714,7 +775,8 @@ function detectRedFlags(
   if (authorities.hasMintAuthority && authorities.hasFreezeAuthority) {
     flags.push({
       severity: 'CRITICAL',
-      message: 'Token has both MINT and FREEZE authority - creator can mint infinite tokens and freeze wallets',
+      message:
+        'Token has both MINT and FREEZE authority - creator can mint infinite tokens and freeze wallets',
       category: 'Authority Control',
     });
   } else if (authorities.hasMintAuthority) {
@@ -832,7 +894,7 @@ function detectRedFlags(
   let criticalCount = 0;
   let highCount = 0;
 
-  flags.forEach(flag => {
+  flags.forEach((flag) => {
     if (flag.severity === 'CRITICAL') {
       totalPenalty += 25;
       criticalCount++;
@@ -868,12 +930,12 @@ function calculateSecurityScore(
   redFlags: RedFlags
 ): number {
   const baseScore =
-    authorities.score +        // 0-25 points
-    holderDist.score +        // 0-20 points
-    liquidity.score +         // 0-20 points
-    tradingPatterns.score +   // 0-15 points
-    metadata.score +          // 0-10 points
-    marketMetrics.score;      // 0-10 points
+    authorities.score + // 0-25 points
+    holderDist.score + // 0-20 points
+    liquidity.score + // 0-20 points
+    tradingPatterns.score + // 0-15 points
+    metadata.score + // 0-10 points
+    marketMetrics.score; // 0-10 points
 
   const finalScore = Math.max(0, Math.min(100, baseScore - redFlags.totalPenalty));
 
@@ -881,10 +943,18 @@ function calculateSecurityScore(
 }
 
 function getRiskLevel(score: number): TokenSecurityReport['riskLevel'] {
-  if (score >= 90) return 'ULTRA_SAFE';
-  if (score >= 70) return 'LOW_RISK';
-  if (score >= 50) return 'MODERATE_RISK';
-  if (score >= 25) return 'HIGH_RISK';
+  if (score >= 90) {
+    return 'ULTRA_SAFE';
+  }
+  if (score >= 70) {
+    return 'LOW_RISK';
+  }
+  if (score >= 50) {
+    return 'MODERATE_RISK';
+  }
+  if (score >= 25) {
+    return 'HIGH_RISK';
+  }
   return 'EXTREME_DANGER';
 }
 
@@ -913,13 +983,17 @@ function getRecommendation(score: number, redFlags: RedFlags): string {
 // ============================================================================
 
 function calculateGini(amounts: number[]): number {
-  if (amounts.length === 0) return 1;
+  if (amounts.length === 0) {
+    return 1;
+  }
 
   const sorted = [...amounts].sort((a, b) => a - b);
   const n = sorted.length;
   const sum = sorted.reduce((a, b) => a + b, 0);
 
-  if (sum === 0) return 1;
+  if (sum === 0) {
+    return 1;
+  }
 
   let numerator = 0;
   sorted.forEach((amount, i) => {
@@ -938,7 +1012,9 @@ async function detectBundleWallets(_tokenAddress: string): Promise<number> {
 /**
  * Check if LP tokens are burned or locked by inspecting pool owner
  */
-async function checkLPStatus(pairAddress: string): Promise<{ lpBurned: boolean; lpLocked: boolean; burnPercentage: number }> {
+async function checkLPStatus(
+  pairAddress: string
+): Promise<{ lpBurned: boolean; lpLocked: boolean; burnPercentage: number }> {
   try {
     // 🔥 FIX: Use Raydium API to get REAL LP token data
     // This is more reliable than checking account owner
@@ -980,13 +1056,16 @@ async function checkLPStatus(pairAddress: string): Promise<{ lpBurned: boolean; 
 
       return { lpBurned, lpLocked: false, burnPercentage: lpBurned ? 100 : 0 };
     } catch (parseError) {
-      logger.warn('[LP Status] Failed to parse pool data', parseError instanceof Error ? parseError : undefined);
+      logger.warn(
+        '[LP Status] Failed to parse pool data',
+        parseError instanceof Error ? parseError : undefined
+      );
       return { lpBurned: false, lpLocked: false, burnPercentage: 0 };
     }
   } catch (error) {
     logger.warn('[LP Status] Failed to check LP status', {
       error: error instanceof Error ? error.message : String(error),
-      pairAddress: pairAddress.substring(0, 10) + '...'
+      pairAddress: pairAddress.substring(0, 10) + '...',
     });
     return { lpBurned: false, lpLocked: false, burnPercentage: 0 };
   }
@@ -997,13 +1076,10 @@ async function fetchLiquidityPools(tokenAddress: string): Promise<any[]> {
 
   // Try DexScreener first (aggregates Raydium, Orca, Meteora, etc.)
   try {
-    const response = await fetch(
-      `https://api.dexscreener.com/latest/dex/tokens/${tokenAddress}`,
-      {
-        signal: AbortSignal.timeout(10000),
-        headers: { 'Accept': 'application/json' }
-      }
-    );
+    const response = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${tokenAddress}`, {
+      signal: AbortSignal.timeout(10000),
+      headers: { Accept: 'application/json' },
+    });
 
     if (response.ok) {
       const data = await response.json();
@@ -1011,7 +1087,7 @@ async function fetchLiquidityPools(tokenAddress: string): Promise<any[]> {
       if (data?.pairs && Array.isArray(data.pairs) && data.pairs.length > 0) {
         logger.info('[Liquidity] DexScreener found pools', {
           tokenAddress: tokenAddress.substring(0, 10) + '...',
-          poolCount: data.pairs.length
+          poolCount: data.pairs.length,
         });
 
         // Get current SOL price for conversion
@@ -1019,12 +1095,15 @@ async function fetchLiquidityPools(tokenAddress: string): Promise<any[]> {
 
         for (const pair of data.pairs) {
           // Filter for SOL pairs only (most relevant)
-          const isSOLPair = pair.quoteToken?.symbol === 'SOL' ||
+          const isSOLPair =
+            pair.quoteToken?.symbol === 'SOL' ||
             pair.quoteToken?.symbol === 'WSOL' ||
             pair.baseToken?.symbol === 'SOL' ||
             pair.baseToken?.symbol === 'WSOL';
 
-          if (!isSOLPair) continue;
+          if (!isSOLPair) {
+            continue;
+          }
 
           // Extract liquidity data
           const liquidityUSD = pair.liquidity?.usd || 0;
@@ -1097,7 +1176,7 @@ async function fetchLiquidityPools(tokenAddress: string): Promise<any[]> {
   } catch (error) {
     logger.warn('[Liquidity] DexScreener failed', {
       error: error instanceof Error ? error.message : String(error),
-      tokenAddress: tokenAddress.substring(0, 10) + '...'
+      tokenAddress: tokenAddress.substring(0, 10) + '...',
     });
   }
 
@@ -1111,9 +1190,9 @@ async function fetchLiquidityPools(tokenAddress: string): Promise<any[]> {
         {
           signal: AbortSignal.timeout(10000),
           headers: {
-            'Accept': 'application/json',
-            'X-API-KEY': BIRDEYE_API_KEY
-          }
+            Accept: 'application/json',
+            'X-API-KEY': BIRDEYE_API_KEY,
+          },
         }
       );
 
@@ -1153,7 +1232,7 @@ async function fetchLiquidityPools(tokenAddress: string): Promise<any[]> {
       `https://quote-api.jup.ag/v6/quote?inputMint=${tokenAddress}&outputMint=So11111111111111111111111111111111111111112&amount=1000000`,
       {
         signal: AbortSignal.timeout(10000),
-        headers: { 'Accept': 'application/json' }
+        headers: { Accept: 'application/json' },
       }
     );
 
@@ -1189,7 +1268,7 @@ async function fetchLiquidityPools(tokenAddress: string): Promise<any[]> {
   // If all sources failed, log and return empty
   logger.error('[Liquidity] All sources failed to retrieve liquidity data', undefined, {
     tokenAddress: tokenAddress.substring(0, 10) + '...',
-    triedSources: ['DexScreener', 'Birdeye', 'Jupiter']
+    triedSources: ['DexScreener', 'Birdeye', 'Jupiter'],
   });
 
   return pools;
@@ -1202,7 +1281,7 @@ async function getSOLPrice(): Promise<number> {
       'https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd',
       {
         signal: AbortSignal.timeout(5000),
-        headers: { 'Accept': 'application/json' }
+        headers: { Accept: 'application/json' },
       }
     );
 
@@ -1215,18 +1294,18 @@ async function getSOLPrice(): Promise<number> {
       }
     }
   } catch (error) {
-    logger.warn('[SOL Price] CoinGecko failed, trying Jupiter', error instanceof Error ? error : undefined);
+    logger.warn(
+      '[SOL Price] CoinGecko failed, trying Jupiter',
+      error instanceof Error ? error : undefined
+    );
   }
 
   try {
     // Fallback to Jupiter Price API
-    const response = await fetch(
-      'https://price.jup.ag/v4/price?ids=SOL',
-      {
-        signal: AbortSignal.timeout(5000),
-        headers: { 'Accept': 'application/json' }
-      }
-    );
+    const response = await fetch('https://price.jup.ag/v4/price?ids=SOL', {
+      signal: AbortSignal.timeout(5000),
+      headers: { Accept: 'application/json' },
+    });
 
     if (response.ok) {
       const data = await response.json();
@@ -1237,7 +1316,10 @@ async function getSOLPrice(): Promise<number> {
       }
     }
   } catch (error) {
-    logger.warn('[SOL Price] Jupiter failed, using fallback', error instanceof Error ? error : undefined);
+    logger.warn(
+      '[SOL Price] Jupiter failed, using fallback',
+      error instanceof Error ? error : undefined
+    );
   }
 
   // Conservative fallback price (updated periodically)
@@ -1250,7 +1332,7 @@ function detectBundleBots(transactions: any[]): number {
   // Group transactions by slot and count wallets buying in same slot
   const slotGroups: { [slot: number]: Set<string> } = {};
 
-  transactions.forEach(tx => {
+  transactions.forEach((tx) => {
     if (!slotGroups[tx.slot]) {
       slotGroups[tx.slot] = new Set();
     }
@@ -1262,7 +1344,7 @@ function detectBundleBots(transactions: any[]): number {
 
   // Count slots with multiple buyers
   let bundleCount = 0;
-  Object.values(slotGroups).forEach(wallets => {
+  Object.values(slotGroups).forEach((wallets) => {
     if (wallets.size > 1) {
       bundleCount += wallets.size - 1;
     }
@@ -1276,7 +1358,7 @@ function detectWashTrading(transactions: any[]): boolean {
   const traders = new Set<string>();
   const repeatedTraders = new Set<string>();
 
-  transactions.forEach(tx => {
+  transactions.forEach((tx) => {
     if (traders.has(tx.feePayer)) {
       repeatedTraders.add(tx.feePayer);
     } else {
@@ -1289,12 +1371,12 @@ function detectWashTrading(transactions: any[]): boolean {
 
 function detectHoneypot(transactions: any[]): { canSell: boolean; honeypotDetected: boolean } {
   // Check if there are ANY sell transactions
-  const sells = transactions.filter(tx =>
-    tx.type === 'SWAP' && tx.description?.toLowerCase().includes('sell')
+  const sells = transactions.filter(
+    (tx) => tx.type === 'SWAP' && tx.description?.toLowerCase().includes('sell')
   );
 
-  const buys = transactions.filter(tx =>
-    tx.type === 'SWAP' && tx.description?.toLowerCase().includes('buy')
+  const buys = transactions.filter(
+    (tx) => tx.type === 'SWAP' && tx.description?.toLowerCase().includes('buy')
   );
 
   const canSell = sells.length > 0;

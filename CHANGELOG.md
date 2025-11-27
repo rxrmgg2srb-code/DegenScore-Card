@@ -5,6 +5,7 @@
 ### 🏆 Project Quality: 6.5/10 → 8.5/10 (+31%)
 
 #### Governance & Community Standards (9 files, 1,114 lines)
+
 - ✅ LICENSE (MIT license)
 - ✅ SECURITY.md with bug bounty program
 - ✅ CONTRIBUTING.md (456 lines)
@@ -12,17 +13,20 @@
 - ✅ GitHub templates (issues, PRs, funding)
 
 #### Code Quality Automation (10 files, 534 lines)
+
 - ✅ Prettier + ESLint + EditorConfig
 - ✅ Husky git hooks (pre-commit, commit-msg)
 - ✅ lint-staged + commitlint
 - ✅ CODE_QUALITY_SETUP.md guide
 
 #### CI/CD Enhancements (3 files, 121 lines)
+
 - ✅ CodeQL for SAST (Static Application Security Testing)
 - ✅ Dependabot for automated dependency updates
 - ✅ Enhanced CI pipeline
 
 #### Testing Infrastructure (8 files, 1,172 lines)
+
 - ✅ Coverage infrastructure ready (thresholds configurable)
 - ✅ Example tests (components, API, E2E)
 - ✅ Playwright E2E setup
@@ -30,6 +34,7 @@
 - 📋 Next: Increase coverage to 80% in Sprint 2
 
 #### Documentation
+
 - ✅ ROADMAP_30_DAYS.md (4-week plan)
 - ✅ QUALITY_IMPROVEMENTS_SUMMARY.md
 - ✅ TESTING_GUIDE.md
@@ -44,12 +49,15 @@
 ### 🎉 Features Principales Agregadas
 
 #### 1. Export de Datos (CSV/JSON)
+
 **Archivos Nuevos:**
+
 - `lib/exportHelpers.ts` - Utilidades para conversión de datos
 - `pages/api/export/card.ts` - Endpoint de export
 - Integración en `/profile/[walletAddress]` con botones de descarga
 
 **Funcionalidad:**
+
 - Exportar datos de card en formato JSON
 - Exportar datos de card en formato CSV
 - Nombres de archivo automáticos con timestamp
@@ -60,11 +68,13 @@
 #### 2. Historial de Scores con Gráficos
 
 **Archivos Nuevos:**
+
 - `pages/api/score-history.ts` - Endpoint para obtener historial
 - `pages/api/cron/record-scores.ts` - Cron job para snapshots
 - `components/ScoreHistoryChart.tsx` - Componente de visualización
 
 **Modelos de Base de Datos:**
+
 ```prisma
 model ScoreHistory {
   id            String   @id @default(cuid())
@@ -81,6 +91,7 @@ model ScoreHistory {
 ```
 
 **Funcionalidad:**
+
 - Snapshots automáticos cada 6 horas (top 1000 cards)
 - Gráficos de evolución de score (7/30/90 días)
 - Estadísticas: max, min, promedio, mejor rank
@@ -92,6 +103,7 @@ model ScoreHistory {
 #### 3. Sistema de Seguimiento de Wallets (Follows)
 
 **Archivos Nuevos:**
+
 - `pages/api/follows/add.ts` - Seguir wallet
 - `pages/api/follows/remove.ts` - Dejar de seguir
 - `pages/api/follows/list.ts` - Lista de wallets seguidas
@@ -101,6 +113,7 @@ model ScoreHistory {
 - `pages/following.tsx` - Dashboard de wallets seguidas
 
 **Modelos de Base de Datos:**
+
 ```prisma
 model UserFollows {
   id        String   @id @default(cuid())
@@ -113,6 +126,7 @@ model UserFollows {
 ```
 
 **Funcionalidad:**
+
 - Seguir/dejar de seguir cualquier wallet
 - Ver lista de wallets que sigues
 - Ver quién te sigue
@@ -125,12 +139,14 @@ model UserFollows {
 #### 4. Sistema de Notificaciones Multi-Canal
 
 **Archivos Nuevos:**
+
 - `lib/notifications.ts` - Sistema de notificaciones
 - `pages/api/notifications/preferences.ts` - Gestión de preferencias
 - `components/NotificationSettings.tsx` - Panel de configuración
 - `pages/settings.tsx` - Página de configuración
 
 **Modelos de Base de Datos:**
+
 ```prisma
 model NotificationPreferences {
   walletAddress    String   @id
@@ -149,17 +165,20 @@ model NotificationPreferences {
 ```
 
 **Canales Soportados:**
+
 - **Discord**: Webhooks personales
 - **Telegram**: Bot de Telegram
 - **Email**: (Preparado para SendGrid/SES)
 
 **Tipos de Notificaciones:**
+
 - Nuevo seguidor
 - Trades de wallets seguidas
 - Milestones y logros
 - Challenges semanales
 
 **Funcionalidad:**
+
 - Panel de configuración en `/settings`
 - Toggle individual por canal
 - Configuración de tipos de notificaciones
@@ -170,12 +189,14 @@ model NotificationPreferences {
 #### 5. Job Queue con BullMQ + Redis
 
 **Archivos Nuevos:**
+
 - `lib/queue.ts` - Configuración de queues
 - `workers/card-generation.ts` - Worker para generación de imágenes
 - `pages/api/card-status.ts` - Endpoint para polling
 - `pages/api/generate-card-async.ts` - Generación asíncrona
 
 **Dependencias Nuevas:**
+
 ```json
 {
   "bullmq": "^latest",
@@ -184,11 +205,13 @@ model NotificationPreferences {
 ```
 
 **Queues Implementadas:**
+
 1. **card-generation**: Generación de imágenes en background
 2. **score-history**: Snapshots de scores
 3. **notifications**: Envío de notificaciones
 
 **Funcionalidad:**
+
 - Generación asíncrona de cards (no bloquea UI)
 - Polling para ver progreso
 - Prioridad para usuarios premium
@@ -200,6 +223,7 @@ model NotificationPreferences {
 ### 🔒 Mejoras de Seguridad
 
 **Autenticación de Follows:**
+
 ```typescript
 // Verificar que el usuario es dueño de la wallet
 const authResult = verifySessionToken(token);
@@ -209,6 +233,7 @@ if (authResult.wallet !== targetWallet) {
 ```
 
 **Autenticación de Cron Jobs:**
+
 ```typescript
 // Verificar cron API key
 const cronKey = req.headers['x-cron-key'];
@@ -218,6 +243,7 @@ if (cronKey !== process.env.CRON_API_KEY) {
 ```
 
 **Validación de Webhooks:**
+
 ```typescript
 // Discord webhook validation
 const discordWebhookRegex = /^https:\/\/discord\.com\/api\/webhooks\/\d+\/[\w-]+$/;
@@ -281,21 +307,25 @@ DegenScore-Card/
 ### 🔄 Archivos Modificados
 
 #### `prisma/schema.prisma`
+
 - ✅ Agregado `ScoreHistory` model
 - ✅ Agregado `UserFollows` model
 - ✅ Agregado `NotificationPreferences` model
 
 #### `.env.example`
+
 - ✅ Agregado `CRON_API_KEY`
 - ✅ Agregado `WEBHOOK_SECRET`
 - ✅ Agregado `TELEGRAM_BOT_TOKEN`
 - ✅ Agregado `TELEGRAM_CHANNEL_ID`
 
 #### `package.json`
+
 - ✅ Agregado `bullmq`
 - ✅ Agregado `ioredis`
 
 #### `pages/api/follows/add.ts`
+
 - ✅ Integrado con sistema de notificaciones
 
 ---
@@ -311,6 +341,7 @@ DegenScore-Card/
 **Páginas:** 3
 
 **Líneas de Código:**
+
 - TypeScript: ~3,500 líneas
 - Documentación: ~800 líneas
 - TOTAL: ~4,300 líneas
@@ -320,6 +351,7 @@ DegenScore-Card/
 ### 🚀 Requisitos de Deployment
 
 #### Nuevas Variables de Entorno:
+
 ```bash
 CRON_API_KEY="..."                # REQUERIDO
 WEBHOOK_SECRET="..."              # REQUERIDO
@@ -328,10 +360,12 @@ TELEGRAM_CHANNEL_ID="..."         # OPCIONAL
 ```
 
 #### Nuevos Servicios:
+
 - ✅ Background Worker (BullMQ)
 - ✅ Cron Job (Score History)
 
 #### Migraciones de Base de Datos:
+
 ```bash
 npx prisma db push
 ```
@@ -341,10 +375,12 @@ npx prisma db push
 ### 📚 Documentación
 
 **Guías Creadas:**
+
 - ✅ `DEPLOYMENT_GUIDE.md` - Guía completa de deployment
 - ✅ `CHANGELOG.md` - Este archivo
 
 **Documentación Actualizada:**
+
 - ✅ `.env.example` - Nuevas variables documentadas
 
 ---
@@ -378,6 +414,7 @@ npx prisma db push
 ### 🙏 Créditos
 
 Implementado usando:
+
 - Next.js 14
 - TypeScript
 - Prisma ORM

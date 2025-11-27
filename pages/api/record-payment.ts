@@ -3,10 +3,7 @@ import { prisma } from '../../lib/prisma';
 import { Connection } from '@solana/web3.js';
 import { logger } from '@/lib/logger';
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -46,8 +43,8 @@ export default async function handler(
       logger.info('✅ Transaction verified:', { signature });
     } catch (error) {
       logger.error('❌ Error verifying transaction:', error instanceof Error ? error : undefined, {
-      error: String(error),
-    });
+        error: String(error),
+      });
       return res.status(400).json({ error: 'Failed to verify transaction' });
     }
 
@@ -61,7 +58,7 @@ export default async function handler(
       if (existingPayment) {
         logger.warn('⚠️ Duplicate payment signature detected:', {
           signature,
-          existingPayment: existingPayment.id
+          existingPayment: existingPayment.id,
         });
         throw new Error('Payment signature already used. Possible replay attack.');
       }
@@ -104,7 +101,8 @@ export default async function handler(
     if (error instanceof Error && error.message.includes('Payment signature already used')) {
       return res.status(400).json({
         error: 'Duplicate payment',
-        details: 'This payment signature has already been used. Please use a different transaction.',
+        details:
+          'This payment signature has already been used. Please use a different transaction.',
       });
     }
 

@@ -31,6 +31,7 @@ DegenScore Card is a Web3 platform for analyzing Solana wallet trading performan
 - **Infrastructure:** Docker, Redis, Cloudflare R2
 
 **Security Posture:**
+
 - ✅ All critical vulnerabilities (CVE-DEGEN-001/002/003) resolved
 - ✅ Medium vulnerabilities (CVE-DEGEN-007/008/009) resolved
 - ✅ 60% test coverage threshold enforced
@@ -49,6 +50,7 @@ DegenScore Card is a Web3 platform for analyzing Solana wallet trading performan
 ### 2.1 Smart Contracts (High Priority)
 
 #### **Degen Token Program** (`programs/degen-token/src/lib.rs`)
+
 - SPL token with custom transfer fees
 - Anti-whale protection (1% max wallet)
 - Burn mechanism (5% of transfers)
@@ -57,6 +59,7 @@ DegenScore Card is a Web3 platform for analyzing Solana wallet trading performan
 - Authority-based access control
 
 **Key Functions to Audit:**
+
 ```rust
 - initialize()
 - transfer_with_fees()
@@ -66,6 +69,7 @@ DegenScore Card is a Web3 platform for analyzing Solana wallet trading performan
 ```
 
 **Security Concerns:**
+
 - [ ] Integer overflow/underflow in fee calculations
 - [ ] Authority bypass vulnerabilities
 - [ ] Reentrancy attacks
@@ -74,12 +78,14 @@ DegenScore Card is a Web3 platform for analyzing Solana wallet trading performan
 ---
 
 #### **Degen NFT Program** (`programs/degen-nft/src/lib.rs`)
+
 - Dynamic NFT metadata
 - On-chain score tracking (0-100)
 - Royalty enforcement (5%)
 - Genesis badge for first 1,000 mints
 
 **Key Functions to Audit:**
+
 ```rust
 - mint_nft()
 - update_score()
@@ -88,6 +94,7 @@ DegenScore Card is a Web3 platform for analyzing Solana wallet trading performan
 ```
 
 **Security Concerns:**
+
 - [ ] Score manipulation
 - [ ] Metadata injection
 - [ ] Unauthorized minting
@@ -96,12 +103,14 @@ DegenScore Card is a Web3 platform for analyzing Solana wallet trading performan
 ---
 
 #### **Staking Program** (`programs/staking/src/lib.rs`)
+
 - Tiered rewards system (10%, 15%, 20% APY)
 - Lockup periods with early withdrawal penalty
 - Compound rewards
 - Minimum stake enforcement
 
 **Key Functions to Audit:**
+
 ```rust
 - stake()
 - unstake()
@@ -110,6 +119,7 @@ DegenScore Card is a Web3 platform for analyzing Solana wallet trading performan
 ```
 
 **Security Concerns:**
+
 - [ ] Reward calculation errors
 - [ ] Time manipulation
 - [ ] Withdrawal race conditions
@@ -120,6 +130,7 @@ DegenScore Card is a Web3 platform for analyzing Solana wallet trading performan
 ### 2.2 Backend API (Medium Priority)
 
 **Critical Endpoints:**
+
 - `/api/verify-payment` - On-chain payment verification
 - `/api/analyze` - Wallet analysis (expensive operation)
 - `/api/generate-card` - NFT card generation
@@ -127,6 +138,7 @@ DegenScore Card is a Web3 platform for analyzing Solana wallet trading performan
 - `/api/admin/*` - Administrative functions
 
 **Security Mechanisms:**
+
 - Redis-based distributed rate limiting
 - JWT authentication with Ed25519 signatures
 - Admin wallet whitelist
@@ -134,6 +146,7 @@ DegenScore Card is a Web3 platform for analyzing Solana wallet trading performan
 - XSS sanitization (DOMPurify)
 
 **Areas to Audit:**
+
 - [ ] Authentication bypass
 - [ ] Rate limit circumvention
 - [ ] Payment verification exploits
@@ -154,18 +167,19 @@ DegenScore Card is a Web3 platform for analyzing Solana wallet trading performan
 
 ### 3.1 Resolved Critical Vulnerabilities
 
-| CVE ID | Severity | Description | Status |
-|--------|----------|-------------|--------|
-| CVE-DEGEN-001 | CRITICAL | Exposed credentials in version control | ✅ FIXED |
-| CVE-DEGEN-002 | CRITICAL | Payment verification exploit | ✅ FIXED |
-| CVE-DEGEN-003 | CRITICAL | Weak JWT secret | ✅ FIXED |
-| CVE-DEGEN-007 | MEDIUM | Insufficient file upload validation | ✅ FIXED |
-| CVE-DEGEN-008 | MEDIUM | In-memory rate limiting (single instance) | ✅ FIXED |
-| CVE-DEGEN-009 | MEDIUM | console.log leaking sensitive data | ✅ FIXED |
+| CVE ID        | Severity | Description                               | Status   |
+| ------------- | -------- | ----------------------------------------- | -------- |
+| CVE-DEGEN-001 | CRITICAL | Exposed credentials in version control    | ✅ FIXED |
+| CVE-DEGEN-002 | CRITICAL | Payment verification exploit              | ✅ FIXED |
+| CVE-DEGEN-003 | CRITICAL | Weak JWT secret                           | ✅ FIXED |
+| CVE-DEGEN-007 | MEDIUM   | Insufficient file upload validation       | ✅ FIXED |
+| CVE-DEGEN-008 | MEDIUM   | In-memory rate limiting (single instance) | ✅ FIXED |
+| CVE-DEGEN-009 | MEDIUM   | console.log leaking sensitive data        | ✅ FIXED |
 
 ### 3.2 Security Features Added
 
 **November 2025 Security Sprint:**
+
 1. ✅ Structured logging system (`lib/logger.ts`)
 2. ✅ Redis-based distributed rate limiting
 3. ✅ File upload validation with magic byte checking
@@ -183,6 +197,7 @@ DegenScore Card is a Web3 platform for analyzing Solana wallet trading performan
 ### 4.1 Unit Tests
 
 **JavaScript/TypeScript:**
+
 - Coverage threshold: 60% (enforced in CI/CD)
 - Test files: 1,825+ lines
 - Key modules tested:
@@ -192,11 +207,13 @@ DegenScore Card is a Web3 platform for analyzing Solana wallet trading performan
   - `rateLimit.test.ts` (Rate limiting)
 
 **Rust (Smart Contracts):**
+
 - Token program: 7 unit tests
 - NFT program: 6 unit tests
 - Staking program: 7 unit tests
 
 Run tests:
+
 ```bash
 # JavaScript tests
 npm test -- --coverage
@@ -210,6 +227,7 @@ anchor test
 ### 4.2 Integration Tests
 
 **API Endpoints:**
+
 - `analyze.test.ts` - Wallet analysis
 - `verify-payment.test.ts` - Payment verification
 - `leaderboard.test.ts` - Leaderboard API
@@ -217,6 +235,7 @@ anchor test
 - `referrals/track.test.ts` - Referral tracking
 
 Run:
+
 ```bash
 npm run test:integration
 ```
@@ -226,12 +245,14 @@ npm run test:integration
 ### 4.3 E2E Tests
 
 **User Flows:**
+
 - Card generation flow
 - Referral system
 - Wallet authentication
 - Responsive design
 
 Run:
+
 ```bash
 npm run test:e2e
 ```
@@ -241,11 +262,13 @@ npm run test:e2e
 ### 4.4 Load Tests
 
 **k6 Test Scenarios:**
+
 - Load test: 50-100 concurrent users
 - Stress test: Up to 500 users
 - Spike test: Sudden surge to 1,000 users
 
 Run:
+
 ```bash
 k6 run k6/load-test.js
 k6 run k6/stress-test.js
@@ -325,6 +348,7 @@ k6 run k6/spike-test.js
 ### 6.2 Data Flow
 
 **Card Generation:**
+
 1. User connects wallet
 2. Frontend requests analysis: `POST /api/analyze`
 3. Backend fetches transaction history from Solana (Helius RPC)
@@ -334,6 +358,7 @@ k6 run k6/spike-test.js
 7. Response returned to frontend
 
 **Payment Verification:**
+
 1. User initiates payment
 2. Transaction signature submitted: `POST /api/verify-payment`
 3. Backend verifies on-chain transaction:
@@ -352,6 +377,7 @@ k6 run k6/spike-test.js
 **GitHub:** `github.com/rxrmgg2srb-code/DegenScore-Card`
 
 **Branch Structure:**
+
 - `main` - Production
 - `develop` - Staging
 - `claude/*` - Feature branches

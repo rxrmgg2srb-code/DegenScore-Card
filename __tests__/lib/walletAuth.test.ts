@@ -6,10 +6,16 @@ import * as jwt from 'jsonwebtoken';
 // Mock @solana/web3.js BEFORE import
 jest.mock('@solana/web3.js', () => ({
   PublicKey: class {
-    constructor(key) { this.key = key; }
-    toBytes() { return new Uint8Array([]); }
-    toString() { return this.key; }
-  }
+    constructor(key) {
+      this.key = key;
+    }
+    toBytes() {
+      return new Uint8Array([]);
+    }
+    toString() {
+      return this.key;
+    }
+  },
 }));
 
 import {
@@ -18,7 +24,7 @@ import {
   isAuthChallengeValid,
   verifyAuthentication,
   generateSessionToken,
-  verifySessionToken
+  verifySessionToken,
 } from '@/lib/walletAuth';
 
 // Mock dependencies
@@ -37,8 +43,8 @@ jest.mock('bs58', () => ({
 jest.mock('jsonwebtoken', () => ({
   sign: jest.fn(),
   verify: jest.fn(),
-  TokenExpiredError: class extends Error { },
-  JsonWebTokenError: class extends Error { },
+  TokenExpiredError: class extends Error {},
+  JsonWebTokenError: class extends Error {},
 }));
 
 jest.mock('@/lib/logger', () => ({
@@ -102,7 +108,7 @@ describe('Wallet Authentication Security 🔐', () => {
     });
 
     it('should reject old timestamp', () => {
-      const old = Date.now() - (6 * 60 * 1000); // 6 mins ago
+      const old = Date.now() - 6 * 60 * 1000; // 6 mins ago
       expect(isAuthChallengeValid(old)).toBe(false);
     });
 
@@ -133,7 +139,7 @@ describe('Wallet Authentication Security 🔐', () => {
         publicKey: mockWallet,
         signature: 'sig',
         message: 'msg',
-        timestamp: Date.now() - (10 * 60 * 1000), // 10 mins ago
+        timestamp: Date.now() - 10 * 60 * 1000, // 10 mins ago
       };
 
       const result = verifyAuthentication(response);

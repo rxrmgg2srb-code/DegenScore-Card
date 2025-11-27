@@ -1,6 +1,12 @@
 import { useState } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
-import { Connection, PublicKey, Transaction, SystemProgram, LAMPORTS_PER_SOL } from '@solana/web3.js';
+import {
+  Connection,
+  PublicKey,
+  Transaction,
+  SystemProgram,
+  LAMPORTS_PER_SOL,
+} from '@solana/web3.js';
 import { PAYMENT_CONFIG, UPLOAD_CONFIG } from '../lib/config';
 import { logger } from '@/lib/logger';
 
@@ -40,11 +46,15 @@ export default function ProfileFormModal({
   const [isPaying, setIsPaying] = useState(false);
   const [paymentError, setPaymentError] = useState<string | null>(null);
 
-  if (!isOpen) return null;
+  if (!isOpen) {
+    return null;
+  }
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (!file) {
+      return;
+    }
 
     // Validate size using config
     if (file.size > UPLOAD_CONFIG.MAX_FILE_SIZE) {
@@ -106,7 +116,9 @@ export default function ProfileFormModal({
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ walletAddress, ...formData }),
         });
-        if (!response.ok) throw new Error('Failed to save profile');
+        if (!response.ok) {
+          throw new Error('Failed to save profile');
+        }
         onSubmit(formData);
       } catch (error: any) {
         alert('Error saving profile: ' + error.message);
@@ -135,7 +147,10 @@ export default function ProfileFormModal({
       transaction.recentBlockhash = blockhash;
       transaction.feePayer = publicKey;
       const signature = await sendTransaction(transaction, connection);
-      const confirmation = await connection.confirmTransaction({ signature, blockhash, lastValidBlockHeight }, 'confirmed');
+      const confirmation = await connection.confirmTransaction(
+        { signature, blockhash, lastValidBlockHeight },
+        'confirmed'
+      );
       if (confirmation.value.err) {
         throw new Error('Transaction failed: ' + confirmation.value.err.toString());
       }
@@ -145,7 +160,9 @@ export default function ProfileFormModal({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ walletAddress, ...formData }),
       });
-      if (!profileResponse.ok) throw new Error('Failed to save profile');
+      if (!profileResponse.ok) {
+        throw new Error('Failed to save profile');
+      }
 
       const paymentResponse = await fetch('/api/verify-payment', {
         method: 'POST',
@@ -183,7 +200,7 @@ export default function ProfileFormModal({
 
       onSubmit(formData);
 
-      // Redirigir al leaderboard después de 1 segundo
+      // Redirect to leaderboard after 1 segundo
       setTimeout(() => {
         window.location.href = '/leaderboard';
       }, 1000);
@@ -198,7 +215,10 @@ export default function ProfileFormModal({
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl border-2 border-cyan-500/50 shadow-2xl shadow-cyan-500/20 max-w-md w-full p-8 relative">
-        <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-white transition">
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 text-gray-400 hover:text-white transition"
+        >
           ✕
         </button>
         <div className="text-center mb-6">
@@ -212,7 +232,11 @@ export default function ProfileFormModal({
             <div className="relative">
               <div className="w-32 h-32 rounded-full border-4 border-cyan-500/50 overflow-hidden bg-gray-800 flex items-center justify-center">
                 {imagePreview ? (
-                  <img src={imagePreview} alt="Profile preview" className="w-full h-full object-cover" />
+                  <img
+                    src={imagePreview}
+                    alt="Profile preview"
+                    className="w-full h-full object-cover"
+                  />
                 ) : (
                   <div className="text-gray-500 text-center">
                     <div className="text-4xl mb-2">📷</div>
@@ -220,7 +244,10 @@ export default function ProfileFormModal({
                   </div>
                 )}
               </div>
-              <label htmlFor="profile-image" className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 hover:opacity-100 transition cursor-pointer">
+              <label
+                htmlFor="profile-image"
+                className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 hover:opacity-100 transition cursor-pointer"
+              >
                 <span className="text-white text-sm font-medium">
                   {isUploading ? 'Uploading...' : 'Change'}
                 </span>
@@ -234,7 +261,9 @@ export default function ProfileFormModal({
                 disabled={isUploading}
               />
             </div>
-            <p className="text-gray-500 text-xs mt-2">Max {Math.round(UPLOAD_CONFIG.MAX_FILE_SIZE / (1024 * 1024))} MB • JPG, PNG, GIF</p>
+            <p className="text-gray-500 text-xs mt-2">
+              Max {Math.round(UPLOAD_CONFIG.MAX_FILE_SIZE / (1024 * 1024))} MB • JPG, PNG, GIF
+            </p>
           </div>
 
           {/* Display Name */}
@@ -253,14 +282,18 @@ export default function ProfileFormModal({
 
           {/* Twitter */}
           <div>
-            <label className="text-gray-300 text-sm font-medium mb-2 block">Twitter (optional)</label>
+            <label className="text-gray-300 text-sm font-medium mb-2 block">
+              Twitter (optional)
+            </label>
             <div className="relative">
               <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">@</span>
               <input
                 type="text"
                 placeholder="username"
                 value={formData.twitter}
-                onChange={(e) => setFormData({ ...formData, twitter: e.target.value.replace('@', '') })}
+                onChange={(e) =>
+                  setFormData({ ...formData, twitter: e.target.value.replace('@', '') })
+                }
                 className="w-full pl-8 pr-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500 transition"
                 maxLength={200}
               />
@@ -269,14 +302,18 @@ export default function ProfileFormModal({
 
           {/* Telegram */}
           <div>
-            <label className="text-gray-300 text-sm font-medium mb-2 block">Telegram (optional)</label>
+            <label className="text-gray-300 text-sm font-medium mb-2 block">
+              Telegram (optional)
+            </label>
             <div className="relative">
               <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">@</span>
               <input
                 type="text"
                 placeholder="username"
                 value={formData.telegram}
-                onChange={(e) => setFormData({ ...formData, telegram: e.target.value.replace('@', '') })}
+                onChange={(e) =>
+                  setFormData({ ...formData, telegram: e.target.value.replace('@', '') })
+                }
                 className="w-full pl-8 pr-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500 transition"
                 maxLength={200}
               />
@@ -295,7 +332,9 @@ export default function ProfileFormModal({
             <div className="p-3 bg-green-500/10 border border-green-500/50 rounded-lg">
               <p className="text-green-400 text-sm flex items-center gap-2">
                 <span>✅</span>
-                <span>Promo code <strong>{promoCodeApplied}</strong> applied - Premium FREE!</span>
+                <span>
+                  Promo code <strong>{promoCodeApplied}</strong> applied - Premium FREE!
+                </span>
               </p>
             </div>
           )}
@@ -316,9 +355,25 @@ export default function ProfileFormModal({
             >
               {isPaying ? (
                 <span className="flex items-center justify-center">
-                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                  <svg
+                    className="animate-spin -ml-1 mr-2 h-4 w-4"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    />
                   </svg>
                   Paying...
                 </span>

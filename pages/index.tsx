@@ -13,9 +13,7 @@ export default function Home() {
         <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-6">
           {/* Logo/Title */}
           <div className="text-center sm:text-left">
-            <h1 className="text-4xl sm:text-5xl font-bold gradient-text-gold">
-              DegenScore
-            </h1>
+            <h1 className="text-4xl sm:text-5xl font-bold gradient-text-gold">DegenScore</h1>
             <p className="text-gray-400 text-sm mt-1">Track your trading mastery</p>
           </div>
 

@@ -12,10 +12,7 @@ export const config = {
   },
 };
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -34,7 +31,9 @@ export default async function handler(
 
     const [fields, files] = await new Promise<[any, any]>((resolve, reject) => {
       form.parse(req, (err, fields, files) => {
-        if (err) reject(err);
+        if (err) {
+          reject(err);
+        }
         resolve([fields, files]);
       });
     });
@@ -83,7 +82,7 @@ export default async function handler(
     logger.info('✅ Image converted to base64 for wallet', {
       walletAddress,
       size: fileBuffer.length,
-      mimeType
+      mimeType,
     });
 
     res.status(200).json({
@@ -95,9 +94,8 @@ export default async function handler(
       error: String(error),
     });
 
-    const errorMessage = process.env.NODE_ENV === 'development'
-      ? error.message
-      : 'Failed to upload image';
+    const errorMessage =
+      process.env.NODE_ENV === 'development' ? error.message : 'Failed to upload image';
 
     res.status(500).json({ error: errorMessage });
   }

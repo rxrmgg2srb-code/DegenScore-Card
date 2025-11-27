@@ -85,9 +85,9 @@ const nextConfig = {
               "frame-src 'self'",
               "object-src 'none'",
               "base-uri 'self'",
-              "form-action 'self'"
-            ].join('; ')
-          }
+              "form-action 'self'",
+            ].join('; '),
+          },
         ],
       },
     ];
@@ -128,7 +128,9 @@ const nextConfig = {
         );
         console.log('✅ copy-webpack-plugin loaded - fonts will be copied to build');
       } catch (error) {
-        console.warn('⚠️ copy-webpack-plugin not available - fonts will be loaded from public/fonts directly');
+        console.warn(
+          '⚠️ copy-webpack-plugin not available - fonts will be loaded from public/fonts directly'
+        );
         console.warn('   Run: npm install to fix this warning');
       }
     }
@@ -139,44 +141,46 @@ const nextConfig = {
       // Minimize memory usage
       minimize: !dev,
       // Reduce parallelization to save memory
-      ...(isServer ? {} : {
-        moduleIds: 'deterministic',
-        runtimeChunk: 'single',
-        splitChunks: {
-          chunks: 'all',
-          maxSize: 244000, // Split large chunks to reduce memory
-          cacheGroups: {
-            default: false,
-            vendors: false,
-            framework: {
+      ...(isServer
+        ? {}
+        : {
+            moduleIds: 'deterministic',
+            runtimeChunk: 'single',
+            splitChunks: {
               chunks: 'all',
-              name: 'framework',
-              test: /(?<!node_modules.*)[\\/]node_modules[\\/](react|react-dom|scheduler|prop-types|use-subscription)[\\/]/,
-              priority: 40,
-              enforce: true,
-            },
-            commons: {
-              name: 'commons',
-              chunks: 'all',
-              minChunks: 2,
-              priority: 20,
-            },
-            lib: {
-              test(module) {
-                return module.size() > 160000 && /node_modules[/\\]/.test(module.identifier());
+              maxSize: 244000, // Split large chunks to reduce memory
+              cacheGroups: {
+                default: false,
+                vendors: false,
+                framework: {
+                  chunks: 'all',
+                  name: 'framework',
+                  test: /(?<!node_modules.*)[\\/]node_modules[\\/](react|react-dom|scheduler|prop-types|use-subscription)[\\/]/,
+                  priority: 40,
+                  enforce: true,
+                },
+                commons: {
+                  name: 'commons',
+                  chunks: 'all',
+                  minChunks: 2,
+                  priority: 20,
+                },
+                lib: {
+                  test(module) {
+                    return module.size() > 160000 && /node_modules[/\\]/.test(module.identifier());
+                  },
+                  name(module) {
+                    const hash = require('crypto').createHash('sha1');
+                    hash.update(module.identifier());
+                    return hash.digest('hex').substring(0, 8);
+                  },
+                  priority: 30,
+                  minChunks: 1,
+                  reuseExistingChunk: true,
+                },
               },
-              name(module) {
-                const hash = require('crypto').createHash('sha1');
-                hash.update(module.identifier());
-                return hash.digest('hex').substring(0, 8);
-              },
-              priority: 30,
-              minChunks: 1,
-              reuseExistingChunk: true,
             },
-          },
-        },
-      }),
+          }),
     };
 
     // Reduce memory footprint by limiting parallelism
@@ -207,6 +211,7 @@ const sentryWebpackPluginOptions = {
 
 // Exportar con Sentry solo si está configurado Y hay auth token
 // Esto reduce el uso de memoria durante el build
-module.exports = process.env.NEXT_PUBLIC_SENTRY_DSN && process.env.SENTRY_AUTH_TOKEN
-  ? withSentryConfig(nextConfig, sentryWebpackPluginOptions)
-  : nextConfig;
+module.exports =
+  process.env.NEXT_PUBLIC_SENTRY_DSN && process.env.SENTRY_AUTH_TOKEN
+    ? withSentryConfig(nextConfig, sentryWebpackPluginOptions)
+    : nextConfig;

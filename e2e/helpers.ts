@@ -165,11 +165,14 @@ export async function mockAICoachApi(page: Page) {
       let response = 'I am your AI trading coach. How can I help you?';
 
       if (message.toLowerCase().includes('strategy')) {
-        response = 'Based on your trading patterns, I recommend a dollar-cost averaging strategy with proper position sizing.';
+        response =
+          'Based on your trading patterns, I recommend a dollar-cost averaging strategy with proper position sizing.';
       } else if (message.toLowerCase().includes('risk')) {
-        response = 'Your risk profile shows moderate risk tolerance. Consider using stop-losses on 30% of your positions.';
+        response =
+          'Your risk profile shows moderate risk tolerance. Consider using stop-losses on 30% of your positions.';
       } else if (message.toLowerCase().includes('improve')) {
-        response = 'To improve your performance, focus on: 1) Consistent risk management, 2) Diversification, 3) Tracking your trades.';
+        response =
+          'To improve your performance, focus on: 1) Consistent risk management, 2) Diversification, 3) Tracking your trades.';
       }
 
       await route.fulfill({
@@ -446,7 +449,10 @@ export async function captureConsoleLogs(page: Page) {
  */
 export async function waitForConsoleMessage(page: Page, pattern: RegExp, timeout = 5000) {
   return new Promise((resolve, reject) => {
-    const timer = setTimeout(() => reject(new Error('Timeout waiting for console message')), timeout);
+    const timer = setTimeout(
+      () => reject(new Error('Timeout waiting for console message')),
+      timeout
+    );
 
     const handler = (msg: any) => {
       if (pattern.test(msg.text())) {

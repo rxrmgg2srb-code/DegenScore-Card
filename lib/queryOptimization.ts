@@ -77,7 +77,9 @@ export async function getOptimizedLeaderboard(
  * Batch fetch wallet data to avoid N+1 queries
  */
 export async function batchFetchWallets(walletAddresses: string[]) {
-  if (walletAddresses.length === 0) return [];
+  if (walletAddresses.length === 0) {
+    return [];
+  }
 
   return await prisma.degenCard.findMany({
     where: {
@@ -97,10 +99,7 @@ export async function batchFetchWallets(walletAddresses: string[]) {
 /**
  * Optimized search with full-text search capabilities
  */
-export async function searchWallets(
-  query: string,
-  limit: number = 20
-) {
+export async function searchWallets(query: string, limit: number = 20) {
   // Search by wallet address or username
   const results = await prisma.degenCard.findMany({
     where: {
@@ -145,10 +144,7 @@ export async function getTrendingWallets(limit: number = 10) {
       totalVolume: true,
       level: true,
     },
-    orderBy: [
-      { likes: 'desc' },
-      { degenScore: 'desc' },
-    ],
+    orderBy: [{ likes: 'desc' }, { degenScore: 'desc' }],
     take: limit,
   });
 
@@ -166,7 +162,9 @@ export async function getWalletBadgeCount(walletAddress: string): Promise<number
     select: { id: true },
   });
 
-  if (!card) return 0;
+  if (!card) {
+    return 0;
+  }
 
   const count = await prisma.badge.count({
     where: { cardId: card.id },
@@ -179,7 +177,7 @@ export async function getWalletBadgeCount(walletAddress: string): Promise<number
  * Bulk update with transaction for atomic operations
  */
 export async function bulkUpdateScores(updates: Array<{ wallet: string; score: number }>) {
-  const operations = updates.map(update =>
+  const operations = updates.map((update) =>
     prisma.degenCard.update({
       where: { walletAddress: update.wallet },
       data: { degenScore: update.score },
@@ -256,10 +254,7 @@ export async function getActivityFeed(
 /**
  * Optimized score history with data aggregation
  */
-export async function getScoreHistoryOptimized(
-  walletAddress: string,
-  days: number = 30
-) {
+export async function getScoreHistoryOptimized(walletAddress: string, days: number = 30) {
   const startDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
 
   const history = await prisma.scoreHistory.findMany({

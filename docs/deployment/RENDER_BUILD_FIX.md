@@ -1,11 +1,13 @@
 # 🔧 Render Build Fix - Prisma Error
 
 ## Error
+
 ```
 Cannot find module '/opt/render/project/src/node_modules/@prisma/client/runtime/query_engine_bg.postgresql.wasm-base64.js'
 ```
 
 ## Root Cause
+
 The build command is running `npx prisma generate` which uses a cached/global version of Prisma instead of the locally installed version with --legacy-peer-deps.
 
 ## Solution
@@ -15,11 +17,13 @@ The build command is running `npx prisma generate` which uses a cached/global ve
 Go to Render Dashboard → Your Service → Settings → Build & Deploy
 
 **Change Build Command from:**
+
 ```bash
 npm install --legacy-peer-deps && npx prisma generate && npm run build
 ```
 
 **To:**
+
 ```bash
 npm install --legacy-peer-deps && npm run build:render
 ```
@@ -33,6 +37,7 @@ The new `build:render` script explicitly specifies the schema path and uses the 
 ```
 
 This ensures:
+
 1. Uses the Prisma version installed with --legacy-peer-deps
 2. Explicitly points to the schema file
 3. Avoids npx caching issues
@@ -41,6 +46,7 @@ This ensures:
 ## Alternative Solution (If Above Doesn't Work)
 
 **Build Command:**
+
 ```bash
 npm install --legacy-peer-deps && npm run build
 ```
@@ -62,6 +68,7 @@ After changing the build command:
 ## If Still Failing
 
 Try this build command instead:
+
 ```bash
 npm ci --legacy-peer-deps && npx prisma generate && npm run build
 ```

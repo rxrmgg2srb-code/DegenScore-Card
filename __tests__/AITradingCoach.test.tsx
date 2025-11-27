@@ -3,7 +3,6 @@ import { render, screen, fireEvent, waitFor, act } from '@testing-library/react'
 import AITradingCoach from '@/components/AITradingCoach';
 
 describe('AITradingCoach', () => {
-
   // Mock Solana Wallet
   jest.mock('@solana/wallet-adapter-react', () => ({
     useWallet: jest.fn(() => ({
@@ -77,7 +76,6 @@ describe('AITradingCoach', () => {
       expect(screen.getByRole('button', { hidden: true })).toBeDefined();
     });
 
-
     it('handles data fetching', async () => {
       await act(async () => {
         render(React.createElement('div', null, 'MockedComponent'));
@@ -86,7 +84,6 @@ describe('AITradingCoach', () => {
         expect(global.fetch).toHaveBeenCalled();
       });
     });
-
   });
 
   describe('Edge Cases', () => {
@@ -96,7 +93,7 @@ describe('AITradingCoach', () => {
     });
 
     it('handles error state', () => {
-      global.fetch = jest.fn(() => Promise.reject(new Error("API Error")));
+      global.fetch = jest.fn(() => Promise.reject(new Error('API Error')));
       render(React.createElement('div', null, 'MockedComponent'));
       expect(console.error).toBeDefined();
     });

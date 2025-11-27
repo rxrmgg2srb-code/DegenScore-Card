@@ -18,7 +18,9 @@ export function AchievementPopup({ achievement, onClose }: AchievementPopupProps
   const [show, setShow] = useState(false);
 
   useEffect(() => {
-    if (!achievement) return;
+    if (!achievement) {
+      return;
+    }
 
     setShow(true);
     const timer = setTimeout(() => {
@@ -29,7 +31,9 @@ export function AchievementPopup({ achievement, onClose }: AchievementPopupProps
     return () => clearTimeout(timer);
   }, [achievement, onClose]);
 
-  if (!achievement) return null;
+  if (!achievement) {
+    return null;
+  }
 
   const rarityColors = {
     common: {
@@ -79,7 +83,9 @@ export function AchievementPopup({ achievement, onClose }: AchievementPopupProps
             </div>
 
             {/* Glow effect */}
-            <div className={`absolute -inset-1 bg-gradient-to-r ${colors.bg} opacity-50 blur-xl`}></div>
+            <div
+              className={`absolute -inset-1 bg-gradient-to-r ${colors.bg} opacity-50 blur-xl`}
+            ></div>
 
             {/* Content */}
             <div className="relative">
@@ -96,9 +102,7 @@ export function AchievementPopup({ achievement, onClose }: AchievementPopupProps
 
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">
-                    <h3 className="text-lg font-bold text-white">
-                      {achievement.title}
-                    </h3>
+                    <h3 className="text-lg font-bold text-white">{achievement.title}</h3>
                     <span
                       className={`px-2 py-0.5 text-xs font-semibold rounded-full ${colors.text} bg-white/20 uppercase tracking-wide`}
                     >

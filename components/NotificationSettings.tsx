@@ -43,7 +43,9 @@ export default function NotificationSettings() {
   }, [sessionToken]);
 
   const generateToken = () => {
-    if (!publicKey) return;
+    if (!publicKey) {
+      return;
+    }
 
     try {
       const token = generateSessionToken(publicKey.toBase58());
@@ -55,7 +57,9 @@ export default function NotificationSettings() {
   };
 
   const fetchPreferences = async () => {
-    if (!sessionToken) return;
+    if (!sessionToken) {
+      return;
+    }
 
     setLoading(true);
 
@@ -148,9 +152,9 @@ export default function NotificationSettings() {
     <div className="bg-gray-800/50 rounded-lg p-6">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h3 className="text-2xl font-bold text-white mb-1">🔔 Notificaciones</h3>
+          <h3 className="text-2xl font-bold text-white mb-1">🔔 Notifications</h3>
           <p className="text-gray-400 text-sm">
-            Configura cómo quieres recibir notificaciones de DegenScore
+            Configure how you want to receive DegenScore notifications
           </p>
         </div>
       </div>
@@ -164,7 +168,9 @@ export default function NotificationSettings() {
               <div className="text-2xl">💬</div>
               <div>
                 <h4 className="text-white font-bold">Discord</h4>
-                <p className="text-gray-400 text-xs">Recibe notificaciones en tu servidor Discord</p>
+                <p className="text-gray-400 text-xs">
+                  Receive notifications on your Discord server
+                </p>
               </div>
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
@@ -195,7 +201,7 @@ export default function NotificationSettings() {
               <div className="text-2xl">✈️</div>
               <div>
                 <h4 className="text-white font-bold">Telegram</h4>
-                <p className="text-gray-400 text-xs">Recibe mensajes en Telegram</p>
+                <p className="text-gray-400 text-xs">Receive messages on Telegram</p>
               </div>
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
@@ -218,7 +224,7 @@ export default function NotificationSettings() {
                 className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white text-sm focus:border-purple-500 focus:outline-none"
               />
               <p className="text-xs text-gray-500">
-                Envía /start a @DegenScoreBot para obtener tu Chat ID
+                Send /start to @DegenScoreBot to get your Chat ID
               </p>
             </div>
           )}
@@ -231,7 +237,7 @@ export default function NotificationSettings() {
               <div className="text-2xl">📧</div>
               <div>
                 <h4 className="text-white font-bold">Email</h4>
-                <p className="text-gray-400 text-xs">Recibe notificaciones por email</p>
+                <p className="text-gray-400 text-xs">Receive notifications by email</p>
               </div>
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
@@ -258,14 +264,14 @@ export default function NotificationSettings() {
 
       {/* Notification Types */}
       <div className="border-t border-gray-700 pt-6 mb-6">
-        <h4 className="text-white font-bold mb-4">Tipos de Notificaciones</h4>
+        <h4 className="text-white font-bold mb-4">Notification Types</h4>
         <div className="space-y-3">
           <label className="flex items-center justify-between cursor-pointer">
             <div className="flex items-center gap-3">
               <div className="text-xl">📊</div>
               <div>
-                <div className="text-white font-medium">Trades de Seguidos</div>
-                <div className="text-gray-400 text-xs">Cuando una wallet seguida hace un trade</div>
+                <div className="text-white font-medium">Followed Trades</div>
+                <div className="text-gray-400 text-xs">When a followed wallet makes a trade</div>
               </div>
             </div>
             <input
@@ -280,8 +286,8 @@ export default function NotificationSettings() {
             <div className="flex items-center gap-3">
               <div className="text-xl">🎉</div>
               <div>
-                <div className="text-white font-medium">Logros y Milestones</div>
-                <div className="text-gray-400 text-xs">Cuando alcanzas un nuevo logro</div>
+                <div className="text-white font-medium">Achievements and Milestones</div>
+                <div className="text-gray-400 text-xs">When you reach a new achievement</div>
               </div>
             </div>
             <input
@@ -296,8 +302,8 @@ export default function NotificationSettings() {
             <div className="flex items-center gap-3">
               <div className="text-xl">🏆</div>
               <div>
-                <div className="text-white font-medium">Challenges Semanales</div>
-                <div className="text-gray-400 text-xs">Nuevos challenges y resultados</div>
+                <div className="text-white font-medium">Weekly Challenges</div>
+                <div className="text-gray-400 text-xs">New challenges and results</div>
               </div>
             </div>
             <input
@@ -318,7 +324,7 @@ export default function NotificationSettings() {
           saving ? 'opacity-50 cursor-not-allowed' : ''
         }`}
       >
-        {saving ? 'Guardando...' : '💾 Guardar Preferencias'}
+        {saving ? 'Saving...' : '💾 Save Preferences'}
       </button>
     </div>
   );

@@ -25,7 +25,7 @@ export default function RealtimeLeaderboard() {
     const pusher = getPusherClient();
     if (!pusher) {
       logger.warn('Pusher not configured, falling back to polling');
-      // Fallback: polling cada 30 segundos
+      // Fallback: polling every 30 seconds
       const interval = setInterval(fetchLeaderboard, 30000);
       return () => clearInterval(interval);
     }
@@ -50,7 +50,7 @@ export default function RealtimeLeaderboard() {
       (data: { walletAddress: string; username?: string; score: number }) => {
         logger.info('👑 New top scorer:', data);
         setNewTopScorer(data.username || data.walletAddress);
-        // Mostrar notificación por 5 segundos
+        // Show notification for 5 seconds
         setTimeout(() => setNewTopScorer(null), 5000);
         // Refresh leaderboard
         fetchLeaderboard();
@@ -95,10 +95,10 @@ export default function RealtimeLeaderboard() {
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold">Leaderboard</h2>
         <div className="flex items-center space-x-2">
-          <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500 animate-pulse' : 'bg-gray-500'}`} />
-          <span className="text-sm text-gray-400">
-            {isConnected ? 'Live' : 'Offline'}
-          </span>
+          <div
+            className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500 animate-pulse' : 'bg-gray-500'}`}
+          />
+          <span className="text-sm text-gray-400">{isConnected ? 'Live' : 'Offline'}</span>
         </div>
       </div>
 
@@ -111,9 +111,7 @@ export default function RealtimeLeaderboard() {
             exit={{ opacity: 0, y: -20 }}
             className="bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg p-4 text-center"
           >
-            <p className="font-bold text-white">
-              👑 {newTopScorer} is now #1!
-            </p>
+            <p className="font-bold text-white">👑 {newTopScorer} is now #1!</p>
           </motion.div>
         )}
       </AnimatePresence>
@@ -148,7 +146,8 @@ export default function RealtimeLeaderboard() {
                 {/* User Info */}
                 <div>
                   <p className="font-semibold">
-                    {entry.displayName || `${entry.walletAddress.slice(0, 4)}...${entry.walletAddress.slice(-4)}`}
+                    {entry.displayName ||
+                      `${entry.walletAddress.slice(0, 4)}...${entry.walletAddress.slice(-4)}`}
                   </p>
                   <p className="text-sm text-gray-400">{entry.walletAddress.slice(0, 8)}...</p>
                 </div>

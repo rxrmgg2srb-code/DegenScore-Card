@@ -37,10 +37,7 @@ function isConsecutiveDay(lastCheckIn: Date, now: Date): boolean {
   return isSameDay(lastCheckIn, yesterday);
 }
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -97,16 +94,14 @@ export default async function handler(
       const xpEarned = DAILY_XP_BASE + streakBonus;
 
       // Check for milestone badges
-      const milestonesReached = STREAK_MILESTONES.filter(
-        m => newStreak === m.days
-      );
+      const milestonesReached = STREAK_MILESTONES.filter((m) => newStreak === m.days);
 
       let bonusXP = 0;
       const badgesEarned = [];
 
       for (const milestone of milestonesReached) {
         // Check if badge already exists
-        const hasBadge = card.badges.some(b => b.name === milestone.badge);
+        const hasBadge = card.badges.some((b) => b.name === milestone.badge);
 
         if (!hasBadge) {
           await tx.badge.create({
@@ -143,7 +138,11 @@ export default async function handler(
         },
       });
 
-      logger.info('Daily check-in completed:', { walletAddress, streak: newStreak, xpEarned: totalXpEarned });
+      logger.info('Daily check-in completed:', {
+        walletAddress,
+        streak: newStreak,
+        xpEarned: totalXpEarned,
+      });
 
       return {
         alreadyCheckedIn: false,
@@ -155,7 +154,7 @@ export default async function handler(
         bonusXP,
         badgesEarned,
         streakBroken: card.lastCheckIn && !isConsecutiveDay(card.lastCheckIn, now),
-        nextMilestone: STREAK_MILESTONES.find(m => m.days > newStreak),
+        nextMilestone: STREAK_MILESTONES.find((m) => m.days > newStreak),
       };
     });
 
@@ -169,14 +168,14 @@ export default async function handler(
             metadata: {
               streak: result.currentStreak,
               xpEarned: result.xpEarned,
-              badgesEarned: result.badgesEarned?.map(b => b.name) || [],
+              badgesEarned: result.badgesEarned?.map((b) => b.name) || [],
             },
           },
         });
       } catch (activityError) {
         // If ActivityLog table doesn't exist or fails, just log the error but don't fail the request
         logger.warn('⚠️ Failed to log check-in activity (non-critical)', {
-          error: activityError instanceof Error ? activityError.message : String(activityError)
+          error: activityError instanceof Error ? activityError.message : String(activityError),
         });
       }
     }
@@ -200,9 +199,7 @@ export default async function handler(
       error: String(error),
     });
     res.status(500).json({
-      error: process.env.NODE_ENV === 'development'
-        ? error.message
-        : 'Failed to process check-in',
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Failed to process check-in',
     });
   }
 }

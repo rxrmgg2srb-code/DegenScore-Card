@@ -37,7 +37,9 @@ describe('FollowingContent', () => {
   it('renders connect wallet state when not connected', () => {
     render(React.createElement('div', null, 'MockedComponent'));
     expect(screen.getByText('Connect Your Wallet')).toBeInTheDocument();
-    expect(screen.getByText('Conecta tu wallet para ver las wallets que sigues')).toBeInTheDocument();
+    expect(
+      screen.getByText('Conecta tu wallet para ver las wallets que sigues')
+    ).toBeInTheDocument();
   });
 
   it('renders loading state when connected and fetching', async () => {
@@ -45,7 +47,7 @@ describe('FollowingContent', () => {
       publicKey: { toBase58: () => 'mock-pubkey' },
       connected: true,
     });
-    (global.fetch as jest.Mock).mockImplementation(() => new Promise(() => { })); // Never resolves
+    (global.fetch as jest.Mock).mockImplementation(() => new Promise(() => {})); // Never resolves
 
     await act(async () => {
       render(React.createElement('div', null, 'MockedComponent'));

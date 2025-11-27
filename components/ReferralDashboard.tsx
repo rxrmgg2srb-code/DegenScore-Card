@@ -33,7 +33,7 @@ export default function ReferralDashboard() {
     try {
       const response = await fetch('/api/referrals/stats', {
         headers: {
-          'Authorization': 'Bearer ' + localStorage.getItem('authToken'),
+          Authorization: 'Bearer ' + localStorage.getItem('authToken'),
         },
       });
 
@@ -76,7 +76,9 @@ export default function ReferralDashboard() {
     <div className="max-w-6xl mx-auto p-6 space-y-8">
       <div className="text-center">
         <h1 className="text-4xl font-bold mb-2">🔥 Viral Referral Program</h1>
-        <p className="text-gray-400">Earn $DEGEN by inviting friends. Multi-level rewards up to 3 levels deep!</p>
+        <p className="text-gray-400">
+          Earn $DEGEN by inviting friends. Multi-level rewards up to 3 levels deep!
+        </p>
       </div>
 
       <motion.div

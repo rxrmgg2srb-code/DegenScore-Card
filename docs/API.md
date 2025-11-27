@@ -1,13 +1,16 @@
 # 🚀 API Documentation
 
 ## Base URL
+
 ```
 Production: https://degenscore.com/api
 Development: http://localhost:3000/api
 ```
 
 ## Authentication
+
 Most endpoints require wallet signature verification. Include the following headers:
+
 ```
 X-Wallet-Address: <solana_wallet_address>
 X-Signature: <ed25519_signature>
@@ -21,9 +24,11 @@ X-Message: <signed_message>
 ### 🎴 Card Management
 
 #### `POST /api/analyze`
+
 Analyze a wallet and generate DegenScore metrics.
 
 **Request:**
+
 ```json
 {
   "walletAddress": "string" // Solana wallet address
@@ -31,6 +36,7 @@ Analyze a wallet and generate DegenScore metrics.
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -52,16 +58,18 @@ Analyze a wallet and generate DegenScore metrics.
 ---
 
 #### `GET /api/get-card?wallet=<address>`
+
 Retrieve an existing DegenScore card.
 
 **Response:**
+
 ```json
 {
   "id": "clx123abc",
   "walletAddress": "xyz...",
   "degenScore": 75,
   "isPaid": true,
-  "isMinted": true,
+  "isMinted": true
   // ... all card metrics
 }
 ```
@@ -69,17 +77,22 @@ Retrieve an existing DegenScore card.
 ---
 
 #### `POST /api/generate-card`
+
 Generate visual card image after analysis.
 
 **Request:**
+
 ```json
 {
   "walletAddress": "string",
-  "metrics": { /* metrics object */ }
+  "metrics": {
+    /* metrics object */
+  }
 }
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -92,9 +105,11 @@ Generate visual card image after analysis.
 ### 💰 Payment & Verification
 
 #### `POST /api/verify-payment`
+
 Verify payment transaction for premium features.
 
 **Request:**
+
 ```json
 {
   "walletAddress": "string",
@@ -103,6 +118,7 @@ Verify payment transaction for premium features.
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -118,14 +134,17 @@ Verify payment transaction for premium features.
 ### 🏆 Leaderboard & Social
 
 #### `GET /api/leaderboard?metric=score&limit=100`
+
 Get top wallets by metric.
 
 **Query Params:**
+
 - `metric`: `score` | `volume` | `winRate` | `likes` (default: `score`)
 - `limit`: 1-100 (default: 50)
 - `offset`: For pagination
 
 **Response:**
+
 ```json
 {
   "leaderboard": [
@@ -145,9 +164,11 @@ Get top wallets by metric.
 ---
 
 #### `POST /api/like`
+
 Like a DegenScore card.
 
 **Request:**
+
 ```json
 {
   "walletAddress": "string" // Card to like
@@ -161,9 +182,11 @@ Like a DegenScore card.
 ### 📊 Analytics & Tracking
 
 #### `GET /api/score-history?wallet=<address>`
+
 Get historical score progression.
 
 **Response:**
+
 ```json
 {
   "history": [
@@ -180,9 +203,11 @@ Get historical score progression.
 ---
 
 #### `GET /api/hot-feed?limit=20`
+
 Get recent trades from top wallets.
 
 **Response:**
+
 ```json
 {
   "trades": [
@@ -204,9 +229,11 @@ Get recent trades from top wallets.
 ### 🎯 Gamification
 
 #### `POST /api/daily-checkin`
+
 Daily check-in for streak rewards.
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -219,9 +246,11 @@ Daily check-in for streak rewards.
 ---
 
 #### `GET /api/current-challenge`
+
 Get active weekly challenge.
 
 **Response:**
+
 ```json
 {
   "week": 3,
@@ -241,9 +270,11 @@ Get active weekly challenge.
 ### 🔍 Token Analysis
 
 #### `POST /api/analyze-token`
+
 Analyze token security (100+ data points).
 
 **Request:**
+
 ```json
 {
   "tokenAddress": "string" // SPL token mint
@@ -251,6 +282,7 @@ Analyze token security (100+ data points).
 ```
 
 **Response:**
+
 ```json
 {
   "tokenSymbol": "BONK",
@@ -258,10 +290,10 @@ Analyze token security (100+ data points).
   "riskLevel": "LOW_RISK",
   "recommendation": "SAFE_TO_BUY",
   "scores": {
-    "authorityScore": 95,    // Mint/freeze revoked
-    "holderScore": 78,       // Distribution
-    "liquidityScore": 88,    // LP locked
-    "tradingScore": 72       // Patterns
+    "authorityScore": 95, // Mint/freeze revoked
+    "holderScore": 78, // Distribution
+    "liquidityScore": 88, // LP locked
+    "tradingScore": 72 // Patterns
   },
   "redFlags": [
     {
@@ -275,9 +307,11 @@ Analyze token security (100+ data points).
 ---
 
 #### `POST /api/super-token-score`
+
 Ultra-deep token analysis (SuperScore).
 
 **Enhanced Analysis:**
+
 - New wallet risk detection
 - Insider trading patterns
 - Wallet clustering (bundles)
@@ -291,9 +325,11 @@ Ultra-deep token analysis (SuperScore).
 ### 🔔 Notifications & Webhooks
 
 #### `POST /api/notifications/preferences`
+
 Update notification settings.
 
 **Request:**
+
 ```json
 {
   "emailEnabled": true,
@@ -309,12 +345,15 @@ Update notification settings.
 ### 📸 Media & Sharing
 
 #### `POST /api/upload-profile-image`
+
 Upload profile image.
 
 **Request:** `multipart/form-data`
+
 - `image`: File (max 5MB, .jpg/.png/.webp)
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -325,6 +364,7 @@ Upload profile image.
 ---
 
 #### `GET /api/og-image?wallet=<address>`
+
 Generate Open Graph card image for social sharing.
 
 **Returns:** Image (PNG, 1200x630)
@@ -339,11 +379,14 @@ All endpoints return errors in this format:
 {
   "error": "Error message",
   "code": "ERROR_CODE",
-  "details": { /* optional additional info */ }
+  "details": {
+    /* optional additional info */
+  }
 }
 ```
 
 ### Common Error Codes:
+
 - `INVALID_WALLET` - Invalid Solana address
 - `RATE_LIMIT_EXCEEDED` - Too many requests
 - `UNAUTHORIZED` - Missing/invalid signature
@@ -355,16 +398,17 @@ All endpoints return errors in this format:
 
 ## Rate Limiting
 
-| Endpoint | Rate Limit |
-|----------|------------|
-| `/api/analyze` | 10/min |
-| `/api/super-token-score` | 5/min |
-| `/api/generate-card` | 20/min |
-| `/api/leaderboard` | 60/min |
-| `/api/like` | 30/min |
-| All others | 60/min |
+| Endpoint                 | Rate Limit |
+| ------------------------ | ---------- |
+| `/api/analyze`           | 10/min     |
+| `/api/super-token-score` | 5/min      |
+| `/api/generate-card`     | 20/min     |
+| `/api/leaderboard`       | 60/min     |
+| `/api/like`              | 30/min     |
+| All others               | 60/min     |
 
 Headers included in responses:
+
 ```
 X-RateLimit-Limit: 60
 X-RateLimit-Remaining: 45
@@ -382,6 +426,7 @@ Coming soon: Real-time leaderboard updates, whale alerts, challenge progress via
 ## SDK & Client Libraries
 
 Coming soon:
+
 - TypeScript SDK
 - Python SDK
 - REST API Postman Collection

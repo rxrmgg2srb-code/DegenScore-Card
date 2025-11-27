@@ -8,26 +8,54 @@ interface ShareModalProps {
   onSkip?: () => void;
 }
 
-export default function ShareModal({ isOpen, onShared, onSkip, walletAddress: _walletAddress, degenScore }: ShareModalProps) {
+export default function ShareModal({
+  isOpen,
+  onShared,
+  onSkip,
+  walletAddress: _walletAddress,
+  degenScore,
+}: ShareModalProps) {
   const [hasShared, setHasShared] = useState(false);
 
-  if (!isOpen) return null;
+  if (!isOpen) {
+    return null;
+  }
 
   const getTierEmoji = (score: number) => {
-    if (score >= 90) return '👑';
-    if (score >= 80) return '💎';
-    if (score >= 70) return '💠';
-    if (score >= 60) return '⚡';
-    if (score >= 50) return '🌟';
+    if (score >= 90) {
+      return '👑';
+    }
+    if (score >= 80) {
+      return '💎';
+    }
+    if (score >= 70) {
+      return '💠';
+    }
+    if (score >= 60) {
+      return '⚡';
+    }
+    if (score >= 50) {
+      return '🌟';
+    }
     return '🎮';
   };
 
   const getTierName = (score: number) => {
-    if (score >= 90) return 'LEGENDARY';
-    if (score >= 80) return 'MASTER';
-    if (score >= 70) return 'DIAMOND';
-    if (score >= 60) return 'PLATINUM';
-    if (score >= 50) return 'GOLD';
+    if (score >= 90) {
+      return 'LEGENDARY';
+    }
+    if (score >= 80) {
+      return 'MASTER';
+    }
+    if (score >= 70) {
+      return 'DIAMOND';
+    }
+    if (score >= 60) {
+      return 'PLATINUM';
+    }
+    if (score >= 50) {
+      return 'GOLD';
+    }
     return 'DEGEN';
   };
 
@@ -79,12 +107,8 @@ Check your Solana trading score at ${appUrl}
 
         <div className="text-center mb-6">
           <div className="text-6xl mb-4 animate-bounce">🚀</div>
-          <h2 className="text-3xl font-bold text-white mb-2">
-            Share Your Score!
-          </h2>
-          <p className="text-gray-400">
-            Unlock your premium card by sharing on Twitter
-          </p>
+          <h2 className="text-3xl font-bold text-white mb-2">Share Your Score!</h2>
+          <p className="text-gray-400">Unlock your premium card by sharing on Twitter</p>
         </div>
 
         <div className="bg-gradient-to-r from-cyan-500/10 to-blue-500/10 border border-cyan-500/30 rounded-xl p-4 mb-6">
@@ -113,10 +137,14 @@ Check your Solana trading score at ${appUrl}
         <div className="bg-gray-800/50 rounded-xl p-4 mb-6 border border-gray-700">
           <div className="text-gray-400 text-xs mb-2">Preview:</div>
           <div className="text-white text-sm">
-            {getTierEmoji(degenScore)} Just got my DegenScore: <span className="font-bold text-cyan-400">{degenScore}/100</span> ({getTierName(degenScore)})!
-            <br /><br />
+            {getTierEmoji(degenScore)} Just got my DegenScore:{' '}
+            <span className="font-bold text-cyan-400">{degenScore}/100</span> (
+            {getTierName(degenScore)})!
+            <br />
+            <br />
             Check your Solana trading score at...
-            <br /><br />
+            <br />
+            <br />
             <span className="text-cyan-400">#DegenScore #Solana #SolanaTrading</span>
           </div>
         </div>
@@ -134,7 +162,7 @@ Check your Solana trading score at ${appUrl}
           ) : (
             <span className="flex items-center justify-center gap-2">
               <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/>
+                <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z" />
               </svg>
               <span>Share on Twitter / X</span>
             </span>

@@ -33,7 +33,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       alerts,
     });
   } catch (error: any) {
-    logger.error('Error in /api/whales/alerts:', error instanceof Error ? error : new Error(String(error)));
+    logger.error(
+      'Error in /api/whales/alerts:',
+      error instanceof Error ? error : new Error(String(error))
+    );
     return res.status(500).json({
       error: 'Failed to fetch alerts',
       message: error.message,

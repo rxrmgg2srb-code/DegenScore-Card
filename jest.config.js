@@ -7,10 +7,10 @@ module.exports = {
     '^@/hooks/(.*)$': '<rootDir>/hooks/$1',
     '^@/pages/(.*)$': '<rootDir>/pages/$1',
     '^@/components/(.*)$': '<rootDir>/components/$1',
-    '^@/(.*)$': '<rootDir>/$1'
+    '^@/(.*)$': '<rootDir>/$1',
   },
   transform: {
-    '^.+\\.(ts|tsx)$': 'ts-jest'
+    '^.+\\.(ts|tsx)$': 'ts-jest',
   },
   // Ignore Playwright e2e tests
   testMatch: [

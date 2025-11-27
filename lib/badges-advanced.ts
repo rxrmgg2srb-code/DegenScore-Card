@@ -370,7 +370,7 @@ export const BADGES: Badge[] = [
  * Calcula qué badges ha desbloqueado un usuario
  */
 export function calculateUnlockedBadges(metrics: WalletMetrics): Badge[] {
-  return BADGES.filter(badge => badge.condition(metrics));
+  return BADGES.filter((badge) => badge.condition(metrics));
 }
 
 /**
@@ -378,22 +378,22 @@ export function calculateUnlockedBadges(metrics: WalletMetrics): Badge[] {
  */
 export function calculateLevel(metrics: WalletMetrics): number {
   // XP = degenScore * 10 + totalTrades + (totalVolume / 10) + rugsSurvived * 5 + moonshots * 10
-  const xp = 
-    metrics.degenScore * 10 + 
-    metrics.totalTrades + 
+  const xp =
+    metrics.degenScore * 10 +
+    metrics.totalTrades +
     Math.floor(metrics.totalVolume / 10) +
     metrics.rugsSurvived * 5 +
     metrics.moonshots * 10;
-  
+
   // Cada nivel requiere más XP: Level 1 = 0, Level 2 = 100, Level 3 = 300, etc.
   let level = 1;
   let requiredXp = 0;
-  
+
   while (xp >= requiredXp) {
     level++;
     requiredXp += level * 100;
   }
-  
+
   return Math.max(1, level - 1);
 }
 
@@ -402,8 +402,8 @@ export function calculateLevel(metrics: WalletMetrics): number {
  */
 export function calculateXP(metrics: WalletMetrics): number {
   return (
-    metrics.degenScore * 10 + 
-    metrics.totalTrades + 
+    metrics.degenScore * 10 +
+    metrics.totalTrades +
     Math.floor(metrics.totalVolume / 10) +
     metrics.rugsSurvived * 5 +
     metrics.moonshots * 10
@@ -422,10 +422,10 @@ export function getXPForNextLevel(currentLevel: number): number {
  */
 export function getBadgesByRarity(badges: Badge[]): Record<string, Badge[]> {
   return {
-    LEGENDARY: badges.filter(b => b.rarity === 'LEGENDARY'),
-    EPIC: badges.filter(b => b.rarity === 'EPIC'),
-    RARE: badges.filter(b => b.rarity === 'RARE'),
-    COMMON: badges.filter(b => b.rarity === 'COMMON'),
+    LEGENDARY: badges.filter((b) => b.rarity === 'LEGENDARY'),
+    EPIC: badges.filter((b) => b.rarity === 'EPIC'),
+    RARE: badges.filter((b) => b.rarity === 'RARE'),
+    COMMON: badges.filter((b) => b.rarity === 'COMMON'),
   };
 }
 
@@ -458,7 +458,9 @@ export function getAchievementSummary(metrics: WalletMetrics): {
 
   // Warnings
   if (metrics.rugsCaught > 3) {
-    warnings.push(`Caught in ${metrics.rugsCaught} rug pulls (-${metrics.totalRugValue.toFixed(1)} SOL)`);
+    warnings.push(
+      `Caught in ${metrics.rugsCaught} rug pulls (-${metrics.totalRugValue.toFixed(1)} SOL)`
+    );
   }
   if (metrics.profitLoss < -10) {
     warnings.push(`Net loss of ${Math.abs(metrics.profitLoss).toFixed(1)} SOL`);

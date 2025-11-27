@@ -30,7 +30,7 @@ export default function SuperTokenScorerContent() {
     <div className="min-h-screen bg-gradient-to-br from-purple-900 via-black to-blue-900 p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
         <Header />
-        
+
         <InputSection
           tokenAddress={tokenAddress}
           setTokenAddress={setTokenAddress}

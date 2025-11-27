@@ -18,7 +18,7 @@ interface ScarcityBannerProps {
 export default function ScarcityBanner({
   maxSlots = 1000,
   currentSlots,
-  type = 'premium'
+  type = 'premium',
 }: ScarcityBannerProps) {
   const [slots, setSlots] = useState(currentSlots || maxSlots);
   const [showBanner, setShowBanner] = useState(true);
@@ -50,7 +50,9 @@ export default function ScarcityBanner({
   const percentageFilled = (remaining / maxSlots) * 100;
 
   // Don't show if slots are full or banner is dismissed
-  if (remaining <= 0 || !showBanner) return null;
+  if (remaining <= 0 || !showBanner) {
+    return null;
+  }
 
   // Determine urgency level
   const isUrgent = remaining < 100;
@@ -110,9 +112,7 @@ export default function ScarcityBanner({
                       </span>
                     )}
                   </h3>
-                  <p className={`text-sm ${currentConfig.textColor}`}>
-                    {currentConfig.subtitle}
-                  </p>
+                  <p className={`text-sm ${currentConfig.textColor}`}>{currentConfig.subtitle}</p>
                 </div>
               </div>
             </div>
@@ -128,8 +128,8 @@ export default function ScarcityBanner({
                     isCritical
                       ? 'bg-gradient-to-r from-red-500 to-orange-500'
                       : isUrgent
-                      ? 'bg-gradient-to-r from-yellow-500 to-orange-500'
-                      : 'bg-gradient-to-r from-cyan-500 to-purple-500'
+                        ? 'bg-gradient-to-r from-yellow-500 to-orange-500'
+                        : 'bg-gradient-to-r from-cyan-500 to-purple-500'
                   }`}
                 />
               </div>
@@ -142,14 +142,12 @@ export default function ScarcityBanner({
             {/* Right: CTA + Close */}
             <div className="flex items-center gap-4">
               <div className="text-right hidden sm:block">
-                <div className="text-3xl font-bold text-white">
-                  {remaining}
-                </div>
+                <div className="text-3xl font-bold text-white">{remaining}</div>
                 <div className="text-xs text-white/70">slots left</div>
               </div>
 
               <button
-                onClick={() => window.location.href = '/mint'}
+                onClick={() => (window.location.href = '/mint')}
                 className="bg-white text-black font-bold px-6 py-3 rounded-lg hover:bg-gray-100 transition shadow-lg"
               >
                 Claim Now
@@ -160,7 +158,12 @@ export default function ScarcityBanner({
                 className="text-white/50 hover:text-white/80 transition"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
                 </svg>
               </button>
             </div>

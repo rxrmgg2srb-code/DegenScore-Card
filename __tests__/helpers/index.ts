@@ -9,8 +9,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 // Async helpers
 // ============================================================================
 
-export const sleep = (ms = 0): Promise<void> =>
-  new Promise((resolve) => setTimeout(resolve, ms));
+export const sleep = (ms = 0): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
 
 export const flushAsyncOps = async (): Promise<void> => {
   await Promise.resolve();
@@ -260,8 +259,8 @@ const buildFetchResponse = (config: MockFetchResponseConfig = {}): Response => {
     config.body === undefined
       ? ''
       : typeof config.body === 'string'
-      ? config.body
-      : JSON.stringify(config.body);
+        ? config.body
+        : JSON.stringify(config.body);
 
   const response = new Response(body, { status, headers });
 
@@ -281,8 +280,7 @@ export const mockFetch = (
   const queue = Array.isArray(responses) ? [...responses] : [responses];
 
   const fetchMock = jest.fn(async (...args: Parameters<typeof fetch>) => {
-    const responder =
-      queue.length > 1 ? queue.shift()! : queue.length === 1 ? queue[0] : undefined;
+    const responder = queue.length > 1 ? queue.shift()! : queue.length === 1 ? queue[0] : undefined;
 
     let config: MockFetchResponseConfig | undefined;
 
@@ -372,10 +370,7 @@ export const createMockTransaction = (signature = generateMockSignature()): Mock
     },
     transaction: {
       message: {
-        accountKeys: [
-          { pubkey: generateMockAddress() },
-          { pubkey: generateMockAddress() },
-        ],
+        accountKeys: [{ pubkey: generateMockAddress() }, { pubkey: generateMockAddress() }],
         instructions: [
           {
             programId: 'system',
@@ -407,8 +402,7 @@ export interface MockWallet {
 export const createMockWallet = (address = generateMockAddress()): MockWallet => {
   const publicKey = {
     toBase58: () => address,
-    equals: (other?: { toBase58: () => string } | null) =>
-      other?.toBase58?.() === address,
+    equals: (other?: { toBase58: () => string } | null) => other?.toBase58?.() === address,
   };
 
   return {

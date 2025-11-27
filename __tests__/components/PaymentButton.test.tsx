@@ -82,9 +82,12 @@ describe('PaymentButton', () => {
       fireEvent.click(button);
     });
 
-    await waitFor(() => {
-      expect(mockOnPaymentSuccess).toHaveBeenCalled();
-    }, { timeout: 5000 });
+    await waitFor(
+      () => {
+        expect(mockOnPaymentSuccess).toHaveBeenCalled();
+      },
+      { timeout: 5000 }
+    );
   });
 
   it('shows error when wallet not connected and button clicked', async () => {

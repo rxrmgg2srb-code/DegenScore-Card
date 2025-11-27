@@ -3,9 +3,8 @@ import Head from 'next/head';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { LanguageSelector } from '../components/LanguageSelector';
-import FIFACard, { FIFACardProps } from '../components/FIFACard';
 import { LeaderboardEntry, Stats, ViewMode, SortBy } from './leaderboard/types';
-import { LeaderboardCard } from './leaderboard/LeaderboardCard';
+import { FIFALeaderboardCard } from './leaderboard/FIFALeaderboardCard';
 import { LeaderboardTable } from './leaderboard/LeaderboardTable';
 import { LeaderboardStats } from './leaderboard/LeaderboardStats';
 import { LeaderboardFilters } from './leaderboard/LeaderboardFilters';
@@ -13,12 +12,12 @@ import { LeaderboardFilters } from './leaderboard/LeaderboardFilters';
 // Dynamic imports - NO ejecutar en servidor, solo en cliente
 const RankingsWidget = dynamic(() => import('../components/RankingsWidget'), {
   ssr: false,
-  loading: () => <div className="animate-pulse bg-gray-800/50 rounded-2xl h-96"></div>
+  loading: () => <div className="animate-pulse bg-gray-800/50 rounded-2xl h-96"></div>,
 });
 
 const ChallengeWinnersWidget = dynamic(() => import('../components/ChallengeWinnersWidget'), {
   ssr: false,
-  loading: () => <div className="animate-pulse bg-gray-800/50 rounded-2xl h-96"></div>
+  loading: () => <div className="animate-pulse bg-gray-800/50 rounded-2xl h-96"></div>,
 });
 
 export function Leaderboard() {
@@ -62,9 +61,9 @@ export function Leaderboard() {
   const handleLike = async (cardId: string) => {
     const hasLiked = userLikes[cardId];
 
-    setUserLikes(prev => ({ ...prev, [cardId]: !hasLiked }));
-    setLeaderboard(prev =>
-      prev.map(entry => {
+    setUserLikes((prev) => ({ ...prev, [cardId]: !hasLiked }));
+    setLeaderboard((prev) =>
+      prev.map((entry) => {
         if (entry.id === cardId) {
           const newLikes = (entry.likes || 0) + (hasLiked ? -1 : 1);
           return { ...entry, likes: newLikes };
@@ -86,18 +85,14 @@ export function Leaderboard() {
 
       const data = await response.json();
 
-      setLeaderboard(prev =>
-        prev.map(entry =>
-          entry.id === cardId
-            ? { ...entry, likes: data.likes }
-            : entry
-        )
+      setLeaderboard((prev) =>
+        prev.map((entry) => (entry.id === cardId ? { ...entry, likes: data.likes } : entry))
       );
     } catch (error) {
       console.error('Error updating like:', error);
-      setUserLikes(prev => ({ ...prev, [cardId]: hasLiked } as { [key: string]: boolean }));
-      setLeaderboard(prev =>
-        prev.map(entry =>
+      setUserLikes((prev) => ({ ...prev, [cardId]: hasLiked }) as { [key: string]: boolean });
+      setLeaderboard((prev) =>
+        prev.map((entry) =>
           entry.id === cardId
             ? { ...entry, likes: (entry.likes || 0) + (hasLiked ? 1 : -1) }
             : entry
@@ -107,23 +102,29 @@ export function Leaderboard() {
   };
 
   const filteredLeaderboard = searchWallet
-    ? leaderboard.filter(entry =>
-      entry.walletAddress.toLowerCase().includes(searchWallet.toLowerCase()) ||
-      (entry.displayName && entry.displayName.toLowerCase().includes(searchWallet.toLowerCase()))
-    )
+    ? leaderboard.filter(
+        (entry) =>
+          entry.walletAddress.toLowerCase().includes(searchWallet.toLowerCase()) ||
+          (entry.displayName &&
+            entry.displayName.toLowerCase().includes(searchWallet.toLowerCase()))
+      )
     : leaderboard;
 
   return (
     <>
       <Head>
         <title>Leaderboard | DegenScore</title>
-        <meta name="description" content="Top Solana traders ranked by DegenScore" />
+        <meta name="description" content="Top Solana Traders Ranked by DegenScore" />
       </Head>
 
       <style jsx global>{`
         @keyframes shine {
-          0% { background-position: -200% center; }
-          100% { background-position: 200% center; }
+          0% {
+            background-position: -200% center;
+          }
+          100% {
+            background-position: 200% center;
+          }
         }
         .shine-effect {
           background: linear-gradient(
@@ -188,12 +189,6 @@ export function Leaderboard() {
                 >
                   Oldest
                 </button>
-                <button
-                  className={`px-4 py-2 rounded ${sortBy === 'all' ? 'bg-yellow-500 text-black' : 'bg-gray-800 text-gray-200'}`}
-                  onClick={() => setSortBy('all')}
-                >
-                  All
-                </button>
               </div>
 
               {loading ? (
@@ -206,28 +201,14 @@ export function Leaderboard() {
                   {filteredLeaderboard.length > 0 ? (
                     <>
                       {viewMode === 'cards' && (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 justify-items-center">
                           {filteredLeaderboard.map((entry, index) => (
-                            // Render new FIFA style card
-                            <FIFACard
+                            <FIFALeaderboardCard
                               key={entry.id}
-                              rank={entry.rank ?? index + 1}
-                              walletAddress={entry.walletAddress}
-                              displayName={entry.displayName}
-                              profileImage={entry.profileImage}
-                              degenScore={entry.degenScore ?? 0}
-                              tier={entry.tier ?? 'Bronze'}
-                              stats={entry.stats ?? {
-                                winRate: 0,
-                                totalVolume: 0,
-                                profitLoss: 0,
-                                totalTrades: 0,
-                                avgHoldTime: 0,
-                                level: 0,
-                              }}
-                              badges={entry.badges ?? []}
-                              twitter={entry.twitter}
-                              telegram={entry.telegram}
+                              entry={entry}
+                              index={index}
+                              handleLike={handleLike}
+                              userLikes={userLikes}
                             />
                           ))}
                         </div>

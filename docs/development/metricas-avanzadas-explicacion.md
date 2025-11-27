@@ -3,6 +3,7 @@
 ## 🎯 Problema Resuelto
 
 ### ❌ Sistema Anterior (Limitaciones):
+
 ```typescript
 // ❌ Solo obtenía las últimas 100 transacciones
 const transactions = await getWalletTransactions(walletAddress, 100);
@@ -21,6 +22,7 @@ const transactions = await getWalletTransactions(walletAddress, 100);
 ```
 
 ### ✅ Sistema Nuevo (Soluciones):
+
 ```typescript
 // ✅ Obtiene TODAS las transacciones históricas
 // Paginación automática hasta obtener todo el historial
@@ -52,26 +54,29 @@ const transactions = await getWalletTransactions(walletAddress, 100);
 
 ```typescript
 interface RugAnalysis {
-  rugsSurvived: number;        // Vendió antes del rug ✅
-  rugsCaught: number;          // Se quedó atrapado ❌
-  totalRugValue: number;       // SOL perdidos en rugs
-  ruggedTokens: string[];      // Lista de tokens ruggeados
+  rugsSurvived: number; // Vendió antes del rug ✅
+  rugsCaught: number; // Se quedó atrapado ❌
+  totalRugValue: number; // SOL perdidos en rugs
+  ruggedTokens: string[]; // Lista de tokens ruggeados
 }
 ```
 
 **Cómo se detecta un rug:**
+
 1. Usuario compró el token
 2. Usuario vendió <20% de lo que compró
 3. Pérdida no realizada >80% del capital invertido
-→ **RUG CAUGHT** 😭
+   → **RUG CAUGHT** 😭
 
 **Cómo se detecta una salvada:**
+
 1. Usuario compró el token
 2. Usuario vendió >50% antes del colapso
 3. Pérdida total >70% pero recuperó algo
-→ **RUG SURVIVED** 💪
+   → **RUG SURVIVED** 💪
 
 **Ejemplos:**
+
 ```typescript
 // Caso 1: RUG CAUGHT
 Compró: 10 SOL worth of SCAM token
@@ -91,14 +96,16 @@ Token fue a 0 después
 ### 2. **Moonshots Detection** 🚀
 
 ```typescript
-moonshots: number;  // Trades con >10x ganancia
+moonshots: number; // Trades con >10x ganancia
 ```
 
 **Criterio:**
+
 - Posición cerrada (vendió todo o >95%)
 - P&L realizado > 10x el capital invertido
 
 **Ejemplo:**
+
 ```typescript
 Compró: 1 SOL de PUMP token
 Vendió: 15 SOL
@@ -110,30 +117,31 @@ Vendió: 15 SOL
 ### 3. **Trading Style Analysis** ⚡💎
 
 ```typescript
-quickFlips: number;      // Trades < 1 hora
-diamondHands: number;    // Trades > 7 días
-avgHoldTime: number;     // Tiempo promedio en horas
+quickFlips: number; // Trades < 1 hora
+diamondHands: number; // Trades > 7 días
+avgHoldTime: number; // Tiempo promedio en horas
 ```
 
 **Identifica el estilo del trader:**
 
-| Estilo | Características |
-|--------|----------------|
-| **Scalper** | >50 quick flips, avg hold time < 2 horas |
-| **Day Trader** | Avg hold time 2-24 horas |
-| **Swing Trader** | Avg hold time 1-7 días |
-| **HODLer** | >20 diamond hands, avg hold time > 7 días |
+| Estilo           | Características                           |
+| ---------------- | ----------------------------------------- |
+| **Scalper**      | >50 quick flips, avg hold time < 2 horas  |
+| **Day Trader**   | Avg hold time 2-24 horas                  |
+| **Swing Trader** | Avg hold time 1-7 días                    |
+| **HODLer**       | >20 diamond hands, avg hold time > 7 días |
 
 ---
 
 ### 4. **Win/Loss Streaks** 🔥❄️
 
 ```typescript
-longestWinStreak: number;    // Racha más larga de wins
-longestLossStreak: number;   // Racha más larga de losses
+longestWinStreak: number; // Racha más larga de wins
+longestLossStreak: number; // Racha más larga de losses
 ```
 
 **Uso:**
+
 - Evalúa consistencia del trader
 - Detecta patrones de comportamiento
 - Ayuda a identificar si está en "hot streak" o "tilt"
@@ -143,10 +151,11 @@ longestLossStreak: number;   // Racha más larga de losses
 ### 5. **Volatility Score** 📊
 
 ```typescript
-volatilityScore: number;  // 0-100 (qué tan errático es el trader)
+volatilityScore: number; // 0-100 (qué tan errático es el trader)
 ```
 
 **Cálculo:**
+
 ```typescript
 // Varianza de P&L de todas las posiciones cerradas
 const pnls = closedPositions.map(p => p.realizedPnL);
@@ -156,6 +165,7 @@ volatilityScore = min(sqrt(variance) * 10, 100);
 ```
 
 **Interpretación:**
+
 - **0-30**: Trader consistente y predecible ✅
 - **30-60**: Volatilidad moderada ⚠️
 - **60-100**: Trader muy errático, grandes wins y losses 🎰
@@ -165,11 +175,12 @@ volatilityScore = min(sqrt(variance) * 10, 100);
 ### 6. **Realized vs Unrealized P&L** 💰
 
 ```typescript
-realizedPnL: number;      // P&L de posiciones cerradas
-unrealizedPnL: number;    // P&L de posiciones abiertas (asumiendo valor 0)
+realizedPnL: number; // P&L de posiciones cerradas
+unrealizedPnL: number; // P&L de posiciones abiertas (asumiendo valor 0)
 ```
 
 **Diferencia clave:**
+
 ```typescript
 // REALIZED = lo que ya vendió
 Position A: Compró 5 SOL, vendió 8 SOL → +3 SOL realizado ✅
@@ -183,10 +194,11 @@ Position B: Compró 3 SOL, aún lo tiene → -3 SOL no realizado ❌
 ### 7. **First Trade Date** 📅
 
 ```typescript
-firstTradeDate: number;  // Timestamp del primer trade
+firstTradeDate: number; // Timestamp del primer trade
 ```
 
 **Uso:**
+
 - Calcular cuánto tiempo lleva tradeando
 - Evaluar experiencia del trader
 - Contexto para otras métricas
@@ -196,20 +208,23 @@ firstTradeDate: number;  // Timestamp del primer trade
 ## 🏅 Nuevos Badges
 
 ### Badges de Rugs:
+
 - 🛡️ **Rug Survivor Legend** - Survived 10+ rugs
 - 🔍 **Rug Detector** - Survived 5+ rugs
 - 🚪 **Quick Exit** - Survived 3+ rugs
 - ✊ **Rug Survivor** - Survived 1+ rug
-- 🎪 **Rug Magnet** - Caught in 5+ rugs *(badge de "honor")*
-- 💸 **Exit Liquidity** - Caught in 10+ rugs *(F)*
+- 🎪 **Rug Magnet** - Caught in 5+ rugs _(badge de "honor")_
+- 💸 **Exit Liquidity** - Caught in 10+ rugs _(F)_
 
 ### Badges de Moonshots:
+
 - 🚀 **Moonshot Master** - 10+ trades con 10x+
 - 💎 **Gem Hunter** - 5+ moonshots
 - 🍀 **Lucky Finder** - 3+ moonshots
 - 🌙 **First Moonshot** - Primer 10x
 
 ### Badges de Trading Style:
+
 - ⚡ **Scalper King** - 100+ quick flips (<1 hora)
 - 🔄 **Quick Flipper** - 50+ quick flips
 - 💨 **Speed Trader** - 20+ quick flips
@@ -218,11 +233,13 @@ firstTradeDate: number;  // Timestamp del primer trade
 - 🤝 **HODLer** - 5+ holds >7 días
 
 ### Badges de Win Streaks:
+
 - 🔥 **Unstoppable** - Win streak de 20+
 - 🌟 **On Fire** - Win streak de 10+
 - 🎲 **Hot Streak** - Win streak de 5+
 
 ### Badges de Volatilidad:
+
 - 📈 **Steady Eddie** - Baja volatilidad + ganancias consistentes
 - 🎰 **Degen Gambler** - Volatilidad extremadamente alta
 
@@ -329,19 +346,22 @@ const metrics = await calculateAdvancedMetrics(walletAddress);
 ## 📈 Mejoras en el Performance
 
 ### Paginación Inteligente:
+
 ```typescript
 // Obtiene TODAS las transacciones
 // Pero con límites para evitar timeouts
-const maxFetches = 50;  // Máximo 5000 transacciones
+const maxFetches = 50; // Máximo 5000 transacciones
 ```
 
 **Por qué 5000?**
+
 - La mayoría de traders tienen <1000 transacciones
 - 5000 cubre el 99% de casos
 - Evita timeouts en la API
 - ~5-10 segundos para analizar todo
 
 ### Caching Recomendado:
+
 ```typescript
 // Guardar métricas en BD cada vez que se calculan
 // Solo recalcular si han pasado >24 horas
@@ -487,25 +507,26 @@ const metrics = await calculateAdvancedMetrics(walletAddress);
 
 ## 📊 Comparativa: Antes vs Después
 
-| Métrica | Sistema Anterior | Sistema Nuevo |
-|---------|-----------------|---------------|
-| **Transacciones analizadas** | 100 últimas | TODAS (hasta 5000) |
-| **P&L calculation** | Aproximado | Por posición real |
-| **Detección de rugs** | ❌ No | ✅ Sí |
-| **Moonshots tracking** | ❌ No | ✅ Sí |
-| **Trading style** | ❌ No | ✅ Sí (quick flip/hodl) |
-| **Win streaks** | ❌ No | ✅ Sí |
-| **Volatilidad** | ❌ No | ✅ Sí |
-| **Realized vs Unrealized** | ❌ No | ✅ Sí |
-| **Badges** | 25 | 50+ |
-| **DegenScore precision** | Básico | Avanzado |
-| **Tiempo de cálculo** | <1 seg | 5-10 seg |
+| Métrica                      | Sistema Anterior | Sistema Nuevo           |
+| ---------------------------- | ---------------- | ----------------------- |
+| **Transacciones analizadas** | 100 últimas      | TODAS (hasta 5000)      |
+| **P&L calculation**          | Aproximado       | Por posición real       |
+| **Detección de rugs**        | ❌ No            | ✅ Sí                   |
+| **Moonshots tracking**       | ❌ No            | ✅ Sí                   |
+| **Trading style**            | ❌ No            | ✅ Sí (quick flip/hodl) |
+| **Win streaks**              | ❌ No            | ✅ Sí                   |
+| **Volatilidad**              | ❌ No            | ✅ Sí                   |
+| **Realized vs Unrealized**   | ❌ No            | ✅ Sí                   |
+| **Badges**                   | 25               | 50+                     |
+| **DegenScore precision**     | Básico           | Avanzado                |
+| **Tiempo de cálculo**        | <1 seg           | 5-10 seg                |
 
 ---
 
 ## 🎯 Próximos Pasos Recomendados
 
 1. **Integrar con save-card.ts**
+
 ```typescript
 // pages/api/save-card.ts
 import { calculateAdvancedMetrics } from '../../lib/metrics-advanced';
@@ -515,10 +536,11 @@ const metrics = await calculateAdvancedMetrics(walletAddress);
 ```
 
 2. **Actualizar schema de Prisma**
+
 ```prisma
 model DegenCard {
   // ... campos existentes ...
-  
+
   // Agregar nuevos campos:
   rugsSurvived      Int      @default(0)
   rugsCaught        Int      @default(0)
@@ -536,12 +558,14 @@ model DegenCard {
 ```
 
 3. **Actualizar el UI de la Card**
+
 - Agregar sección de rugs
 - Mostrar trading style
 - Destacar moonshots
 - Indicador de win streak
 
 4. **Testing**
+
 - Probar con wallets conocidas
 - Verificar detección de rugs
 - Validar P&L real vs esperado
@@ -551,13 +575,12 @@ model DegenCard {
 ## 💡 Tips de Implementación
 
 ### Performance:
+
 ```typescript
 // Cache las métricas en BD
 // Solo recalcular si han pasado >24h
 
-const shouldRecalculate = 
-  !card.updatedAt || 
-  (Date.now() - card.updatedAt.getTime()) > 86400000;
+const shouldRecalculate = !card.updatedAt || Date.now() - card.updatedAt.getTime() > 86400000;
 
 if (shouldRecalculate) {
   const metrics = await calculateAdvancedMetrics(walletAddress);
@@ -568,6 +591,7 @@ if (shouldRecalculate) {
 ```
 
 ### Error Handling:
+
 ```typescript
 try {
   const metrics = await calculateAdvancedMetrics(walletAddress);
@@ -579,11 +603,12 @@ try {
 ```
 
 ### Progress Indicator:
+
 ```typescript
 // Mostrar progreso al usuario
-"Fetching transactions... (1/3)"
-"Analyzing positions... (2/3)"
-"Calculating metrics... (3/3)"
+'Fetching transactions... (1/3)';
+'Analyzing positions... (2/3)';
+'Calculating metrics... (3/3)';
 ```
 
 ---
@@ -591,6 +616,7 @@ try {
 ## 🏆 Resultado Final
 
 Con este nuevo sistema, las cards mostrarán:
+
 - ✅ Análisis completo del historial de trading
 - ✅ Detección precisa de rugs y salvadas
 - ✅ Identificación de moonshots

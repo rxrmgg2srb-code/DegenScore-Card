@@ -3,6 +3,7 @@
 ## Resumen
 
 Sistema completo de retención de usuarios implementado con:
+
 - ✅ **Daily Login Streaks** - Sistema de rachas diarias
 - ✅ **Daily Challenges** - Desafíos diarios rotativos
 - ✅ **User Analytics** - Tracking de engagement
@@ -15,12 +16,14 @@ Sistema completo de retención de usuarios implementado con:
 ## 📊 Daily Login Streaks
 
 ### Características:
+
 - Racha de días consecutivos
 - Recompensas progresivas
 - Badges automáticos
 - XP por check-in diario
 
 ### Recompensas:
+
 ```
 Día 1:   +10 XP
 Día 3:   +30 XP + Badge "Consistente"
@@ -34,14 +37,17 @@ Día 100: +2000 XP + Badge "Centurión"
 ### Endpoints API:
 
 #### POST `/api/streaks/checkin`
+
 Check-in diario (llamar automáticamente al entrar al app)
 
 **Headers:**
+
 ```
 Authorization: Bearer <session_token>
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -62,9 +68,11 @@ Authorization: Bearer <session_token>
 ```
 
 #### GET `/api/streaks/leaderboard?limit=100`
+
 Leaderboard de streaks
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -85,12 +93,14 @@ Leaderboard de streaks
 ## 🎯 Daily Challenges
 
 ### Características:
+
 - 3 desafíos diferentes por día
 - Rotan automáticamente cada 24h
 - Recompensas de XP
 - Tracking de progreso
 
 ### Tipos de Desafíos:
+
 1. **Trades**: Haz X trades ganadores
 2. **Win Rate**: Consigue X% win rate
 3. **Volume**: Opera $X en volumen
@@ -102,14 +112,17 @@ Leaderboard de streaks
 ### Endpoints API:
 
 #### GET `/api/challenges/daily`
+
 Obtener desafíos del día (con progreso si autenticado)
 
 **Headers (opcional):**
+
 ```
 Authorization: Bearer <session_token>
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -134,15 +147,18 @@ Authorization: Bearer <session_token>
 ```
 
 #### POST `/api/challenges/daily`
+
 Actualizar progreso de challenge
 
 **Headers:**
+
 ```
 Authorization: Bearer <session_token>
 Content-Type: application/json
 ```
 
 **Body:**
+
 ```json
 {
   "challengeType": "trades",
@@ -151,6 +167,7 @@ Content-Type: application/json
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -165,6 +182,7 @@ Content-Type: application/json
 ## 📈 User Analytics
 
 ### Métricas Trackeadas:
+
 - Login count & last login
 - Challenges completed
 - Duels played & won
@@ -174,6 +192,7 @@ Content-Type: application/json
 - Total time spent
 
 ### Leveling System:
+
 ```
 Level = floor(sqrt(totalXP / 100)) + 1
 
@@ -190,12 +209,14 @@ Ejemplos:
 ## 🏆 Achievement System
 
 ### Estructura:
+
 - Achievements ocultos y visibles
 - Diferentes rarities (Common, Rare, Epic, Legendary)
 - Recompensas de XP y Badges
 - Sistema de unlocking
 
 ### Achievements Preparados:
+
 - 🦄 **Unicorn Hunter**: Encuentra token 1000x
 - 👻 **Ghost Trader**: 10 trades ganadores seguidos
 - 🌙 **Night Owl**: Trade a las 3 AM
@@ -209,15 +230,18 @@ Ejemplos:
 ## ⚔️ Trading Duels (1v1)
 
 ### Concepto:
+
 Competencias de trading 1v1 con dinero virtual
 
 ### Flujo:
+
 1. Usuario A crea duel con entry fee (0.5 SOL)
 2. Usuario B acepta el duel (pone 0.5 SOL también)
 3. Ambos traders durante 24h con 10 SOL virtuales
 4. Mejor ROI gana 0.9 SOL (0.1 SOL = fee)
 
 ### Estado:
+
 - ✅ Modelos de base de datos creados
 - ✅ Tablas creadas (TradingDuel, VirtualTrade)
 - ⏳ Falta implementar endpoints y UI
@@ -227,20 +251,24 @@ Competencias de trading 1v1 con dinero virtual
 ## 👥 Referral System
 
 ### Features:
+
 - Código de referido único por usuario
 - Tracking de referidos
 - Recompensas automáticas
 
 ### Recompensas:
+
 - Referrer: 0.1 SOL cuando referido compra premium
 - Referido: 20% descuento en premium
 
 ### Milestones:
+
 - 5 referidos: Badge "Recruiter"
 - 10 referidos: Premium gratis forever
 - 50 referidos: Partner status (% de revenue)
 
 ### Estado:
+
 - ✅ Modelo de base de datos creado
 - ⏳ Falta implementar lógica y UI
 
@@ -249,32 +277,38 @@ Competencias de trading 1v1 con dinero virtual
 ## 🎨 Componentes UI
 
 ### StreakWidget
+
 Widget compacto para mostrar racha actual
 
 **Uso:**
+
 ```tsx
 import StreakWidget from '../components/StreakWidget';
 
-<StreakWidget />
+<StreakWidget />;
 ```
 
 **Características:**
+
 - Auto check-in al cargar
 - Muestra racha actual y récord
 - Próxima recompensa
 - Estado de check-in del día
 
 ### DailyChallengesWidget
+
 Widget para mostrar desafíos diarios
 
 **Uso:**
+
 ```tsx
 import DailyChallengesWidget from '../components/DailyChallengesWidget';
 
-<DailyChallengesWidget />
+<DailyChallengesWidget />;
 ```
 
 **Características:**
+
 - Lista de 3 challenges del día
 - Barra de progreso
 - Recompensas de XP
@@ -293,6 +327,7 @@ Ejecutar en Supabase SQL Editor:
 ```
 
 Esto creará 9 nuevas tablas:
+
 1. UserStreak
 2. DailyChallenge
 3. DailyChallengeCompletion
@@ -330,12 +365,12 @@ const updateChallenge = async () => {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${sessionToken}`,
+      Authorization: `Bearer ${sessionToken}`,
     },
     body: JSON.stringify({
       challengeType: 'trades',
-      increment: 1
-    })
+      increment: 1,
+    }),
   });
 };
 ```
@@ -345,6 +380,7 @@ const updateChallenge = async () => {
 ## 🔮 Próximos Pasos (Opcionales)
 
 ### Corto Plazo:
+
 1. **Implementar Trading Duels** (8 horas)
    - Endpoints API
    - UI de creación/join
@@ -361,6 +397,7 @@ const updateChallenge = async () => {
    - "Nuevo challenge disponible"
 
 ### Largo Plazo:
+
 1. **Season Battle Pass** (40 horas)
    - 100 niveles
    - Recompensas progresivas
@@ -378,15 +415,18 @@ const updateChallenge = async () => {
 Con estas features implementadas:
 
 **Sin engagement features:**
+
 - DAU/MAU: ~20%
 - Día 30 retention: ~5%
 
 **Con engagement features:**
+
 - DAU/MAU: ~45-60% (Duolingo tiene 50%)
 - Día 30 retention: ~25-35%
 - Aumento de premium conversions: +30-50%
 
 **ROI estimado:**
+
 - Tiempo de implementación: ~2-3 días
 - Aumento de revenue: +40-60%
 - Payback: <1 mes

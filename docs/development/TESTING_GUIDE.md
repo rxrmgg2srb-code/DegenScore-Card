@@ -99,6 +99,7 @@ Test pure functions and utilities.
 **Location**: `__tests__/lib/[filename].test.ts`
 
 **Example**:
+
 ```typescript
 // __tests__/lib/calculateScore.test.ts
 import { calculateScore } from '@/lib/calculateScore';
@@ -125,6 +126,7 @@ Test React components in isolation.
 **Location**: `__tests__/components/[ComponentName].test.tsx`
 
 **Example**:
+
 ```typescript
 // __tests__/components/ScoreCard.test.tsx
 import { render, screen } from '@testing-library/react';
@@ -150,6 +152,7 @@ Test Next.js API routes.
 **Location**: `__tests__/api/[route].test.ts`
 
 **Example**:
+
 ```typescript
 // __tests__/api/score.test.ts
 import { createMocks } from 'node-mocks-http';
@@ -189,6 +192,7 @@ Test complete user journeys.
 **Location**: `e2e/[feature].spec.ts`
 
 **Example**:
+
 ```typescript
 // e2e/score-generation.spec.ts
 import { test, expect } from '@playwright/test';
@@ -223,6 +227,7 @@ Coverage thresholds are enforced in CI:
 ```
 
 **View Coverage**:
+
 ```bash
 npm test
 # Coverage summary printed to console
@@ -230,11 +235,13 @@ npm test
 ```
 
 **Coverage is collected from**:
+
 - `lib/**/*.{js,ts}`
 - `pages/api/**/*.{js,ts}`
 - `components/**/*.{js,jsx,ts,tsx}`
 
 **Excluded from coverage**:
+
 - `*.d.ts` (type definitions)
 - `node_modules/`
 - `.next/` (build output)
@@ -252,6 +259,7 @@ npm test
    - ✅ `it('should return 400 for invalid wallet address', () => { ... })`
 
 3. **Follow AAA pattern** (Arrange, Act, Assert)
+
    ```typescript
    it('should calculate score correctly', () => {
      // Arrange
@@ -272,19 +280,23 @@ npm test
 ### Component Tests
 
 1. **Use data-testid for complex selectors**
+
    ```tsx
    <button data-testid="mint-button">Mint NFT</button>
    ```
+
    ```typescript
    const button = screen.getByTestId('mint-button');
    ```
 
 2. **Test accessibility**
+
    ```typescript
    expect(screen.getByRole('button', { name: /mint nft/i })).toBeInTheDocument();
    ```
 
 3. **Mock external dependencies**
+
    ```typescript
    jest.mock('@/lib/solana', () => ({
      mintNFT: jest.fn().mockResolvedValue({ signature: 'abc123' }),
@@ -302,6 +314,7 @@ npm test
 ### API Tests
 
 1. **Test all HTTP methods**
+
    ```typescript
    describe('POST /api/score', () => { ... });
    describe('GET /api/score', () => { ... });
@@ -314,6 +327,7 @@ npm test
    - Server errors (500)
 
 3. **Mock external services**
+
    ```typescript
    jest.mock('@/lib/database', () => ({
      prisma: { score: { findUnique: jest.fn() } },
@@ -339,6 +353,7 @@ npm test
    - Leave detailed testing to unit/component tests
 
 3. **Clean up after tests**
+
    ```typescript
    test.afterEach(async ({ page }) => {
      // Clear cookies, localStorage, etc.

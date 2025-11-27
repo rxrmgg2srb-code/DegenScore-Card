@@ -21,7 +21,9 @@ export const DailyCheckIn = () => {
   const [message, setMessage] = useState('');
 
   const handleCheckIn = async () => {
-    if (!publicKey || isLoading) return;
+    if (!publicKey || isLoading) {
+      return;
+    }
 
     setIsLoading(true);
     setMessage('');
@@ -46,9 +48,10 @@ export const DailyCheckIn = () => {
         if (result.alreadyCheckedIn) {
           setMessage('Already checked in today! Come back tomorrow 🔥');
         } else {
-          const badgeMsg = result.badgesEarned?.length > 0
-            ? ` 🎉 Earned: ${result.badgesEarned.map((b: any) => b.name).join(', ')}`
-            : '';
+          const badgeMsg =
+            result.badgesEarned?.length > 0
+              ? ` 🎉 Earned: ${result.badgesEarned.map((b: any) => b.name).join(', ')}`
+              : '';
           setMessage(`+${result.xpEarned} XP!${badgeMsg}`);
 
           // Confetti effect or celebration animation
@@ -118,8 +121,20 @@ export const DailyCheckIn = () => {
             {isLoading ? (
               <span className="flex items-center justify-center gap-2">
                 <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                    fill="none"
+                  />
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  />
                 </svg>
                 Checking in...
               </span>
@@ -139,9 +154,7 @@ export const DailyCheckIn = () => {
           <div className="mt-4 bg-black/30 backdrop-blur-sm rounded-lg p-3 border border-yellow-400/30">
             <p className="text-yellow-200 text-xs font-medium mb-1">Next Milestone:</p>
             <div className="flex items-center justify-between">
-              <p className="text-white font-bold text-sm">
-                {data.nextMilestone.badge}
-              </p>
+              <p className="text-white font-bold text-sm">{data.nextMilestone.badge}</p>
               <p className="text-yellow-200 text-sm">
                 {data.nextMilestone.days - data.currentStreak} more days
               </p>

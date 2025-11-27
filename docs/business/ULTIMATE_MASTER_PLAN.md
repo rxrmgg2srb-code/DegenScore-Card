@@ -13,6 +13,7 @@
 ### ✅ **Lo Que Ya Tienes (Valor: €50,000+ en desarrollo)**
 
 **Infraestructura Técnica:**
+
 - ✅ Algoritmo DegenScore profesional (750+ líneas, FIFO tracking)
 - ✅ Smart Contracts Anchor (Token + NFT + Staking)
 - ✅ Sistema de referidos multinivel (3 niveles: 20%, 10%, 5%)
@@ -25,6 +26,7 @@
 - ✅ Database queries optimizadas (70% más rápido)
 
 **Mecánicas FOMO:**
+
 - ✅ Scarcity banner (slots limitados)
 - ✅ Countdown timers
 - ✅ Live activity feed
@@ -32,6 +34,7 @@
 - ✅ Sistema de badges
 
 **Gaps Críticos a Resolver:**
+
 - ❌ 0 usuarios
 - ❌ 0 comunidad
 - ❌ 0 ingresos
@@ -53,7 +56,6 @@
 
 ```typescript
 const FREE_STACK = {
-
   // 1. Frontend + Backend
   vercel: {
     service: 'Vercel Pro (gratis)',
@@ -62,7 +64,7 @@ const FREE_STACK = {
       'Unlimited deploys',
       'Auto SSL + CDN global',
       'Edge Functions',
-      'Web Analytics (gratis)'
+      'Web Analytics (gratis)',
     ],
     setup: `
       1. Ir a vercel.com
@@ -72,7 +74,7 @@ const FREE_STACK = {
       5. Deploy automático en cada push
     `,
     domain: 'degenscore.vercel.app (gratis)',
-    customDomain: 'degenscore.com ($12/año - única inversión)'
+    customDomain: 'degenscore.com ($12/año - única inversión)',
   },
 
   // 2. Database
@@ -83,7 +85,7 @@ const FREE_STACK = {
       'Branching (staging/prod)',
       'Auto-scaling',
       'Prisma compatible',
-      '3 proyectos gratis'
+      '3 proyectos gratis',
     ],
     setup: `
       1. Crear cuenta en neon.tech
@@ -91,7 +93,7 @@ const FREE_STACK = {
       3. Copiar DATABASE_URL
       4. Pegar en Vercel env vars
       5. npx prisma db push
-    `
+    `,
   },
 
   // 3. RPC Solana
@@ -101,10 +103,10 @@ const FREE_STACK = {
       '100,000 requests/día gratis',
       'Enhanced APIs',
       'Webhook support',
-      'Suficiente para 1,000+ usuarios/día'
+      'Suficiente para 1,000+ usuarios/día',
     ],
     upgrade: 'Cuando llegues a 5,000 usuarios → $50/mes',
-    setup: 'Crear cuenta en helius.xyz'
+    setup: 'Crear cuenta en helius.xyz',
   },
 
   // 4. Cache
@@ -114,9 +116,9 @@ const FREE_STACK = {
       '10,000 commands/día gratis',
       'Global edge caching',
       'Serverless compatible',
-      'Perfect para hot wallet cache'
+      'Perfect para hot wallet cache',
     ],
-    setup: 'Crear cuenta en upstash.com'
+    setup: 'Crear cuenta en upstash.com',
   },
 
   // 5. File Storage
@@ -126,9 +128,9 @@ const FREE_STACK = {
       '10GB storage gratis',
       '10M Class A operations/mes',
       '100M Class B operations/mes',
-      'Para avatares, NFT images, exports'
+      'Para avatares, NFT images, exports',
     ],
-    setup: 'Crear cuenta en Cloudflare'
+    setup: 'Crear cuenta en Cloudflare',
   },
 
   // 6. Email
@@ -138,9 +140,9 @@ const FREE_STACK = {
       '3,000 emails/mes gratis',
       'Custom domain',
       'Beautiful templates',
-      'Para notificaciones y flash sales'
+      'Para notificaciones y flash sales',
     ],
-    setup: 'Crear cuenta en resend.com'
+    setup: 'Crear cuenta en resend.com',
   },
 
   // 7. Monitoring
@@ -150,29 +152,24 @@ const FREE_STACK = {
       '5,000 events/mes gratis',
       'Real-time alerts',
       'Source maps',
-      'Performance monitoring'
+      'Performance monitoring',
     ],
-    setup: 'Crear cuenta en sentry.io'
+    setup: 'Crear cuenta en sentry.io',
   },
 
   // 8. Uptime
   uptimeRobot: {
     service: 'UptimeRobot',
-    features: [
-      '50 monitors gratis',
-      '5-min intervals',
-      'Email/SMS alerts',
-      'Status page pública'
-    ],
-    setup: 'Crear cuenta en uptimerobot.com'
+    features: ['50 monitors gratis', '5-min intervals', 'Email/SMS alerts', 'Status page pública'],
+    setup: 'Crear cuenta en uptimerobot.com',
   },
 
   // 9. Analytics
   analytics: {
     vercel: 'Web Analytics (gratis)',
     plausible: 'Alternativa privacy-first (gratis)',
-    mixpanel: '100k events/mes gratis'
-  }
+    mixpanel: '100k events/mes gratis',
+  },
 };
 ```
 
@@ -326,38 +323,27 @@ CATEGORIES:
 
 ```typescript
 const DISCORD_BOTS = {
-
   // 1. MEE6 (Gratis)
   mee6: {
     features: [
       'Auto-roles por niveles',
       'Welcome messages custom',
       'Auto-moderation',
-      'Leaderboard de engagement'
+      'Leaderboard de engagement',
     ],
-    setup: 'mee6.xyz → Add to Server'
+    setup: 'mee6.xyz → Add to Server',
   },
 
   // 2. Dyno (Gratis)
   dyno: {
-    features: [
-      'Auto-mod avanzada',
-      'Custom commands',
-      'Anti-raid protection',
-      'Auto-responder'
-    ],
-    setup: 'dyno.gg → Add to Server'
+    features: ['Auto-mod avanzada', 'Custom commands', 'Anti-raid protection', 'Auto-responder'],
+    setup: 'dyno.gg → Add to Server',
   },
 
   // 3. Carl-bot (Gratis)
   carlBot: {
-    features: [
-      'Reaction roles',
-      'Auto-posting',
-      'Polls y encuestas',
-      'Tags personalizados'
-    ],
-    setup: 'carl.gg → Add to Server'
+    features: ['Reaction roles', 'Auto-posting', 'Polls y encuestas', 'Tags personalizados'],
+    setup: 'carl.gg → Add to Server',
   },
 
   // 4. Custom Bot (Tu código)
@@ -366,7 +352,7 @@ const DISCORD_BOTS = {
       'Post leaderboard cada hora',
       'Notificar nuevos badges',
       'Alertas de flash sales',
-      'Stats en tiempo real'
+      'Stats en tiempo real',
     ],
     code: `
       // bot.js
@@ -391,8 +377,8 @@ const DISCORD_BOTS = {
         channel.send({ embeds: [embed] });
       }, 3600000); // Cada hora
     `,
-    deploy: 'Gratis en Vercel Edge Functions'
-  }
+    deploy: 'Gratis en Vercel Edge Functions',
+  },
 };
 ```
 
@@ -404,18 +390,20 @@ const postAchievement = async (achievement) => {
   const webhook = new WebhookClient({ url: DISCORD_WEBHOOK });
 
   await webhook.send({
-    embeds: [{
-      title: '🎉 NEW ACHIEVEMENT UNLOCKED!',
-      description: `**${achievement.username}** just earned:
+    embeds: [
+      {
+        title: '🎉 NEW ACHIEVEMENT UNLOCKED!',
+        description: `**${achievement.username}** just earned:
 
       ${achievement.badge.emoji} **${achievement.badge.name}**
       ${achievement.badge.description}
 
       Score: ${achievement.score}/100 (Rank #${achievement.rank})`,
-      color: 0xFFD700,
-      thumbnail: { url: achievement.avatarUrl },
-      timestamp: new Date()
-    }]
+        color: 0xffd700,
+        thumbnail: { url: achievement.avatarUrl },
+        timestamp: new Date(),
+      },
+    ],
   });
 };
 
@@ -423,17 +411,19 @@ const postAchievement = async (achievement) => {
 const postFlashSale = async (sale) => {
   await webhook.send({
     content: '@everyone',
-    embeds: [{
-      title: '⚡ FLASH SALE LIVE NOW!',
-      description: `${sale.name}
+    embeds: [
+      {
+        title: '⚡ FLASH SALE LIVE NOW!',
+        description: `${sale.name}
 
       ${sale.discount}% OFF Premium!
 
       ⏰ Ends in ${sale.hoursLeft} hours
 
       Only ${sale.remaining} slots left!`,
-      color: 0xFF4500
-    }]
+        color: 0xff4500,
+      },
+    ],
   });
 };
 ```
@@ -483,7 +473,6 @@ PINNED_TWEET:
 
 ```typescript
 const TWITTER_SCHEDULE = {
-
   // Lunes - Friday: 4 tweets/día
   daily: [
     {
@@ -498,7 +487,7 @@ const TWITTER_SCHEDULE = {
 
       Today could be YOUR day 👇
       degenscore.com`,
-      engagement: 'Morning crowd, high engagement'
+      engagement: 'Morning crowd, high engagement',
     },
 
     {
@@ -521,7 +510,7 @@ const TWITTER_SCHEDULE = {
           🎲 Risk tolerance
 
           What's YOUR score? 🤔`,
-          goal: 'Education = value'
+          goal: 'Education = value',
         },
         {
           content: `🏆 BADGE SPOTLIGHT
@@ -533,9 +522,9 @@ const TWITTER_SCHEDULE = {
           Only 23 wallets have this badge.
 
           Think you have what it takes?`,
-          goal: 'FOMO + aspiration'
-        }
-      ]
+          goal: 'FOMO + aspiration',
+        },
+      ],
     },
 
     {
@@ -552,7 +541,7 @@ const TWITTER_SCHEDULE = {
       Absolute legend 💎
 
       Think you can beat that? 👇`,
-      engagement: 'Social proof + competition'
+      engagement: 'Social proof + competition',
     },
 
     {
@@ -568,8 +557,8 @@ const TWITTER_SCHEDULE = {
 
       Can you crack the top 10?
       degenscore.com`,
-      engagement: 'Competition + FOMO'
-    }
+      engagement: 'Competition + FOMO',
+    },
   ],
 
   // Weekends: Reduced posting
@@ -584,9 +573,9 @@ const TWITTER_SCHEDULE = {
       🏆 Winner: @${winner} (Score: ${winnerScore})
       🚀 Biggest moonshot: +${biggestGain}%
 
-      Next week could be YOU 👇`
-    }
-  ]
+      Next week could be YOU 👇`,
+    },
+  ],
 };
 ```
 
@@ -643,6 +632,7 @@ export default async function handler(req, res) {
 ### **3. Telegram - Alertas Instantáneas (GRATIS)**
 
 **¿Por qué Telegram?**
+
 - Notificaciones push instantáneas
 - Bots 100% gratis (no limits)
 - Inline buttons (CTAs poderosos)
@@ -664,7 +654,9 @@ const bot = new TelegramBot(process.env.TELEGRAM_BOT_TOKEN, { polling: true });
 bot.onText(/\/start/, async (msg) => {
   const chatId = msg.chat.id;
 
-  await bot.sendMessage(chatId, `
+  await bot.sendMessage(
+    chatId,
+    `
 🔥 *Welcome to DegenScore!*
 
 I'll send you instant alerts for:
@@ -676,15 +668,19 @@ I'll send you instant alerts for:
 
 Link your wallet:
 /connect <your_wallet_address>
-  `, {
-    parse_mode: 'Markdown',
-    reply_markup: {
-      inline_keyboard: [[
-        { text: '📊 Check Score', url: 'https://degenscore.com' },
-        { text: '🏆 Leaderboard', url: 'https://degenscore.com/leaderboard' }
-      ]]
+  `,
+    {
+      parse_mode: 'Markdown',
+      reply_markup: {
+        inline_keyboard: [
+          [
+            { text: '📊 Check Score', url: 'https://degenscore.com' },
+            { text: '🏆 Leaderboard', url: 'https://degenscore.com/leaderboard' },
+          ],
+        ],
+      },
     }
-  });
+  );
 });
 
 bot.onText(/\/connect (.+)/, async (msg, match) => {
@@ -694,7 +690,9 @@ bot.onText(/\/connect (.+)/, async (msg, match) => {
   // Verify wallet format
   // Save to database: walletAddress → telegramChatId
 
-  await bot.sendMessage(chatId, `
+  await bot.sendMessage(
+    chatId,
+    `
 ✅ *Wallet Connected!*
 
 ${wallet}
@@ -702,14 +700,18 @@ ${wallet}
 You'll now receive instant notifications.
 
 /help - See all commands
-  `, { parse_mode: 'Markdown' });
+  `,
+    { parse_mode: 'Markdown' }
+  );
 });
 
 // Auto-alerts
 export const sendScoreUpdate = async (wallet, oldScore, newScore) => {
   const chatId = await getChatIdForWallet(wallet);
 
-  await bot.sendMessage(chatId, `
+  await bot.sendMessage(
+    chatId,
+    `
 🔔 *Score Update!*
 
 Your DegenScore changed:
@@ -718,7 +720,9 @@ ${oldScore} → ${newScore} ${newScore > oldScore ? '📈' : '📉'}
 Rank: #${rank}
 
 Keep grinding! 💪
-  `, { parse_mode: 'Markdown' });
+  `,
+    { parse_mode: 'Markdown' }
+  );
 };
 
 // Flash sale alerts
@@ -726,7 +730,9 @@ export const sendFlashSaleAlert = async () => {
   const subscribers = await getAllTelegramUsers();
 
   for (const chatId of subscribers) {
-    await bot.sendMessage(chatId, `
+    await bot.sendMessage(
+      chatId,
+      `
 ⚡ *FLASH SALE LIVE!*
 
 50% OFF Premium - 24 hours only!
@@ -734,14 +740,16 @@ export const sendFlashSaleAlert = async () => {
 Only 47 slots left 🔥
 
 Claim now 👇
-    `, {
-      parse_mode: 'Markdown',
-      reply_markup: {
-        inline_keyboard: [[
-          { text: '🔥 Claim 50% OFF', url: 'https://degenscore.com/premium?sale=xxx' }
-        ]]
+    `,
+      {
+        parse_mode: 'Markdown',
+        reply_markup: {
+          inline_keyboard: [
+            [{ text: '🔥 Claim 50% OFF', url: 'https://degenscore.com/premium?sale=xxx' }],
+          ],
+        },
       }
-    });
+    );
   }
 };
 ```
@@ -905,26 +913,26 @@ const SHARE_REWARDS = {
   first_share: {
     reward: 'First Sharer badge',
     xp: 50,
-    description: 'Share anything for first time'
+    description: 'Share anything for first time',
   },
 
   share_10_times: {
     reward: 'Influencer badge',
     xp: 200,
-    description: 'Share 10 times'
+    description: 'Share 10 times',
   },
 
   viral_tweet: {
     reward: 'Viral Degen badge',
     xp: 500,
     trigger: '100+ likes on shared tweet',
-    tracking: 'Twitter API webhook'
+    tracking: 'Twitter API webhook',
   },
 
   referral_via_share: {
     reward: '0.001 SOL per signup',
-    description: 'Each user who signs up from your tweet'
-  }
+    description: 'Each user who signs up from your tweet',
+  },
 };
 ```
 
@@ -934,7 +942,6 @@ const SHARE_REWARDS = {
 
 ```typescript
 const TEMPORAL_EVENTS = {
-
   // Evento 1: Flash Challenges (24h)
   flashChallenge: {
     name: '⚡ 24H Flash Challenge',
@@ -950,15 +957,15 @@ const TEMPORAL_EVENTS = {
         'Most trades in 24h',
         'Highest single gain',
         'Best win rate (min 10 trades)',
-        'Biggest comeback (from negative to positive)'
+        'Biggest comeback (from negative to positive)',
       ],
 
       prizes: {
         winner: 'Free Premium for 3 months + Exclusive NFT badge',
         top3: 'Free Premium for 1 month',
         top10: 'Exclusive "Flash Champion" badge',
-        all_participants: '50 XP participation reward'
-      }
+        all_participants: '50 XP participation reward',
+      },
     },
 
     implementation: `
@@ -987,8 +994,8 @@ const TEMPORAL_EVENTS = {
       twitter: 'Tweet countdown cada 6 horas',
       discord: 'Live leaderboard en #weekly-challenges',
       telegram: 'Push notifications a todos',
-      urgency: 'Show time remaining everywhere'
-    }
+      urgency: 'Show time remaining everywhere',
+    },
   },
 
   // Evento 2: Double XP Weekend
@@ -1006,12 +1013,12 @@ const TEMPORAL_EVENTS = {
         trade: '2 XP → 4 XP',
         badge_earned: '50 XP → 100 XP',
         referral: '20 XP → 40 XP',
-        share: '10 XP → 20 XP'
-      }
+        share: '10 XP → 20 XP',
+      },
     },
 
     psychology: 'Players grind hard durante weekend para max XP',
-    engagement: '+300% activity durante evento'
+    engagement: '+300% activity durante evento',
   },
 
   // Evento 3: Badge Hunt (48h)
@@ -1028,22 +1035,22 @@ const TEMPORAL_EVENTS = {
         {
           name: 'Halloween Hunter 🎃',
           requirement: 'Trade 13 times on Oct 31',
-          available: 'Oct 31 only'
+          available: 'Oct 31 only',
         },
         {
           name: 'New Year Degen 🎆',
           requirement: 'Make profitable trade on Jan 1',
-          available: 'Jan 1 only'
+          available: 'Jan 1 only',
         },
         {
           name: 'Full Moon Trader 🌕',
           requirement: 'Trade during full moon',
-          available: 'Every full moon (24h window)'
-        }
+          available: 'Every full moon (24h window)',
+        },
       ],
 
       scarcity: 'Show "X users earned this badge" counter',
-      fomo: 'After 48h, badge becomes impossible to get'
+      fomo: 'After 48h, badge becomes impossible to get',
     },
 
     implementation: `
@@ -1067,7 +1074,7 @@ const TEMPORAL_EVENTS = {
         // After 48h, lock badge
         setTimeout(() => lockBadge(badge.id), 48 * 60 * 60 * 1000);
       };
-    `
+    `,
   },
 
   // Evento 4: Rug Survivor Tournament
@@ -1083,12 +1090,12 @@ const TEMPORAL_EVENTS = {
       prizes: {
         champion: '$500 cash + "Rug Master" NFT',
         top10: 'Premium for 1 year',
-        top50: 'Exclusive "Survivor" badge'
+        top50: 'Exclusive "Survivor" badge',
       },
 
       marketing: 'Meme-heavy, community loves it',
-      virality: 'Users share their rug survival stories'
-    }
+      virality: 'Users share their rug survival stories',
+    },
   },
 
   // Evento 5: Moonshot Madness
@@ -1104,12 +1111,12 @@ const TEMPORAL_EVENTS = {
       prizes: {
         biggest: '$200 + "Moon King" badge',
         top5: 'Premium for 6 months',
-        everyone_500plus: '"Moonshot Hunter" badge'
+        everyone_500plus: '"Moonshot Hunter" badge',
       },
 
-      hook: 'Everyone wants to flex their moonshot'
-    }
-  }
+      hook: 'Everyone wants to flex their moonshot',
+    },
+  },
 };
 ```
 
@@ -1120,26 +1127,26 @@ const TEMPORAL_EVENTS = {
 const EVENT_CALENDAR = {
   weekly: {
     friday: 'Flash Challenge (24h)',
-    sunday: 'Leaderboard Weekly Reset + Winner Announcement'
+    sunday: 'Leaderboard Weekly Reset + Winner Announcement',
   },
 
   monthly: {
     firstWeekend: 'Double XP Weekend',
     week2: 'Badge Hunt (48h)',
     week3: 'Moonshot Madness (72h)',
-    lastDay: 'Monthly Leaderboard Final'
+    lastDay: 'Monthly Leaderboard Final',
   },
 
   quarterly: {
     month3: 'Rug Survivor Tournament',
-    seasonEnd: 'Season Finale + Big Prizes'
+    seasonEnd: 'Season Finale + Big Prizes',
   },
 
   special: {
     newYear: 'New Year Degen Badge',
     halloween: 'Halloween Hunt',
-    solanaVersary: 'Solana Anniversary Event'
-  }
+    solanaVersary: 'Solana Anniversary Event',
+  },
 };
 
 // Auto-scheduler
@@ -1173,7 +1180,6 @@ const scheduleAllEvents = () => {
 
 ```typescript
 const SECURITY_ARCHITECTURE = {
-
   // Layer 1: Network Security
   network: {
     firewall: {
@@ -1183,22 +1189,22 @@ const SECURITY_ARCHITECTURE = {
         'WAF (Web Application Firewall)',
         'Rate limiting',
         'Bot detection',
-        'Geographic filtering'
+        'Geographic filtering',
       ],
       rules: `
         - Block known bot IPs
         - Rate limit: 100 req/min per IP
         - Challenge after 3 failed auth attempts
         - Block Tor exit nodes (optional)
-      `
+      `,
     },
 
     ssl: {
-      cert: 'Let\'s Encrypt (auto-renewed)',
+      cert: "Let's Encrypt (auto-renewed)",
       protocol: 'TLS 1.3 only',
       ciphers: 'Strong ciphers only',
-      hsts: 'Strict-Transport-Security: max-age=31536000'
-    }
+      hsts: 'Strict-Transport-Security: max-age=31536000',
+    },
   },
 
   // Layer 2: Application Security
@@ -1223,7 +1229,7 @@ const SECURITY_ARCHITECTURE = {
           walletAddress: walletSchema,
           amount: z.number().positive()
         });
-      `
+      `,
     },
 
     authentication: {
@@ -1240,7 +1246,7 @@ const SECURITY_ARCHITECTURE = {
         const isValid = verifyWalletSignature(signature, challenge, walletAddress);
         // Generate JWT
         const token = generateSessionToken(walletAddress);
-      `
+      `,
     },
 
     authorization: {
@@ -1249,7 +1255,7 @@ const SECURITY_ARCHITECTURE = {
       roles: {
         user: ['read:own', 'write:own'],
         premium: ['read:own', 'write:own', 'read:premium'],
-        admin: ['*']
+        admin: ['*'],
       },
 
       implementation: `
@@ -1257,8 +1263,8 @@ const SECURITY_ARCHITECTURE = {
           const permissions = ROLES[role];
           return permissions.includes(action) || permissions.includes('*');
         };
-      `
-    }
+      `,
+    },
   },
 
   // Layer 3: Data Security
@@ -1268,11 +1274,7 @@ const SECURITY_ARCHITECTURE = {
         method: 'AES-256-GCM',
         keyRotation: '90 days',
 
-        sensitiveFields: [
-          'email (if collected)',
-          'telegramChatId',
-          'apiKeys (user-generated)'
-        ],
+        sensitiveFields: ['email (if collected)', 'telegramChatId', 'apiKeys (user-generated)'],
 
         implementation: `
           import { createCipheriv, createDecipheriv, randomBytes } from 'crypto';
@@ -1308,7 +1310,7 @@ const SECURITY_ARCHITECTURE = {
 
             return decrypted;
           };
-        `
+        `,
       },
 
       inTransit: {
@@ -1319,7 +1321,7 @@ const SECURITY_ARCHITECTURE = {
           X-Frame-Options: DENY
           X-XSS-Protection: 1; mode=block
           Content-Security-Policy: default-src 'self'
-        `
+        `,
       },
 
       keyManagement: {
@@ -1341,8 +1343,8 @@ const SECURITY_ARCHITECTURE = {
           echo $NEW_KEY | vercel env add ENCRYPTION_KEY production
 
           echo "✅ Keys rotated successfully"
-        `
-      }
+        `,
+      },
     },
 
     backups: {
@@ -1359,8 +1361,8 @@ const SECURITY_ARCHITECTURE = {
 
         # Verify backup
         pg_restore --list backup-*.sql
-      `
-    }
+      `,
+    },
   },
 
   // Layer 4: Anti-Fraud
@@ -1372,7 +1374,7 @@ const SECURITY_ARCHITECTURE = {
         '✅ Verify treasury GAINED SOL',
         '✅ Verify exact amount',
         '✅ Prevent signature reuse',
-        '✅ Check transaction finality'
+        '✅ Check transaction finality',
       ],
 
       additionalChecks: `
@@ -1409,7 +1411,7 @@ const SECURITY_ARCHITECTURE = {
             return { error: 'Wallet flagged' };
           }
         };
-      `
+      `,
     },
 
     botDetection: {
@@ -1423,7 +1425,7 @@ const SECURITY_ARCHITECTURE = {
             sitekey={process.env.NEXT_PUBLIC_HCAPTCHA_SITEKEY}
             onVerify={(token) => verifyCaptcha(token)}
           />
-        `
+        `,
       },
 
       behaviorAnalysis: {
@@ -1432,11 +1434,11 @@ const SECURITY_ARCHITECTURE = {
           'Keystroke dynamics',
           'Time on page',
           'Scroll behavior',
-          'Click patterns'
+          'Click patterns',
         ],
 
         library: 'fingerprintjs (gratis)',
-        action: 'Flag suspicious behavior for review'
+        action: 'Flag suspicious behavior for review',
       },
 
       rateLimiting: {
@@ -1458,8 +1460,8 @@ const SECURITY_ARCHITECTURE = {
               throw new Error('Rate limit exceeded');
             }
           };
-        `
-      }
+        `,
+      },
     },
 
     mevProtection: {
@@ -1476,9 +1478,9 @@ const SECURITY_ARCHITECTURE = {
           bundle.addTransactions(transaction);
 
           const bundleId = await sendBundle(bundle);
-        `
-      }
-    }
+        `,
+      },
+    },
   },
 
   // Layer 5: Monitoring & Incident Response
@@ -1491,8 +1493,8 @@ const SECURITY_ARCHITECTURE = {
         'Payment verification failed',
         'Database connection lost',
         'Unauthorized access attempt',
-        'Unusual traffic spike'
-      ]
+        'Unusual traffic spike',
+      ],
     },
 
     logging: {
@@ -1501,7 +1503,7 @@ const SECURITY_ARCHITECTURE = {
         'Authentication attempts',
         'Payment transactions',
         'Admin actions',
-        'Errors'
+        'Errors',
       ],
 
       retention: '90 days',
@@ -1520,7 +1522,7 @@ const SECURITY_ARCHITECTURE = {
         };
 
         await prisma.log.create({ data: log });
-      `
+      `,
     },
 
     incidentResponse: {
@@ -1543,8 +1545,8 @@ const SECURITY_ARCHITECTURE = {
         1. Create GitHub issue
         2. Add to sprint
         3. Fix in next update
-      `
-    }
+      `,
+    },
   },
 
   // Layer 6: Compliance & Audits
@@ -1557,7 +1559,7 @@ const SECURITY_ARCHITECTURE = {
         critical: '$500-1000',
         high: '$200-500',
         medium: '$50-200',
-        low: '$10-50'
+        low: '$10-50',
       },
 
       rules: `
@@ -1565,13 +1567,13 @@ const SECURITY_ARCHITECTURE = {
         - No public exploits before fix
         - No user data theft
         - Proof of concept required
-      `
+      `,
     },
 
     audits: {
       internal: 'Weekly code review',
       automated: 'SonarQube (gratis) on every commit',
-      external: 'After first €10k revenue → hire OtterSec/Halborn'
+      external: 'After first €10k revenue → hire OtterSec/Halborn',
     },
 
     gdpr: {
@@ -1581,12 +1583,12 @@ const SECURITY_ARCHITECTURE = {
         'Privacy policy',
         'Data deletion on request',
         'Cookie consent',
-        'Data export capability'
+        'Data export capability',
       ],
 
-      minimal: 'We barely collect data, so minimal compliance needed'
-    }
-  }
+      minimal: 'We barely collect data, so minimal compliance needed',
+    },
+  },
 };
 ```
 
@@ -1596,6 +1598,7 @@ const SECURITY_ARCHITECTURE = {
 ## Security Implementation Checklist
 
 ### Network Layer:
+
 - [x] Cloudflare WAF enabled
 - [x] DDoS protection active
 - [x] SSL/TLS 1.3 configured
@@ -1603,6 +1606,7 @@ const SECURITY_ARCHITECTURE = {
 - [ ] Tor blocking (optional)
 
 ### Application Layer:
+
 - [x] Input validation (Zod)
 - [x] Wallet signature auth
 - [x] JWT sessions
@@ -1611,6 +1615,7 @@ const SECURITY_ARCHITECTURE = {
 - [x] SQL injection prevention (Prisma)
 
 ### Data Layer:
+
 - [ ] Encrypt sensitive fields (AES-256)
 - [ ] Key rotation script
 - [ ] Database backups (auto)
@@ -1618,6 +1623,7 @@ const SECURITY_ARCHITECTURE = {
 - [ ] CORS properly configured
 
 ### Anti-Fraud:
+
 - [x] Payment verification (enhanced)
 - [ ] hCaptcha integration
 - [x] Rate limiting (Redis)
@@ -1625,6 +1631,7 @@ const SECURITY_ARCHITECTURE = {
 - [ ] MEV protection (Jito)
 
 ### Monitoring:
+
 - [ ] Sentry error tracking
 - [ ] Logging all critical events
 - [ ] Alert webhooks
@@ -1632,6 +1639,7 @@ const SECURITY_ARCHITECTURE = {
 - [ ] Incident response plan
 
 ### Compliance:
+
 - [ ] Bug bounty program (when funded)
 - [ ] Privacy policy
 - [ ] Terms of service
@@ -1661,16 +1669,12 @@ export default function WaitlistPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-900 via-black to-cyan-900">
       <div className="max-w-4xl mx-auto px-6 py-20">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-        >
-          <h1 className="text-6xl font-bold text-center mb-6">
-            Are You a Top 1% Solana Trader?
-          </h1>
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+          <h1 className="text-6xl font-bold text-center mb-6">Are You a Top 1% Solana Trader?</h1>
 
           <p className="text-2xl text-center text-gray-300 mb-12">
-            DegenScore analyzes your wallet and gives you a <span className="text-cyan-400">0-100 score</span>.
+            DegenScore analyzes your wallet and gives you a{' '}
+            <span className="text-cyan-400">0-100 score</span>.
             <br />
             Compete on public leaderboards. Earn exclusive badges.
           </p>
@@ -1695,9 +1699,7 @@ export default function WaitlistPage() {
 
           {/* Tally.so Form (GRATIS) */}
           <div className="bg-black/30 p-8 rounded-2xl">
-            <h2 className="text-3xl font-bold text-center mb-6">
-              Join the Waitlist 🚀
-            </h2>
+            <h2 className="text-3xl font-bold text-center mb-6">Join the Waitlist 🚀</h2>
 
             <iframe
               src="https://tally.so/embed/YOUR_FORM_ID?hideTitle=1"
@@ -1719,7 +1721,8 @@ export default function WaitlistPage() {
           {/* Social Proof */}
           <div className="mt-12 text-center">
             <p className="text-gray-400 mb-4">
-              Join <span className="text-cyan-400 font-bold">{waitlistCount}</span> degens on the waitlist
+              Join <span className="text-cyan-400 font-bold">{waitlistCount}</span> degens on the
+              waitlist
             </p>
 
             {/* Live counter */}
@@ -1755,6 +1758,7 @@ Love your Solana content. Quick question:
 I built DegenScore - analyzes your wallet and gives you a 0-100 trading score.
 
 Launching next week. Interested in:
+
 - Early access (before public launch)
 - Exclusive "OG Degen" badge (forever)
 - 10% revenue share on referrals
@@ -1771,12 +1775,14 @@ DegenScore.com
 ## Target: Mid-tier (10k-100k)
 
 **Offer**:
+
 - Early access + OG badge
 - 15% revenue share on referrals
 - Feature in our "Top Degens" list
 - Custom badge designed for you
 
 **Ask**:
+
 - 1 thread on launch
 - 1 follow-up tweet after 1 week
 
@@ -1785,12 +1791,14 @@ DegenScore.com
 ## Target: Macro (100k+)
 
 **Offer**:
+
 - 0.1% equity stake
 - 20% revenue share on referrals
 - Custom integration/feature
 - Co-marketing partnership
 
 **Ask**:
+
 - Regular mentions
 - Advisory role
 ```
@@ -1801,6 +1809,7 @@ DegenScore.com
 # 7-Day Countdown Threads
 
 ## Day 7 (7 days before launch)
+
 "🧵 THREAD: We've been tracking Solana's best traders for 6 months.
 
 We analyzed 100,000+ wallets.
@@ -1811,9 +1820,11 @@ Tomorrow, we reveal what we found.
 The #DegenScore is coming. 🔥"
 
 ## Day 6
+
 "🧵 Here's what we discovered:
 
 The top 1% of Solana traders have these traits:
+
 - Win rate >60%
 - Average hold time <24h
 - Catch 1+ moonshot per month
@@ -1823,6 +1834,7 @@ The top 1% of Solana traders have these traits:
 Do YOU have what it takes? 🤔"
 
 ## Day 5
+
 "🧵 We built an algorithm that scores traders 0-100.
 
 It analyzes:
@@ -1838,6 +1850,7 @@ It analyzes:
 What would YOUR score be? 👀"
 
 ## Day 4
+
 "🧵 Tomorrow we reveal the leaderboard.
 
 Who are Solana's REAL degens?
@@ -1849,6 +1862,7 @@ Some wallets with 5-figure gains are ranked lower than wallets with 4-figure gai
 Why? Thread tomorrow 👇"
 
 ## Day 3
+
 "🧵 Why volume ≠ skill
 
 Many wallets move millions but lose money.
@@ -1861,6 +1875,7 @@ Launch in 3 days.
 Are you ready to see where you rank? 🔥"
 
 ## Day 2
+
 "🧵 FINAL 48 HOURS
 
 DegenScore launches Friday 12 PM EST.
@@ -1874,6 +1889,7 @@ Set your reminders ⏰
 This is going to be BIG."
 
 ## Day 1
+
 "🚨 TOMORROW 12 PM EST
 
 DegenScore goes live.
@@ -1883,6 +1899,7 @@ Prove you're Solana's #1 degen.
 RT this + tag 3 degens who should check their score 👇"
 
 ## Launch Day
+
 "🔥 DegenScore is LIVE
 
 Check your score: https://degenscore.com
@@ -1951,15 +1968,15 @@ Let's see who are the REAL degens 👑"
     - r/SolanaTrading
     - r/CryptoCurrency
     - r/CryptoMoonShots
-  title: "DegenScore - Check your Solana trading score (Free)"
+  title: 'DegenScore - Check your Solana trading score (Free)'
 
 11:00 AM EST:
   action: Discord announcement
-  content: "@everyone DegenScore is LIVE! 🚀"
+  content: '@everyone DegenScore is LIVE! 🚀'
 
 12:00 PM EST:
   action: Telegram blast
-  content: "LIVE NOW: Check your DegenScore"
+  content: 'LIVE NOW: Check your DegenScore'
 
 2:00 PM EST:
   action: KOLs start posting
@@ -1996,6 +2013,7 @@ Let's see who are the REAL degens 👑"
 
 ```markdown
 ## Pre-Launch (6-8 AM)
+
 - [ ] All systems operational
 - [ ] Database connected
 - [ ] Cache working
@@ -2005,6 +2023,7 @@ Let's see who are the REAL degens 👑"
 - [ ] Error monitoring active
 
 ## Launch (8 AM)
+
 - [ ] Tweet posted
 - [ ] Discord announcement
 - [ ] Telegram blast
@@ -2013,6 +2032,7 @@ Let's see who are the REAL degens 👑"
 - [ ] Email to waitlist
 
 ## Post-Launch Monitoring (8 AM - 12 PM)
+
 - [ ] Monitor error rate
 - [ ] Check server load
 - [ ] Respond to every tweet
@@ -2020,18 +2040,21 @@ Let's see who are the REAL degens 👑"
 - [ ] Track signups in real-time
 
 ## Afternoon (12 PM - 6 PM)
+
 - [ ] KOLs posting
 - [ ] Share user wins
 - [ ] Fix any bugs immediately
 - [ ] Keep engagement high
 
 ## Evening (6 PM - 10 PM)
+
 - [ ] Post stats
 - [ ] Thank everyone
 - [ ] Tease tomorrow's content
 ```
 
 **Meta Día 8:**
+
 - 200-500 primeros usuarios
 - Top 5 en ProductHunt
 - Trending en CT (Crypto Twitter)
@@ -2055,6 +2078,7 @@ Hasta ahora tenemos:
 ✅ Launch Day completo
 
 Falta:
+
 - Días 9-30 (primeras 3 semanas)
 - Fase 2 (Primeros ingresos €1k-5k/mes)
 - Fase 3 (Escalado €10k-50k/mes)

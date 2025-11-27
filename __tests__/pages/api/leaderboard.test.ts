@@ -7,7 +7,25 @@ jest.mock('@/lib/rateLimitRedis', () => ({ strictRateLimit: jest.fn().mockResolv
 
 describe('API: /api/leaderboard', () => {
   let handler: any;
-  beforeEach(async () => { jest.clearAllMocks(); try { handler = (await import('@/pages/api/leaderboard')).default; } catch { handler = null; } });
-  it('should be defined', () => { expect(handler).toBeDefined(); });
-  it('should handle requests', async () => { if (!handler) return; const { req, res } = createMocks({ method: 'GET' }); try { await handler(req, res); expect(res._getStatusCode()).toBeGreaterThan(0); } catch (e) { expect(e).toBeDefined(); } });
+  beforeEach(async () => {
+    jest.clearAllMocks();
+    try {
+      handler = (await import('@/pages/api/leaderboard')).default;
+    } catch {
+      handler = null;
+    }
+  });
+  it('should be defined', () => {
+    expect(handler).toBeDefined();
+  });
+  it('should handle requests', async () => {
+    if (!handler) return;
+    const { req, res } = createMocks({ method: 'GET' });
+    try {
+      await handler(req, res);
+      expect(res._getStatusCode()).toBeGreaterThan(0);
+    } catch (e) {
+      expect(e).toBeDefined();
+    }
+  });
 });

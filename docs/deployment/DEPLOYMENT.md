@@ -3,6 +3,7 @@
 ## Resumen de Features
 
 ### Sistema de Engagement:
+
 - ✅ Daily Login Streaks
 - ✅ Daily Challenges
 - ✅ User Analytics & Leveling
@@ -11,6 +12,7 @@
 - ✅ Referral System (preparado)
 
 ### Killer Features:
+
 - ✅ AI Trading Coach (GPT-4)
 - ✅ Whale Tracking Radar
 - ✅ Telegram Mini App
@@ -46,6 +48,7 @@ migrations/engagement_features.sql
 ```
 
 Esto crea 9 tablas:
+
 - UserStreak
 - DailyChallenge
 - DailyChallengeCompletion
@@ -65,6 +68,7 @@ migrations/killer_features.sql
 ```
 
 Esto crea 5 tablas:
+
 - AICoachAnalysis
 - WhaleWallet
 - WhaleAlert
@@ -118,6 +122,7 @@ TELEGRAM_BOT_TOKEN=1234567890:ABCdefGHIjklMNOpqrsTUVwxyz
 4. Agregar $5-10 de crédito en https://platform.openai.com/settings/organization/billing
 
 **Costo estimado:**
+
 - Análisis promedio: ~2000 tokens = $0.03
 - 100 análisis/día = $3/día
 - Con cooldowns: ~$20-40/mes
@@ -148,6 +153,7 @@ curl -X POST "https://api.telegram.org/bot<TU_TOKEN>/setWebhook" \
 ```
 
 **Respuesta esperada:**
+
 ```json
 {
   "ok": true,
@@ -163,6 +169,7 @@ curl "https://api.telegram.org/bot<TU_TOKEN>/getWebhookInfo"
 ```
 
 **Respuesta esperada:**
+
 ```json
 {
   "ok": true,
@@ -187,6 +194,7 @@ curl "https://api.telegram.org/bot<TU_TOKEN>/getWebhookInfo"
 ### A. Push de Código
 
 El código ya está pusheado a:
+
 ```
 claude/deploy-features-01D4QqcUJW3GRxAAg7cY2mJN
 ```
@@ -194,11 +202,13 @@ claude/deploy-features-01D4QqcUJW3GRxAAg7cY2mJN
 ### B. Merge a Main
 
 **Opción 1: GitHub UI**
+
 1. Ir a GitHub
 2. Create Pull Request
 3. Merge
 
 **Opción 2: Git CLI**
+
 ```bash
 git checkout main
 git pull origin main
@@ -225,6 +235,7 @@ Render detectará el push a main y hará deploy automáticamente.
 Visitar: https://www.solanamillondollar.com
 
 Deberías ver:
+
 - ✅ Streak Widget (si wallet conectada)
 - ✅ Daily Challenges Widget
 - ✅ AI Trading Coach section
@@ -239,6 +250,7 @@ Deberías ver:
 5. Deberías ver análisis completo
 
 **Si falla:**
+
 - Verificar OPENAI_API_KEY en Render
 - Ver logs de Render para errores
 - Verificar que wallet tenga trades
@@ -251,6 +263,7 @@ Deberías ver:
 4. Tab "Alerts" mostrará actividad
 
 **Si no hay whales:**
+
 - Normal al inicio
 - Se detectarán automáticamente con cron job
 - Puedes forzar detección procesando trades
@@ -264,6 +277,7 @@ Deberías ver:
 5. Enviar `/help` para ver comandos
 
 **Si no responde:**
+
 - Verificar webhook con getWebhookInfo
 - Verificar TELEGRAM_BOT_TOKEN en Render
 - Ver logs de Render
@@ -332,11 +346,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 ### A. Logs de Render
 
 Ver logs en tiempo real:
+
 ```
 Render Dashboard → Web Service → Logs
 ```
 
 Buscar errores de:
+
 - OpenAI API
 - Telegram webhook
 - Prisma queries
@@ -349,6 +365,7 @@ https://platform.openai.com/usage
 ### C. Telegram Webhook
 
 Ver estado:
+
 ```bash
 curl "https://api.telegram.org/bot<TOKEN>/getWebhookInfo"
 ```
@@ -360,6 +377,7 @@ curl "https://api.telegram.org/bot<TOKEN>/getWebhookInfo"
 ### Error: "OpenAI API key not configured"
 
 **Solución:**
+
 1. Verificar OPENAI_API_KEY en Render
 2. Re-deploy si es necesario
 3. Verificar que key empieza con `sk-proj-`
@@ -367,6 +385,7 @@ curl "https://api.telegram.org/bot<TOKEN>/getWebhookInfo"
 ### Error: "Telegram webhook not responding"
 
 **Solución:**
+
 1. Verificar webhook: `getWebhookInfo`
 2. Re-configurar webhook con setWebhook
 3. Verificar TELEGRAM_BOT_TOKEN en Render
@@ -374,6 +393,7 @@ curl "https://api.telegram.org/bot<TOKEN>/getWebhookInfo"
 ### Error: "No whales detected"
 
 **Solución:**
+
 1. Normal al inicio
 2. Ejecutar cron job de detección manualmente
 3. Esperar a que haya suficientes trades
@@ -381,6 +401,7 @@ curl "https://api.telegram.org/bot<TOKEN>/getWebhookInfo"
 ### Error: "Challenge not updating"
 
 **Solución:**
+
 1. Verificar que endpoint POST /api/challenges/daily funciona
 2. Ver logs de Render
 3. Verificar que tabla DailyChallenge tiene datos
@@ -388,6 +409,7 @@ curl "https://api.telegram.org/bot<TOKEN>/getWebhookInfo"
 ### Error: "Prisma client errors"
 
 **Solución:**
+
 1. Verificar migraciones ejecutadas
 2. Ejecutar `npx prisma generate` localmente
 3. Re-deploy
@@ -397,17 +419,20 @@ curl "https://api.telegram.org/bot<TOKEN>/getWebhookInfo"
 ## 📈 Métricas de Éxito
 
 ### Día 1:
+
 - ✅ Deploy exitoso sin errores
 - ✅ Homepage carga con nuevos componentes
 - ✅ Telegram bot responde a /start
 
 ### Semana 1:
+
 - 📊 10+ análisis de AI Coach
 - 📊 5+ whales detectadas
 - 📊 50+ usuarios con streak activo
 - 📊 20+ usuarios vinculados a Telegram
 
 ### Mes 1:
+
 - 📊 DAU/MAU: 65%+
 - 📊 Premium conversion: 5%+
 - 📊 100+ whales en sistema
@@ -439,11 +464,13 @@ curl "https://api.telegram.org/bot<TOKEN>/getWebhookInfo"
 ### Pricing Sugerido:
 
 **Free:**
+
 - 1 AI análisis/semana
 - 5 whales máximo
 - Challenges básicos
 
 **Premium ($25-30/mes):**
+
 - 1 AI análisis/día
 - Whales ilimitadas
 - Real-time alerts
@@ -457,9 +484,11 @@ curl "https://api.telegram.org/bot<TOKEN>/getWebhookInfo"
 ## 📞 Support
 
 **Issues:**
+
 - GitHub: https://github.com/rxrmgg2srb-code/DegenScore-Card/issues
 
 **Documentación:**
+
 - ENGAGEMENT_FEATURES.md
 - KILLER_FEATURES.md
 - Este archivo (DEPLOYMENT.md)
