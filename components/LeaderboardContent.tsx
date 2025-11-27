@@ -3,7 +3,6 @@ import Head from 'next/head';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { LanguageSelector } from '../components/LanguageSelector';
-import FIFACard, { FIFACardProps } from '../components/FIFACard';
 import { LeaderboardEntry, Stats, ViewMode, SortBy } from './leaderboard/types';
 import { FIFALeaderboardCard } from './leaderboard/FIFALeaderboardCard';
 import { LeaderboardTable } from './leaderboard/LeaderboardTable';
@@ -188,12 +187,6 @@ export function Leaderboard() {
                 >
                   Oldest
                 </button>
-                <button
-                  className={`px-4 py-2 rounded ${sortBy === 'all' ? 'bg-yellow-500 text-black' : 'bg-gray-800 text-gray-200'}`}
-                  onClick={() => setSortBy('all')}
-                >
-                  All
-                </button>
               </div>
 
               {loading ? (
@@ -210,23 +203,10 @@ export function Leaderboard() {
                           {filteredLeaderboard.map((entry, index) => (
                             <FIFALeaderboardCard
                               key={entry.id}
-                              rank={entry.rank ?? index + 1}
-                              walletAddress={entry.walletAddress}
-                              displayName={entry.displayName}
-                              profileImage={entry.profileImage}
-                              degenScore={entry.degenScore ?? 0}
-                              tier={entry.tier ?? 'Bronze'}
-                              stats={entry.stats ?? {
-                                winRate: 0,
-                                totalVolume: 0,
-                                profitLoss: 0,
-                                totalTrades: 0,
-                                avgHoldTime: 0,
-                                level: 0,
-                              }}
-                              badges={entry.badges ?? []}
-                              twitter={entry.twitter}
-                              telegram={entry.telegram}
+                              entry={entry}
+                              index={index}
+                              handleLike={handleLike}
+                              userLikes={userLikes}
                             />
                           ))}
                         </div>

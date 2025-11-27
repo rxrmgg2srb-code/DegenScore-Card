@@ -3,7 +3,6 @@ import nacl from 'tweetnacl';
 import bs58 from 'bs58';
 import * as jwt from 'jsonwebtoken';
 import { logger } from '@/lib/logger';
-import redis from '@/lib/cache/redis'; // ✅ SECURITY: Redis for nonce tracking
 
 
 /**
