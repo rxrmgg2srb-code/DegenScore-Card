@@ -1,11 +1,8 @@
-import type { NextApiRequest, NextApiResponse} from 'next';
+import type { NextApiRequest, NextApiResponse } from 'next';
 import { getReferralLeaderboard } from '../../../lib/referralEngine';
 import { logger } from '@/lib/logger';
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -19,9 +16,13 @@ export default async function handler(
       leaderboard,
     });
   } catch (error) {
-    logger.error('Error getting referral leaderboard:', error instanceof Error ? error : undefined, {
-      error: String(error),
-    });
+    logger.error(
+      'Error getting referral leaderboard:',
+      error instanceof Error ? error : undefined,
+      {
+        error: String(error),
+      }
+    );
     res.status(500).json({
       error: 'Failed to get leaderboard',
       details: error instanceof Error ? error.message : 'Unknown error',

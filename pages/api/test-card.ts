@@ -16,10 +16,7 @@ try {
  * Endpoint de prueba para verificar que canvas funciona correctamente
  * Genera una tarjeta simple de prueba
  */
-export default async function handler(
-  _req: NextApiRequest,
-  res: NextApiResponse
-) {
+export default async function handler(_req: NextApiRequest, res: NextApiResponse) {
   try {
     logger.info('🧪 Generating TEST card...');
 
@@ -84,14 +81,13 @@ export default async function handler(
     res.setHeader('Content-Type', 'image/png');
     res.setHeader('Cache-Control', 'no-cache');
     res.status(200).send(buffer);
-
   } catch (error) {
     logger.error('❌ Error in test-card:', error instanceof Error ? error : undefined, {
-      error: String(error)
+      error: String(error),
     });
     res.status(500).json({
       error: 'Failed to generate test card',
-      details: error instanceof Error ? error.message : 'Unknown error'
+      details: error instanceof Error ? error.message : 'Unknown error',
     });
   }
 }

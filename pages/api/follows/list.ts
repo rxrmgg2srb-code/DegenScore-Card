@@ -7,10 +7,7 @@ import { logger } from '../../../lib/logger';
  * API endpoint to list followed wallets
  * Public endpoint - can view anyone's following list
  */
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -73,15 +70,13 @@ export default async function handler(
       following: validFollows.length,
       wallets: validFollows,
     });
-
   } catch (error: any) {
     logger.error('Error listing follows:', error instanceof Error ? error : undefined, {
       error: String(error),
     });
 
-    const errorMessage = process.env.NODE_ENV === 'development'
-      ? error.message
-      : 'Failed to list follows';
+    const errorMessage =
+      process.env.NODE_ENV === 'development' ? error.message : 'Failed to list follows';
 
     res.status(500).json({ error: errorMessage });
   }

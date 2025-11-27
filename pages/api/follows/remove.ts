@@ -8,10 +8,7 @@ import { logger } from '../../../lib/logger';
  * API endpoint to unfollow a wallet
  * Requires authentication
  */
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'DELETE' && req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -63,15 +60,13 @@ export default async function handler(
       success: true,
       message: 'Successfully unfollowed wallet',
     });
-
   } catch (error: any) {
     logger.error('Error removing follow:', error instanceof Error ? error : undefined, {
       error: String(error),
     });
 
-    const errorMessage = process.env.NODE_ENV === 'development'
-      ? error.message
-      : 'Failed to unfollow wallet';
+    const errorMessage =
+      process.env.NODE_ENV === 'development' ? error.message : 'Failed to unfollow wallet';
 
     res.status(500).json({ error: errorMessage });
   }

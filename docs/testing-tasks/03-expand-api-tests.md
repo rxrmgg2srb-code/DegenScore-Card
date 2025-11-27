@@ -12,12 +12,12 @@ Create comprehensive test coverage for the backend API layer (`pages/api/**`) an
 
 ### Test Coverage Targets
 
-| Domain | Current | Target | New Tests |
-|--------|---------|--------|-----------|
-| API Routes | ~30% | 85%+ | ~150 tests |
-| Lib Modules | ~25% | 90%+ | ~200 tests |
-| Integration | ~10% | 70%+ | ~50 tests |
-| **Total** | - | - | **~400 tests** |
+| Domain      | Current | Target | New Tests      |
+| ----------- | ------- | ------ | -------------- |
+| API Routes  | ~30%    | 85%+   | ~150 tests     |
+| Lib Modules | ~25%    | 90%+   | ~200 tests     |
+| Integration | ~10%    | 70%+   | ~50 tests      |
+| **Total**   | -       | -      | **~400 tests** |
 
 ### API Routes to Test
 
@@ -128,85 +128,116 @@ Create comprehensive test coverage for the backend API layer (`pages/api/**`) an
 Create comprehensive fixtures in `__tests__/fixtures/`:
 
 1. **`api.fixtures.ts`**
+
    ```typescript
    export const mockApiRequest = (overrides = {}) => ({
      method: 'GET',
      headers: { 'content-type': 'application/json' },
      query: {},
      body: {},
-     ...overrides
+     ...overrides,
    });
 
    export const mockApiResponse = () => ({
      status: jest.fn().mockReturnThis(),
      json: jest.fn().mockReturnThis(),
-     send: jest.fn().mockReturnThis()
+     send: jest.fn().mockReturnThis(),
    });
    ```
 
 2. **`blockchain.fixtures.ts`**
+
    ```typescript
-   export const mockTransaction = { /* ... */ };
-   export const mockWallet = { /* ... */ };
-   export const mockTokenMetadata = { /* ... */ };
+   export const mockTransaction = {
+     /* ... */
+   };
+   export const mockWallet = {
+     /* ... */
+   };
+   export const mockTokenMetadata = {
+     /* ... */
+   };
    ```
 
 3. **`prisma.fixtures.ts`**
+
    ```typescript
-   export const mockUser = { /* ... */ };
-   export const mockChallenge = { /* ... */ };
-   export const mockBadge = { /* ... */ };
+   export const mockUser = {
+     /* ... */
+   };
+   export const mockChallenge = {
+     /* ... */
+   };
+   export const mockBadge = {
+     /* ... */
+   };
    ```
 
 4. **`external-services.fixtures.ts`**
    ```typescript
-   export const mockHeliusResponse = { /* ... */ };
-   export const mockOpenAIResponse = { /* ... */ };
-   export const mockCloudflareR2Response = { /* ... */ };
+   export const mockHeliusResponse = {
+     /* ... */
+   };
+   export const mockOpenAIResponse = {
+     /* ... */
+   };
+   export const mockCloudflareR2Response = {
+     /* ... */
+   };
    ```
 
 ### Mocking Strategies
 
 1. **Redis Mock**
+
    ```typescript
    // __mocks__/redis.ts
    const store = new Map();
    export const redis = {
-     get: jest.fn(key => Promise.resolve(store.get(key))),
-     set: jest.fn((key, val) => { store.set(key, val); return Promise.resolve('OK'); }),
-     del: jest.fn(key => { store.delete(key); return Promise.resolve(1); })
+     get: jest.fn((key) => Promise.resolve(store.get(key))),
+     set: jest.fn((key, val) => {
+       store.set(key, val);
+       return Promise.resolve('OK');
+     }),
+     del: jest.fn((key) => {
+       store.delete(key);
+       return Promise.resolve(1);
+     }),
    };
    ```
 
 2. **Pusher Mock**
+
    ```typescript
    // __mocks__/pusher.ts
    export const Pusher = jest.fn().mockImplementation(() => ({
      trigger: jest.fn().mockResolvedValue({}),
-     triggerBatch: jest.fn().mockResolvedValue({})
+     triggerBatch: jest.fn().mockResolvedValue({}),
    }));
    ```
 
 3. **OpenAI Mock**
+
    ```typescript
    // __mocks__/openai.ts
    export const openai = {
      chat: {
        completions: {
          create: jest.fn().mockResolvedValue({
-           choices: [{ message: { content: 'Mocked response' } }]
-         })
-       }
-     }
+           choices: [{ message: { content: 'Mocked response' } }],
+         }),
+       },
+     },
    };
    ```
 
 4. **Helius RPC Mock**
+
    ```typescript
    // __mocks__/helius.ts
    export const helius = {
      getTransaction: jest.fn().mockResolvedValue(mockTransaction),
-     getTokenMetadata: jest.fn().mockResolvedValue(mockTokenMetadata)
+     getTokenMetadata: jest.fn().mockResolvedValue(mockTokenMetadata),
    };
    ```
 
@@ -215,13 +246,14 @@ Create comprehensive fixtures in `__tests__/fixtures/`:
    // __mocks__/r2.ts
    export const r2Client = {
      putObject: jest.fn().mockResolvedValue({ ETag: 'mock-etag' }),
-     getObject: jest.fn().mockResolvedValue({ Body: Buffer.from('data') })
+     getObject: jest.fn().mockResolvedValue({ Body: Buffer.from('data') }),
    };
    ```
 
 ### Test Patterns
 
 1. **API Route Testing Pattern**
+
    ```typescript
    describe('POST /api/analytics/trades', () => {
      it('should return 400 for missing wallet address', async () => {
@@ -234,7 +266,7 @@ Create comprehensive fixtures in `__tests__/fixtures/`:
        // Mock Prisma, Redis, external APIs
        const { req, res } = createMocks({
          method: 'POST',
-         body: { wallet: 'mock-wallet' }
+         body: { wallet: 'mock-wallet' },
        });
        await handler(req, res);
        expect(res._getStatusCode()).toBe(200);
@@ -244,16 +276,21 @@ Create comprehensive fixtures in `__tests__/fixtures/`:
    ```
 
 2. **Library Module Testing Pattern**
+
    ```typescript
    describe('metricsEngine.calculateDegenScore', () => {
      it('should calculate score for active trader', () => {
-       const trades = [/* mock trades */];
+       const trades = [
+         /* mock trades */
+       ];
        const score = calculateDegenScore(trades);
        expect(score).toBeGreaterThan(700);
      });
 
      it('should penalize high-loss trades', () => {
-       const trades = [/* losing trades */];
+       const trades = [
+         /* losing trades */
+       ];
        const score = calculateDegenScore(trades);
        expect(score).toBeLessThan(500);
      });

@@ -33,9 +33,9 @@ const MAX_MEMORY_CACHE_SIZE = 100;
 
 // Cache TTL settings
 const CACHE_TTL = {
-  HOT_WALLET: 5 * 60 * 1000,      // 5 minutes for trending wallets
-  NORMAL_WALLET: 30 * 60 * 1000,  // 30 minutes for regular wallets
-  COLD_WALLET: 60 * 60 * 1000,    // 1 hour for inactive wallets
+  HOT_WALLET: 5 * 60 * 1000, // 5 minutes for trending wallets
+  NORMAL_WALLET: 30 * 60 * 1000, // 30 minutes for regular wallets
+  COLD_WALLET: 60 * 60 * 1000, // 1 hour for inactive wallets
 };
 
 // Cache statistics
@@ -49,9 +49,7 @@ let cacheStats: CacheStats = {
 /**
  * Get cached wallet metrics
  */
-export async function getCachedWalletMetrics(
-  walletAddress: string
-): Promise<any | null> {
+export async function getCachedWalletMetrics(walletAddress: string): Promise<any | null> {
   cacheStats.totalRequests++;
 
   // Check memory cache first (fastest)
@@ -79,18 +77,19 @@ export async function getCachedWalletMetrics(
         }
 
         // Update hitCount in Redis
-        await cacheSet(
-          `wallet:metrics:${walletAddress}`,
-          JSON.stringify(parsed),
-          { ttl: getTTL(parsed.hitCount) }
-        );
+        await cacheSet(`wallet:metrics:${walletAddress}`, JSON.stringify(parsed), {
+          ttl: getTTL(parsed.hitCount),
+        });
 
         updateCacheStats();
         return parsed.metrics;
       }
     }
   } catch (error) {
-    logger.error('Redis cache read error', error instanceof Error ? error : new Error(String(error)));
+    logger.error(
+      'Redis cache read error',
+      error instanceof Error ? error : new Error(String(error))
+    );
   }
 
   cacheStats.misses++;
@@ -101,10 +100,7 @@ export async function getCachedWalletMetrics(
 /**
  * Set cached wallet metrics
  */
-export async function setCachedWalletMetrics(
-  walletAddress: string,
-  metrics: any
-): Promise<void> {
+export async function setCachedWalletMetrics(walletAddress: string, metrics: any): Promise<void> {
   const cacheData: CachedWalletData = {
     metrics,
     lastUpdated: Date.now(),
@@ -113,13 +109,14 @@ export async function setCachedWalletMetrics(
 
   // Always cache in Redis
   try {
-    await cacheSet(
-      `wallet:metrics:${walletAddress}`,
-      JSON.stringify(cacheData),
-      { ttl: CACHE_TTL.NORMAL_WALLET / 1000 }
-    );
+    await cacheSet(`wallet:metrics:${walletAddress}`, JSON.stringify(cacheData), {
+      ttl: CACHE_TTL.NORMAL_WALLET / 1000,
+    });
   } catch (error) {
-    logger.error('Redis cache write error', error instanceof Error ? error : new Error(String(error)));
+    logger.error(
+      'Redis cache write error',
+      error instanceof Error ? error : new Error(String(error))
+    );
   }
 
   // Add to memory cache if there's space or it's replacing an existing entry
@@ -137,7 +134,10 @@ export async function invalidateWalletCache(walletAddress: string): Promise<void
   try {
     await cacheDel(`wallet:metrics:${walletAddress}`);
   } catch (error) {
-    logger.error('Redis cache invalidation error', error instanceof Error ? error : new Error(String(error)));
+    logger.error(
+      'Redis cache invalidation error',
+      error instanceof Error ? error : new Error(String(error))
+    );
   }
 }
 
@@ -156,14 +156,16 @@ export async function warmCacheForHotWallets(wallets: string[]): Promise<void> {
         const parsed: CachedWalletData = JSON.parse(cached);
         parsed.hitCount = Math.max(parsed.hitCount, 10); // Mark as hot
 
-        await cacheSet(
-          `wallet:metrics:${wallet}`,
-          JSON.stringify(parsed),
-          { ttl: CACHE_TTL.HOT_WALLET / 1000 }
-        );
+        await cacheSet(`wallet:metrics:${wallet}`, JSON.stringify(parsed), {
+          ttl: CACHE_TTL.HOT_WALLET / 1000,
+        });
       }
     } catch (error) {
-      logger.error('Failed to warm cache for wallet', error instanceof Error ? error : new Error(String(error)), { wallet });
+      logger.error(
+        'Failed to warm cache for wallet',
+        error instanceof Error ? error : new Error(String(error)),
+        { wallet }
+      );
     }
   }
 }
@@ -190,7 +192,9 @@ export function resetCacheStats(): void {
 /**
  * Get trending wallets (most cache hits)
  */
-export async function getTrendingWallets(limit: number = 10): Promise<Array<{ wallet: string; hits: number }>> {
+export async function getTrendingWallets(
+  limit: number = 10
+): Promise<Array<{ wallet: string; hits: number }>> {
   const trending: Array<{ wallet: string; hits: number }> = [];
 
   // Get from memory cache
@@ -213,8 +217,12 @@ function isCacheExpired(cached: CachedWalletData): boolean {
 }
 
 function getTTL(hitCount: number): number {
-  if (hitCount > 20) {return CACHE_TTL.HOT_WALLET;}
-  if (hitCount > 5) {return CACHE_TTL.NORMAL_WALLET;}
+  if (hitCount > 20) {
+    return CACHE_TTL.HOT_WALLET;
+  }
+  if (hitCount > 5) {
+    return CACHE_TTL.NORMAL_WALLET;
+  }
   return CACHE_TTL.COLD_WALLET;
 }
 
@@ -231,9 +239,8 @@ function setMemoryCache(walletAddress: string, data: CachedWalletData): void {
 }
 
 function updateCacheStats(): void {
-  cacheStats.hitRate = cacheStats.totalRequests > 0
-    ? (cacheStats.hits / cacheStats.totalRequests) * 100
-    : 0;
+  cacheStats.hitRate =
+    cacheStats.totalRequests > 0 ? (cacheStats.hits / cacheStats.totalRequests) * 100 : 0;
 }
 
 // Periodic cleanup of expired memory cache entries

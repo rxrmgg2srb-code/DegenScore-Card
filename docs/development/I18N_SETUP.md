@@ -3,6 +3,7 @@
 ## ✅ ¡Ya está Implementado!
 
 Tu proyecto ahora soporta **3 idiomas**:
+
 - 🇪🇸 **Español** (por defecto)
 - 🇬🇧 **Inglés**
 - 🇨🇳 **Chino**
@@ -123,7 +124,7 @@ export default function Page() {
 import { LanguageSelectorSimple } from '@/components/LanguageSelector';
 
 // Usa LanguageSelectorSimple en lugar de LanguageSelector
-<LanguageSelectorSimple />
+<LanguageSelectorSimple />;
 ```
 
 ---
@@ -133,6 +134,7 @@ import { LanguageSelectorSimple } from '@/components/LanguageSelector';
 ### 1. Edita los archivos JSON
 
 **locales/es/common.json**:
+
 ```json
 {
   "mi_nueva_seccion": {
@@ -143,6 +145,7 @@ import { LanguageSelectorSimple } from '@/components/LanguageSelector';
 ```
 
 **locales/en/common.json**:
+
 ```json
 {
   "mi_nueva_seccion": {
@@ -153,6 +156,7 @@ import { LanguageSelectorSimple } from '@/components/LanguageSelector';
 ```
 
 **locales/zh/common.json**:
+
 ```json
 {
   "mi_nueva_seccion": {
@@ -185,6 +189,7 @@ touch locales/fr/common.json
 ### 2. Añade las traducciones
 
 **locales/fr/common.json**:
+
 ```json
 {
   "nav": {
@@ -234,13 +239,17 @@ const languages: Language[] = [
 ### Mensajes de error
 
 ```tsx
-{error && <p className="text-red-500">{t('errors.server_error')}</p>}
+{
+  error && <p className="text-red-500">{t('errors.server_error')}</p>;
+}
 ```
 
 ### Estados de carga
 
 ```tsx
-{loading ? t('common.loading') : t('common.view_more')}
+{
+  loading ? t('common.loading') : t('common.view_more');
+}
 ```
 
 ### Cards y métricas
@@ -294,34 +303,36 @@ En `LanguageSelector.tsx`:
 
 ```tsx
 // Cambiar color del botón
-className="bg-purple-600/20 hover:bg-purple-600/30 border border-purple-500/30"
+className = 'bg-purple-600/20 hover:bg-purple-600/30 border border-purple-500/30';
 // Por ejemplo a azul:
-className="bg-blue-600/20 hover:bg-blue-600/30 border border-blue-500/30"
+className = 'bg-blue-600/20 hover:bg-blue-600/30 border border-blue-500/30';
 
 // Cambiar color del dropdown
-className="bg-gray-900 border border-purple-500/30"
+className = 'bg-gray-900 border border-purple-500/30';
 // Por ejemplo:
-className="bg-black border border-blue-500/30"
+className = 'bg-black border border-blue-500/30';
 ```
 
 ### Cambiar posición
 
 ```tsx
 // Dropdown alineado a la derecha (default)
-className="absolute right-0 mt-2"
+className = 'absolute right-0 mt-2';
 
 // Dropdown alineado a la izquierda
-className="absolute left-0 mt-2"
+className = 'absolute left-0 mt-2';
 ```
 
 ### Solo mostrar bandera (sin texto)
 
 ```tsx
-<span className="text-2xl">{currentLanguage.flag}</span>
-{/* Elimina esta línea: */}
+<span className="text-2xl">{currentLanguage.flag}</span>;
+{
+  /* Elimina esta línea: */
+}
 <span className="hidden sm:inline text-sm font-medium text-white">
   {currentLanguage.nativeName}
-</span>
+</span>;
 ```
 
 ---
@@ -345,6 +356,7 @@ className="absolute left-0 mt-2"
 ### Verificar traducción faltante
 
 Si una traducción no existe, verás la key en lugar del texto:
+
 ```
 nav.home  ← Esto significa que falta la traducción
 ```
@@ -358,48 +370,61 @@ Añádela al archivo `common.json` correspondiente.
 ### Actualmente traducidas:
 
 ✅ **Navegación** (nav)
+
 - Home, Leaderboard, Documentation
 - Conectar/Desconectar wallet
 
 ✅ **Hero Section** (hero)
+
 - Título, subtítulo, CTA
 - Estadísticas
 
 ✅ **Card Métricas** (card)
+
 - 12 métricas principales
 - Badges, niveles
 
 ✅ **Tiers** (tiers)
+
 - FREE, PREMIUM, PRO
 - Todas las features
 
 ✅ **Check-In** (checkin)
+
 - Título, racha, botón
 - Milestones, XP
 
 ✅ **Referidos** (referrals)
+
 - Sistema completo
 - 4 tiers de rewards
 
 ✅ **Challenges** (challenges)
+
 - Título, premio, participar
 
 ✅ **Leaderboard** (leaderboard)
+
 - Filtros, categorías
 
 ✅ **Live Activity** (activity)
+
 - 6 tipos de acciones
 
 ✅ **Scarcity Banner** (scarcity)
+
 - Mensajes de urgencia
 
 ✅ **Documentación** (documentation)
+
 - 13 secciones
 
 ✅ **Común** (common)
+
 - Loading, errores, botones
 
 ✅ **Errores** (errors)
+
 - Mensajes de error
 
 ---
@@ -419,14 +444,13 @@ import i18n from '../lib/i18n';
 **Solución**: Verifica que `I18nextProvider` esté envolviendo tu app en `_app.tsx`:
 
 ```tsx
-<I18nextProvider i18n={i18n}>
-  {/* Tu app */}
-</I18nextProvider>
+<I18nextProvider i18n={i18n}>{/* Tu app */}</I18nextProvider>
 ```
 
 ### Traducciones no se cargan
 
 **Solución**: Verifica que los archivos JSON estén en la ubicación correcta:
+
 ```
 locales/es/common.json
 locales/en/common.json
@@ -436,6 +460,7 @@ locales/zh/common.json
 ### Idioma no persiste después de reload
 
 **Solución**: Asegúrate de que `i18next-browser-languagedetector` esté instalado:
+
 ```bash
 npm install i18next-browser-languagedetector
 ```
@@ -472,6 +497,7 @@ Tu app ahora soporta **3 idiomas** completos con un selector bonito en la parte 
 ### Próximos pasos sugeridos:
 
 1. **Añadir el Header a tu página principal**:
+
    ```tsx
    import { Header } from '@/components/Header';
 

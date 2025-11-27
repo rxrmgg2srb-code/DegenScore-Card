@@ -3,10 +3,12 @@
 ## Phase 1: CRITICAL FIXES (Completed)
 
 ### 1. ✅ OpenAI max_tokens Limit
+
 **Status:** ✅ **ALREADY FIXED**  
 **File:** `lib/aiCoach.ts:139`
 
 **Code:**
+
 ```typescript
 const completion = await openai.chat.completions.create({
   model: 'gpt-4-turbo-preview',
@@ -18,6 +20,7 @@ const completion = await openai.chat.completions.create({
 ```
 
 **Additional Protections Found:**
+
 - Daily budget limit: `$10 USD` (line 16)
 - Cost tracking after each call (line 144)
 - Budget checking before API calls (line 118)
@@ -27,12 +30,14 @@ const completion = await openai.chat.completions.create({
 ---
 
 ### 2. ✅ Redis Connection Timeouts
+
 **Status:** ✅ **NOT NEEDED (Upstash)**  
 **File:** `lib/cache/redis.ts`
 
 **Finding:** Using `@upstash/redis` (REST/HTTP client), which has built-in timeout handling:
+
 ```typescript
-import { Redis } from '@upstash/redis';  // REST API client, not TCP
+import { Redis } from '@upstash/redis'; // REST API client, not TCP
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
@@ -42,6 +47,7 @@ const redis = new Redis({
 ```
 
 **Why No Timeout Config Needed:**
+
 - Upstash uses REST API (not persistent connection)
 - HTTP requests timeout automatically
 - No connection pool saturation risk
@@ -49,6 +55,7 @@ const redis = new Redis({
 
 **Alternative (if using ioredis):**
 If you switch to traditional Redis (ior edis), then add:
+
 ```typescript
 import Redis from 'ioredis';
 
@@ -67,10 +74,12 @@ const redis = new Redis(url, {
 ---
 
 ### 3. ⚠️ getServerSideProps Usage Review
+
 **Status:** ⚠️ **REQUIRES MANUAL REVIEW**  
 **Files Found:** 10 pages using SSR
 
 **List:**
+
 1. `pages/token-scanner.tsx`
 2. `pages/super-token-scorer.tsx`
 3. `pages/settings.tsx`
@@ -84,12 +93,14 @@ const redis = new Redis(url, {
 
 **Analysis Needed:**
 For each page, check if `getServerSideProps` is:
+
 - ✅ **Necessary:** Fetching user-specific or auth-protected data
 - ❌ **Unnecessary:** Could be static or use client-side fetching
 
 **Example - Quick Check:**
 
 **KEEP getServerSideProps if:**
+
 ```typescript
 // User-specific data that needs auth
 export async function getServerSideProps(context) {
@@ -100,20 +111,23 @@ export async function getServerSideProps(context) {
 ```
 
 **REMOVE getServerSideProps if:**
+
 ```typescript
 // Static data that doesn't change per-user
 export async function getServerSideProps() {
-  return { props: {} };  // ❌ EMPTY - REMOVE!
+  return { props: {} }; // ❌ EMPTY - REMOVE!
 }
 ```
 
 **Impact of Removal:**
+
 - **Before:** Server renders on every request (TTFB +500ms)
 - **After:** Static generation (TTFB ~50ms)
 - **Savings:** ~90% faster first paint
 
-**Recommendation:** 
+**Recommendation:**
 Review each file individually. Priority:
+
 1. Check `index.full.tsx` and `index-improved.tsx` (landing pages)
 2. Check `documentation.tsx` (should be static)
 3. Check tool pages (may need SSR for data)
@@ -122,19 +136,20 @@ Review each file individually. Priority:
 
 ## Summary
 
-| Issue | Current Status | Action Required |
-|-------|----------------|-----------------|
-| OpenAI max_tokens | ✅ Fixed (2000) | None |
-| OpenAI budget limit | ✅ Fixed ($10/day) | None |
-| OpenAI cost tracking | ✅ Implemented | None |
-| Redis timeouts | ✅ Safe (Upstash) | None |
-| getServerSideProps | ⚠️ Need review | Manual check of 10 files |
+| Issue                | Current Status     | Action Required          |
+| -------------------- | ------------------ | ------------------------ |
+| OpenAI max_tokens    | ✅ Fixed (2000)    | None                     |
+| OpenAI budget limit  | ✅ Fixed ($10/day) | None                     |
+| OpenAI cost tracking | ✅ Implemented     | None                     |
+| Redis timeouts       | ✅ Safe (Upstash)  | None                     |
+| getServerSideProps   | ⚠️ Need review     | Manual check of 10 files |
 
 ---
 
 ## Phase 2: Non-Critical (Optional)
 
 ### Large Components
+
 ```
 SuperTokenScorer.tsx      27 KB  🔴
 DegenCard.tsx             21 KB  🔴
@@ -145,6 +160,7 @@ WhaleRadar.tsx            16 KB  🟠
 **Recommendation:** Split into subcomponents when time permits.
 
 ### Prisma Indices
+
 **Current:** 46+ indices across schema  
 **Recommended:** ~20 indices  
 **Action:** Review compound indices for soft delete (likely over-optimized)

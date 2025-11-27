@@ -2,18 +2,18 @@ import { useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 export interface TokenSecurityReport {
-    tokenAddress: string;
-    securityScore: number;
-    riskLevel: string;
-    recommendation: string;
-    tokenAuthorities: any;
-    holderDistribution: any;
-    liquidityAnalysis: any;
-    tradingPatterns: any;
-    metadata: any;
-    marketMetrics: any;
-    redFlags: any;
-    analyzedAt: number;
+  tokenAddress: string;
+  securityScore: number;
+  riskLevel: string;
+  recommendation: string;
+  tokenAuthorities: any;
+  holderDistribution: any;
+  liquidityAnalysis: any;
+  tradingPatterns: any;
+  metadata: any;
+  marketMetrics: any;
+  redFlags: any;
+  analyzedAt: number;
 }
 
 /**
@@ -50,106 +50,106 @@ export interface TokenSecurityReport {
  * console.log(report.securityScore); // 0-100
  */
 export function useTokenSecurity() {
-    const [tokenAddress, setTokenAddress] = useState('');
-    const [loading, setLoading] = useState(false);
-    const [report, setReport] = useState<TokenSecurityReport | null>(null);
-    const [progress, setProgress] = useState(0);
-    const [progressMessage, setProgressMessage] = useState('');
+  const [tokenAddress, setTokenAddress] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [report, setReport] = useState<TokenSecurityReport | null>(null);
+  const [progress, setProgress] = useState(0);
+  const [progressMessage, setProgressMessage] = useState('');
 
-    const analyzeToken = async () => {
-        if (!tokenAddress.trim()) {
-            toast.error('Please enter a token address');
-            return;
+  const analyzeToken = async () => {
+    if (!tokenAddress.trim()) {
+      toast.error('Please enter a token address');
+      return;
+    }
+
+    setLoading(true);
+    setProgress(0);
+    setReport(null);
+
+    // Simulate progress
+    const progressInterval = setInterval(() => {
+      setProgress((prev) => {
+        if (prev >= 95) {
+          clearInterval(progressInterval);
+          return 95;
         }
+        return prev + 5;
+      });
+    }, 200);
 
-        setLoading(true);
-        setProgress(0);
-        setReport(null);
+    const messages = [
+      'Validating token address...',
+      'Fetching token metadata...',
+      'Analyzing token authorities...',
+      'Analyzing holder distribution...',
+      'Analyzing liquidity...',
+      'Detecting trading patterns...',
+      'Analyzing market metrics...',
+      'Calculating security score...',
+    ];
 
-        // Simulate progress
-        const progressInterval = setInterval(() => {
-            setProgress((prev) => {
-                if (prev >= 95) {
-                    clearInterval(progressInterval);
-                    return 95;
-                }
-                return prev + 5;
-            });
-        }, 200);
+    let messageIndex = 0;
+    const messageInterval = setInterval(() => {
+      setProgressMessage(messages[messageIndex % messages.length]!);
+      messageIndex++;
+    }, 1000);
 
-        const messages = [
-            'Validating token address...',
-            'Fetching token metadata...',
-            'Analyzing token authorities...',
-            'Analyzing holder distribution...',
-            'Analyzing liquidity...',
-            'Detecting trading patterns...',
-            'Analyzing market metrics...',
-            'Calculating security score...',
-        ];
+    try {
+      const response = await fetch('/api/analyze-token', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ tokenAddress: tokenAddress.trim() }),
+      });
 
-        let messageIndex = 0;
-        const messageInterval = setInterval(() => {
-            setProgressMessage(messages[messageIndex % messages.length]!);
-            messageIndex++;
-        }, 1000);
+      clearInterval(progressInterval);
+      clearInterval(messageInterval);
 
-        try {
-            const response = await fetch('/api/analyze-token', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ tokenAddress: tokenAddress.trim() }),
-            });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Analysis failed');
+      }
 
-            clearInterval(progressInterval);
-            clearInterval(messageInterval);
+      const data = await response.json();
+      setProgress(100);
+      setProgressMessage('Analysis complete!');
+      setReport(data.report);
 
-            if (!response.ok) {
-                const error = await response.json();
-                throw new Error(error.error || 'Analysis failed');
-            }
+      if (data.cached) {
+        toast.success('Analysis loaded from cache');
+      } else {
+        toast.success('Token analyzed successfully!');
+      }
+    } catch (error: any) {
+      clearInterval(progressInterval);
+      clearInterval(messageInterval);
+      toast.error(error.message || 'Failed to analyze token');
+      setProgress(0);
+      setProgressMessage('');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-            const data = await response.json();
-            setProgress(100);
-            setProgressMessage('Analysis complete!');
-            setReport(data.report);
+  const handlePaste = async () => {
+    try {
+      const text = await navigator.clipboard.readText();
+      setTokenAddress(text.trim());
+      toast.success('Address pasted!');
+    } catch (error) {
+      toast.error('Failed to paste from clipboard');
+    }
+  };
 
-            if (data.cached) {
-                toast.success('Analysis loaded from cache');
-            } else {
-                toast.success('Token analyzed successfully!');
-            }
-        } catch (error: any) {
-            clearInterval(progressInterval);
-            clearInterval(messageInterval);
-            toast.error(error.message || 'Failed to analyze token');
-            setProgress(0);
-            setProgressMessage('');
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handlePaste = async () => {
-        try {
-            const text = await navigator.clipboard.readText();
-            setTokenAddress(text.trim());
-            toast.success('Address pasted!');
-        } catch (error) {
-            toast.error('Failed to paste from clipboard');
-        }
-    };
-
-    return {
-        tokenAddress,
-        setTokenAddress,
-        loading,
-        report,
-        progress,
-        progressMessage,
-        analyzeToken,
-        handlePaste,
-    };
+  return {
+    tokenAddress,
+    setTokenAddress,
+    loading,
+    report,
+    progress,
+    progressMessage,
+    analyzeToken,
+    handlePaste,
+  };
 }

@@ -7,10 +7,7 @@ import { logger } from '../../../lib/logger';
  * API endpoint for daily streak check-in
  * Automatically called when user visits the app
  */
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -41,13 +38,11 @@ export default async function handler(
       success: true,
       streak: streakInfo,
     });
-
   } catch (error: any) {
     logger.error('Error in streak check-in:', error);
 
-    const errorMessage = process.env.NODE_ENV === 'development'
-      ? error.message
-      : 'Failed to check streak';
+    const errorMessage =
+      process.env.NODE_ENV === 'development' ? error.message : 'Failed to check streak';
 
     res.status(500).json({ error: errorMessage });
   }

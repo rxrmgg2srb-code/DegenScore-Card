@@ -6,10 +6,7 @@ import { logger } from '../../lib/logger';
 import { cacheGetOrSet, CacheKeys } from '../../lib/cache/redis';
 import { checkAllBadges } from '../../lib/badges-with-points';
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -23,14 +20,27 @@ export default async function handler(
     const { sortBy = 'likes', limit: limitParam, noCache } = req.query;
 
     // Validate and sanitize sort field - ahora aceptamos: likes, referralCount, badgePoints, newest, oldest
-    const validSortFields = ['likes', 'referralCount', 'badgePoints', 'degenScore', 'totalVolume', 'winRate', 'newest', 'oldest'];
-    const sortField = validSortFields.includes(sortBy as string) ? sortBy as string : 'newest';
+    const validSortFields = [
+      'likes',
+      'referralCount',
+      'badgePoints',
+      'degenScore',
+      'totalVolume',
+      'winRate',
+      'newest',
+      'oldest',
+    ];
+    const sortField = validSortFields.includes(sortBy as string) ? (sortBy as string) : 'newest';
 
     // Validate limit
     const { limit } = validatePagination(undefined, limitParam);
     const safeLimit = Math.min(limit, 100); // Max 100 entries
 
-    logger.debug('Leaderboard request', { sortBy: sortField, limit: safeLimit, noCache: !!noCache });
+    logger.debug('Leaderboard request', {
+      sortBy: sortField,
+      limit: safeLimit,
+      noCache: !!noCache,
+    });
 
     // Data fetching function
     const fetchData = async () => {
@@ -73,7 +83,7 @@ export default async function handler(
           });
 
           // Solo retornar los primeros 8 badges y campos esenciales para reducir tamaño de respuesta
-          const simplifiedBadges = badges.slice(0, 8).map(badge => ({
+          const simplifiedBadges = badges.slice(0, 8).map((badge) => ({
             key: badge.key,
             icon: badge.icon,
             name: badge.name,
@@ -123,8 +133,8 @@ export default async function handler(
         });
       } else if (sortField === 'badgePoints' || sortField === 'referralCount') {
         sortedCards.sort((a, b) => {
-          const aValue = sortField === 'badgePoints' ? (a.badgePoints || 0) : (a.referralCount || 0);
-          const bValue = sortField === 'badgePoints' ? (b.badgePoints || 0) : (b.referralCount || 0);
+          const aValue = sortField === 'badgePoints' ? a.badgePoints || 0 : a.referralCount || 0;
+          const bValue = sortField === 'badgePoints' ? b.badgePoints || 0 : b.referralCount || 0;
           return bValue - aValue; // DESC
         });
       } else {
@@ -192,9 +202,8 @@ export default async function handler(
       error: String(error),
     });
 
-    const errorMessage = process.env.NODE_ENV === 'development'
-      ? error.message
-      : 'Failed to fetch leaderboard';
+    const errorMessage =
+      process.env.NODE_ENV === 'development' ? error.message : 'Failed to fetch leaderboard';
 
     res.status(500).json({ error: errorMessage });
   }

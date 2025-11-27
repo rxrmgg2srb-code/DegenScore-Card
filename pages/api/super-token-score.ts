@@ -31,10 +31,7 @@ import redis from '@/lib/cache/redis';
 const CACHE_TTL = 1800; // 30 minutos cache (análisis es costoso)
 const STALE_THRESHOLD = 2 * 60 * 60 * 1000; // 2 horas
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -86,9 +83,11 @@ export default async function handler(
 
     // Check database for recent analysis (if not forcing refresh)
     if (!forceRefresh) {
-      const existing = await prisma.superTokenAnalysis.findUnique({
-        where: { tokenAddress },
-      }).catch(() => null); // Ignore if table doesn't exist yet
+      const existing = await prisma.superTokenAnalysis
+        .findUnique({
+          where: { tokenAddress },
+        })
+        .catch(() => null); // Ignore if table doesn't exist yet
 
       if (existing) {
         const age = Date.now() - existing.analyzedAt.getTime();
@@ -97,7 +96,7 @@ export default async function handler(
         if (age < STALE_THRESHOLD) {
           logger.info('✅ Returning database cached Super Token Score', {
             tokenAddress,
-            ageMinutes: Math.floor(age / 60000)
+            ageMinutes: Math.floor(age / 60000),
           });
 
           // Update view count
@@ -136,7 +135,10 @@ export default async function handler(
     if (redis) {
       const cacheKey = `super-token-score:${tokenAddress}`;
       await redis.set(cacheKey, JSON.stringify(result), { ex: CACHE_TTL }).catch((err) => {
-        logger.error('Failed to cache Super Token Score in Redis', err instanceof Error ? err : undefined);
+        logger.error(
+          'Failed to cache Super Token Score in Redis',
+          err instanceof Error ? err : undefined
+        );
       });
     }
 
@@ -152,11 +154,14 @@ export default async function handler(
       data: result,
       cached: false,
     });
-
   } catch (error: any) {
-    logger.error('❌ Super Token Score analysis failed', error instanceof Error ? error : undefined, {
-      error: String(error),
-    });
+    logger.error(
+      '❌ Super Token Score analysis failed',
+      error instanceof Error ? error : undefined,
+      {
+        error: String(error),
+      }
+    );
 
     // Don't expose internal errors in production
     const errorMessage =
@@ -176,15 +181,17 @@ export default async function handler(
  */
 async function updateViewCount(tokenAddress: string) {
   try {
-    await prisma.superTokenAnalysis.update({
-      where: { tokenAddress },
-      data: {
-        viewCount: { increment: 1 },
-        lastViewedAt: new Date(),
-      },
-    }).catch(() => {
-      // Table might not exist yet, ignore
-    });
+    await prisma.superTokenAnalysis
+      .update({
+        where: { tokenAddress },
+        data: {
+          viewCount: { increment: 1 },
+          lastViewedAt: new Date(),
+        },
+      })
+      .catch(() => {
+        // Table might not exist yet, ignore
+      });
   } catch (error) {
     // Fail silently
   }
@@ -195,129 +202,137 @@ async function updateViewCount(tokenAddress: string) {
  */
 async function saveSuperScoreToDatabase(tokenAddress: string, result: SuperTokenScore) {
   try {
-    await prisma.superTokenAnalysis.upsert({
-      where: { tokenAddress },
-      create: {
-        tokenAddress,
+    await prisma.superTokenAnalysis
+      .upsert({
+        where: { tokenAddress },
+        create: {
+          tokenAddress,
 
-        // Basic info
-        tokenSymbol: result.tokenSymbol,
-        tokenName: result.tokenName,
+          // Basic info
+          tokenSymbol: result.tokenSymbol,
+          tokenName: result.tokenName,
 
-        // Super Score
-        superScore: result.superScore,
-        globalRiskLevel: result.globalRiskLevel,
-        recommendation: result.recommendation,
+          // Super Score
+          superScore: result.superScore,
+          globalRiskLevel: result.globalRiskLevel,
+          recommendation: result.recommendation,
 
-        // Score breakdown
-        baseSecurityScore: result.scoreBreakdown.baseSecurityScore,
-        newWalletScore: result.scoreBreakdown.newWalletScore,
-        insiderScore: result.scoreBreakdown.insiderScore,
-        volumeScore: result.scoreBreakdown.volumeScore,
-        socialScore: result.scoreBreakdown.socialScore,
-        botDetectionScore: result.scoreBreakdown.botDetectionScore,
-        smartMoneyScore: result.scoreBreakdown.smartMoneyScore,
-        teamScore: result.scoreBreakdown.teamScore,
-        pricePatternScore: result.scoreBreakdown.pricePatternScore,
-        historicalHoldersScore: result.scoreBreakdown.historicalHoldersScore,
-        liquidityDepthScore: result.scoreBreakdown.liquidityDepthScore,
-        crossChainScore: result.scoreBreakdown.crossChainScore,
-        competitorScore: result.scoreBreakdown.competitorScore,
-        rugCheckScore: result.scoreBreakdown.rugCheckScore,
-        dexScreenerScore: result.scoreBreakdown.dexScreenerScore,
-        birdeyeScore: result.scoreBreakdown.birdeyeScore,
-        jupiterScore: result.scoreBreakdown.jupiterScore,
+          // Score breakdown
+          baseSecurityScore: result.scoreBreakdown.baseSecurityScore,
+          newWalletScore: result.scoreBreakdown.newWalletScore,
+          insiderScore: result.scoreBreakdown.insiderScore,
+          volumeScore: result.scoreBreakdown.volumeScore,
+          socialScore: result.scoreBreakdown.socialScore,
+          botDetectionScore: result.scoreBreakdown.botDetectionScore,
+          smartMoneyScore: result.scoreBreakdown.smartMoneyScore,
+          teamScore: result.scoreBreakdown.teamScore,
+          pricePatternScore: result.scoreBreakdown.pricePatternScore,
+          historicalHoldersScore: result.scoreBreakdown.historicalHoldersScore,
+          liquidityDepthScore: result.scoreBreakdown.liquidityDepthScore,
+          crossChainScore: result.scoreBreakdown.crossChainScore,
+          competitorScore: result.scoreBreakdown.competitorScore,
+          rugCheckScore: result.scoreBreakdown.rugCheckScore,
+          dexScreenerScore: result.scoreBreakdown.dexScreenerScore,
+          birdeyeScore: result.scoreBreakdown.birdeyeScore,
+          jupiterScore: result.scoreBreakdown.jupiterScore,
 
-        // Key metrics from sub-analyses
-        walletsUnder10Days: result.newWalletAnalysis.walletsUnder10Days,
-        percentageNewWallets: result.newWalletAnalysis.percentageNewWallets,
-        insiderWallets: result.insiderAnalysis.insiderWallets,
-        insiderProfitTaking: result.insiderAnalysis.insiderProfitTaking,
-        realVolume24h: result.volumeAnalysis.realVolume,
-        fakeVolumePercent: result.volumeAnalysis.fakeVolumePercent,
-        totalBots: result.botDetection.totalBots,
-        botPercent: result.botDetection.botPercent,
-        smartMoneySignal: result.smartMoneyAnalysis.signal,
-        teamTokensLocked: result.teamAnalysis.teamTokensLocked,
-        pricePattern: result.pricePattern.pattern,
-        liquidityHealth: result.liquidityDepth.liquidityHealth,
+          // Key metrics from sub-analyses
+          walletsUnder10Days: result.newWalletAnalysis.walletsUnder10Days,
+          percentageNewWallets: result.newWalletAnalysis.percentageNewWallets,
+          insiderWallets: result.insiderAnalysis.insiderWallets,
+          insiderProfitTaking: result.insiderAnalysis.insiderProfitTaking,
+          realVolume24h: result.volumeAnalysis.realVolume,
+          fakeVolumePercent: result.volumeAnalysis.fakeVolumePercent,
+          totalBots: result.botDetection.totalBots,
+          botPercent: result.botDetection.botPercent,
+          smartMoneySignal: result.smartMoneyAnalysis.signal,
+          teamTokensLocked: result.teamAnalysis.teamTokensLocked,
+          pricePattern: result.pricePattern.pattern,
+          liquidityHealth: result.liquidityDepth.liquidityHealth,
 
-        // Red flags and green flags
-        totalRedFlags: result.allRedFlags.length,
-        criticalRedFlags: result.allRedFlags.filter(f => f.severity === 'CRITICAL').length,
-        highRedFlags: result.allRedFlags.filter(f => f.severity === 'HIGH').length,
-        totalGreenFlags: result.greenFlags.length,
+          // Red flags and green flags
+          totalRedFlags: result.allRedFlags.length,
+          criticalRedFlags: result.allRedFlags.filter((f) => f.severity === 'CRITICAL').length,
+          highRedFlags: result.allRedFlags.filter((f) => f.severity === 'HIGH').length,
+          totalGreenFlags: result.greenFlags.length,
 
-        // Full data as JSON
-        fullDataJson: result as any,
-        redFlagsJson: result.allRedFlags as any,
-        greenFlagsJson: result.greenFlags as any,
+          // Full data as JSON
+          fullDataJson: result as any,
+          redFlagsJson: result.allRedFlags as any,
+          greenFlagsJson: result.greenFlags as any,
 
-        // Timestamps
-        analyzedAt: new Date(),
-        analysisTimeMs: result.analysisTimeMs,
+          // Timestamps
+          analyzedAt: new Date(),
+          analysisTimeMs: result.analysisTimeMs,
 
-        // Analytics
-        viewCount: 1,
-        lastViewedAt: new Date(),
-      },
-      update: {
-        // Update all the same fields
-        tokenSymbol: result.tokenSymbol,
-        tokenName: result.tokenName,
-        superScore: result.superScore,
-        globalRiskLevel: result.globalRiskLevel,
-        recommendation: result.recommendation,
-        baseSecurityScore: result.scoreBreakdown.baseSecurityScore,
-        newWalletScore: result.scoreBreakdown.newWalletScore,
-        insiderScore: result.scoreBreakdown.insiderScore,
-        volumeScore: result.scoreBreakdown.volumeScore,
-        socialScore: result.scoreBreakdown.socialScore,
-        botDetectionScore: result.scoreBreakdown.botDetectionScore,
-        smartMoneyScore: result.scoreBreakdown.smartMoneyScore,
-        teamScore: result.scoreBreakdown.teamScore,
-        pricePatternScore: result.scoreBreakdown.pricePatternScore,
-        historicalHoldersScore: result.scoreBreakdown.historicalHoldersScore,
-        liquidityDepthScore: result.scoreBreakdown.liquidityDepthScore,
-        crossChainScore: result.scoreBreakdown.crossChainScore,
-        competitorScore: result.scoreBreakdown.competitorScore,
-        rugCheckScore: result.scoreBreakdown.rugCheckScore,
-        dexScreenerScore: result.scoreBreakdown.dexScreenerScore,
-        birdeyeScore: result.scoreBreakdown.birdeyeScore,
-        jupiterScore: result.scoreBreakdown.jupiterScore,
-        walletsUnder10Days: result.newWalletAnalysis.walletsUnder10Days,
-        percentageNewWallets: result.newWalletAnalysis.percentageNewWallets,
-        insiderWallets: result.insiderAnalysis.insiderWallets,
-        insiderProfitTaking: result.insiderAnalysis.insiderProfitTaking,
-        realVolume24h: result.volumeAnalysis.realVolume,
-        fakeVolumePercent: result.volumeAnalysis.fakeVolumePercent,
-        totalBots: result.botDetection.totalBots,
-        botPercent: result.botDetection.botPercent,
-        smartMoneySignal: result.smartMoneyAnalysis.signal,
-        teamTokensLocked: result.teamAnalysis.teamTokensLocked,
-        pricePattern: result.pricePattern.pattern,
-        liquidityHealth: result.liquidityDepth.liquidityHealth,
-        totalRedFlags: result.allRedFlags.length,
-        criticalRedFlags: result.allRedFlags.filter(f => f.severity === 'CRITICAL').length,
-        highRedFlags: result.allRedFlags.filter(f => f.severity === 'HIGH').length,
-        totalGreenFlags: result.greenFlags.length,
-        fullDataJson: result as any,
-        redFlagsJson: result.allRedFlags as any,
-        greenFlagsJson: result.greenFlags as any,
-        analyzedAt: new Date(),
-        analysisTimeMs: result.analysisTimeMs,
-      },
-    }).catch((err) => {
-      // If table doesn't exist, skip database save
-      logger.warn('Super Token Analysis table not found, skipping DB save', { error: String(err) });
-    });
+          // Analytics
+          viewCount: 1,
+          lastViewedAt: new Date(),
+        },
+        update: {
+          // Update all the same fields
+          tokenSymbol: result.tokenSymbol,
+          tokenName: result.tokenName,
+          superScore: result.superScore,
+          globalRiskLevel: result.globalRiskLevel,
+          recommendation: result.recommendation,
+          baseSecurityScore: result.scoreBreakdown.baseSecurityScore,
+          newWalletScore: result.scoreBreakdown.newWalletScore,
+          insiderScore: result.scoreBreakdown.insiderScore,
+          volumeScore: result.scoreBreakdown.volumeScore,
+          socialScore: result.scoreBreakdown.socialScore,
+          botDetectionScore: result.scoreBreakdown.botDetectionScore,
+          smartMoneyScore: result.scoreBreakdown.smartMoneyScore,
+          teamScore: result.scoreBreakdown.teamScore,
+          pricePatternScore: result.scoreBreakdown.pricePatternScore,
+          historicalHoldersScore: result.scoreBreakdown.historicalHoldersScore,
+          liquidityDepthScore: result.scoreBreakdown.liquidityDepthScore,
+          crossChainScore: result.scoreBreakdown.crossChainScore,
+          competitorScore: result.scoreBreakdown.competitorScore,
+          rugCheckScore: result.scoreBreakdown.rugCheckScore,
+          dexScreenerScore: result.scoreBreakdown.dexScreenerScore,
+          birdeyeScore: result.scoreBreakdown.birdeyeScore,
+          jupiterScore: result.scoreBreakdown.jupiterScore,
+          walletsUnder10Days: result.newWalletAnalysis.walletsUnder10Days,
+          percentageNewWallets: result.newWalletAnalysis.percentageNewWallets,
+          insiderWallets: result.insiderAnalysis.insiderWallets,
+          insiderProfitTaking: result.insiderAnalysis.insiderProfitTaking,
+          realVolume24h: result.volumeAnalysis.realVolume,
+          fakeVolumePercent: result.volumeAnalysis.fakeVolumePercent,
+          totalBots: result.botDetection.totalBots,
+          botPercent: result.botDetection.botPercent,
+          smartMoneySignal: result.smartMoneyAnalysis.signal,
+          teamTokensLocked: result.teamAnalysis.teamTokensLocked,
+          pricePattern: result.pricePattern.pattern,
+          liquidityHealth: result.liquidityDepth.liquidityHealth,
+          totalRedFlags: result.allRedFlags.length,
+          criticalRedFlags: result.allRedFlags.filter((f) => f.severity === 'CRITICAL').length,
+          highRedFlags: result.allRedFlags.filter((f) => f.severity === 'HIGH').length,
+          totalGreenFlags: result.greenFlags.length,
+          fullDataJson: result as any,
+          redFlagsJson: result.allRedFlags as any,
+          greenFlagsJson: result.greenFlags as any,
+          analyzedAt: new Date(),
+          analysisTimeMs: result.analysisTimeMs,
+        },
+      })
+      .catch((err) => {
+        // If table doesn't exist, skip database save
+        logger.warn('Super Token Analysis table not found, skipping DB save', {
+          error: String(err),
+        });
+      });
 
     logger.info('✅ Super Token Score saved to database', { tokenAddress });
   } catch (error) {
-    logger.error('Failed to save Super Token Score to database', error instanceof Error ? error : undefined, {
-      tokenAddress,
-      error: String(error),
-    });
+    logger.error(
+      'Failed to save Super Token Score to database',
+      error instanceof Error ? error : undefined,
+      {
+        tokenAddress,
+        error: String(error),
+      }
+    );
     // Don't throw - analysis was successful even if DB save failed
   }
 }

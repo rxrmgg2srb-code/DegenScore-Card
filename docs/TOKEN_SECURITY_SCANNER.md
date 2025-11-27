@@ -88,6 +88,7 @@ Content-Type: application/json
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -169,6 +170,7 @@ Content-Type: application/json
 ## Example Analysis Results
 
 ### ✅ Safe Token
+
 - Security Score: 92
 - Authorities: Revoked
 - Liquidity: 500 SOL, LP burned
@@ -176,6 +178,7 @@ Content-Type: application/json
 - Age: 30+ days
 
 ### ⛔ Dangerous Token
+
 - Security Score: 15
 - Authorities: Mint & Freeze active
 - Liquidity: 3 SOL, LP not locked
@@ -201,6 +204,7 @@ Content-Type: application/json
 ## Support
 
 For issues or questions:
+
 - GitHub: https://github.com/rxrmgg2srb-code/DegenScore-Card
 - Documentation: /docs
 

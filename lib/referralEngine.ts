@@ -37,10 +37,10 @@ export interface ReferralStats {
 
 export enum ReferralTier {
   NONE = 'NONE',
-  INFLUENCER = 'INFLUENCER',        // 5 referrals
-  WHALE_HUNTER = 'WHALE_HUNTER',    // 25 referrals
-  VIRAL_KING = 'VIRAL_KING',        // 100 referrals
-  LEGEND = 'LEGEND',                // 500 referrals
+  INFLUENCER = 'INFLUENCER', // 5 referrals
+  WHALE_HUNTER = 'WHALE_HUNTER', // 25 referrals
+  VIRAL_KING = 'VIRAL_KING', // 100 referrals
+  LEGEND = 'LEGEND', // 500 referrals
 }
 
 export interface ReferralMilestone {
@@ -98,8 +98,8 @@ export const REFERRAL_MILESTONES: ReferralMilestone[] = [
 
 // Reward percentages by level
 export const REWARD_PERCENTAGES = {
-  LEVEL_1: 0.20, // 20%
-  LEVEL_2: 0.10, // 10%
+  LEVEL_1: 0.2, // 20%
+  LEVEL_2: 0.1, // 10%
   LEVEL_3: 0.05, // 5%
 };
 
@@ -177,10 +177,7 @@ export async function trackReferral(
 /**
  * Create multi-level referral relationships
  */
-async function createMultiLevelReferrals(
-  level1Referrer: string,
-  newUser: string
-): Promise<void> {
+async function createMultiLevelReferrals(level1Referrer: string, newUser: string): Promise<void> {
   // Find Level 1's referrer (would be Level 2 for new user)
   const level1Ref = await prisma.referral.findFirst({
     where: { referredAddress: level1Referrer },
@@ -215,10 +212,7 @@ async function createMultiLevelReferrals(
 /**
  * Award earnings to referrers when a referred user earns $DEGEN
  */
-export async function distributeReferralRewards(
-  userWallet: string,
-  amount: number
-): Promise<void> {
+export async function distributeReferralRewards(userWallet: string, amount: number): Promise<void> {
   try {
     // Find all referral relationships for this user
     const referrals = await prisma.referral.findMany({
@@ -244,14 +238,16 @@ export async function distributeReferralRewards(
       });
 
       // Log the reward
-      logger.info(
-        `💰 Referral reward: ${referral.referrerAddress} earned ${rewardAmount} $DEGEN`
-      );
+      logger.info(`💰 Referral reward: ${referral.referrerAddress} earned ${rewardAmount} $DEGEN`);
     }
   } catch (error) {
-    logger.error('Error distributing referral rewards', error instanceof Error ? error : undefined, {
-      error: String(error),
-    });
+    logger.error(
+      'Error distributing referral rewards',
+      error instanceof Error ? error : undefined,
+      {
+        error: String(error),
+      }
+    );
   }
 }
 
@@ -272,10 +268,7 @@ async function checkAndAwardMilestones(referrerAddress: string): Promise<void> {
 /**
  * Award a milestone to a user
  */
-async function awardMilestone(
-  wallet: string,
-  milestone: ReferralMilestone
-): Promise<void> {
+async function awardMilestone(wallet: string, milestone: ReferralMilestone): Promise<void> {
   // Award badge
   await prisma.badge.create({
     data: {
@@ -323,9 +316,8 @@ export async function getReferralStats(wallet: string): Promise<ReferralStats> {
   }
 
   // Find next milestone
-  const nextMilestone = REFERRAL_MILESTONES.find(
-    m => totalReferrals < m.requiredReferrals
-  ) || null;
+  const nextMilestone =
+    REFERRAL_MILESTONES.find((m) => totalReferrals < m.requiredReferrals) || null;
 
   return {
     totalReferrals,

@@ -28,6 +28,7 @@ npx prisma db push
 ```
 
 4. Deberías ver:
+
 ```
 ✔ Your database is now in sync with your Prisma schema.
 ```
@@ -49,6 +50,7 @@ npx prisma studio
 ```
 
 Y verifica que existen estas 3 tablas nuevas:
+
 - ✅ `ScoreHistory`
 - ✅ `UserFollows`
 - ✅ `NotificationPreferences`
@@ -82,7 +84,7 @@ Render no tiene HTTP cron jobs nativos. Usa uno de estos servicios GRATIS:
 3. Create New Cron Job:
    - **Title**: DegenScore Score History
    - **URL**: `https://tu-app.com/api/cron/record-scores`
-   - **Schedule**: Every 6 hours (0 */6 * * *)
+   - **Schedule**: Every 6 hours (0 _/6 _ \* \*)
    - **Method**: POST
    - **Custom Headers**:
      ```
@@ -195,6 +197,7 @@ Deberías recibir:
 **Problema**: La CRON_API_KEY no coincide
 
 **Solución**:
+
 1. Verifica en Render que `CRON_API_KEY` está correctamente configurada
 2. Verifica que en cron-job.org usas el mismo valor en el header
 
@@ -203,6 +206,7 @@ Deberías recibir:
 **Problema**: Las migraciones no se aplicaron
 
 **Solución**:
+
 ```bash
 # En Render Shell
 npx prisma db push --force-reset  # ⚠️ BORRA DATOS!
@@ -215,6 +219,7 @@ npx prisma db push
 **Problema**: Upstash Redis no configurado
 
 **Solución**:
+
 1. Ve a https://upstash.com
 2. Verifica que las variables están en Render:
    - `UPSTASH_REDIS_REST_URL`
@@ -223,11 +228,13 @@ npx prisma db push
 ### No veo el gráfico de scores
 
 **Causas posibles**:
+
 1. **El cron no ha corrido**: Espera 6 horas o ejecuta manualmente (paso 4.2)
 2. **Usuario no es premium**: El gráfico solo aparece para usuarios `isPaid: true`
 3. **No hay datos**: El cron guarda solo top 1000 usuarios premium
 
 **Solución**:
+
 ```bash
 # Verificar si hay datos en ScoreHistory
 # En Render Shell:

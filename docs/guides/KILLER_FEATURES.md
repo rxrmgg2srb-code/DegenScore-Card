@@ -35,11 +35,13 @@
 Obtener análisis existente.
 
 **Headers:**
+
 ```
 Authorization: Bearer <session_token>
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -76,11 +78,13 @@ Authorization: Bearer <session_token>
 Solicitar nuevo análisis (tarda 20-30 segundos).
 
 **Headers:**
+
 ```
 Authorization: Bearer <session_token>
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -94,7 +98,7 @@ Authorization: Bearer <session_token>
 ```tsx
 import AITradingCoach from '../components/AITradingCoach';
 
-<AITradingCoach />
+<AITradingCoach />;
 ```
 
 ### Variables de Entorno Requeridas:
@@ -130,6 +134,7 @@ OPENAI_API_KEY=sk-proj-...
 Obtener top whales (público, no requiere auth).
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -156,11 +161,13 @@ Obtener top whales (público, no requiere auth).
 Obtener alertas de whales seguidas (requiere auth).
 
 **Headers:**
+
 ```
 Authorization: Bearer <session_token>
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -187,12 +194,14 @@ Authorization: Bearer <session_token>
 Seguir una whale.
 
 **Headers:**
+
 ```
 Authorization: Bearer <session_token>
 Content-Type: application/json
 ```
 
 **Body:**
+
 ```json
 {
   "whaleWalletId": "whale_abc123"
@@ -204,12 +213,14 @@ Content-Type: application/json
 Dejar de seguir una whale.
 
 **Headers:**
+
 ```
 Authorization: Bearer <session_token>
 Content-Type: application/json
 ```
 
 **Body:**
+
 ```json
 {
   "whaleWalletId": "whale_abc123"
@@ -221,6 +232,7 @@ Content-Type: application/json
 Obtener whales seguidas.
 
 **Headers:**
+
 ```
 Authorization: Bearer <session_token>
 ```
@@ -230,7 +242,7 @@ Authorization: Bearer <session_token>
 ```tsx
 import WhaleRadar from '../components/WhaleRadar';
 
-<WhaleRadar />
+<WhaleRadar />;
 ```
 
 ### Integración en Trading:
@@ -271,6 +283,7 @@ await processTradeForWhaleDetection(walletAddress, {
    - Copiar el token
 
 2. **Configurar webhook:**
+
    ```bash
    curl -X POST "https://api.telegram.org/bot<TOKEN>/setWebhook" \
      -H "Content-Type: application/json" \
@@ -285,12 +298,15 @@ await processTradeForWhaleDetection(walletAddress, {
 ### Comandos Disponibles:
 
 #### `/start`
+
 Mensaje de bienvenida y guía de inicio.
 
 #### `/link`
+
 Instrucciones para vincular wallet de Solana.
 
 Proceso:
+
 1. Usuario usa `/link` en Telegram
 2. Bot muestra código único (su Telegram ID)
 3. Usuario va a web app → Telegram Link
@@ -298,9 +314,11 @@ Proceso:
 5. ¡Vinculado!
 
 #### `/score`
+
 Ver DegenScore y stats de trading.
 
 Ejemplo de respuesta:
+
 ```
 📊 Tu DegenScore
 
@@ -319,9 +337,11 @@ Ejemplo de respuesta:
 ```
 
 #### `/challenge`
+
 Ver desafíos diarios y progreso.
 
 Ejemplo:
+
 ```
 🎯 Desafíos Diarios
 
@@ -339,9 +359,11 @@ Ejemplo:
 ```
 
 #### `/whale`
+
 Ver actividad reciente de whales seguidas.
 
 Ejemplo:
+
 ```
 🐋 Actividad de Whales (últimas 24h)
 
@@ -355,9 +377,11 @@ Ejemplo:
 ```
 
 #### `/alerts`
+
 Ver estado de notificaciones.
 
 #### `/help`
+
 Ver todos los comandos disponibles.
 
 ### API Endpoints:
@@ -373,12 +397,14 @@ Configurado automáticamente con Telegram.
 Vincular Telegram con wallet.
 
 **Headers:**
+
 ```
 Authorization: Bearer <session_token>
 Content-Type: application/json
 ```
 
 **Body:**
+
 ```json
 {
   "telegramId": 123456789
@@ -391,10 +417,7 @@ Content-Type: application/json
 import { sendTelegramNotification } from '../lib/telegramBot';
 
 // Enviar notificación a un usuario
-await sendTelegramNotification(
-  telegramId,
-  '🐋 Whale ABC...XYZ compró 500 SOL de BONK!'
-);
+await sendTelegramNotification(telegramId, '🐋 Whale ABC...XYZ compró 500 SOL de BONK!');
 ```
 
 ### Notificar a Followers de Whale:
@@ -402,10 +425,7 @@ await sendTelegramNotification(
 ```tsx
 import { notifyWhaleFollowers } from '../lib/telegramBot';
 
-await notifyWhaleFollowers(
-  whaleWalletId,
-  '🐋 Whale que sigues compró 500 SOL de BONK!'
-);
+await notifyWhaleFollowers(whaleWalletId, '🐋 Whale que sigues compró 500 SOL de BONK!');
 ```
 
 ---
@@ -421,6 +441,7 @@ Ejecutar en Supabase SQL Editor:
 ```
 
 Esto crea 5 nuevas tablas:
+
 1. AICoachAnalysis
 2. WhaleWallet
 3. WhaleAlert
@@ -450,6 +471,7 @@ curl -X POST "https://api.telegram.org/bot<TOKEN>/setWebhook" \
 ```
 
 Verificar webhook:
+
 ```bash
 curl "https://api.telegram.org/bot<TOKEN>/getWebhookInfo"
 ```
@@ -474,10 +496,12 @@ import WhaleRadar from '../components/WhaleRadar';
 ### AI Trading Coach:
 
 **Free:**
+
 - 1 análisis por semana
 - Todas las features
 
 **Premium:**
+
 - 1 análisis por día
 - Análisis históricos ilimitados
 - Exportar análisis como PDF
@@ -487,10 +511,12 @@ import WhaleRadar from '../components/WhaleRadar';
 ### Whale Tracking:
 
 **Free:**
+
 - Seguir hasta 5 whales
 - Alertas básicas
 
 **Premium:**
+
 - Seguir whales ilimitadas
 - Alertas push a Telegram
 - Análisis de correlación (qué tokens compran las whales)
@@ -501,10 +527,12 @@ import WhaleRadar from '../components/WhaleRadar';
 ### Telegram Bot:
 
 **Free:**
+
 - Todos los comandos básicos
 - Notificaciones limitadas (1 por hora)
 
 **Premium:**
+
 - Notificaciones ilimitadas real-time
 - Comandos avanzados (/predict, /copy)
 - Priority support
@@ -541,15 +569,18 @@ import WhaleRadar from '../components/WhaleRadar';
 ### Impacto Estimado:
 
 **Sin killer features:**
+
 - DAU/MAU: ~45-60%
 - Premium conversion: ~2-3%
 
 **Con killer features:**
+
 - DAU/MAU: ~65-80% (AI + Telegram)
 - Premium conversion: ~5-8% (valor claro)
 - Viral coefficient: 1.3-1.5 (Telegram sharing)
 
 **ROI:**
+
 - Tiempo de implementación: ~3-4 días
 - Aumento de revenue: +80-120%
 - Payback: <2 semanas

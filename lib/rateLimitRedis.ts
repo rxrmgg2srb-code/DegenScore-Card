@@ -74,9 +74,7 @@ export interface RateLimitOptions {
 // MAIN RATE LIMITING FUNCTION
 // ============================================================================
 
-export async function checkRateLimit(
-  options: RateLimitOptions
-): Promise<RateLimitResult> {
+export async function checkRateLimit(options: RateLimitOptions): Promise<RateLimitResult> {
   try {
     const { identifier, endpoint = 'default', isPremium = false } = options;
 
@@ -173,16 +171,12 @@ export function rateLimitMiddleware(
   endpoint?: string,
   getIdentifier?: (req: NextApiRequest) => string
 ) {
-  return async (
-    req: NextApiRequest,
-    res: NextApiResponse,
-    next?: () => void
-  ): Promise<void> => {
+  return async (req: NextApiRequest, res: NextApiResponse, next?: () => void): Promise<void> => {
     try {
       // Get identifier (IP or wallet)
       const identifier =
         getIdentifier?.(req) ||
-        req.headers['x-forwarded-for'] as string ||
+        (req.headers['x-forwarded-for'] as string) ||
         req.connection.remoteAddress ||
         'unknown';
 
@@ -261,7 +255,10 @@ async function checkPremiumStatus(req: NextApiRequest): Promise<boolean> {
       const cached = await redis.get(cacheKey);
 
       if (cached !== null) {
-        logger.debug('Premium status from cache', { walletAddress: walletAddress.slice(0, 8), isPremium: cached === '1' });
+        logger.debug('Premium status from cache', {
+          walletAddress: walletAddress.slice(0, 8),
+          isPremium: cached === '1',
+        });
         return cached === '1';
       }
     }
@@ -306,19 +303,14 @@ async function checkPremiumStatus(req: NextApiRequest): Promise<boolean> {
 /**
  * Manually reset rate limit for a user (admin function)
  */
-export async function resetRateLimit(
-  identifier: string,
-  endpoint?: string
-): Promise<void> {
+export async function resetRateLimit(identifier: string, endpoint?: string): Promise<void> {
   if (!isRedisEnabled || !redis) {
     logger.warn('Redis not available, cannot reset rate limit');
     return;
   }
 
   try {
-    const key = endpoint
-      ? `ratelimit:${endpoint}:${identifier}`
-      : `ratelimit:*:${identifier}`;
+    const key = endpoint ? `ratelimit:${endpoint}:${identifier}` : `ratelimit:*:${identifier}`;
 
     if (endpoint) {
       await redis.del(key);
@@ -468,10 +460,7 @@ export async function rateLimit(
  * Strict rate limiting for expensive operations (analyze, generate-card)
  * Lower limits than default
  */
-export async function strictRateLimit(
-  req: NextApiRequest,
-  res: NextApiResponse
-): Promise<boolean> {
+export async function strictRateLimit(req: NextApiRequest, res: NextApiResponse): Promise<boolean> {
   return rateLimit(req, res, { endpoint: 'generate-card' });
 }
 

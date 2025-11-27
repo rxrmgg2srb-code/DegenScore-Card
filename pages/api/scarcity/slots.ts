@@ -4,10 +4,7 @@ import { logger } from '@/lib/logger';
 
 const MAX_PREMIUM_SLOTS = parseInt(process.env.NEXT_PUBLIC_MAX_PREMIUM_SLOTS || '1000');
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
   }

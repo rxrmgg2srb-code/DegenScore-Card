@@ -1,3 +1,5 @@
+import Link from 'next/link';
+
 export function CTASection() {
   return (
     <div className="bg-gradient-to-r from-purple-900/40 via-pink-900/40 to-purple-900/40 backdrop-blur-xl rounded-3xl p-12 border-2 border-purple-500/50 shadow-[0_0_60px_rgba(168,85,247,0.4)] mb-16 text-center">
@@ -6,7 +8,8 @@ export function CTASection() {
       </h2>
 
       <p className="text-gray-300 text-xl md:text-2xl max-w-3xl mx-auto mb-8">
-        Join <span className="text-cyan-400 font-black">10,000+ traders</span> who've generated their DegenScore cards
+        Join <span className="text-cyan-400 font-black">10,000+ traders</span> who&apos;ve
+        generated their DegenScore cards
       </p>
 
       <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
@@ -21,12 +24,12 @@ export function CTASection() {
           </span>
         </button>
 
-        <a
+        <Link
           href="/leaderboard"
           className="px-8 py-4 bg-gray-800/80 hover:bg-gray-700/80 border-2 border-purple-400 text-white font-bold text-xl rounded-2xl transition-all hover:scale-105"
         >
           🏆 View Leaderboard
-        </a>
+        </Link>
       </div>
 
       <div className="mt-8 text-gray-400 text-sm">

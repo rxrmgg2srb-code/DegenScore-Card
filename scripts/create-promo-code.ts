@@ -36,7 +36,6 @@ async function main() {
     console.log('   Expires At:', promoCode.expiresAt || 'Never');
     console.log('');
     console.log('🎉 Users can now use code "DEGENLAUNCH2024" to get free premium access!');
-
   } catch (error) {
     console.error('❌ Error creating promo code:', error);
     throw error;

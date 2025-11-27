@@ -2,10 +2,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { prisma } from '../../lib/prisma';
 import { logger } from '@/lib/logger';
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -26,14 +23,18 @@ export default async function handler(
         actualTier = subscription.tier;
 
         // Verificar si la suscripción PRO expiró
-        if (subscription.tier === 'PRO' && subscription.expiresAt && subscription.expiresAt <= new Date()) {
+        if (
+          subscription.tier === 'PRO' &&
+          subscription.expiresAt &&
+          subscription.expiresAt <= new Date()
+        ) {
           // Downgrade automático a PREMIUM (pagas una vez, tienes acceso permanente con delay)
           await prisma.subscription.update({
             where: { walletAddress: walletAddress as string },
             data: {
               tier: 'PREMIUM',
-              expiresAt: null // Acceso permanente a PREMIUM
-            }
+              expiresAt: null, // Acceso permanente a PREMIUM
+            },
           });
           tier = 'PREMIUM';
           logger.info(`⬇️ Downgraded ${walletAddress} from PRO to PREMIUM (trial expired)`);
@@ -43,7 +44,7 @@ export default async function handler(
           // Si hay isPaid en la card, debería tener al menos PREMIUM
           const card = await prisma.degenCard.findUnique({
             where: { walletAddress: walletAddress as string },
-            select: { isPaid: true }
+            select: { isPaid: true },
           });
 
           if (card?.isPaid) {
@@ -57,8 +58,12 @@ export default async function handler(
 
     // 2. Calcular el delay según el tier (PLAN DE NEGOCIO)
     let delayHours = 72; // FREE: 72h delay
-    if (tier === 'PREMIUM') {delayHours = 6;} // PREMIUM: 6h delay (después del trial)
-    if (tier === 'PRO') {delayHours = 1;} // PRO: Near real-time (1h delay for safety)
+    if (tier === 'PREMIUM') {
+      delayHours = 6;
+    } // PREMIUM: 6h delay (después del trial)
+    if (tier === 'PRO') {
+      delayHours = 1;
+    } // PRO: Near real-time (1h delay for safety)
 
     const delayTimestamp = new Date(Date.now() - delayHours * 60 * 60 * 1000);
 
@@ -74,11 +79,12 @@ export default async function handler(
     });
 
     // 4. Formatear respuesta según tier
-    const formattedTrades = trades.map(trade => ({
+    const formattedTrades = trades.map((trade) => ({
       id: trade.id,
-      degen: tier === 'FREE'
-        ? `${trade.walletAddress.slice(0, 4)}...${trade.walletAddress.slice(-4)}`
-        : trade.displayName || trade.walletAddress,
+      degen:
+        tier === 'FREE'
+          ? `${trade.walletAddress.slice(0, 4)}...${trade.walletAddress.slice(-4)}`
+          : trade.displayName || trade.walletAddress,
       degenScore: trade.degenScore,
       type: trade.type,
       solAmount: tier === 'FREE' ? '???' : trade.solAmount.toFixed(2),
@@ -94,9 +100,13 @@ export default async function handler(
       delay: delayHours === 1 ? 'near real-time' : `${delayHours}h`,
       trades: formattedTrades,
       upgradeAvailable: tier !== 'PRO',
-      trialInfo: tier === 'PRO' ? 'Active 30-day trial' : tier === 'PREMIUM' ? 'Upgrade to PRO for real-time' : 'Upgrade to Premium for better access',
+      trialInfo:
+        tier === 'PRO'
+          ? 'Active 30-day trial'
+          : tier === 'PREMIUM'
+            ? 'Upgrade to PRO for real-time'
+            : 'Upgrade to Premium for better access',
     });
-
   } catch (error) {
     logger.error('❌ Error fetching hot feed:', error instanceof Error ? error : undefined, {
       error: String(error),
@@ -111,8 +121,14 @@ export default async function handler(
 function getTimeAgo(timestamp: Date): string {
   const seconds = Math.floor((Date.now() - timestamp.getTime()) / 1000);
 
-  if (seconds < 60) {return `${seconds}s ago`;}
-  if (seconds < 3600) {return `${Math.floor(seconds / 60)}m ago`;}
-  if (seconds < 86400) {return `${Math.floor(seconds / 3600)}h ago`;}
+  if (seconds < 60) {
+    return `${seconds}s ago`;
+  }
+  if (seconds < 3600) {
+    return `${Math.floor(seconds / 60)}m ago`;
+  }
+  if (seconds < 86400) {
+    return `${Math.floor(seconds / 3600)}h ago`;
+  }
   return `${Math.floor(seconds / 86400)}d ago`;
 }

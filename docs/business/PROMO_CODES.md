@@ -3,6 +3,7 @@
 ## Códigos Activos
 
 ### DEGENLAUNCH2024
+
 - **Descripción**: Promoción de lanzamiento - Acceso Premium Gratuito
 - **Beneficios**: Upgrade premium GRATIS (equivalente a 0.1 SOL)
 - **Límite de usos**: 100 usuarios
@@ -20,6 +21,7 @@
 ## Beneficios Premium
 
 Con un código promocional obtienes GRATIS:
+
 - ✅ Foto de perfil personalizada
 - ✅ Enlaces a redes sociales (Twitter & Telegram)
 - 🏆 Acceso al leaderboard
@@ -45,6 +47,7 @@ npx prisma studio
 ```
 
 Luego ve a la tabla `PromoCode` y crea un nuevo registro con:
+
 - `code`: El código (en mayúsculas, sin espacios)
 - `description`: Descripción del código
 - `maxUses`: Número máximo de usos (0 = ilimitado)

@@ -25,10 +25,7 @@ export const pusherServer = isPusherEnabled
 
 // Client-side Pusher (para componentes React)
 export function getPusherClient(): PusherClient | null {
-  if (
-    !process.env.NEXT_PUBLIC_PUSHER_KEY ||
-    !process.env.NEXT_PUBLIC_PUSHER_CLUSTER
-  ) {
+  if (!process.env.NEXT_PUBLIC_PUSHER_KEY || !process.env.NEXT_PUBLIC_PUSHER_CLUSTER) {
     return null;
   }
 
@@ -68,11 +65,7 @@ export const PusherEvents = {
 /**
  * Trigger event to channel
  */
-export async function triggerEvent(
-  channel: string,
-  event: string,
-  data: any
-): Promise<boolean> {
+export async function triggerEvent(channel: string, event: string, data: any): Promise<boolean> {
   if (!isPusherEnabled || !pusherServer) {
     logger.warn('Pusher not configured, skipping event:', { event });
     return false;
@@ -127,36 +120,23 @@ export const realtimeHelpers = {
     score: number;
     badges: number;
   }) {
-    return triggerEvent(
-      PusherChannels.GLOBAL_ACTIVITY,
-      PusherEvents.NEW_CARD,
-      cardData
-    );
+    return triggerEvent(PusherChannels.GLOBAL_ACTIVITY, PusherEvents.NEW_CARD, cardData);
   },
 
   /**
    * Notificar like en card
    */
-  async notifyCardLiked(data: {
-    walletAddress: string;
-    totalLikes: number;
-  }) {
-    return triggerEvent(
-      PusherChannels.GLOBAL_ACTIVITY,
-      PusherEvents.CARD_LIKED,
-      data
-    );
+  async notifyCardLiked(data: { walletAddress: string; totalLikes: number }) {
+    return triggerEvent(PusherChannels.GLOBAL_ACTIVITY, PusherEvents.CARD_LIKED, data);
   },
 
   /**
    * Notificar actualización de leaderboard
    */
   async notifyLeaderboardUpdate(leaderboardData: any[]) {
-    return triggerEvent(
-      PusherChannels.LEADERBOARD,
-      PusherEvents.LEADERBOARD_UPDATE,
-      { leaderboard: leaderboardData }
-    );
+    return triggerEvent(PusherChannels.LEADERBOARD, PusherEvents.LEADERBOARD_UPDATE, {
+      leaderboard: leaderboardData,
+    });
   },
 
   /**
@@ -192,26 +172,14 @@ export const realtimeHelpers = {
     amount: number;
     value: number;
   }) {
-    return triggerEvent(
-      PusherChannels.HOT_FEED,
-      PusherEvents.HOT_WALLET_TRADE,
-      data
-    );
+    return triggerEvent(PusherChannels.HOT_FEED, PusherEvents.HOT_WALLET_TRADE, data);
   },
 
   /**
    * Notificar nuevo badge ganado
    */
-  async notifyBadgeEarned(data: {
-    walletAddress: string;
-    badgeName: string;
-    badgeType: string;
-  }) {
-    return triggerEvent(
-      PusherChannels.GLOBAL_ACTIVITY,
-      PusherEvents.BADGE_EARNED,
-      data
-    );
+  async notifyBadgeEarned(data: { walletAddress: string; badgeName: string; badgeType: string }) {
+    return triggerEvent(PusherChannels.GLOBAL_ACTIVITY, PusherEvents.BADGE_EARNED, data);
   },
 
   /**

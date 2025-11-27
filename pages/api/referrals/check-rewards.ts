@@ -39,10 +39,7 @@ const REFERRAL_REWARDS = [
   },
 ];
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -87,7 +84,7 @@ export default async function handler(
 
     // Determine which rewards are unlocked
     const unlockedRewards = REFERRAL_REWARDS.filter(
-      reward => paidReferralsCount >= reward.minReferrals
+      (reward) => paidReferralsCount >= reward.minReferrals
     );
 
     // Check current user state
@@ -106,7 +103,7 @@ export default async function handler(
     const claimableRewards = [];
     for (const reward of unlockedRewards) {
       // Check if badge already awarded
-      const hasBadge = card?.badges.some(b => b.name === reward.badge);
+      const hasBadge = card?.badges.some((b) => b.name === reward.badge);
 
       if (!hasBadge) {
         claimableRewards.push(reward);
@@ -114,14 +111,12 @@ export default async function handler(
     }
 
     // Calculate next milestone
-    const nextReward = REFERRAL_REWARDS.find(
-      reward => paidReferralsCount < reward.minReferrals
-    );
+    const nextReward = REFERRAL_REWARDS.find((reward) => paidReferralsCount < reward.minReferrals);
 
     const response = {
       totalReferrals: referrals.length,
       paidReferrals: paidReferralsCount,
-      pendingReferrals: referrals.filter(r => !r.hasPaid).length,
+      pendingReferrals: referrals.filter((r) => !r.hasPaid).length,
       unlockedRewards,
       claimableRewards,
       nextMilestone: nextReward
@@ -146,9 +141,7 @@ export default async function handler(
       error: String(error),
     });
     res.status(500).json({
-      error: process.env.NODE_ENV === 'development'
-        ? error.message
-        : 'Failed to check rewards',
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Failed to check rewards',
     });
   }
 }

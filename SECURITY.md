@@ -5,6 +5,7 @@
 DegenScore Card takes security seriously. This document outlines our security practices, implemented protections, and how to report vulnerabilities.
 
 **Security Score: 90/100** (Excellent)
+
 - ✅ All critical vulnerabilities resolved
 - ✅ OWASP Top 10 compliant
 - ✅ Web3 security best practices implemented
@@ -16,27 +17,31 @@ DegenScore Card takes security seriously. This document outlines our security pr
 ### 1. Authentication & Authorization
 
 #### ✅ Cryptographic Wallet Authentication
+
 - **Challenge-Response Protocol**: 5-minute expiration window
 - **Digital Signature Verification**: TweetNaCl (ed25519)
 - **JWT Session Management**: HS256, 7-day expiration
 - **Replay Attack Protection**: Redis-based nonce tracking
 
 **Implementation:**
+
 ```typescript
 // lib/walletAuth.ts
-- generateAuthChallenge()  // Creates time-bound challenge
-- verifyWalletSignature()  // Cryptographic verification
-- verifyAuthentication()   // With replay protection
-- generateSessionToken()   // Secure JWT issuance
+-generateAuthChallenge() - // Creates time-bound challenge
+  verifyWalletSignature() - // Cryptographic verification
+  verifyAuthentication() - // With replay protection
+  generateSessionToken(); // Secure JWT issuance
 ```
 
 **Security Features:**
+
 - ✅ No password storage (wallet-based auth)
 - ✅ Nonce single-use enforcement (prevents replay)
 - ✅ Timestamp validation (5-minute window)
 - ✅ Server-only JWT secret (never exposed to client)
 
 #### ✅ JWT Security
+
 - **Secret Storage**: Server-only environment variable
 - **Minimum Length**: 32 characters enforced
 - **Algorithm**: HS256 (HMAC-SHA256)
@@ -44,6 +49,7 @@ DegenScore Card takes security seriously. This document outlines our security pr
 - **No Fallback Secrets**: Fail-fast if misconfigured
 
 **Critical Fix Applied:**
+
 ```typescript
 // ❌ BEFORE (VULNERABLE):
 const secret = process.env.NEXT_PUBLIC_JWT_SECRET; // EXPOSED TO CLIENT!
@@ -56,7 +62,7 @@ if (!secret || secret.length < 32) {
 }
 const payload = jwt.verify(token, secret, {
   algorithms: ['HS256'],
-  issuer: 'degenscore-card'
+  issuer: 'degenscore-card',
 });
 ```
 
@@ -65,6 +71,7 @@ const payload = jwt.verify(token, secret, {
 ### 2. Payment Verification
 
 #### ✅ Multi-Layer Transaction Verification
+
 Our payment verification is one of the most robust in the Web3 ecosystem:
 
 1. **On-Chain Signature Verification**
@@ -85,6 +92,7 @@ Our payment verification is one of the most robust in the Web3 ecosystem:
    - Accounts for transaction fees
 
 **Implementation:**
+
 ```typescript
 // pages/api/verify-payment.ts
 
@@ -92,14 +100,13 @@ Our payment verification is one of the most robust in the Web3 ecosystem:
 const txInfo = await connection.getTransaction(signature);
 
 // 2. Verify sender and treasury in transaction
-const senderIndex = accountKeys.findIndex(k => k.equals(senderPubkey));
-const treasuryIndex = accountKeys.findIndex(k => k.equals(treasuryPubkey));
+const senderIndex = accountKeys.findIndex((k) => k.equals(senderPubkey));
+const treasuryIndex = accountKeys.findIndex((k) => k.equals(treasuryPubkey));
 
 // 3. Validate balance changes
-const senderLost = txInfo.meta.preBalances[senderIndex] -
-                   txInfo.meta.postBalances[senderIndex];
-const treasuryGained = txInfo.meta.postBalances[treasuryIndex] -
-                       txInfo.meta.preBalances[treasuryIndex];
+const senderLost = txInfo.meta.preBalances[senderIndex] - txInfo.meta.postBalances[senderIndex];
+const treasuryGained =
+  txInfo.meta.postBalances[treasuryIndex] - txInfo.meta.preBalances[treasuryIndex];
 
 // 4. Atomic database update with duplicate check
 await prisma.$transaction(async (tx) => {
@@ -116,6 +123,7 @@ await prisma.$transaction(async (tx) => {
 ```
 
 **Attack Vectors Prevented:**
+
 - ✅ Fake transactions (on-chain verification)
 - ✅ Double-spend (database unique constraint)
 - ✅ Amount manipulation (balance validation)
@@ -128,6 +136,7 @@ await prisma.$transaction(async (tx) => {
 #### ✅ Distributed Redis-Based Rate Limiting
 
 **Features:**
+
 - **Multi-Instance Support**: Works across horizontal scaling
 - **Sliding Window Algorithm**: More accurate than fixed windows
 - **Premium Tier Support**: Higher limits for paid users
@@ -135,19 +144,20 @@ await prisma.$transaction(async (tx) => {
 - **Per-Endpoint Configuration**: Different limits per operation
 
 **Configuration:**
+
 ```typescript
 // lib/rateLimitRedis.ts
 export const RATE_LIMITS = {
   analyze: {
-    free: { requests: 10, window: 60 },    // 10/min
+    free: { requests: 10, window: 60 }, // 10/min
     premium: { requests: 100, window: 60 }, // 100/min
   },
   'generate-card': {
-    free: { requests: 5, window: 60 },     // 5/min (expensive)
+    free: { requests: 5, window: 60 }, // 5/min (expensive)
     premium: { requests: 50, window: 60 },
   },
   payment: {
-    free: { requests: 3, window: 60 },     // 3/min (security)
+    free: { requests: 3, window: 60 }, // 3/min (security)
     premium: { requests: 10, window: 60 },
   },
   // ... more endpoints
@@ -155,6 +165,7 @@ export const RATE_LIMITS = {
 ```
 
 **Premium Status Caching:**
+
 - Queries database for subscription status
 - Caches in Redis with 5-minute TTL
 - Graceful degradation if Redis unavailable
@@ -166,23 +177,26 @@ export const RATE_LIMITS = {
 #### ✅ Multi-Layer Input Protection
 
 **XSS Prevention:**
+
 ```typescript
 // lib/sanitize.ts
-- sanitizeString()       // Removes HTML tags, script tags
-- sanitizeHTML()         // Strips all markup
-- sanitizeURL()          // Validates http/https only
-- sanitizeInput()        // Recursive object sanitization
+-sanitizeString() - // Removes HTML tags, script tags
+  sanitizeHTML() - // Strips all markup
+  sanitizeURL() - // Validates http/https only
+  sanitizeInput(); // Recursive object sanitization
 ```
 
 **Solana-Specific Validation:**
+
 ```typescript
 // lib/validation.ts
-- isValidSolanaAddress() // Public key validation
-- validateSignature()    // Base58 signature format
-- validateWalletAddress()// Alias for clarity
+-isValidSolanaAddress() - // Public key validation
+  validateSignature() - // Base58 signature format
+  validateWalletAddress(); // Alias for clarity
 ```
 
 **Database Protection:**
+
 - ✅ Prisma ORM (SQL injection prevention)
 - ✅ Parameterized queries
 - ✅ Type-safe operations
@@ -194,16 +208,18 @@ export const RATE_LIMITS = {
 #### ✅ Sensitive Data Redaction
 
 **Automatic Redaction:**
+
 ```typescript
 // lib/sanitize.ts
-- redactWallet()    // "So1a...3xYz" (first 4, last 4)
-- redactSignature() // "5KJx8..." (first 8 only)
-- redactToken()     // "eyJhbG..." (first 8 only)
-- redactEmail()     // "***@domain.com"
-- sanitizeForLog()  // Auto-redacts objects
+-redactWallet() - // "So1a...3xYz" (first 4, last 4)
+  redactSignature() - // "5KJx8..." (first 8 only)
+  redactToken() - // "eyJhbG..." (first 8 only)
+  redactEmail() - // "***@domain.com"
+  sanitizeForLog(); // Auto-redacts objects
 ```
 
 **Applied Everywhere:**
+
 ```typescript
 // ✅ Payment logs
 logger.info(`Verifying payment for: ${redactWallet(walletAddress)}`);
@@ -228,15 +244,15 @@ res.status(400).json({ error: 'Payment verification failed' }); // Generic
 headers: [
   {
     key: 'Strict-Transport-Security',
-    value: 'max-age=63072000; includeSubDomains; preload'
+    value: 'max-age=63072000; includeSubDomains; preload',
   },
   {
     key: 'X-Frame-Options',
-    value: 'SAMEORIGIN'
+    value: 'SAMEORIGIN',
   },
   {
     key: 'X-Content-Type-Options',
-    value: 'nosniff'
+    value: 'nosniff',
   },
   {
     key: 'Content-Security-Policy',
@@ -247,10 +263,10 @@ headers: [
       "img-src 'self' data: blob: https:",
       "connect-src 'self' https://api.mainnet-beta.solana.com",
       "object-src 'none'",
-      "base-uri 'self'"
-    ].join('; ')
-  }
-]
+      "base-uri 'self'",
+    ].join('; '),
+  },
+];
 ```
 
 ---
@@ -260,24 +276,27 @@ headers: [
 #### ✅ hCaptcha Integration
 
 Protects endpoints from bot abuse:
+
 - `/api/like` - Prevent like spam
 - `/api/generate-card` - Expensive operation
 - `/api/auth/challenge` - Auth spam prevention
 - `/api/follows/add` - Follow spam prevention
 
 **Usage:**
+
 ```typescript
 import { requireCaptcha } from '@/lib/captcha';
 
 export default async function handler(req, res) {
   // Require CAPTCHA if enabled
-  if (!await requireCaptcha(req, res)) return;
+  if (!(await requireCaptcha(req, res))) return;
 
   // ... rest of handler
 }
 ```
 
 **Environment Variables:**
+
 ```env
 CAPTCHA_ENABLED=true
 HCAPTCHA_SECRET=your_secret_key
@@ -289,6 +308,7 @@ NEXT_PUBLIC_HCAPTCHA_SITE_KEY=your_site_key
 ## 🔧 Environment Variables Security
 
 ### Required (Server-Only):
+
 ```env
 # Database
 DATABASE_URL=postgresql://...
@@ -308,6 +328,7 @@ UPSTASH_REDIS_TOKEN=...
 ```
 
 ### Optional:
+
 ```env
 # CAPTCHA (recommended for production)
 CAPTCHA_ENABLED=true
@@ -322,6 +343,7 @@ OPENAI_API_KEY=<your_key>
 ```
 
 ### ⚠️ NEVER Commit:
+
 - `.env` (git ignored)
 - `.env.local` (git ignored)
 - Any file containing secrets
@@ -333,17 +355,20 @@ OPENAI_API_KEY=<your_key>
 If you discover a security vulnerability, please follow responsible disclosure:
 
 ### DO:
+
 1. **Email**: security@degenscore.com (replace with actual)
 2. **Provide**: Detailed description, steps to reproduce, impact assessment
 3. **Wait**: 90 days for fix before public disclosure
 4. **Expect**: Response within 48 hours
 
 ### DON'T:
+
 - ❌ Publicly disclose before fix
 - ❌ Exploit in production
 - ❌ Access other users' data
 
 ### Bug Bounty:
+
 - 🏆 **Critical**: Up to $5,000
 - 🥈 **High**: Up to $2,000
 - 🥉 **Medium**: Up to $500
@@ -354,18 +379,21 @@ If you discover a security vulnerability, please follow responsible disclosure:
 ## 📊 Security Audit History
 
 ### Latest Audit: November 2025
+
 **Score**: 78/100 → 90/100
 **Auditor**: Internal comprehensive review
 **Critical Issues Found**: 2
 **Status**: ✅ All resolved
 
 **Findings:**
+
 1. ✅ JWT secret exposure (CVSS 9.8) - FIXED
 2. ✅ Replay attack vulnerability (CVSS 7.5) - FIXED
 3. ✅ Rate limiting not distributed (CVSS 6.5) - FIXED
 4. ✅ Verbose logging (CVSS 4.3) - FIXED
 
 **Remaining Recommendations:**
+
 - Implement CAPTCHA (added as optional)
 - WebSocket for real-time (roadmap)
 - Multi-sig treasury (roadmap)
@@ -376,6 +404,7 @@ If you discover a security vulnerability, please follow responsible disclosure:
 ## 🔒 Best Practices for Contributors
 
 ### Code Security:
+
 1. **Never** hardcode secrets
 2. **Always** validate user input
 3. **Use** parameterized queries (Prisma)
@@ -383,18 +412,21 @@ If you discover a security vulnerability, please follow responsible disclosure:
 5. **Fail secure** on errors
 
 ### Auth & Crypto:
+
 1. **Never** store private keys
 2. **Always** verify signatures on-chain
 3. **Use** time-bound challenges
 4. **Implement** replay protection
 
 ### Database:
+
 1. **Use** transactions for multi-step operations
 2. **Add** unique constraints for critical data
 3. **Index** frequently queried fields
 4. **Soft delete** (never hard delete sensitive data)
 
 ### API:
+
 1. **Rate limit** all public endpoints
 2. **Require auth** for sensitive operations
 3. **Validate** all inputs
@@ -405,12 +437,14 @@ If you discover a security vulnerability, please follow responsible disclosure:
 ## 📚 Security Resources
 
 ### Standards Followed:
+
 - [OWASP Top 10](https://owasp.org/www-project-top-ten/)
 - [OWASP API Security](https://owasp.org/www-project-api-security/)
 - [Solana Security Best Practices](https://docs.solana.com/developing/programming-model/security)
 - [Web3 Security Guidelines](https://consensys.github.io/smart-contract-best-practices/)
 
 ### Tools Used:
+
 - TypeScript (type safety)
 - Prisma (SQL injection prevention)
 - ESLint (code quality)
@@ -424,6 +458,7 @@ If you discover a security vulnerability, please follow responsible disclosure:
 ## 📞 Contact
 
 For security concerns:
+
 - **Email**: security@degenscore.com
 - **Discord**: [Link to security channel]
 - **GitHub**: Create a private security advisory

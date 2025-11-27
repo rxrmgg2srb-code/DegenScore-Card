@@ -1,5 +1,5 @@
-const { createCanvas } = require("@napi-rs/canvas");
-const fs = require("fs");
+const { createCanvas } = require('@napi-rs/canvas');
+const fs = require('fs');
 
 const WIDTH = 1024;
 const HEIGHT = 1536;
@@ -17,11 +17,11 @@ function roundRect(ctx, x, y, w, h, r) {
 
 async function main() {
   const canvas = createCanvas(WIDTH, HEIGHT);
-  const ctx = canvas.getContext("2d");
+  const ctx = canvas.getContext('2d');
 
   const bg = ctx.createLinearGradient(0, 0, WIDTH, HEIGHT);
-  bg.addColorStop(0, "#060612");
-  bg.addColorStop(1, "#071226");
+  bg.addColorStop(0, '#060612');
+  bg.addColorStop(1, '#071226');
   ctx.fillStyle = bg;
   ctx.fillRect(0, 0, WIDTH, HEIGHT);
 
@@ -30,19 +30,19 @@ async function main() {
   const cardX = (WIDTH - cardW) / 2;
   const cardY = (HEIGHT - cardH) / 2;
 
-  ctx.fillStyle = "#34d399";
+  ctx.fillStyle = '#34d399';
   roundRect(ctx, cardX - 6, cardY - 6, cardW + 12, cardH + 12, 36);
 
-  ctx.fillStyle = "rgba(0,0,0,0.45)";
+  ctx.fillStyle = 'rgba(0,0,0,0.45)';
   roundRect(ctx, cardX, cardY, cardW, cardH, 28);
 
-  ctx.fillStyle = "#fff";
-  ctx.font = "bold 72px Sans";
-  ctx.fillText("98", cardX + 40, cardY + 120);
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 72px Sans';
+  ctx.fillText('98', cardX + 40, cardY + 120);
 
-  const buffer = canvas.toBuffer("image/png");
-  fs.writeFileSync("card.png", buffer);
-  console.log("card.png written");
+  const buffer = canvas.toBuffer('image/png');
+  fs.writeFileSync('card.png', buffer);
+  console.log('card.png written');
 }
 
 main().catch((e) => {

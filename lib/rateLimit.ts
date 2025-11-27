@@ -12,24 +12,27 @@ interface RateLimitStore {
 const store: RateLimitStore = {};
 
 // Optimized cleanup for high concurrency: every 5 minutes
-setInterval(() => {
-  const now = Date.now();
-  const keys = Object.keys(store);
+setInterval(
+  () => {
+    const now = Date.now();
+    const keys = Object.keys(store);
 
-  // Only clean if we have many entries (memory optimization)
-  if (keys.length > 500) {
-    let cleaned = 0;
-    keys.forEach((key) => {
-      if (store[key] && store[key].resetTime < now) {
-        delete store[key];
-        cleaned++;
+    // Only clean if we have many entries (memory optimization)
+    if (keys.length > 500) {
+      let cleaned = 0;
+      keys.forEach((key) => {
+        if (store[key] && store[key].resetTime < now) {
+          delete store[key];
+          cleaned++;
+        }
+      });
+      if (cleaned > 0) {
+        logger.info(`[RateLimit] Cleaned ${cleaned}/${keys.length} expired entries`);
       }
-    });
-    if (cleaned > 0) {
-      logger.info(`[RateLimit] Cleaned ${cleaned}/${keys.length} expired entries`);
     }
-  }
-}, 5 * 60 * 1000);
+  },
+  5 * 60 * 1000
+);
 
 function getClientIdentifier(req: NextApiRequest): string {
   // Try to get the real IP from various headers (for proxies/load balancers)

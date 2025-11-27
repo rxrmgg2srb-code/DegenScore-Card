@@ -11,12 +11,14 @@ Automatically formats code for consistency across the team.
 **Configuration**: `.prettierrc`
 
 **Usage**:
+
 ```bash
 npm run format              # Format all files
 npm run format:check        # Check formatting without modifying
 ```
 
 **Key Settings**:
+
 - Single quotes for strings
 - 2-space indentation
 - 100 character line width
@@ -30,12 +32,14 @@ Catches errors and enforces coding standards.
 **Configuration**: `.eslintrc.json`
 
 **Usage**:
+
 ```bash
 npm run lint                # Check for linting issues
 npm run lint:fix            # Auto-fix linting issues
 ```
 
 **Rules**:
+
 - TypeScript strict mode enabled
 - No `any` types (warnings)
 - No unused variables (except prefixed with `_`)
@@ -49,6 +53,7 @@ Ensures type safety across the codebase.
 **Configuration**: `tsconfig.json`
 
 **Usage**:
+
 ```bash
 npm run type-check          # Run TypeScript compiler checks
 ```
@@ -62,6 +67,7 @@ Runs quality checks before commits.
 **Configuration**: `.husky/` directory
 
 **Hooks**:
+
 - **pre-commit**: Runs `lint-staged` (lint + format on staged files)
 - **commit-msg**: Validates commit message format with `commitlint`
 
@@ -72,6 +78,7 @@ Only lints and formats files you're committing.
 **Configuration**: `package.json` (`lint-staged` section)
 
 **Actions**:
+
 - JS/TS files: ESLint fix → Prettier format
 - JSON/CSS/MD files: Prettier format
 
@@ -82,6 +89,7 @@ Enforces [Conventional Commits](https://www.conventionalcommits.org/) format.
 **Configuration**: `commitlint.config.js`
 
 **Valid Types**:
+
 - `feat`: New feature
 - `fix`: Bug fix
 - `docs`: Documentation
@@ -93,6 +101,7 @@ Enforces [Conventional Commits](https://www.conventionalcommits.org/) format.
 - `ci`: CI/CD changes
 
 **Examples**:
+
 ```bash
 feat: add leaderboard component
 fix: resolve wallet connection timeout
@@ -107,6 +116,7 @@ Ensures consistent editor settings across different IDEs.
 **Configuration**: `.editorconfig`
 
 **Settings**:
+
 - UTF-8 charset
 - LF line endings
 - 2-space indentation
@@ -173,6 +183,7 @@ npm run test            # Run tests
 **Auto-format on save** (recommended):
 
 **VS Code**:
+
 1. Install "Prettier - Code formatter" extension
 2. Add to `.vscode/settings.json`:
    ```json
@@ -183,12 +194,14 @@ npm run test            # Run tests
    ```
 
 **WebStorm/IntelliJ**:
+
 1. Settings → Languages & Frameworks → JavaScript → Prettier
 2. Check "On save"
 
 ### Writing Commits
 
 **Good commits** (will pass commitlint):
+
 ```bash
 feat: add leaderboard component
 fix(wallet): resolve connection timeout
@@ -197,6 +210,7 @@ test: add metrics engine unit tests
 ```
 
 **Bad commits** (will be rejected):
+
 ```bash
 Added new feature                    # Missing type
 feat: Add feature                    # Subject should be lowercase
@@ -206,16 +220,16 @@ WIP                                  # Not a valid type
 
 ## 🔧 Configuration Files
 
-| File | Purpose |
-|------|---------|
-| `.prettierrc` | Prettier formatting rules |
-| `.prettierignore` | Files to exclude from formatting |
-| `.eslintrc.json` | ESLint linting rules |
-| `.editorconfig` | Editor configuration |
-| `commitlint.config.js` | Commit message rules |
-| `.husky/pre-commit` | Pre-commit git hook |
-| `.husky/commit-msg` | Commit message validation hook |
-| `package.json` (lint-staged) | Staged files processing |
+| File                         | Purpose                          |
+| ---------------------------- | -------------------------------- |
+| `.prettierrc`                | Prettier formatting rules        |
+| `.prettierignore`            | Files to exclude from formatting |
+| `.eslintrc.json`             | ESLint linting rules             |
+| `.editorconfig`              | Editor configuration             |
+| `commitlint.config.js`       | Commit message rules             |
+| `.husky/pre-commit`          | Pre-commit git hook              |
+| `.husky/commit-msg`          | Commit message validation hook   |
+| `package.json` (lint-staged) | Staged files processing          |
 
 ## 🎯 Quality Standards
 
@@ -241,12 +255,14 @@ chmod +x .husky/pre-commit .husky/commit-msg
 ### Formatting conflicts with ESLint
 
 Prettier rules take precedence. If there's a conflict:
+
 1. Check if ESLint rule should be disabled (formatting rules should be in Prettier)
 2. Update `.eslintrc.json` to disable conflicting rule
 
 ### Commit rejected by commitlint
 
 Check the error message:
+
 ```bash
 # Example error:
 # ✖   subject may not be empty
@@ -254,6 +270,7 @@ Check the error message:
 ```
 
 Fix your commit message format:
+
 ```bash
 git commit -m "feat: your feature description"
 ```
@@ -261,6 +278,7 @@ git commit -m "feat: your feature description"
 ### Slow pre-commit hooks
 
 lint-staged only runs on staged files, but if you're committing many files:
+
 ```bash
 # Format the entire codebase once
 npm run format
@@ -273,6 +291,7 @@ git commit -m "style: format codebase"
 ### Skip hooks (emergency only)
 
 **Not recommended**, but in emergencies:
+
 ```bash
 git commit --no-verify -m "fix: emergency hotfix"
 ```

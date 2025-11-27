@@ -5,10 +5,7 @@ import { isValidSolanaAddress } from '../../lib/validation';
 import { strictRateLimit } from '../../lib/rateLimitRedis';
 import { logger } from '../../lib/logger';
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -35,7 +32,10 @@ export default async function handler(
     // PERFORMANCE: Timeout de 30 seconds optimizado para análisis rápido
     const metricsPromise = calculateAdvancedMetrics(walletAddress);
     const timeoutPromise = new Promise<never>((_, reject) =>
-      setTimeout(() => reject(new Error('Analysis timeout - wallet took too long to analyze')), 180000)
+      setTimeout(
+        () => reject(new Error('Analysis timeout - wallet took too long to analyze')),
+        180000
+      )
     );
 
     let metrics;
@@ -45,8 +45,9 @@ export default async function handler(
       if (error instanceof Error && error.message.includes('timeout')) {
         logger.warn('Wallet analysis timeout:', { walletAddress });
         return res.status(504).json({
-          error: 'El análisis está tomando demasiado tiempo. Por favor intenta de nuevo en unos minutos.',
-          details: 'Wallet analysis timeout'
+          error:
+            'El análisis está tomando demasiado tiempo. Por favor intenta de nuevo en unos minutos.',
+          details: 'Wallet analysis timeout',
         });
       }
       throw error;
@@ -55,24 +56,24 @@ export default async function handler(
     logger.info('✅ Analysis complete for wallet:', { walletAddress });
 
     // Validar que tenemos datos reales
-    if (!metrics || metrics.degenScore === 0 && metrics.totalTrades === 0) {
+    if (!metrics || (metrics.degenScore === 0 && metrics.totalTrades === 0)) {
       logger.warn('⚠️ Wallet has no trading activity or analysis returned default values:', {
         walletAddress,
         degenScore: metrics?.degenScore,
-        totalTrades: metrics?.totalTrades
+        totalTrades: metrics?.totalTrades,
       });
     } else {
       logger.info('📊 Metrics summary:', {
         degenScore: metrics.degenScore,
         totalTrades: metrics.totalTrades,
         profitLoss: metrics.profitLoss,
-        winRate: metrics.winRate
+        winRate: metrics.winRate,
       });
     }
 
     // 2. Generate badges usando la función encapsulada (MÁS LIMPIO)
     const badges = generateBadges(metrics); // <--- LÓGICA EXTRAÍDA AQUÍ
-    
+
     // Preparar respuesta con los datos reales
     const analysisData = {
       // Uso de Number() es redundante si TypeScript está configurado correctamente
@@ -106,19 +107,17 @@ export default async function handler(
     };
 
     res.status(200).json(analysisData);
-
   } catch (error: any) {
     logger.error('Error analyzing wallet:', error instanceof Error ? error : undefined, {
       error: String(error),
     });
 
     // Don't expose internal error details in production
-    const errorMessage = process.env.NODE_ENV === 'development'
-      ? error.message
-      : 'Failed to analyze wallet';
+    const errorMessage =
+      process.env.NODE_ENV === 'development' ? error.message : 'Failed to analyze wallet';
 
     res.status(500).json({
-      error: errorMessage
+      error: errorMessage,
     });
   }
 }

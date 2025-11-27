@@ -15,6 +15,7 @@ The project currently has **3 different rate limiting implementations**:
 **File:** `lib/rateLimitRedis.ts`
 
 ### Why Redis is Best:
+
 - ✅ **Persistent** across server restarts
 - ✅ **Fast** (sub-millisecond latency)
 - ✅ **Scalable** (works with multiple server instances)
@@ -28,6 +29,7 @@ The project currently has **3 different rate limiting implementations**:
 ### Step 1: Update API Endpoints
 
 **Before (in-memory):**
+
 ```typescript
 import { rateLimit } from '@/lib/rateLimit';
 
@@ -38,6 +40,7 @@ export default async function handler(req, res) {
 ```
 
 **After (Redis):**
+
 ```typescript
 import { checkRateLimit } from '@/lib/rateLimitRedis';
 
@@ -53,6 +56,7 @@ export default async function handler(req, res) {
 ### Step 2: Configure Redis
 
 Ensure Redis connection is configured in `.env.local`:
+
 ```bash
 UPSTASH_REDIS_URL=your-redis-url-here
 UPSTASH_REDIS_TOKEN=your-redis-token-here
@@ -61,6 +65,7 @@ UPSTASH_REDIS_TOKEN=your-redis-token-here
 ### Step 3: Remove Old Implementations (Optional)
 
 Once all endpoints are migrated:
+
 ```bash
 git rm lib/rateLimit.ts
 git rm lib/rateLimitPersistent.ts
@@ -71,37 +76,39 @@ git rm lib/rateLimitPersistent.ts
 ## Usage Examples
 
 ### Basic Rate Limiting
+
 ```typescript
 import { checkRateLimit, RATE_LIMITS } from '@/lib/rateLimitRedis';
 
 export default async function handler(req, res) {
   const identifier = req.socket.remoteAddress || 'unknown';
   const allowed = await checkRateLimit(identifier, 'api', RATE_LIMITS.BASIC);
-  
+
   if (!allowed) {
     return res.status(429).json({ error: 'Too many requests' });
   }
-  
+
   // Your API logic here
   res.json({ success: true });
 }
 ```
 
 ### Strict Rate Limiting (Expensive Operations)
+
 ```typescript
 import { checkRateLimitStrict } from '@/lib/rateLimitRedis';
 
 export default async function handler(req, res) {
   const identifier = req.socket.remoteAddress || 'unknown';
   const allowed = await checkRateLimitStrict(identifier, 'analyze');
-  
+
   if (!allowed) {
-    return res.status(429).json({ 
+    return res.status(429).json({
       error: 'Rate limit exceeded',
-      message: 'Please wait before analyzing another wallet'
+      message: 'Please wait before analyzing another wallet',
     });
   }
-  
+
   // Expensive operation
   const metrics = await analyzeWallet(req.body.wallet);
   res.json(metrics);
@@ -109,17 +116,18 @@ export default async function handler(req, res) {
 ```
 
 ### Wallet-Based Rate Limiting
+
 ```typescript
 import { checkRateLimit, RATE_LIMITS } from '@/lib/rateLimitRedis';
 
 export default async function handler(req, res) {
   const walletAddress = req.body.walletAddress;
   const allowed = await checkRateLimit(walletAddress, 'wallet-action', RATE_LIMITS.PER_USER);
-  
+
   if (!allowed) {
     return res.status(429).json({ error: 'Too many requests from this wallet' });
   }
-  
+
   // Your logic
   res.json({ success: true });
 }
@@ -146,6 +154,7 @@ RATE_LIMITS = {
 ## Current Usage in Codebase
 
 ### Endpoints Using In-Memory Rate Limiting:
+
 - `pages/api/analyze.ts`
 - `pages/api/generate-card.ts`
 - `pages/api/verify-payment.ts`
@@ -153,6 +162,7 @@ RATE_LIMITS = {
 **Action:** Migrate these to Redis implementation
 
 ### Endpoints Already Using Redis:
+
 - None yet (Redis implementation ready but not used)
 
 **Action:** Start using it!
@@ -161,20 +171,21 @@ RATE_LIMITS = {
 
 ## Benefits of Migration
 
-| Feature | In-Memory | Database | Redis |
-|---------|-----------|----------|-------|
-| Speed | ⚡ Fast | 🐌 Slow | ⚡ Fast |
-| Persistence | ❌ No | ✅ Yes | ✅ Yes |
-| Scalability | ❌ No | ⚠️ Limited | ✅ Yes |
-| Distributed | ❌ No | ⚠️ Limited | ✅ Yes |
-| Auto-cleanup | ⏱️ Manual | ⏱️ Manual | ✅ Auto |
-| Free Tier | ✅ Yes | ✅ Yes | ✅ Yes (Upstash) |
+| Feature      | In-Memory | Database   | Redis            |
+| ------------ | --------- | ---------- | ---------------- |
+| Speed        | ⚡ Fast   | 🐌 Slow    | ⚡ Fast          |
+| Persistence  | ❌ No     | ✅ Yes     | ✅ Yes           |
+| Scalability  | ❌ No     | ⚠️ Limited | ✅ Yes           |
+| Distributed  | ❌ No     | ⚠️ Limited | ✅ Yes           |
+| Auto-cleanup | ⏱️ Manual | ⏱️ Manual  | ✅ Auto          |
+| Free Tier    | ✅ Yes    | ✅ Yes     | ✅ Yes (Upstash) |
 
 ---
 
 ## Testing
 
 After migration, test with:
+
 ```bash
 # Send 100 requests rapidly
 for i in {1..100}; do
@@ -182,7 +193,8 @@ for i in {1..100}; do
 done
 ```
 
-Expected: 
+Expected:
+
 - First 60 requests succeed
 - Remaining 40 requests get 429 status
 

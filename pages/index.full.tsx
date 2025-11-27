@@ -4,41 +4,71 @@ import dynamic from 'next/dynamic';
 import { LanguageSelector } from '../components/LanguageSelector';
 
 // PERFORMANCE: Lazy loading de componentes pesados para reducir bundle inicial
-const HotFeedWidget = dynamic(() => import('../components/HotFeedWidget').catch(() => {
-  console.error('Failed to load HotFeedWidget');
-  return { default: () => <div className="h-96 bg-gray-800/30 rounded-lg p-4 text-center text-gray-400">Failed to load feed</div> };
-}), {
-  loading: () => <div className="h-96 bg-gray-800/30 animate-pulse rounded-lg" />,
-  ssr: false,
-});
+const HotFeedWidget = dynamic(
+  () =>
+    import('../components/HotFeedWidget').catch(() => {
+      console.error('Failed to load HotFeedWidget');
+      return {
+        default: () => (
+          <div className="h-96 bg-gray-800/30 rounded-lg p-4 text-center text-gray-400">
+            Failed to load feed
+          </div>
+        ),
+      };
+    }),
+  {
+    loading: () => <div className="h-96 bg-gray-800/30 animate-pulse rounded-lg" />,
+    ssr: false,
+  }
+);
 
-const GlobalStats = dynamic(() => import('../components/GlobalStats').then(mod => ({ default: mod.GlobalStats })).catch(() => {
-  console.error('Failed to load GlobalStats');
-  return { default: () => <div className="h-32 bg-gray-800/30 rounded-lg" /> };
-}), {
-  loading: () => <div className="h-32 bg-gray-800/30 animate-pulse rounded-lg" />,
-});
+const GlobalStats = dynamic(
+  () =>
+    import('../components/GlobalStats')
+      .then((mod) => ({ default: mod.GlobalStats }))
+      .catch(() => {
+        console.error('Failed to load GlobalStats');
+        return { default: () => <div className="h-32 bg-gray-800/30 rounded-lg" /> };
+      }),
+  {
+    loading: () => <div className="h-32 bg-gray-800/30 animate-pulse rounded-lg" />,
+  }
+);
 
-const LiveActivityFeed = dynamic(() => import('../components/LiveActivityFeed').then(mod => ({ default: mod.LiveActivityFeed })).catch(() => {
-  console.error('Failed to load LiveActivityFeed');
-  return { default: () => null };
-}), {
-  ssr: false,
-});
+const LiveActivityFeed = dynamic(
+  () =>
+    import('../components/LiveActivityFeed')
+      .then((mod) => ({ default: mod.LiveActivityFeed }))
+      .catch(() => {
+        console.error('Failed to load LiveActivityFeed');
+        return { default: () => null };
+      }),
+  {
+    ssr: false,
+  }
+);
 
-const OnboardingTour = dynamic(() => import('../components/OnboardingTour').catch(() => {
-  console.error('Failed to load OnboardingTour');
-  return { default: () => null };
-}), {
-  ssr: false,
-});
+const OnboardingTour = dynamic(
+  () =>
+    import('../components/OnboardingTour').catch(() => {
+      console.error('Failed to load OnboardingTour');
+      return { default: () => null };
+    }),
+  {
+    ssr: false,
+  }
+);
 
-const WeeklyChallengeBanner = dynamic(() => import('../components/WeeklyChallengeBanner').catch(() => {
-  console.error('Failed to load WeeklyChallengeBanner');
-  return { default: () => null };
-}), {
-  loading: () => <div className="h-24 bg-gray-800/30 animate-pulse rounded-lg" />,
-});
+const WeeklyChallengeBanner = dynamic(
+  () =>
+    import('../components/WeeklyChallengeBanner').catch(() => {
+      console.error('Failed to load WeeklyChallengeBanner');
+      return { default: () => null };
+    }),
+  {
+    loading: () => <div className="h-24 bg-gray-800/30 animate-pulse rounded-lg" />,
+  }
+);
 
 // KILLER FEATURES: AI Coach, Whale Radar, Engagement
 const StreakWidget = dynamic(() => Promise.resolve({ default: () => null }), {
@@ -141,7 +171,9 @@ export default function Home() {
           <div className="animate-slide-up">
             <div className="flex items-center gap-2 mb-4">
               <h2 className="text-3xl font-bold gradient-text-gold">🧠 AI Trading Coach</h2>
-              <span className="px-3 py-1 bg-purple-600 text-white text-xs font-bold rounded-full">NEW</span>
+              <span className="px-3 py-1 bg-purple-600 text-white text-xs font-bold rounded-full">
+                NEW
+              </span>
             </div>
             <AITradingCoach />
           </div>
@@ -150,7 +182,9 @@ export default function Home() {
           <div className="animate-slide-up">
             <div className="flex items-center gap-2 mb-4">
               <h2 className="text-3xl font-bold gradient-text-gold">🐋 Whale Tracking Radar</h2>
-              <span className="px-3 py-1 bg-blue-600 text-white text-xs font-bold rounded-full">NEW</span>
+              <span className="px-3 py-1 bg-blue-600 text-white text-xs font-bold rounded-full">
+                NEW
+              </span>
             </div>
             <WhaleRadar />
           </div>

@@ -12,7 +12,7 @@ describe('ScoreCard', () => {
   });
 
   it('renders progress bar with correct width', () => {
-    // We can't easily check computed styles in JSDOM for width %, 
+    // We can't easily check computed styles in JSDOM for width %,
     // but we can check if the element exists and has the style attribute
     const { container } = render(React.createElement('div', null, 'MockedComponent'));
     const progressBar = container.querySelector('.bg-yellow-500'); // Should be yellow for 50%

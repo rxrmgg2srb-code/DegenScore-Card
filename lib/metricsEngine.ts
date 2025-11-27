@@ -26,15 +26,15 @@ export interface Position {
   tokenSymbol?: string;
   entryTime: number;
   exitTime?: number;
-  buyAmount: number;      // SOL spent
-  sellAmount?: number;    // SOL received
+  buyAmount: number; // SOL spent
+  sellAmount?: number; // SOL received
   tokensBought: number;
   tokensSold?: number;
-  entryPrice: number;     // SOL per token
-  exitPrice?: number;     // SOL per token
-  profitLoss?: number;    // In SOL
+  entryPrice: number; // SOL per token
+  exitPrice?: number; // SOL per token
+  profitLoss?: number; // In SOL
   profitLossPercent?: number;
-  holdTime?: number;      // In seconds
+  holdTime?: number; // In seconds
   isOpen: boolean;
   isRug: boolean;
   isMoonshot: boolean;
@@ -94,7 +94,9 @@ export async function calculateAdvancedMetrics(
   try {
     logger.info('🔥 DegenScore Engine v2.0 - Professional Analysis Starting');
 
-    if (onProgress) {onProgress(5, '📡 Fetching transactions...');}
+    if (onProgress) {
+      onProgress(5, '📡 Fetching transactions...');
+    }
 
     const allTransactions = await fetchAllTransactions(walletAddress, onProgress);
 
@@ -106,11 +108,15 @@ export async function calculateAdvancedMetrics(
 
     logger.info(`📊 Total transactions fetched: ${allTransactions.length}`);
 
-    if (onProgress) {onProgress(75, '💱 Analyzing trades...');}
+    if (onProgress) {
+      onProgress(75, '💱 Analyzing trades...');
+    }
 
     // Extract all trades
     const trades = extractTrades(allTransactions, walletAddress);
-    logger.info(`✅ Extracted ${trades.length} valid trades from ${allTransactions.length} transactions`);
+    logger.info(
+      `✅ Extracted ${trades.length} valid trades from ${allTransactions.length} transactions`
+    );
 
     if (trades.length === 0) {
       logger.warn('⚠️ No valid SWAP trades found in transactions');
@@ -119,18 +125,24 @@ export async function calculateAdvancedMetrics(
       return getDefaultMetrics();
     }
 
-    if (onProgress) {onProgress(85, '📈 Building positions...');}
+    if (onProgress) {
+      onProgress(85, '📈 Building positions...');
+    }
 
     // Build positions from trades
     const positions = buildPositions(trades);
     logger.info(`📦 Built ${positions.length} positions`);
 
-    if (onProgress) {onProgress(95, '🎯 Calculating metrics...');}
+    if (onProgress) {
+      onProgress(95, '🎯 Calculating metrics...');
+    }
 
     // Calculate all metrics
     const metrics = calculateMetrics(trades, positions, allTransactions);
 
-    if (onProgress) {onProgress(100, '✅ Analysis complete!');}
+    if (onProgress) {
+      onProgress(100, '✅ Analysis complete!');
+    }
 
     return metrics;
   } catch (error) {
@@ -155,9 +167,9 @@ async function fetchAllTransactions(
   let consecutiveEmpty = 0;
   let consecutiveErrors = 0;
 
-  const MAX_BATCHES = 100;  // Reducido de 100 a 30 para evitar timeouts
+  const MAX_BATCHES = 100; // Reducido de 100 a 30 para evitar timeouts
   const BATCH_SIZE = 100;
-  const DELAY_MS = 300;     // Reducido de 100ms a 50ms para ser más rápido
+  const DELAY_MS = 300; // Reducido de 100ms a 50ms para ser más rápido
   const MAX_EMPTY = 3;
   const MAX_CONSECUTIVE_ERRORS = 5; // Stop if we get 5 errors in a row
 
@@ -172,7 +184,9 @@ async function fetchAllTransactions(
         before = batch[batch.length - 1]?.signature;
         consecutiveEmpty = 0;
         consecutiveErrors = 0; // Reset error counter on success
-        logger.info(`  ✓ Batch ${fetchCount + 1}: ${batch.length} txs (Total: ${allTransactions.length})`);
+        logger.info(
+          `  ✓ Batch ${fetchCount + 1}: ${batch.length} txs (Total: ${allTransactions.length})`
+        );
       } else {
         consecutiveEmpty++;
         consecutiveErrors = 0; // Reset error counter on successful empty response
@@ -188,19 +202,26 @@ async function fetchAllTransactions(
 
       const fetchProgress = 5 + Math.floor((fetchCount / MAX_BATCHES) * 65);
       if (onProgress) {
-        onProgress(fetchProgress, `📡 Batch ${fetchCount}/${MAX_BATCHES}... (${allTransactions.length} txs)`);
+        onProgress(
+          fetchProgress,
+          `📡 Batch ${fetchCount}/${MAX_BATCHES}... (${allTransactions.length} txs)`
+        );
       }
 
-      await new Promise(resolve => setTimeout(resolve, DELAY_MS));
+      await new Promise((resolve) => setTimeout(resolve, DELAY_MS));
     } catch (error: any) {
       consecutiveErrors++;
 
-      logger.error(`  ❌ Error batch ${fetchCount + 1}`, error instanceof Error ? error : undefined, {
-        error: String(error),
-        status: error?.status,
-        before: before ? `${before.substring(0, 20)}...` : 'none',
-        consecutiveErrors,
-      });
+      logger.error(
+        `  ❌ Error batch ${fetchCount + 1}`,
+        error instanceof Error ? error : undefined,
+        {
+          error: String(error),
+          status: error?.status,
+          before: before ? `${before.substring(0, 20)}...` : 'none',
+          consecutiveErrors,
+        }
+      );
 
       // If we're getting too many consecutive errors, stop trying
       if (consecutiveErrors >= MAX_CONSECUTIVE_ERRORS) {
@@ -216,7 +237,7 @@ async function fetchAllTransactions(
       }
 
       fetchCount++;
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise((resolve) => setTimeout(resolve, 500));
       continue;
     }
   }
@@ -228,10 +249,7 @@ async function fetchAllTransactions(
 // TRADE EXTRACTION
 // ============================================================================
 
-function extractTrades(
-  transactions: ParsedTransaction[],
-  walletAddress: string
-): Trade[] {
+function extractTrades(transactions: ParsedTransaction[], walletAddress: string): Trade[] {
   const trades: Trade[] = [];
 
   for (const tx of transactions) {
@@ -240,8 +258,12 @@ function extractTrades(
       continue;
     }
 
-    if (!tx.tokenTransfers || tx.tokenTransfers.length === 0) {continue;}
-    if (!tx.nativeTransfers || tx.nativeTransfers.length === 0) {continue;}
+    if (!tx.tokenTransfers || tx.tokenTransfers.length === 0) {
+      continue;
+    }
+    if (!tx.nativeTransfers || tx.nativeTransfers.length === 0) {
+      continue;
+    }
 
     // Calculate net SOL change for the wallet
     let solNet = 0;
@@ -255,18 +277,25 @@ function extractTrades(
     }
 
     // Ignore tiny swaps (dust)
-    if (Math.abs(solNet) < 0.001) {continue;}
+    if (Math.abs(solNet) < 0.001) {
+      continue;
+    }
 
     // Get token transfers involving this wallet
-    const tokenTransfers = tx.tokenTransfers.filter(t =>
-      t.mint !== SOL_MINT &&
-      (t.fromUserAccount === walletAddress || t.toUserAccount === walletAddress)
+    const tokenTransfers = tx.tokenTransfers.filter(
+      (t) =>
+        t.mint !== SOL_MINT &&
+        (t.fromUserAccount === walletAddress || t.toUserAccount === walletAddress)
     );
 
-    if (tokenTransfers.length === 0) {continue;}
+    if (tokenTransfers.length === 0) {
+      continue;
+    }
 
     const tokenTransfer = tokenTransfers[0];
-    if (!tokenTransfer) {continue;}
+    if (!tokenTransfer) {
+      continue;
+    }
 
     // Determine if this is a buy or sell
     // Buy = SOL goes out (negative solNet), tokens come in
@@ -274,16 +303,22 @@ function extractTrades(
     const isBuy = solNet < 0;
 
     const tokenAmount = isBuy
-      ? tokenTransfers.find(t => t.toUserAccount === walletAddress)?.tokenAmount || 0
-      : tokenTransfers.find(t => t.fromUserAccount === walletAddress)?.tokenAmount || 0;
+      ? tokenTransfers.find((t) => t.toUserAccount === walletAddress)?.tokenAmount || 0
+      : tokenTransfers.find((t) => t.fromUserAccount === walletAddress)?.tokenAmount || 0;
 
-    if (tokenAmount === 0) {continue;}
+    if (tokenAmount === 0) {
+      continue;
+    }
 
     const pricePerToken = Math.abs(solNet) / tokenAmount;
 
     // Sanity checks
-    if (pricePerToken > 1 || pricePerToken < 0.0000001) {continue;}
-    if (Math.abs(solNet) > 50) {continue;} // Ignore whale-sized swaps (likely arbitrage)
+    if (pricePerToken > 1 || pricePerToken < 0.0000001) {
+      continue;
+    }
+    if (Math.abs(solNet) > 50) {
+      continue;
+    } // Ignore whale-sized swaps (likely arbitrage)
 
     trades.push({
       timestamp: tx.timestamp,
@@ -325,7 +360,6 @@ function buildPositions(trades: Trade[]): Position[] {
       }
       openPositions.get(trade.tokenMint)!.push(position);
       positions.push(position);
-
     } else if (trade.type === 'sell') {
       // Close position(s) using FIFO
       const tokenPositions = openPositions.get(trade.tokenMint);
@@ -339,7 +373,9 @@ function buildPositions(trades: Trade[]): Position[] {
 
       while (tokensToSell > 0 && tokenPositions.length > 0) {
         const position = tokenPositions[0];
-        if (!position) {break;}
+        if (!position) {
+          break;
+        }
 
         if (!position.isOpen) {
           tokenPositions.shift();
@@ -402,7 +438,7 @@ function calculateMetrics(
   const totalFees = allTransactions.reduce((sum, tx) => sum + tx.fee / 1e9, 0);
 
   // Closed positions only (for realized metrics)
-  const closedPositions = positions.filter(p => !p.isOpen);
+  const closedPositions = positions.filter((p) => !p.isOpen);
 
   // P&L calculation
   const realizedPnL = closedPositions.reduce((sum, p) => sum + (p.profitLoss || 0), 0);
@@ -410,50 +446,50 @@ function calculateMetrics(
   const profitLoss = realizedPnL + unrealizedPnL;
 
   // Win rate
-  const winningTrades = closedPositions.filter(p => (p.profitLoss || 0) > 0).length;
+  const winningTrades = closedPositions.filter((p) => (p.profitLoss || 0) > 0).length;
   const totalClosedTrades = closedPositions.length;
   const winRate = totalClosedTrades > 0 ? (winningTrades / totalClosedTrades) * 100 : 0;
 
   // Best/worst trades
-  const sortedByPnL = [...closedPositions].sort((a, b) =>
-    (b.profitLoss || 0) - (a.profitLoss || 0)
+  const sortedByPnL = [...closedPositions].sort(
+    (a, b) => (b.profitLoss || 0) - (a.profitLoss || 0)
   );
   const bestTrade = sortedByPnL[0]?.profitLoss || 0;
   const worstTrade = sortedByPnL[sortedByPnL.length - 1]?.profitLoss || 0;
 
   // Rugs
-  const ruggedPositions = closedPositions.filter(p => p.isRug);
+  const ruggedPositions = closedPositions.filter((p) => p.isRug);
   const rugsSurvived = ruggedPositions.length;
   const totalRugValue = Math.abs(ruggedPositions.reduce((sum, p) => sum + (p.profitLoss || 0), 0));
 
   // Separate into rugs caught (exited before -90%) vs rugs fully hit
-  const rugsCaught = ruggedPositions.filter(p =>
-    p.profitLossPercent && p.profitLossPercent > -90 && p.profitLossPercent < -50
+  const rugsCaught = ruggedPositions.filter(
+    (p) => p.profitLossPercent && p.profitLossPercent > -90 && p.profitLossPercent < -50
   ).length;
 
   // Moonshots
-  const moonshots = closedPositions.filter(p => p.isMoonshot).length;
+  const moonshots = closedPositions.filter((p) => p.isMoonshot).length;
 
   // Hold time
-  const avgHoldTime = closedPositions.length > 0
-    ? closedPositions.reduce((sum, p) => sum + (p.holdTime || 0), 0) / closedPositions.length
-    : 0;
+  const avgHoldTime =
+    closedPositions.length > 0
+      ? closedPositions.reduce((sum, p) => sum + (p.holdTime || 0), 0) / closedPositions.length
+      : 0;
 
   // Quick flips (<1 hour)
-  const quickFlips = closedPositions.filter(p => (p.holdTime || 0) < 3600).length;
+  const quickFlips = closedPositions.filter((p) => (p.holdTime || 0) < 3600).length;
 
   // Diamond hands (>30 days AND profitable)
-  const diamondHands = closedPositions.filter(p =>
-    (p.holdTime || 0) > 30 * 24 * 3600 && (p.profitLoss || 0) > 0
+  const diamondHands = closedPositions.filter(
+    (p) => (p.holdTime || 0) > 30 * 24 * 3600 && (p.profitLoss || 0) > 0
   ).length;
 
   // Trading days
-  const uniqueDays = new Set(
-    trades.map(t => new Date(t.timestamp * 1000).toDateString())
-  ).size;
+  const uniqueDays = new Set(trades.map((t) => new Date(t.timestamp * 1000).toDateString())).size;
 
   // First trade date
-  const firstTradeDate = trades.length > 0 ? trades[0]?.timestamp ?? Date.now() / 1000 : Date.now() / 1000;
+  const firstTradeDate =
+    trades.length > 0 ? (trades[0]?.timestamp ?? Date.now() / 1000) : Date.now() / 1000;
 
   // Win/loss streaks
   const { longestWinStreak, longestLossStreak } = calculateStreaks(closedPositions);
@@ -463,7 +499,7 @@ function calculateMetrics(
 
   // Favorite tokens
   const tokenCounts = new Map<string, number>();
-  trades.forEach(t => {
+  trades.forEach((t) => {
     tokenCounts.set(t.tokenMint, (tokenCounts.get(t.tokenMint) || 0) + 1);
   });
   const favoriteTokens = Array.from(tokenCounts.entries())
@@ -614,13 +650,17 @@ function calculateStreaks(positions: Position[]): {
 }
 
 function calculateVolatility(positions: Position[]): number {
-  if (positions.length === 0) {return 0;}
+  if (positions.length === 0) {
+    return 0;
+  }
 
   const returns = positions
-    .filter(p => p.profitLossPercent !== undefined)
-    .map(p => p.profitLossPercent!);
+    .filter((p) => p.profitLossPercent !== undefined)
+    .map((p) => p.profitLossPercent!);
 
-  if (returns.length === 0) {return 0;}
+  if (returns.length === 0) {
+    return 0;
+  }
 
   const mean = returns.reduce((sum, r) => sum + r, 0) / returns.length;
   const variance = returns.reduce((sum, r) => sum + Math.pow(r - mean, 2), 0) / returns.length;

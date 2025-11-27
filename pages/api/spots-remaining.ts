@@ -9,15 +9,12 @@ import { logger } from '@/lib/logger';
 const TOTAL_PREMIUM_SLOTS = 500; // Artificial scarcity cap
 const PRICE_TIERS = [
   { maxUsers: 100, price: 0.15 }, // Early bird
-  { maxUsers: 200, price: 0.2 },  // Standard (current)
+  { maxUsers: 200, price: 0.2 }, // Standard (current)
   { maxUsers: 350, price: 0.25 }, // Phase 2
-  { maxUsers: 500, price: 0.3 },  // Final tier
+  { maxUsers: 500, price: 0.3 }, // Final tier
 ];
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -39,8 +36,12 @@ export default async function handler(
     const spotsRemaining = Math.max(0, TOTAL_PREMIUM_SLOTS - premiumCount);
 
     // Determine current price tier
-    const currentTier = PRICE_TIERS.find(tier => premiumCount < tier.maxUsers) || PRICE_TIERS[PRICE_TIERS.length - 1]!;
-    const nextTier = PRICE_TIERS.find(tier => premiumCount < tier.maxUsers && tier.maxUsers > currentTier.maxUsers);
+    const currentTier =
+      PRICE_TIERS.find((tier) => premiumCount < tier.maxUsers) ||
+      PRICE_TIERS[PRICE_TIERS.length - 1]!;
+    const nextTier = PRICE_TIERS.find(
+      (tier) => premiumCount < tier.maxUsers && tier.maxUsers > currentTier.maxUsers
+    );
 
     // Calculate percentage filled
     const percentFilled = Math.round((premiumCount / TOTAL_PREMIUM_SLOTS) * 100);
@@ -62,9 +63,7 @@ export default async function handler(
       error: String(error),
     });
     res.status(500).json({
-      error: process.env.NODE_ENV === 'development'
-        ? error.message
-        : 'Failed to fetch data',
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Failed to fetch data',
     });
   }
 }

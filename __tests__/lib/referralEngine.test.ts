@@ -29,7 +29,7 @@ describe('Viral Referral Engine', () => {
   describe('Reward Percentages', () => {
     it('should calculate Level 1 rewards (20%)', () => {
       const earnings = 100;
-      const level1Percentage = 0.20;
+      const level1Percentage = 0.2;
       const reward = earnings * level1Percentage;
 
       expect(reward).toBe(20);
@@ -37,7 +37,7 @@ describe('Viral Referral Engine', () => {
 
     it('should calculate Level 2 rewards (10%)', () => {
       const earnings = 100;
-      const level2Percentage = 0.10;
+      const level2Percentage = 0.1;
       const reward = earnings * level2Percentage;
 
       expect(reward).toBe(10);
@@ -53,8 +53,8 @@ describe('Viral Referral Engine', () => {
 
     it('should calculate total referral rewards correctly', () => {
       const earnings = 100;
-      const level1 = earnings * 0.20;
-      const level2 = earnings * 0.10;
+      const level1 = earnings * 0.2;
+      const level2 = earnings * 0.1;
       const level3 = earnings * 0.05;
       const totalReferralPayout = level1 + level2 + level3;
 
@@ -64,14 +64,14 @@ describe('Viral Referral Engine', () => {
 
     it('should handle decimal amounts correctly', () => {
       const earnings = 1.5;
-      const level1 = earnings * 0.20;
+      const level1 = earnings * 0.2;
 
       expect(level1).toBeCloseTo(0.3);
     });
 
     it('should handle very small amounts', () => {
       const earnings = 0.001;
-      const level1 = earnings * 0.20;
+      const level1 = earnings * 0.2;
 
       expect(level1).toBeCloseTo(0.0002);
     });
@@ -94,7 +94,7 @@ describe('Viral Referral Engine', () => {
 
     it('should progress to WHALE_HUNTER at 25 referrals', () => {
       const referralCount = 25;
-      
+
       let tier = ReferralTier.NONE;
       if (referralCount >= 500) tier = ReferralTier.LEGEND;
       else if (referralCount >= 100) tier = ReferralTier.VIRAL_KING;
@@ -106,7 +106,7 @@ describe('Viral Referral Engine', () => {
 
     it('should progress to VIRAL_KING at 100 referrals', () => {
       const referralCount = 100;
-      
+
       let tier = ReferralTier.NONE;
       if (referralCount >= 500) tier = ReferralTier.LEGEND;
       else if (referralCount >= 100) tier = ReferralTier.VIRAL_KING;
@@ -118,7 +118,7 @@ describe('Viral Referral Engine', () => {
 
     it('should reach LEGEND tier at 500 referrals', () => {
       const referralCount = 500;
-      
+
       let tier = ReferralTier.NONE;
       if (referralCount >= 500) tier = ReferralTier.LEGEND;
       else if (referralCount >= 100) tier = ReferralTier.VIRAL_KING;
@@ -130,7 +130,7 @@ describe('Viral Referral Engine', () => {
 
     it('should stay at NONE tier with less than 5 referrals', () => {
       const referralCount = 3;
-      
+
       let tier = ReferralTier.NONE;
       if (referralCount >= 5) tier = ReferralTier.INFLUENCER;
 
@@ -145,7 +145,7 @@ describe('Viral Referral Engine', () => {
         { level: 1, referredWallet: 'user2', referrerWallet: 'owner' },
       ];
 
-      const level1Count = referrals.filter(r => r.level === 1).length;
+      const level1Count = referrals.filter((r) => r.level === 1).length;
       expect(level1Count).toBe(2);
     });
 
@@ -155,7 +155,7 @@ describe('Viral Referral Engine', () => {
         { level: 2, referredWallet: 'user2', referrerWallet: 'user1' },
       ];
 
-      const level2Count = referrals.filter(r => r.level === 2).length;
+      const level2Count = referrals.filter((r) => r.level === 2).length;
       expect(level2Count).toBe(1);
     });
 
@@ -166,7 +166,7 @@ describe('Viral Referral Engine', () => {
         { level: 3, referredWallet: 'user3', referrerWallet: 'user2' },
       ];
 
-      const level3Count = referrals.filter(r => r.level === 3).length;
+      const level3Count = referrals.filter((r) => r.level === 3).length;
       expect(level3Count).toBe(1);
     });
 
@@ -261,8 +261,8 @@ describe('Viral Referral Engine', () => {
 
       const baseEarning = 100;
       const rewards = [
-        { user: 'C', level: 1, amount: baseEarning * 0.20 },
-        { user: 'B', level: 2, amount: baseEarning * 0.10 },
+        { user: 'C', level: 1, amount: baseEarning * 0.2 },
+        { user: 'B', level: 2, amount: baseEarning * 0.1 },
         { user: 'A', level: 3, amount: baseEarning * 0.05 },
       ];
 
@@ -277,15 +277,15 @@ describe('Viral Referral Engine', () => {
         { wallet: 'user2', status: 'INACTIVE', level: 1 },
       ];
 
-      const activeReferrals = referrals.filter(r => r.status === 'ACTIVE');
+      const activeReferrals = referrals.filter((r) => r.status === 'ACTIVE');
       expect(activeReferrals.length).toBe(1);
     });
 
     it('should handle partial chains (only 2 levels)', () => {
       const baseEarning = 100;
       const rewards = [
-        { level: 1, amount: baseEarning * 0.20 },
-        { level: 2, amount: baseEarning * 0.10 },
+        { level: 1, amount: baseEarning * 0.2 },
+        { level: 2, amount: baseEarning * 0.1 },
         // No level 3
       ];
 
@@ -296,7 +296,7 @@ describe('Viral Referral Engine', () => {
     it('should handle single level chains', () => {
       const baseEarning = 100;
       const rewards = [
-        { level: 1, amount: baseEarning * 0.20 },
+        { level: 1, amount: baseEarning * 0.2 },
         // No level 2 or 3
       ];
 
@@ -314,7 +314,7 @@ describe('Viral Referral Engine', () => {
       ];
 
       const userReferrals = 25;
-      const earnedMilestone = milestones.find(m => m.referrals === userReferrals);
+      const earnedMilestone = milestones.find((m) => m.referrals === userReferrals);
 
       expect(earnedMilestone?.reward).toBe(50000);
     });
@@ -348,24 +348,24 @@ describe('Viral Referral Engine', () => {
     it('should show next milestone for new users', () => {
       const currentReferrals = 0;
       const milestones = [5, 25, 100, 500];
-      
-      const nextMilestone = milestones.find(m => m > currentReferrals);
+
+      const nextMilestone = milestones.find((m) => m > currentReferrals);
       expect(nextMilestone).toBe(5);
     });
 
     it('should show next milestone for active users', () => {
       const currentReferrals = 10;
       const milestones = [5, 25, 100, 500];
-      
-      const nextMilestone = milestones.find(m => m > currentReferrals);
+
+      const nextMilestone = milestones.find((m) => m > currentReferrals);
       expect(nextMilestone).toBe(25);
     });
 
     it('should return null for max tier users', () => {
       const currentReferrals = 500;
       const milestones = [5, 25, 100, 500];
-      
-      const nextMilestone = milestones.find(m => m > currentReferrals);
+
+      const nextMilestone = milestones.find((m) => m > currentReferrals);
       expect(nextMilestone).toBeUndefined();
     });
 
@@ -444,7 +444,7 @@ describe('Viral Referral Engine', () => {
 
     it('should handle floating point precision in rewards', () => {
       const earnings = 0.1 + 0.2; // JavaScript floating point issue
-      const reward = earnings * 0.20;
+      const reward = earnings * 0.2;
 
       expect(reward).toBeCloseTo(0.06, 10);
     });
@@ -497,7 +497,7 @@ describe('Viral Referral Engine', () => {
         { wallet: 'user3', status: 'ACTIVE' },
       ];
 
-      const active = referrals.filter(r => r.status === 'ACTIVE');
+      const active = referrals.filter((r) => r.status === 'ACTIVE');
       expect(active.length).toBe(2);
     });
   });

@@ -60,11 +60,7 @@ export function verifyWalletSignature(
     const messageUint8 = new TextEncoder().encode(message);
 
     // Verify the signature
-    const verified = nacl.sign.detached.verify(
-      messageUint8,
-      signatureUint8,
-      publicKey.toBytes()
-    );
+    const verified = nacl.sign.detached.verify(messageUint8, signatureUint8, publicKey.toBytes());
 
     return verified;
   } catch (error) {
@@ -109,7 +105,7 @@ export async function verifyAuthentication(
   if (nonceAlreadyUsed) {
     logger.warn('Replay attack detected', {
       nonce: authResponse.nonce.slice(0, 8),
-      publicKey: authResponse.publicKey.slice(0, 8)
+      publicKey: authResponse.publicKey.slice(0, 8),
     });
     return { valid: false, error: 'Authentication request already used (replay attack detected)' };
   }

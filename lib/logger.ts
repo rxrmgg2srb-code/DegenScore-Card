@@ -109,8 +109,8 @@ class Logger {
   private getLevelColor(level: LogLevel): string {
     const colors: Record<LogLevel, string> = {
       debug: '\x1b[36m', // Cyan
-      info: '\x1b[32m',  // Green
-      warn: '\x1b[33m',  // Yellow
+      info: '\x1b[32m', // Green
+      warn: '\x1b[33m', // Yellow
       error: '\x1b[31m', // Red
     };
     return colors[level];

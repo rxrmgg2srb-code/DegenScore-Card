@@ -6,7 +6,7 @@ import { cacheGet } from './cache/redis';
 /**
  * AI Trading Coach
  * Uses OpenAI GPT-4 to analyze trading behavior and provide personalized insights
- * 
+ *
  * 🔧 TO ENABLE: Set OPENAI_API_KEY in .env.local
  * 🔒 TO DISABLE: Remove or comment out OPENAI_API_KEY (saves $$$)
  */
@@ -14,9 +14,11 @@ import { cacheGet } from './cache/redis';
 // ⚠️ FEATURE FLAG: Check if AI Coach is enabled
 const AI_COACH_ENABLED = !!process.env.OPENAI_API_KEY;
 
-const openai = AI_COACH_ENABLED ? new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-}) : null;
+const openai = AI_COACH_ENABLED
+  ? new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
+    })
+  : null;
 
 // Cost protection: $10 USD daily budget for AI calls
 const DAILY_AI_BUDGET = parseFloat(process.env.AI_DAILY_BUDGET || '10');
@@ -36,9 +38,7 @@ async function checkAIBudget(estimatedInputTokens: number): Promise<void> {
   const currentCost = currentCostStr ? parseFloat(currentCostStr) : 0;
 
   // Estimate cost for this call (input + typical output of ~1500 tokens)
-  const estimatedCost =
-    estimatedInputTokens * COST_PER_INPUT_TOKEN +
-    1500 * COST_PER_OUTPUT_TOKEN; // Conservative estimate
+  const estimatedCost = estimatedInputTokens * COST_PER_INPUT_TOKEN + 1500 * COST_PER_OUTPUT_TOKEN; // Conservative estimate
 
   if (currentCost + estimatedCost > DAILY_AI_BUDGET) {
     logger.warn(`AI daily budget exceeded: $${currentCost.toFixed(2)} / $${DAILY_AI_BUDGET}`);
@@ -52,14 +52,15 @@ async function checkAIBudget(estimatedInputTokens: number): Promise<void> {
  * Track actual cost after API call
  */
 async function trackAICost(usage: OpenAI.CompletionUsage | undefined): Promise<void> {
-  if (!usage) {return;}
+  if (!usage) {
+    return;
+  }
 
   const today = new Date().toISOString().split('T')[0];
   const costKey = `ai:cost:${today}`;
 
   const actualCost =
-    usage.prompt_tokens * COST_PER_INPUT_TOKEN +
-    usage.completion_tokens * COST_PER_OUTPUT_TOKEN;
+    usage.prompt_tokens * COST_PER_INPUT_TOKEN + usage.completion_tokens * COST_PER_OUTPUT_TOKEN;
 
   // Get current cost
   const currentCostStr = await cacheGet<string>(costKey);
@@ -131,7 +132,10 @@ export async function analyzeTraderWithAI(walletAddress: string): Promise<CoachA
     const estimatedInputTokens = Math.ceil(prompt.length / 4); // Rough estimate: 1 token ≈ 4 chars
     await checkAIBudget(estimatedInputTokens);
 
-    logger.debug('Sending to OpenAI:', { tradesCount: recentTrades.length, estimatedTokens: estimatedInputTokens });
+    logger.debug('Sending to OpenAI:', {
+      tradesCount: recentTrades.length,
+      estimatedTokens: estimatedInputTokens,
+    });
 
     // 5. Call OpenAI API
     const completion = await openai.chat.completions.create({
@@ -217,11 +221,14 @@ function calculateTradingStats(card: any, trades: any[]) {
   const tradesLastWeek = trades.filter((t) => new Date(t.timestamp) > oneWeekAgo);
 
   // Calculate time-based patterns
-  const hourlyDistribution = trades.reduce((acc, trade) => {
-    const hour = new Date(trade.timestamp).getHours();
-    acc[hour] = (acc[hour] || 0) + 1;
-    return acc;
-  }, {} as Record<number, number>);
+  const hourlyDistribution = trades.reduce(
+    (acc, trade) => {
+      const hour = new Date(trade.timestamp).getHours();
+      acc[hour] = (acc[hour] || 0) + 1;
+      return acc;
+    },
+    {} as Record<number, number>
+  );
 
   // Find most active hours
   const mostActiveHours = Object.entries(hourlyDistribution)
@@ -268,14 +275,14 @@ RECENT ACTIVITY (Last 50 trades):
 
 TRADE HISTORY SAMPLE:
 ${trades
-      .slice(0, 10)
-      .map(
-        (t) =>
-          `- ${t.action.toUpperCase()} ${t.tokenSymbol} for ${t.solAmount.toFixed(2)} SOL (${new Date(
-            t.timestamp
-          ).toLocaleString()})`
-      )
-      .join('\n')}
+  .slice(0, 10)
+  .map(
+    (t) =>
+      `- ${t.action.toUpperCase()} ${t.tokenSymbol} for ${t.solAmount.toFixed(2)} SOL (${new Date(
+        t.timestamp
+      ).toLocaleString()})`
+  )
+  .join('\n')}
 
 Provide a detailed analysis in the following JSON format:
 {

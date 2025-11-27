@@ -92,10 +92,7 @@ export async function verifyCaptcha(token: string, remoteIP?: string): Promise<b
  * }
  * ```
  */
-export async function requireCaptcha(
-  req: any,
-  res: any
-): Promise<boolean> {
+export async function requireCaptcha(req: any, res: any): Promise<boolean> {
   const captchaToken = req.body?.captchaToken || req.query?.captchaToken;
 
   if (!captchaToken && CAPTCHA_ENABLED) {
@@ -110,7 +107,7 @@ export async function requireCaptcha(
   // Get client IP for verification
   const remoteIP =
     (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() ||
-    req.headers['x-real-ip'] as string ||
+    (req.headers['x-real-ip'] as string) ||
     req.socket?.remoteAddress ||
     undefined;
 
@@ -130,10 +127,7 @@ export async function requireCaptcha(
 /**
  * Optional CAPTCHA middleware (doesn't block if CAPTCHA disabled)
  */
-export async function optionalCaptcha(
-  req: any,
-  res: any
-): Promise<boolean> {
+export async function optionalCaptcha(req: any, res: any): Promise<boolean> {
   if (!CAPTCHA_ENABLED) {
     return true;
   }

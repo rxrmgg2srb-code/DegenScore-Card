@@ -3,11 +3,13 @@
 ## Verificación de Deploy
 
 ### Render Dashboard
+
 - [ ] Build successful
 - [ ] Deploy live
 - [ ] No errors en logs
 
 ### Verificación del Sitio
+
 - [ ] Abrir URL de Render (ej: https://degenscore-card.onrender.com)
 - [ ] Sitio carga sin errores
 - [ ] No hay errores en consola del navegador (F12)
@@ -16,6 +18,7 @@
 - [ ] Database queries funcionan (verifica que usa nueva password)
 
 ### Verificación de Variables de Entorno
+
 - [ ] DATABASE_URL actualizada con nueva password
 - [ ] HELIUS_API_KEY actualizada
 - [ ] Todas las 11 variables presentes en Render
@@ -23,6 +26,7 @@
 ## Setup Local Post-Merge
 
 ### Actualizar Branch Local
+
 ```bash
 # Cambiar a main
 git checkout main
@@ -36,6 +40,7 @@ git log --oneline -1
 ```
 
 ### Instalar Dependencias
+
 ```bash
 # Limpiar instalación anterior
 rm -rf node_modules package-lock.json
@@ -47,6 +52,7 @@ npm install
 ```
 
 ### Inicializar Herramientas
+
 ```bash
 # Inicializar Husky hooks
 npm run prepare
@@ -59,6 +65,7 @@ npm run validate
 ```
 
 ### Probar Localmente
+
 ```bash
 # Iniciar dev server
 npm run dev
@@ -70,6 +77,7 @@ npm run dev
 ## Limpieza
 
 ### Eliminar Branch Mergeado
+
 ```bash
 # Local
 git branch -d claude/deploy-fixes-and-phase1-01LDDxju753GTZd6nAVpUvVJ
@@ -78,6 +86,7 @@ git branch -d claude/deploy-fixes-and-phase1-01LDDxju753GTZd6nAVpUvVJ
 ```
 
 ### Archivar Documentos de Security
+
 ```bash
 # Ya no necesitas estos archivos en producción:
 # - SECURITY_NOTICE.md (puedes eliminarlo o moverlo a docs/)
@@ -95,6 +104,7 @@ git push origin main
 ## Próximos Pasos
 
 ### Esta Semana: Phase 1 Week 1
+
 - [ ] Leer PHASE1_WEEK1_QUICKSTART.md
 - [ ] Instalar librerías de animación (lottie-react, @react-spring/web)
 - [ ] Probar componentes de animación en /test-animations
@@ -102,12 +112,14 @@ git push origin main
 - [ ] Mejorar Leaderboard con stagger animations
 
 ### Este Mes: Completar Phase 1
+
 - [ ] Semana 1: Animaciones básicas ✅ (foundation hecha)
 - [ ] Semana 2: Sistema de achievements
 - [ ] Semana 3: Social features + live feed
 - [ ] Semana 4: Polish + performance
 
 ### Meta: ChatGPT Score
+
 - Actual: 9.0/10
 - Meta Semana 1: 9.3/10
 - Meta Mes 1: 9.5/10
@@ -116,16 +128,19 @@ git push origin main
 ## Troubleshooting
 
 ### Si Render sigue fallando:
+
 1. Verificar que Build Command tiene --legacy-peer-deps
 2. Verificar que todas las variables de entorno están configuradas
 3. Revisar logs de Render para error específico
 
 ### Si local no funciona:
+
 1. Borrar node_modules y package-lock.json
 2. npm install (debería usar .npmrc automáticamente)
 3. Si sigue fallando, usar: npm install --legacy-peer-deps manualmente
 
 ### Si hay problemas de credenciales:
+
 1. Verificar que rotaste las passwords en Supabase/Helius
 2. Verificar que actualizaste en Render
 3. Verificar que .env.local local tiene las nuevas credenciales

@@ -34,7 +34,7 @@ describe('DailyChallengesWidget', () => {
 
   it('renders loading state initially', async () => {
     // Mock fetch to delay response so we can see loading state
-    (global.fetch as jest.Mock).mockImplementation(() => new Promise(() => { }));
+    (global.fetch as jest.Mock).mockImplementation(() => new Promise(() => {}));
 
     await act(async () => {
       render(React.createElement('div', null, 'MockedComponent'));

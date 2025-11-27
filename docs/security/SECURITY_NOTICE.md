@@ -11,10 +11,12 @@
 **.env and .env.local files were accidentally committed to the git repository**, exposing sensitive credentials in the public git history.
 
 **Action Taken**:
+
 - Files removed from git tracking (commit: a147de2)
 - .gitignore already properly configured to exclude these files
 
 **Remaining Action Required**:
+
 - **ALL exposed credentials MUST be rotated immediately**
 - Git history should be cleaned to remove sensitive data
 
@@ -31,12 +33,14 @@ DATABASE_URL="postgresql://postgres.thpsbnuxfrlectmqhajx:S7twc7LDbuZdRgl4@aws-1-
 ```
 
 **What was exposed**:
+
 - Database username: `postgres.thpsbnuxfrlectmqhajx`
 - Database password: `S7twc7LDbuZdRgl4`
 - Database host: `aws-1-eu-west-1.pooler.supabase.com`
 - Database name: `postgres`
 
 **Action Required**:
+
 1. Go to Supabase Dashboard → Settings → Database
 2. Reset database password immediately
 3. Update `DATABASE_URL` in Vercel environment variables
@@ -57,6 +61,7 @@ HELIUS_RPC_URL="https://mainnet.helius-rpc.com/?api-key=c4007b87-8776-4649-9bbf-
 ```
 
 **Action Required**:
+
 1. Go to Helius Dashboard → API Keys
 2. Delete the compromised API key: `c4007b87-8776-4649-9bbf-4ba5db3d9208`
 3. Generate a new API key
@@ -77,6 +82,7 @@ TREASURY_WALLET="Pf9yHR1qmkY9geMLfMJs7JD4yXZURkiaxm5h7K61J7N"
 ```
 
 **Action Required**:
+
 - This is a public address, so exposure is LOW risk
 - However, attackers now know which wallet receives payments
 - Consider: If you want to change it for privacy reasons, deploy a new treasury wallet
@@ -90,6 +96,7 @@ TREASURY_WALLET="Pf9yHR1qmkY9geMLfMJs7JD4yXZURkiaxm5h7K61J7N"
 Check `.env` and `.env.local` files for ANY other sensitive data that may have been exposed:
 
 **From .env file**:
+
 ```
 NEXT_PUBLIC_SOLANA_NETWORK="mainnet-beta"
 NEXT_PUBLIC_SOLANA_RPC_URL (may contain API key in URL)
@@ -100,6 +107,7 @@ CRON_API_KEY (if present)
 ```
 
 **Action Required**:
+
 - Review all environment variables in the exposed files
 - Rotate ANY that contain secrets, API keys, or credentials
 
@@ -121,6 +129,7 @@ CRON_API_KEY (if present)
 **Warning**: This rewrites git history and requires force-push.
 
 **Option A: BFG Repo-Cleaner (Recommended)**
+
 ```bash
 # Install BFG
 brew install bfg  # macOS
@@ -141,6 +150,7 @@ git push --force
 ```
 
 **Option B: git filter-branch**
+
 ```bash
 git filter-branch --force --index-filter \
   'git rm --cached --ignore-unmatch .env .env.local' \
@@ -151,6 +161,7 @@ git push --force --all
 ```
 
 **Important**:
+
 - Force-pushing rewrites history for ALL collaborators
 - Notify all team members before doing this
 - They will need to re-clone or reset their local repos
@@ -185,6 +196,7 @@ git log --all --full-history -- .env.local
 ### Additional Recommendations
 
 1. **Pre-commit hooks**: Use tools like `git-secrets` to prevent committing secrets
+
    ```bash
    brew install git-secrets
    git secrets --install
@@ -210,6 +222,7 @@ git log --all --full-history -- .env.local
 ## 📞 Contact
 
 If you discover abuse of these credentials:
+
 - Email: security@degenscore.com (if exists)
 - GitHub Security Advisory: https://github.com/rxrmgg2srb-code/DegenScore-Card/security/advisories
 
@@ -221,6 +234,7 @@ Copy this checklist and track your progress:
 
 ```markdown
 ## Immediate ✅ COMPLETED
+
 - [x] Rotate Supabase database password
 - [x] Regenerate Helius API key
 - [x] Update Render environment variables (see RENDER_DEPLOYMENT_UPDATE.md)
@@ -228,12 +242,14 @@ Copy this checklist and track your progress:
 - [ ] Verify new credentials work in production (PENDING)
 
 ## Short-term (Next 24 hours)
+
 - [ ] Clean git history with BFG or filter-branch
 - [ ] Force push cleaned history
 - [ ] Notify team members to re-clone
 - [ ] Monitor database/API for suspicious activity
 
 ## Long-term (This week)
+
 - [ ] Install git-secrets pre-commit hooks
 - [ ] Enable GitHub secret scanning (if available)
 - [ ] Document credential rotation procedures
@@ -248,6 +264,7 @@ Copy this checklist and track your progress:
 **Status**: ✅ CREDENTIALS ROTATED - Pending Render deployment update
 
 **Next Steps**:
+
 1. Update environment variables in Render dashboard (see RENDER_DEPLOYMENT_UPDATE.md)
 2. Redeploy application on Render
 3. Verify production works with new credentials

@@ -16,7 +16,7 @@ describe('HotFeedWidget', () => {
   });
 
   it('renders loading state initially', async () => {
-    (global.fetch as jest.Mock).mockImplementation(() => new Promise(() => { })); // Never resolves
+    (global.fetch as jest.Mock).mockImplementation(() => new Promise(() => {})); // Never resolves
 
     await act(async () => {
       render(React.createElement('div', null, 'MockedComponent'));

@@ -9,10 +9,7 @@ import { logger } from '../../lib/logger';
  * API endpoint to start async card generation
  * Returns a job ID that can be polled for status
  */
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -65,15 +62,17 @@ export default async function handler(
       pollUrl: `/api/card-status?jobId=${jobId}`,
       estimatedTime: card.isPaid ? '10-20 seconds' : '20-40 seconds',
     });
-
   } catch (error: any) {
-    logger.error('Error starting async card generation:', error instanceof Error ? error : undefined, {
-      error: String(error),
-    });
+    logger.error(
+      'Error starting async card generation:',
+      error instanceof Error ? error : undefined,
+      {
+        error: String(error),
+      }
+    );
 
-    const errorMessage = process.env.NODE_ENV === 'development'
-      ? error.message
-      : 'Failed to start card generation';
+    const errorMessage =
+      process.env.NODE_ENV === 'development' ? error.message : 'Failed to start card generation';
 
     res.status(500).json({ error: errorMessage });
   }

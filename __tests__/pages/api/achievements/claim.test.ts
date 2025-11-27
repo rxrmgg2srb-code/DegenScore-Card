@@ -6,29 +6,29 @@ jest.mock('@/lib/prisma', () => ({ prisma: {} }));
 jest.mock('@/lib/rateLimitRedis', () => ({ strictRateLimit: jest.fn().mockResolvedValue(true) }));
 
 describe('API: /api/achievements/claim', () => {
-    let handler: any;
+  let handler: any;
 
-    beforeEach(async () => {
-        jest.clearAllMocks();
-        try {
-            handler = (await import('@/pages/api/achievements/claim')).default;
-        } catch (e) {
-            handler = null;
-        }
-    });
+  beforeEach(async () => {
+    jest.clearAllMocks();
+    try {
+      handler = (await import('@/pages/api/achievements/claim')).default;
+    } catch (e) {
+      handler = null;
+    }
+  });
 
-    it('should be defined', () => {
-        expect(handler).toBeDefined();
-    });
+  it('should be defined', () => {
+    expect(handler).toBeDefined();
+  });
 
-    it('should handle POST requests', async () => {
-        if (!handler) return;
-        const { req, res } = createMocks({ method: 'POST', body: {} });
-        try {
-            await handler(req, res);
-            expect(res._getStatusCode()).toBeGreaterThan(0);
-        } catch (e) {
-            expect(e).toBeDefined();
-        }
-    });
+  it('should handle POST requests', async () => {
+    if (!handler) return;
+    const { req, res } = createMocks({ method: 'POST', body: {} });
+    try {
+      await handler(req, res);
+      expect(res._getStatusCode()).toBeGreaterThan(0);
+    } catch (e) {
+      expect(e).toBeDefined();
+    }
+  });
 });

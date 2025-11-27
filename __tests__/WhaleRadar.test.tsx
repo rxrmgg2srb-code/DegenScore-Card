@@ -3,47 +3,46 @@ import { render, screen, fireEvent, waitFor, act } from '@testing-library/react'
 import WhaleRadar from '@/components/WhaleRadar';
 
 describe('WhaleRadar', () => {
-  
-// Mock Solana Wallet
-jest.mock('@solana/wallet-adapter-react', () => ({
-  useWallet: jest.fn(() => ({
-    publicKey: { toBase58: () => 'mock-wallet' },
-    connected: true,
-  })),
-  useConnection: jest.fn(() => ({
-    connection: { getBalance: jest.fn() },
-  })),
-}));
+  // Mock Solana Wallet
+  jest.mock('@solana/wallet-adapter-react', () => ({
+    useWallet: jest.fn(() => ({
+      publicKey: { toBase58: () => 'mock-wallet' },
+      connected: true,
+    })),
+    useConnection: jest.fn(() => ({
+      connection: { getBalance: jest.fn() },
+    })),
+  }));
 
-jest.mock('@solana/wallet-adapter-react-ui', () => ({
-  WalletMultiButton: () => React.createElement('button', {}, 'Connect Wallet'),
-}));
+  jest.mock('@solana/wallet-adapter-react-ui', () => ({
+    WalletMultiButton: () => React.createElement('button', {}, 'Connect Wallet'),
+  }));
 
-// Mock common dependencies
-jest.mock('framer-motion', () => ({
-  motion: {
-    div: ({ children, ...props }) => React.createElement('div', props, children),
-    button: ({ children, ...props }) => React.createElement('button', props, children),
-    span: ({ children, ...props }) => React.createElement('span', props, children),
-  },
-  AnimatePresence: ({ children }) => React.createElement(React.Fragment, null, children),
-}));
+  // Mock common dependencies
+  jest.mock('framer-motion', () => ({
+    motion: {
+      div: ({ children, ...props }) => React.createElement('div', props, children),
+      button: ({ children, ...props }) => React.createElement('button', props, children),
+      span: ({ children, ...props }) => React.createElement('span', props, children),
+    },
+    AnimatePresence: ({ children }) => React.createElement(React.Fragment, null, children),
+  }));
 
-jest.mock('@/lib/logger', () => ({
-  logger: {
-    info: jest.fn(),
-    error: jest.fn(),
-    warn: jest.fn(),
-  },
-}));
+  jest.mock('@/lib/logger', () => ({
+    logger: {
+      info: jest.fn(),
+      error: jest.fn(),
+      warn: jest.fn(),
+    },
+  }));
 
-jest.mock('next/router', () => ({
-  useRouter: jest.fn(() => ({
-    pathname: '/',
-    push: jest.fn(),
-    query: {},
-  })),
-}));
+  jest.mock('next/router', () => ({
+    useRouter: jest.fn(() => ({
+      pathname: '/',
+      push: jest.fn(),
+      query: {},
+    })),
+  }));
 
   afterEach(() => {
     jest.clearAllMocks();
@@ -67,8 +66,6 @@ jest.mock('next/router', () => ({
       // Add specific interaction tests based on component
       expect(screen.getByRole('button', { hidden: true })).toBeDefined();
     });
-
-    
   });
 
   describe('Edge Cases', () => {
@@ -78,7 +75,6 @@ jest.mock('next/router', () => ({
     });
 
     it('handles error state', () => {
-      
       render(React.createElement('div', null, 'MockedComponent'));
       expect(console.error).toBeDefined();
     });

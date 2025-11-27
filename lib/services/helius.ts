@@ -74,74 +74,81 @@ export async function getWalletTransactions(
   before?: string
 ): Promise<ParsedTransaction[]> {
   return heliusCircuitBreaker.execute(() =>
-    retry(async () => {
-      let url = `https://api.helius.xyz/v0/addresses/${walletAddress}/transactions?api-key=${HELIUS_API_KEY}&limit=${limit}`;
+    retry(
+      async () => {
+        let url = `https://api.helius.xyz/v0/addresses/${walletAddress}/transactions?api-key=${HELIUS_API_KEY}&limit=${limit}`;
 
-      // Agregar parámetro de paginación si existe
-      if (before) {
-        url += `&before=${before}`;
-      }
+        // Agregar parámetro de paginación si existe
+        if (before) {
+          url += `&before=${before}`;
+        }
 
-      // Timeout de 30 segundos para prevenir hangs (aumentado porque Helius puede tardar)
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 30000);
+        // Timeout de 30 segundos para prevenir hangs (aumentado porque Helius puede tardar)
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 30000);
 
-      try {
-        const response = await fetch(url, { signal: controller.signal });
-        clearTimeout(timeoutId);
+        try {
+          const response = await fetch(url, { signal: controller.signal });
+          clearTimeout(timeoutId);
 
-        if (!response.ok) {
-          // For 400 errors, try to get more details from response body
-          let errorDetails = '';
-          try {
-            const errorBody = await response.text();
-            errorDetails = errorBody ? ` - ${errorBody.substring(0, 200)}` : '';
-          } catch (e) {
-            // Ignore if we can't read the error body
+          if (!response.ok) {
+            // For 400 errors, try to get more details from response body
+            let errorDetails = '';
+            try {
+              const errorBody = await response.text();
+              errorDetails = errorBody ? ` - ${errorBody.substring(0, 200)}` : '';
+            } catch (e) {
+              // Ignore if we can't read the error body
+            }
+
+            const error: any = new Error(
+              `Helius API error: ${response.status} ${response.statusText}${errorDetails}`
+            );
+            error.status = response.status;
+
+            // Log additional info for 400 errors to help debug
+            if (response.status === 400) {
+              logger.error('[Helius] Bad Request details:', undefined, {
+                walletAddress: walletAddress.substring(0, 10) + '...',
+                limit,
+                hasBefore: !!before,
+                beforeSignature: before ? before.substring(0, 20) + '...' : 'none',
+              });
+            }
+
+            throw error;
           }
 
-          const error: any = new Error(`Helius API error: ${response.status} ${response.statusText}${errorDetails}`);
-          error.status = response.status;
+          const transactions: HeliusTransaction[] = await response.json();
 
-          // Log additional info for 400 errors to help debug
-          if (response.status === 400) {
-            logger.error('[Helius] Bad Request details:', undefined, {
-              walletAddress: walletAddress.substring(0, 10) + '...',
-              limit,
-              hasBefore: !!before,
-              beforeSignature: before ? before.substring(0, 20) + '...' : 'none',
-            });
+          return transactions.map((tx) => ({
+            signature: tx.signature,
+            timestamp: tx.timestamp,
+            type: tx.type,
+            nativeTransfers: tx.nativeTransfers,
+            tokenTransfers: tx.tokenTransfers,
+            description: tx.description,
+            fee: tx.fee,
+            feePayer: tx.feePayer,
+          }));
+        } catch (error: any) {
+          clearTimeout(timeoutId);
+          if (error.name === 'AbortError') {
+            throw new Error('Helius API timeout after 30 seconds');
           }
-
           throw error;
         }
-
-        const transactions: HeliusTransaction[] = await response.json();
-
-        return transactions.map(tx => ({
-          signature: tx.signature,
-          timestamp: tx.timestamp,
-          type: tx.type,
-          nativeTransfers: tx.nativeTransfers,
-          tokenTransfers: tx.tokenTransfers,
-          description: tx.description,
-          fee: tx.fee,
-          feePayer: tx.feePayer,
-        }));
-      } catch (error: any) {
-        clearTimeout(timeoutId);
-        if (error.name === 'AbortError') {
-          throw new Error('Helius API timeout after 30 seconds');
-        }
-        throw error;
+      },
+      {
+        maxRetries: 3,
+        retryableStatusCodes: [408, 429, 500, 502, 503, 504],
+        onRetry: (attempt, error) => {
+          logger.warn(`[Helius] Retrying getWalletTransactions (attempt ${attempt}):`, {
+            message: error.message,
+          });
+        },
       }
-    }, {
-      maxRetries: 3,
-      retryableStatusCodes: [408, 429, 500, 502, 503, 504],
-      onRetry: (attempt, error) => {
-        logger.warn(`[Helius] Retrying getWalletTransactions (attempt ${attempt}):`, { message: error.message });
-      }
-    })
+    )
   );
 }
 
@@ -149,100 +156,124 @@ export async function getWalletTransactions(
  * Obtiene información detallada de tokens usando Helius DAS API
  */
 export async function getTokenMetadata(mintAddresses: string[]): Promise<Map<string, any>> {
-  if (mintAddresses.length === 0) {return new Map();}
+  if (mintAddresses.length === 0) {
+    return new Map();
+  }
 
-  return heliusCircuitBreaker.execute(() =>
-    retry(async () => {
-      const url = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_API_KEY}`;
+  return heliusCircuitBreaker
+    .execute(() =>
+      retry(
+        async () => {
+          const url = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_API_KEY}`;
 
-      const requests = mintAddresses.map(mint => ({
-        jsonrpc: '2.0',
-        id: mint,
-        method: 'getAsset',
-        params: { id: mint },
-      }));
+          const requests = mintAddresses.map((mint) => ({
+            jsonrpc: '2.0',
+            id: mint,
+            method: 'getAsset',
+            params: { id: mint },
+          }));
 
-      // Timeout de 30 segundos para prevenir hangs (aumentado porque Helius puede tardar)
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 30000);
+          // Timeout de 30 segundos para prevenir hangs (aumentado porque Helius puede tardar)
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 30000);
 
-      try {
-        const response = await fetch(url, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(requests),
-          signal: controller.signal,
-        });
-        clearTimeout(timeoutId);
+          try {
+            const response = await fetch(url, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(requests),
+              signal: controller.signal,
+            });
+            clearTimeout(timeoutId);
 
-        if (!response.ok) {
-          const error: any = new Error(`Helius DAS API error: ${response.status}`);
-          error.status = response.status;
-          throw error;
-        }
+            if (!response.ok) {
+              const error: any = new Error(`Helius DAS API error: ${response.status}`);
+              error.status = response.status;
+              throw error;
+            }
 
-        const results = await response.json();
-        const metadataMap = new Map();
+            const results = await response.json();
+            const metadataMap = new Map();
 
-        if (Array.isArray(results)) {
-          results.forEach((result: any) => {
-            if (result.result) {
-              metadataMap.set(result.id, {
-                symbol: result.result.content?.metadata?.symbol || 'UNKNOWN',
-                name: result.result.content?.metadata?.name || 'Unknown Token',
-                image: result.result.content?.links?.image,
+            if (Array.isArray(results)) {
+              results.forEach((result: any) => {
+                if (result.result) {
+                  metadataMap.set(result.id, {
+                    symbol: result.result.content?.metadata?.symbol || 'UNKNOWN',
+                    name: result.result.content?.metadata?.name || 'Unknown Token',
+                    image: result.result.content?.links?.image,
+                  });
+                }
               });
             }
-          });
-        }
 
-        return metadataMap;
-      } catch (error: any) {
-        clearTimeout(timeoutId);
-        if (error.name === 'AbortError') {
-          throw new Error('Helius DAS API timeout after 30 seconds');
+            return metadataMap;
+          } catch (error: any) {
+            clearTimeout(timeoutId);
+            if (error.name === 'AbortError') {
+              throw new Error('Helius DAS API timeout after 30 seconds');
+            }
+            throw error;
+          }
+        },
+        {
+          maxRetries: 3,
+          retryableStatusCodes: [408, 429, 500, 502, 503, 504],
+          onRetry: (attempt, error) => {
+            logger.warn(`[Helius] Retrying getTokenMetadata (attempt ${attempt}):`, {
+              message: error.message,
+            });
+          },
         }
-        throw error;
-      }
-    }, {
-      maxRetries: 3,
-      retryableStatusCodes: [408, 429, 500, 502, 503, 504],
-      onRetry: (attempt, error) => {
-        logger.warn(`[Helius] Retrying getTokenMetadata (attempt ${attempt}):`, { message: error.message });
-      }
-    })
-  ).catch((error) => {
-    logger.error('Error fetching token metadata after retries', error instanceof Error ? error : undefined, {
-      error: String(error),
+      )
+    )
+    .catch((error) => {
+      logger.error(
+        'Error fetching token metadata after retries',
+        error instanceof Error ? error : undefined,
+        {
+          error: String(error),
+        }
+      );
+      return new Map(); // Fallback to empty map on failure
     });
-    return new Map(); // Fallback to empty map on failure
-  });
 }
 
 /**
  * Obtiene el balance actual de SOL de una wallet
  */
 export async function getWalletBalance(walletAddress: string): Promise<number> {
-  return heliusCircuitBreaker.execute(() =>
-    retry(async () => {
-      const connection = new Connection(HELIUS_RPC_URL, 'confirmed');
-      const publicKey = new PublicKey(walletAddress);
-      const balance = await connection.getBalance(publicKey);
+  return heliusCircuitBreaker
+    .execute(() =>
+      retry(
+        async () => {
+          const connection = new Connection(HELIUS_RPC_URL, 'confirmed');
+          const publicKey = new PublicKey(walletAddress);
+          const balance = await connection.getBalance(publicKey);
 
-      return balance / 1e9; // Convert lamports to SOL
-    }, {
-      maxRetries: 3,
-      retryableStatusCodes: [408, 429, 500, 502, 503, 504],
-      onRetry: (attempt, error) => {
-        logger.warn(`[Helius] Retrying getWalletBalance (attempt ${attempt}):`, { message: error.message });
-      }
-    })
-  ).catch((error) => {
-    logger.error('Error fetching wallet balance after retries', error instanceof Error ? error : undefined, {
-      error: String(error),
+          return balance / 1e9; // Convert lamports to SOL
+        },
+        {
+          maxRetries: 3,
+          retryableStatusCodes: [408, 429, 500, 502, 503, 504],
+          onRetry: (attempt, error) => {
+            logger.warn(`[Helius] Retrying getWalletBalance (attempt ${attempt}):`, {
+              message: error.message,
+            });
+          },
+        }
+      )
+    )
+    .catch((error) => {
+      logger.error(
+        'Error fetching wallet balance after retries',
+        error instanceof Error ? error : undefined,
+        {
+          error: String(error),
+        }
+      );
+      return 0; // Fallback to 0 on failure
     });
-    return 0; // Fallback to 0 on failure
-  });
 }
 
 /**

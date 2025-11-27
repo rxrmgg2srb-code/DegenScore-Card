@@ -26,7 +26,7 @@ const EXCLUDE_PATTERNS = ['.archive', '__tests__', 'node_modules', '.next'];
 function getFilesWithConsoleLog() {
   const files = [];
 
-  INCLUDE_DIRS.forEach(dir => {
+  INCLUDE_DIRS.forEach((dir) => {
     const dirPath = path.join(process.cwd(), dir);
     if (!fs.existsSync(dirPath)) return;
 
@@ -43,7 +43,7 @@ function scanDirectory(dir, files) {
     const fullPath = path.join(dir, entry.name);
 
     // Skip excluded patterns
-    if (EXCLUDE_PATTERNS.some(pattern => fullPath.includes(pattern))) {
+    if (EXCLUDE_PATTERNS.some((pattern) => fullPath.includes(pattern))) {
       continue;
     }
 
@@ -133,4 +133,6 @@ console.log(`\n✨ Complete! Fixed ${fixedCount} files`);
 console.log('\n📝 Next steps:');
 console.log('1. Review changes with: git diff');
 console.log('2. Run tests: npm test');
-console.log('3. Commit changes: git add . && git commit -m "fix: replace console.log with structured logger (CVE-DEGEN-009)"');
+console.log(
+  '3. Commit changes: git add . && git commit -m "fix: replace console.log with structured logger (CVE-DEGEN-009)"'
+);

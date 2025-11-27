@@ -1,19 +1,23 @@
 # 🔧 Cómo arreglar tarjetas sin datos en Vercel
 
 ## Problema
+
 Las tarjetas no muestran datos porque están en caché desde cuando las fonts no funcionaban.
 
 ## ✅ Solución Rápida (3 pasos)
 
 ### 1. Limpiar el caché de Redis
+
 **Opción A - Desde el navegador (MÁS FÁCIL):**
 
 Simplemente abre esta URL:
+
 ```
 https://tu-app.vercel.app/api/clear-card-cache
 ```
 
 Verás algo como:
+
 ```json
 {
   "success": true,
@@ -23,11 +27,13 @@ Verás algo como:
 ```
 
 **Opción B - Con curl:**
+
 ```bash
 curl https://tu-app.vercel.app/api/clear-card-cache
 ```
 
 **Opción C - Para una wallet específica:**
+
 ```bash
 curl -X POST https://tu-app.vercel.app/api/clear-card-cache \
   -H "Content-Type: application/json" \
@@ -35,6 +41,7 @@ curl -X POST https://tu-app.vercel.app/api/clear-card-cache \
 ```
 
 ### 2. Regenerar la tarjeta SIN caché
+
 Agrega `?nocache=true` al generar la tarjeta:
 
 ```bash
@@ -43,7 +50,9 @@ Body: { "walletAddress": "tu_wallet_aqui" }
 ```
 
 ### 3. Verificar que funciona
+
 Prueba con el endpoint de test:
+
 ```
 https://tu-app.vercel.app/api/test-card
 ```
@@ -80,16 +89,19 @@ Si ves esto, significa que los datos SÍ están llegando. Solo hay que limpiar e
 ## 🚨 Si sigue sin funcionar
 
 ### Opción A: Verificar que los datos existen en BD
+
 ```sql
 SELECT * FROM "DegenCard" WHERE "walletAddress" = 'tu_wallet';
 ```
 
 ### Opción B: Revisar logs de Vercel
+
 1. Ve a: https://vercel.com/tu-proyecto/logs
 2. Busca errores al llamar `/api/generate-card`
 3. Verifica que el mensaje "🎨 Using system fonts" aparece
 
 ### Opción C: Regenerar los datos de la wallet
+
 ```bash
 POST https://tu-app.vercel.app/api/save-card
 Body: { "walletAddress": "tu_wallet_aqui" }
@@ -99,13 +111,13 @@ Luego limpia caché y regenera.
 
 ## 📝 Endpoints Útiles
 
-| Endpoint | Método | Descripción |
-|----------|--------|-------------|
-| `/api/save-card` | POST | Analiza wallet y guarda métricas en BD |
-| `/api/generate-card` | POST | Genera imagen PNG de la tarjeta |
-| `/api/generate-card?nocache=true` | POST | Fuerza regeneración sin caché |
-| `/api/clear-card-cache` | POST | Limpia TODO el caché de tarjetas |
-| `/api/test-card` | GET | Genera tarjeta de prueba con datos dummy |
+| Endpoint                          | Método | Descripción                              |
+| --------------------------------- | ------ | ---------------------------------------- |
+| `/api/save-card`                  | POST   | Analiza wallet y guarda métricas en BD   |
+| `/api/generate-card`              | POST   | Genera imagen PNG de la tarjeta          |
+| `/api/generate-card?nocache=true` | POST   | Fuerza regeneración sin caché            |
+| `/api/clear-card-cache`           | POST   | Limpia TODO el caché de tarjetas         |
+| `/api/test-card`                  | GET    | Genera tarjeta de prueba con datos dummy |
 
 ## 🎯 Resumen
 

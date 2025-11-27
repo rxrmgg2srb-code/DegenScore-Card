@@ -7,10 +7,7 @@ import { logger } from '../../lib/logger';
  * API endpoint para obtener el historial de scores de una wallet
  * Permite generar gráficos de evolución temporal
  */
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -67,22 +64,23 @@ export default async function handler(
     if (history.length === 0) {
       return res.status(404).json({
         error: 'No history found',
-        message: 'Esta wallet no tiene historial de scores aún. El historial se genera cada 6 horas para usuarios premium.',
+        message:
+          'Esta wallet no tiene historial de scores aún. El historial se genera cada 6 horas para usuarios premium.',
       });
     }
 
     // Calculate statistics
-    const scores = history.map(h => h.score);
+    const scores = history.map((h) => h.score);
     const maxScore = Math.max(...scores);
     const minScore = Math.min(...scores);
     const avgScore = scores.reduce((a, b) => a + b, 0) / scores.length;
     const latestScore = scores[scores.length - 1] as number;
     const firstScore = scores[0] as number;
     const scoreChange = latestScore - firstScore;
-    const scoreChangePercent = firstScore > 0 ? ((scoreChange / firstScore) * 100) : 0;
+    const scoreChangePercent = firstScore > 0 ? (scoreChange / firstScore) * 100 : 0;
 
     // Best rank
-    const ranks = history.filter(h => h.rank !== null).map(h => h.rank!);
+    const ranks = history.filter((h) => h.rank !== null).map((h) => h.rank!);
     const bestRank = ranks.length > 0 ? Math.min(...ranks) : null;
 
     res.status(200).json({
@@ -93,7 +91,7 @@ export default async function handler(
         days: daysNum,
       },
       dataPoints: history.length,
-      history: history.map(h => ({
+      history: history.map((h) => ({
         timestamp: h.timestamp.toISOString(),
         score: h.score,
         rank: h.rank,
@@ -113,15 +111,13 @@ export default async function handler(
         bestRank,
       },
     });
-
   } catch (error: any) {
     logger.error('Error fetching score history:', error instanceof Error ? error : undefined, {
       error: String(error),
     });
 
-    const errorMessage = process.env.NODE_ENV === 'development'
-      ? error.message
-      : 'Failed to fetch score history';
+    const errorMessage =
+      process.env.NODE_ENV === 'development' ? error.message : 'Failed to fetch score history';
 
     res.status(500).json({ error: errorMessage });
   }

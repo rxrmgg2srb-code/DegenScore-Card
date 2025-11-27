@@ -213,6 +213,7 @@ curl -X POST http://localhost:3000/api/verify-payment \
 **Problem**: JWT_SECRET missing or too short
 
 **Solution**:
+
 ```bash
 # Generate strong secret
 openssl rand -base64 32
@@ -229,6 +230,7 @@ npm run dev
 **Problem**: UPSTASH_REDIS_URL or token incorrect
 
 **Solution**:
+
 ```bash
 # Test Redis connection
 curl https://your-redis-url.upstash.io/get/test \
@@ -246,6 +248,7 @@ curl https://your-redis-url.upstash.io/get/test \
 **Impact**: Requests still allowed (fail-open) but not rate-limited
 
 **Solution**:
+
 1. Check Redis status (Upstash dashboard)
 2. Verify `UPSTASH_REDIS_URL` and `UPSTASH_REDIS_TOKEN`
 3. Check network connectivity
@@ -256,6 +259,7 @@ curl https://your-redis-url.upstash.io/get/test \
 **Problem**: hCaptcha secret incorrect or token expired
 
 **Solution**:
+
 ```bash
 # 1. Verify secret in hCaptcha dashboard
 # 2. Check CAPTCHA_ENABLED and HCAPTCHA_SECRET in .env
@@ -289,6 +293,7 @@ curl https://your-redis-url.upstash.io/get/test \
 ### Sentry Alerts
 
 Configure alerts for:
+
 - JWT verification errors
 - Payment verification failures
 - Database connection errors

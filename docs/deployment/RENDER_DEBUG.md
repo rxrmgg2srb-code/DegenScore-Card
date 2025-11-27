@@ -3,6 +3,7 @@
 ## 📊 **ANÁLISIS DESPUÉS DE 2+ HORAS**
 
 ### **Síntomas:**
+
 ```bash
 ==> Running 'npm start'
 > degenscore-card@0.2.0 start
@@ -25,21 +26,25 @@
 ## 🔍 **INVESTIGACIÓN REALIZADA**
 
 ### 1. **Variables de Entorno** ✅
+
 - Todas configuradas correctamente
 - DATABASE_URL, HELIUS_API_KEY, JWT_SECRET, etc.
 - NODE_ENV=production
 
 ### 2. **Scripts de Inicio** ✅
+
 - Probado con `server.js` custom
 - Probado con `next start` directo
 - Puerto 10000 configurado correctamente
 
 ### 3. **Health Check Endpoint** ✅
+
 - `/api/health` creado y funcional
 - No importa dependencias pesadas
 - Verifica variables de entorno
 
 ### 4. **Configuración de Next.js** ⚠️
+
 **PROBLEMA ENCONTRADO:** Content-Security-Policy
 
 ```javascript
@@ -54,6 +59,7 @@
 ```
 
 **Por qué es problemático:**
+
 - `upgrade-insecure-requests` fuerza HTTPS
 - Render puede hacer health checks internos sobre HTTP
 - Next.js rechaza las requests HTTP por CSP
@@ -106,6 +112,7 @@
 Render detectará el nuevo commit y redesplegará automáticamente.
 
 **Esperar logs como:**
+
 ```bash
 ==> Running 'npm start'
 > next start -H 0.0.0.0 -p ${PORT:-3000}
@@ -124,12 +131,13 @@ Render detectará el nuevo commit y redesplegará automáticamente.
 ```javascript
 // next.config.js
 const nextConfig = {
-  output: 'standalone',  // ← Crear build standalone
+  output: 'standalone', // ← Crear build standalone
   // ...
 };
 ```
 
 Luego cambiar start command:
+
 ```bash
 node .next/standalone/server.js
 ```
@@ -247,7 +255,7 @@ Render espera max 60 segundos. Si Next.js tarda más:
 ```yaml
 # render.yaml
 healthCheckPath: /api/health
-healthCheckTimeout: 60  # Aumentar timeout
+healthCheckTimeout: 60 # Aumentar timeout
 ```
 
 ---
@@ -255,17 +263,21 @@ healthCheckTimeout: 60  # Aumentar timeout
 ## 🔬 **DATOS TÉCNICOS**
 
 ### **Next.js Version:** 14.0.4
+
 ### **Node Version:** 18.x
+
 ### **Render Region:** Frankfurt
+
 ### **Database:** Supabase PostgreSQL
 
 ### **Variables Configuradas:**
+
 - ✅ NODE_ENV=production
 - ✅ DATABASE_URL
 - ✅ HELIUS_API_KEY
 - ✅ JWT_SECRET
 - ✅ TREASURY_WALLET
-- ✅ NEXT_PUBLIC_*
+- ✅ NEXT*PUBLIC*\*
 
 ---
 
@@ -283,16 +295,19 @@ healthCheckTimeout: 60  # Aumentar timeout
 ## ✅ **ESTADO ACTUAL**
 
 ### **Cambios Aplicados:**
+
 1. ✅ CSP desactivado temporalmente
 2. ✅ npm start simplificado a next directo
 3. ✅ Logging mejorado
 4. ✅ Pusheado a GitHub
 
 ### **Esperando:**
+
 - Redeploy automático de Render
 - Confirmación de puerto detectado
 
 ### **Si falla de nuevo:**
+
 - Probar standalone build
 - Probar custom server
 - Migrar a Vercel

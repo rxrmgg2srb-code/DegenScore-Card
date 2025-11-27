@@ -16,10 +16,10 @@ const mockResult = {
     fundamentals: { score: 70, weight: 25, findings: [] },
     technicalAnalysis: { score: 75, weight: 20, findings: [] },
     sentiment: { score: 70, weight: 15, findings: [] },
-    innovation: { score: 80, weight: 10, findings: [] }
+    innovation: { score: 80, weight: 10, findings: [] },
   },
   redFlags: [],
-  greenFlags: []
+  greenFlags: [],
 };
 
 describe('MainScoreDisplay', () => {

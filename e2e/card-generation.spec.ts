@@ -5,7 +5,9 @@ test.describe('Card Generation Flow', () => {
     await page.goto('/');
 
     // Check for wallet input
-    const walletInput = page.locator('input[placeholder*="wallet" i], input[placeholder*="address" i]');
+    const walletInput = page.locator(
+      'input[placeholder*="wallet" i], input[placeholder*="address" i]'
+    );
     await expect(walletInput.first()).toBeVisible();
 
     // Check for analyze/generate button
@@ -17,11 +19,15 @@ test.describe('Card Generation Flow', () => {
     await page.goto('/');
 
     // Enter invalid wallet address
-    const walletInput = page.locator('input[placeholder*="wallet" i], input[placeholder*="address" i]').first();
+    const walletInput = page
+      .locator('input[placeholder*="wallet" i], input[placeholder*="address" i]')
+      .first();
     await walletInput.fill('invalid-wallet-address');
 
     // Click generate button
-    const generateButton = page.locator('button:has-text("Analyze"), button:has-text("Generate")').first();
+    const generateButton = page
+      .locator('button:has-text("Analyze"), button:has-text("Generate")')
+      .first();
     await generateButton.click();
 
     // Should show error message
@@ -33,7 +39,7 @@ test.describe('Card Generation Flow', () => {
 
     // Find and click leaderboard link
     const leaderboardLink = page.locator('a[href*="leaderboard"], button:has-text("Leaderboard")');
-    if (await leaderboardLink.count() > 0) {
+    if ((await leaderboardLink.count()) > 0) {
       await leaderboardLink.first().click();
       await expect(page).toHaveURL(/.*leaderboard.*/);
     }
@@ -44,7 +50,7 @@ test.describe('Card Generation Flow', () => {
 
     // Check for stats display (total users, volume, etc.)
     const statsSection = page.locator('[class*="stats" i], [class*="global" i]');
-    const hasStats = await statsSection.count() > 0;
+    const hasStats = (await statsSection.count()) > 0;
 
     if (hasStats) {
       await expect(statsSection.first()).toBeVisible();
@@ -57,18 +63,22 @@ test.describe('Card Display', () => {
     await page.goto('/');
 
     const walletInput = page.locator('input[placeholder*="wallet" i]').first();
-    const generateButton = page.locator('button:has-text("Analyze"), button:has-text("Generate")').first();
+    const generateButton = page
+      .locator('button:has-text("Analyze"), button:has-text("Generate")')
+      .first();
 
-    if (await walletInput.isVisible() && await generateButton.isVisible()) {
+    if ((await walletInput.isVisible()) && (await generateButton.isVisible())) {
       // Fill with a test wallet
       await walletInput.fill('TestWallet12345678901234567890123456789');
       await generateButton.click();
 
       // Check for loading state
-      const loadingIndicator = page.locator('[class*="loading" i], [class*="spinner" i], text=/loading|analyzing/i');
+      const loadingIndicator = page.locator(
+        '[class*="loading" i], [class*="spinner" i], text=/loading|analyzing/i'
+      );
 
       // Loading indicator might appear briefly
-      const loadingExists = await loadingIndicator.count() > 0;
+      const loadingExists = (await loadingIndicator.count()) > 0;
       if (loadingExists) {
         await expect(loadingIndicator.first()).toBeVisible();
       }

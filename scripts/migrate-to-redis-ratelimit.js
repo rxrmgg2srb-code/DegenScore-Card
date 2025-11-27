@@ -45,7 +45,7 @@ function migrateFile(filePath) {
   let modified = false;
 
   // Replace import statement
-  if (content.includes("from '@/lib/rateLimit'") || content.includes('from \'@/lib/rateLimit\'')) {
+  if (content.includes("from '@/lib/rateLimit'") || content.includes("from '@/lib/rateLimit'")) {
     content = content.replace(
       /import\s*{\s*rateLimit\s*}\s*from\s*['"]@\/lib\/rateLimit['"]/g,
       "import { rateLimitMiddleware } from '@/lib/rateLimitRedis'"
@@ -76,16 +76,17 @@ function migrateFile(filePath) {
   }
 
   // Pattern 2: Check if handler is async
-  if (modified && !/async\s+function\s+handler/.test(content) && !/export\s+default\s+async\s+function/.test(content)) {
+  if (
+    modified &&
+    !/async\s+function\s+handler/.test(content) &&
+    !/export\s+default\s+async\s+function/.test(content)
+  ) {
     // Make handler async if it's not
     content = content.replace(
       /export\s+default\s+function\s+handler/g,
       'export default async function handler'
     );
-    content = content.replace(
-      /function\s+handler\(/g,
-      'async function handler('
-    );
+    content = content.replace(/function\s+handler\(/g, 'async function handler(');
   }
 
   if (modified) {

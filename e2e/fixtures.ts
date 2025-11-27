@@ -262,24 +262,14 @@ export const fixtures = {
       name: 'Pro',
       price: 9.99,
       period: 'month',
-      features: [
-        'Everything in Basic',
-        'Whale Radar',
-        'Advanced Analytics',
-        'Priority Support',
-      ],
+      features: ['Everything in Basic', 'Whale Radar', 'Advanced Analytics', 'Priority Support'],
     },
     {
       id: 'premium',
       name: 'Premium',
       price: 29.99,
       period: 'month',
-      features: [
-        'Everything in Pro',
-        'AI Coach',
-        'Custom Alerts',
-        'API Access',
-      ],
+      features: ['Everything in Pro', 'AI Coach', 'Custom Alerts', 'API Access'],
     },
   ],
 

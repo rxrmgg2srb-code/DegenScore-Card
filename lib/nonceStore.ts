@@ -55,7 +55,9 @@ export async function markNonceAsUsed(nonce: string): Promise<void> {
  * Delete a nonce (for testing/cleanup)
  */
 export async function deleteNonce(nonce: string): Promise<void> {
-  if (!redis) {return;}
+  if (!redis) {
+    return;
+  }
 
   try {
     const key = `${NONCE_PREFIX}${nonce}`;
@@ -79,11 +81,11 @@ export async function getNonceStats(): Promise<{
   try {
     // Get all nonce keys (use SCAN in production for large datasets)
     const keys = await redis.keys(`${NONCE_PREFIX}*`);
-    const sample = keys.slice(0, 10).map(k => k.replace(NONCE_PREFIX, ''));
+    const sample = keys.slice(0, 10).map((k) => k.replace(NONCE_PREFIX, ''));
 
     return {
       total: keys.length,
-      sample
+      sample,
     };
   } catch (error) {
     logger.error('Error getting nonce stats', error as Error);

@@ -56,9 +56,7 @@ export interface ImageDimensions {
 // MAIN VALIDATION FUNCTION
 // ============================================================================
 
-export async function validateUploadedFile(
-  file: File
-): Promise<FileValidationResult> {
+export async function validateUploadedFile(file: File): Promise<FileValidationResult> {
   try {
     logger.debug('Starting file validation', {
       name: file.name,

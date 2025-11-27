@@ -22,10 +22,10 @@ async function sendDiscordNotification(
 ): Promise<boolean> {
   try {
     const color = {
-      trade: 0x9945FF, // Purple
-      milestone: 0x00FF00, // Green
-      challenge: 0xFFD700, // Gold
-      follow: 0x00AAFF, // Blue
+      trade: 0x9945ff, // Purple
+      milestone: 0x00ff00, // Green
+      challenge: 0xffd700, // Gold
+      follow: 0x00aaff, // Blue
     }[data.type];
 
     const response = await fetch(webhookUrl, {
@@ -63,10 +63,7 @@ async function sendDiscordNotification(
 /**
  * Send Telegram notification
  */
-async function sendTelegramNotification(
-  chatId: string,
-  data: NotificationData
-): Promise<boolean> {
+async function sendTelegramNotification(chatId: string, data: NotificationData): Promise<boolean> {
   const botToken = process.env.TELEGRAM_BOT_TOKEN;
   if (!botToken) {
     logger.warn('Telegram bot token not configured');
@@ -86,21 +83,18 @@ async function sendTelegramNotification(
       message += `\n\n[Ver más](${data.url})`;
     }
 
-    const response = await fetch(
-      `https://api.telegram.org/bot${botToken}/sendMessage`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          chat_id: chatId,
-          text: message,
-          parse_mode: 'Markdown',
-          disable_web_page_preview: false,
-        }),
-      }
-    );
+    const response = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        chat_id: chatId,
+        text: message,
+        parse_mode: 'Markdown',
+        disable_web_page_preview: false,
+      }),
+    });
 
     const result = await response.json();
     return result.ok;
@@ -114,10 +108,7 @@ async function sendTelegramNotification(
  * Send email notification
  * Note: Requires email service configuration (SendGrid, SES, etc.)
  */
-async function sendEmailNotification(
-  email: string,
-  data: NotificationData
-): Promise<boolean> {
+async function sendEmailNotification(email: string, data: NotificationData): Promise<boolean> {
   // TODO: Implement email sending using SendGrid, AWS SES, or similar
   // For now, just log
   logger.info('Email notification (not implemented):', {
@@ -158,10 +149,7 @@ async function sendEmailNotification(
 /**
  * Send notification to a specific wallet address
  */
-export async function notifyWallet(
-  walletAddress: string,
-  data: NotificationData
-): Promise<void> {
+export async function notifyWallet(walletAddress: string, data: NotificationData): Promise<void> {
   try {
     // Get user's notification preferences
     const preferences = await prisma.notificationPreferences.findUnique({
@@ -264,9 +252,7 @@ export async function notifyFollowersOfTrade(
     };
 
     // Send notifications to all followers
-    await Promise.all(
-      followers.map((f) => notifyWallet(f.follower, notificationData))
-    );
+    await Promise.all(followers.map((f) => notifyWallet(f.follower, notificationData)));
 
     logger.info('Notified followers of trade:', {
       wallet: walletAddress,

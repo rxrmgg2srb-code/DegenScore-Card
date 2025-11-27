@@ -23,6 +23,7 @@ He reescrito completamente el sistema de promo codes con:
 ### Paso 1: Asegúrate de tener DATABASE_URL configurado
 
 En tu `.env`:
+
 ```bash
 DATABASE_URL="postgresql://user:password@host:port/database?pgbouncer=true"
 ```
@@ -34,6 +35,7 @@ npx ts-node scripts/create-promo-code.ts
 ```
 
 Este script:
+
 - ✅ Crea el código `DEGENLAUNCH2024`
 - ✅ Lo configura con 100 usos máximos
 - ✅ Lo activa automáticamente
@@ -53,20 +55,21 @@ psql $DATABASE_URL -c "SELECT * FROM \"PromoCode\" WHERE code = 'DEGENLAUNCH2024
 
 El nuevo sistema devuelve códigos de error específicos:
 
-| Código | Significado | Solución |
-|--------|-------------|----------|
-| `PROMO_NOT_FOUND` | El código no existe en la base de datos | Ejecuta el script para crearlo |
-| `PROMO_INACTIVE` | El código está desactivado | Reactiva el código en la DB |
-| `PROMO_EXPIRED` | El código expiró | Actualiza la fecha de expiración |
-| `PROMO_LIMIT_REACHED` | Se alcanzó el límite de usos | Aumenta `maxUses` en la DB |
-| `PROMO_ALREADY_USED` | El usuario ya usó este código | El usuario debe esperar o usar otro código |
-| `CARD_NOT_FOUND` | La card no existe | El usuario debe generar su card primero |
-| `CARD_DELETED` | La card fue eliminada | Restaurar la card o crear una nueva |
-| `ALREADY_PREMIUM` | La card ya es premium | No necesita promo code |
+| Código                | Significado                             | Solución                                   |
+| --------------------- | --------------------------------------- | ------------------------------------------ |
+| `PROMO_NOT_FOUND`     | El código no existe en la base de datos | Ejecuta el script para crearlo             |
+| `PROMO_INACTIVE`      | El código está desactivado              | Reactiva el código en la DB                |
+| `PROMO_EXPIRED`       | El código expiró                        | Actualiza la fecha de expiración           |
+| `PROMO_LIMIT_REACHED` | Se alcanzó el límite de usos            | Aumenta `maxUses` en la DB                 |
+| `PROMO_ALREADY_USED`  | El usuario ya usó este código           | El usuario debe esperar o usar otro código |
+| `CARD_NOT_FOUND`      | La card no existe                       | El usuario debe generar su card primero    |
+| `CARD_DELETED`        | La card fue eliminada                   | Restaurar la card o crear una nueva        |
+| `ALREADY_PREMIUM`     | La card ya es premium                   | No necesita promo code                     |
 
 ## 🧪 Cómo Probar
 
 ### Test 1: Código NO existe (debería dar error específico)
+
 ```bash
 curl -X POST http://localhost:3000/api/apply-promo-code \
   -H "Content-Type: application/json" \
@@ -84,6 +87,7 @@ curl -X POST http://localhost:3000/api/apply-promo-code \
 ```
 
 ### Test 2: Código existe y es válido (debería funcionar)
+
 ```bash
 # Primero, asegúrate de crear el código
 npx ts-node scripts/create-promo-code.ts
@@ -112,6 +116,7 @@ curl -X POST http://localhost:3000/api/apply-promo-code \
 ```
 
 ### Test 3: Usuario ya usó el código (error específico)
+
 ```bash
 # Intenta usar el mismo código otra vez
 curl -X POST http://localhost:3000/api/apply-promo-code \
@@ -132,13 +137,17 @@ curl -X POST http://localhost:3000/api/apply-promo-code \
 ## 🛠️ Troubleshooting
 
 ### Problema: "Promo code not found"
+
 **Solución**: Ejecuta el script de creación
+
 ```bash
 npx ts-node scripts/create-promo-code.ts
 ```
 
 ### Problema: "Card not found"
+
 **Solución**: El usuario debe generar su card primero
+
 ```bash
 # 1. Analizar wallet
 POST /api/analyze
@@ -154,14 +163,18 @@ POST /api/apply-promo-code
 ```
 
 ### Problema: Database connection error
+
 **Solución**: Verifica tu `DATABASE_URL` en `.env`
+
 ```bash
 # Test de conexión
 npx prisma db pull
 ```
 
 ### Problema: El script falla con errores de TypeScript
+
 **Solución**: Instala dependencias
+
 ```bash
 npm install -D ts-node @types/node
 ```
@@ -169,6 +182,7 @@ npm install -D ts-node @types/node
 ## 📊 Monitorear Uso de Promo Codes
 
 ### Ver todos los promo codes
+
 ```sql
 SELECT
   code,
@@ -182,6 +196,7 @@ ORDER BY "createdAt" DESC;
 ```
 
 ### Ver quién usó un promo code
+
 ```sql
 SELECT
   pr."walletAddress",
@@ -196,6 +211,7 @@ ORDER BY pr."createdAt" DESC;
 ```
 
 ### Resetear un promo code para un usuario
+
 ```sql
 -- CUIDADO: Esto permite que el usuario use el código otra vez
 DELETE FROM "PromoRedemption"
@@ -219,7 +235,7 @@ const promoCode = await prisma.promoCode.upsert({
   create: {
     code: 'MI_NUEVO_CODIGO',
     description: '🎁 Descripción del código',
-    maxUses: 50,        // 0 = ilimitado
+    maxUses: 50, // 0 = ilimitado
     usedCount: 0,
     isActive: true,
     expiresAt: new Date('2025-12-31'), // null = nunca expira
@@ -228,6 +244,7 @@ const promoCode = await prisma.promoCode.upsert({
 ```
 
 Luego ejecuta:
+
 ```bash
 npx ts-node scripts/create-promo-code.ts
 ```

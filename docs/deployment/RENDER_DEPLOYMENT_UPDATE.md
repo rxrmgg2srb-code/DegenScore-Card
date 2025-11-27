@@ -12,11 +12,13 @@ You need to update the following environment variables in your Render dashboard:
 ### 🔐 Critical Updates (Required Immediately)
 
 1. **DATABASE_URL** (Supabase - NEW PASSWORD)
+
    ```
    postgresql://postgres.thpsbnuxfrlectmqhajx:6yiJePuc5ncMqi8z@aws-1-eu-west-1.pooler.supabase.com:6543/postgres
    ```
 
 2. **HELIUS_API_KEY** (NEW KEY)
+
    ```
    a60d4b18-2322-468c-99a2-feaaffecea58
    ```
@@ -29,11 +31,13 @@ You need to update the following environment variables in your Render dashboard:
 ### 🔑 New Security Secrets (Required)
 
 4. **JWT_SECRET**
+
    ```
    jfp1A05aEMDTLXQSllD75ztCoZR6mamRY6OSCBf+YeA=
    ```
 
 5. **CRON_API_KEY**
+
    ```
    Lh6Mw8Ma1W0DXMUDfOjW6vloke92JOth8v+blTK/0Hc=
    ```
@@ -46,21 +50,25 @@ You need to update the following environment variables in your Render dashboard:
 ### ✅ Existing Variables (Keep as-is)
 
 7. **TREASURY_WALLET**
+
    ```
    Pf9yHR1qmkY9geMLfMJs7JD4yXZURkiaxm5h7K61J7N
    ```
 
 8. **NEXT_PUBLIC_TREASURY_WALLET**
+
    ```
    Pf9yHR1qmkY9geMLfMJs7JD4yXZURkiaxm5h7K61J7N
    ```
 
 9. **NEXT_PUBLIC_SOLANA_NETWORK**
+
    ```
    mainnet-beta
    ```
 
 10. **NEXT_PUBLIC_HELIUS_RPC_URL** (with new key)
+
     ```
     https://mainnet.helius-rpc.com/?api-key=a60d4b18-2322-468c-99a2-feaaffecea58
     ```
@@ -126,6 +134,7 @@ After updating all variables:
 **Cause**: DATABASE_URL might be incorrect or Supabase password not updated.
 
 **Solution**:
+
 1. Verify DATABASE_URL in Render matches exactly (including password: `6yiJePuc5ncMqi8z`)
 2. Check Supabase dashboard that password was actually reset
 3. Redeploy after confirming
@@ -135,6 +144,7 @@ After updating all variables:
 **Cause**: Old API key still in use.
 
 **Solution**:
+
 1. Verify HELIUS_API_KEY matches: `a60d4b18-2322-468c-99a2-feaaffecea58`
 2. Verify HELIUS_RPC_URL contains the new key
 3. Check both HELIUS_RPC_URL and NEXT_PUBLIC_HELIUS_RPC_URL
@@ -144,6 +154,7 @@ After updating all variables:
 **Cause**: Missing required environment variables.
 
 **Solution**:
+
 1. Verify ALL variables from the list are present
 2. Check for typos in variable names (case-sensitive)
 3. Check Render build logs for specific errors
@@ -190,13 +201,13 @@ Copy this to ensure you have everything:
 
 ## 🎯 Expected Timeline
 
-| Step | Time |
-|------|------|
-| Update variables in dashboard | 5-10 min |
-| Trigger redeploy | 1 min |
-| Wait for deployment | 2-5 min |
-| Verify application works | 2-3 min |
-| **Total** | **10-20 min** |
+| Step                          | Time          |
+| ----------------------------- | ------------- |
+| Update variables in dashboard | 5-10 min      |
+| Trigger redeploy              | 1 min         |
+| Wait for deployment           | 2-5 min       |
+| Verify application works      | 2-3 min       |
+| **Total**                     | **10-20 min** |
 
 ---
 

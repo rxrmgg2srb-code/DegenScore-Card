@@ -24,10 +24,7 @@ export async function uploadImage(
 /**
  * ❌ R2 Storage DISABLED
  */
-export async function getImageUrl(
-  _key: string,
-  _expiresIn: number = 3600
-): Promise<string | null> {
+export async function getImageUrl(_key: string, _expiresIn: number = 3600): Promise<string | null> {
   return null;
 }
 

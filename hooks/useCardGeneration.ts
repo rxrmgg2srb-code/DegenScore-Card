@@ -54,7 +54,7 @@ export function useCardGeneration() {
   });
 
   const generateCard = async (address: string) => {
-    setState(prev => ({
+    setState((prev) => ({
       ...prev,
       walletAddress: address,
       loading: true,
@@ -66,7 +66,11 @@ export function useCardGeneration() {
 
     try {
       // Step 1: Analyze wallet
-      setState(prev => ({ ...prev, analysisMessage: '🔍 Analyzing wallet...', analysisProgress: 10 }));
+      setState((prev) => ({
+        ...prev,
+        analysisMessage: '🔍 Analyzing wallet...',
+        analysisProgress: 10,
+      }));
 
       const analyzeResponse = await fetch('/api/analyze', {
         method: 'POST',
@@ -82,7 +86,7 @@ export function useCardGeneration() {
       const data = await analyzeResponse.json();
       logger.info('✅ Analysis complete:', data);
 
-      setState(prev => ({
+      setState((prev) => ({
         ...prev,
         analysisData: data,
         analysisMessage: '📊 Analysis complete!',
@@ -90,7 +94,11 @@ export function useCardGeneration() {
       }));
 
       // Step 2: Save to database
-      setState(prev => ({ ...prev, analysisMessage: '💾 Saving to database...', analysisProgress: 60 }));
+      setState((prev) => ({
+        ...prev,
+        analysisMessage: '💾 Saving to database...',
+        analysisProgress: 60,
+      }));
 
       const saveResponse = await fetch('/api/save-card', {
         method: 'POST',
@@ -109,10 +117,14 @@ export function useCardGeneration() {
       const saveData = await saveResponse.json();
       logger.info('✅ Card saved:', saveData);
 
-      setState(prev => ({ ...prev, analysisMessage: '✅ Saved!', analysisProgress: 80 }));
+      setState((prev) => ({ ...prev, analysisMessage: '✅ Saved!', analysisProgress: 80 }));
 
       // Step 3: Generate card image (force fresh generation, no cache)
-      setState(prev => ({ ...prev, analysisMessage: '🎨 Generating card image...', analysisProgress: 90 }));
+      setState((prev) => ({
+        ...prev,
+        analysisMessage: '🎨 Generating card image...',
+        analysisProgress: 90,
+      }));
 
       const imageResponse = await fetch('/api/generate-card?nocache=true', {
         method: 'POST',
@@ -128,7 +140,7 @@ export function useCardGeneration() {
       const blob = await imageResponse.blob();
       const imageUrl = URL.createObjectURL(blob);
 
-      setState(prev => ({
+      setState((prev) => ({
         ...prev,
         cardImage: imageUrl,
         analysisMessage: '🎉 Complete!',
@@ -137,7 +149,7 @@ export function useCardGeneration() {
 
       // Step 4: Trigger celebrations
       setTimeout(() => {
-        setState(prev => ({ ...prev, analyzing: false }));
+        setState((prev) => ({ ...prev, analyzing: false }));
 
         const score = data.degenScore || 0;
         let celebrationType: CelebrationState['celebrationType'] = 'card-generated';
@@ -162,7 +174,7 @@ export function useCardGeneration() {
 
         // Show first card achievement
         setTimeout(() => {
-          setCelebrationState(prev => ({
+          setCelebrationState((prev) => ({
             ...prev,
             currentAchievement: achievements.firstCard,
           }));
@@ -170,11 +182,11 @@ export function useCardGeneration() {
 
         // Show upgrade modal
         setTimeout(() => {
-          setModalState(prev => ({ ...prev, showUpgradeModal: true }));
+          setModalState((prev) => ({ ...prev, showUpgradeModal: true }));
         }, 1000);
       }, 500);
     } catch (err) {
-      setState(prev => ({
+      setState((prev) => ({
         ...prev,
         error: err instanceof Error ? err.message : 'An error occurred',
         analyzing: false,
@@ -184,7 +196,7 @@ export function useCardGeneration() {
         error: String(err),
       });
     } finally {
-      setState(prev => ({ ...prev, loading: false }));
+      setState((prev) => ({ ...prev, loading: false }));
     }
   };
 
@@ -212,7 +224,7 @@ export function useCardGeneration() {
     if (imageResponse.ok) {
       const blob = await imageResponse.blob();
       const imageUrl = URL.createObjectURL(blob);
-      setState(prev => ({ ...prev, cardImage: imageUrl }));
+      setState((prev) => ({ ...prev, cardImage: imageUrl }));
       logger.info('✅ Card regenerated!');
     }
   };

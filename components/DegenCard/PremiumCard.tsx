@@ -165,7 +165,9 @@ export default function PremiumCard({
               transition={{ delay: 0.4, duration: 0.6 }}
               className="relative text-center"
             >
-              <div className={`text-8xl font-black bg-gradient-to-r ${accentGradient} bg-clip-text text-transparent drop-shadow-lg`}>
+              <div
+                className={`text-8xl font-black bg-gradient-to-r ${accentGradient} bg-clip-text text-transparent drop-shadow-lg`}
+              >
                 {Math.round(degenScore)}
               </div>
               <div className="text-lg font-bold text-gray-300 mt-2 uppercase tracking-wider">
@@ -242,9 +244,7 @@ export default function PremiumCard({
             whileHover={{ scale: 1.05, backgroundColor: 'rgba(0,0,0,0.3)' }}
           >
             <div className="text-xs font-semibold text-gray-400 mb-1">Volume</div>
-            <div className="text-lg font-black text-cyan-400">
-              {formatVolume(totalVolume)}
-            </div>
+            <div className="text-lg font-black text-cyan-400">{formatVolume(totalVolume)}</div>
           </motion.div>
 
           {/* Trades stat */}
@@ -253,9 +253,7 @@ export default function PremiumCard({
             whileHover={{ scale: 1.05, backgroundColor: 'rgba(0,0,0,0.3)' }}
           >
             <div className="text-xs font-semibold text-gray-400 mb-1">Trades</div>
-            <div className="text-lg font-black text-purple-400">
-              {totalTrades}
-            </div>
+            <div className="text-lg font-black text-purple-400">{totalTrades}</div>
           </motion.div>
 
           {/* Win Rate stat */}
@@ -264,7 +262,9 @@ export default function PremiumCard({
             whileHover={{ scale: 1.05, backgroundColor: 'rgba(0,0,0,0.3)' }}
           >
             <div className="text-xs font-semibold text-gray-400 mb-1">Win Rate</div>
-            <div className={`text-lg font-black ${winRate >= 50 ? 'text-green-400' : 'text-red-400'}`}>
+            <div
+              className={`text-lg font-black ${winRate >= 50 ? 'text-green-400' : 'text-red-400'}`}
+            >
               {winRate.toFixed(1)}%
             </div>
           </motion.div>
@@ -279,8 +279,11 @@ export default function PremiumCard({
             className="text-center pt-2"
           >
             <div className="text-xs font-semibold text-gray-400 mb-1">Realized P&L</div>
-            <div className={`text-2xl font-black ${profitLoss >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-              {profitLoss >= 0 ? '+' : ''}{formatVolume(Math.abs(profitLoss))}
+            <div
+              className={`text-2xl font-black ${profitLoss >= 0 ? 'text-green-400' : 'text-red-400'}`}
+            >
+              {profitLoss >= 0 ? '+' : ''}
+              {formatVolume(Math.abs(profitLoss))}
             </div>
           </motion.div>
         )}

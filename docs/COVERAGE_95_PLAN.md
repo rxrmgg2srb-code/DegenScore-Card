@@ -5,6 +5,7 @@
 ### Áreas típicas de baja cobertura:
 
 #### 1. **Utility Functions (`lib/utils/`)**
+
 - Funciones de formateo
 - Validadores
 - Helpers
@@ -13,6 +14,7 @@
 **Acción:** Crear tests unitarios exhaustivos
 
 #### 2. **API Routes (`pages/api/`)**
+
 - Handlers HTTP
 - Autenticación
 - Validación de requests
@@ -21,6 +23,7 @@
 **Acción:** Crear tests de integración con mocks de DB y externos
 
 #### 3. **Hooks personalizados (`hooks/`)**
+
 - useWallet integrations
 - useTokenAnalysis
 - useDegenCard
@@ -29,6 +32,7 @@
 **Acción:** Tests con @testing-library/react-hooks
 
 #### 4. **Services (`lib/services/`)**
+
 - APIs externas (Helius, CoinGecko)
 - Database operations
 - Caching layers
@@ -37,6 +41,7 @@
 **Acción:** Tests con mocks comprehensivos
 
 #### 5. **Error Boundaries y Edge Cases**
+
 - Error states
 - Loading states
 - Empty states
@@ -95,6 +100,7 @@ npm run generate-badge
 - **Lines:** 95%+
 
 ### Next steps:
+
 1. Ejecutar `npm run test:coverage`
 2. Analizar reporte de cobertura
 3. Identificar archivos con <95%

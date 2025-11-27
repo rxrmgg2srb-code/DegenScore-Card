@@ -6,7 +6,7 @@ test.describe('Wallet Authentication', () => {
 
     // Look for wallet connect button
     const connectButton = page.locator('button:has-text("Connect"), button:has-text("Wallet")');
-    const buttonExists = await connectButton.count() > 0;
+    const buttonExists = (await connectButton.count()) > 0;
 
     if (buttonExists) {
       await expect(connectButton.first()).toBeVisible();
@@ -18,18 +18,20 @@ test.describe('Wallet Authentication', () => {
 
     const connectButton = page.locator('button:has-text("Connect"):has-text("Wallet")');
 
-    if (await connectButton.count() > 0) {
+    if ((await connectButton.count()) > 0) {
       await connectButton.first().click();
 
       // Modal/dropdown with wallet providers should appear
       const walletModal = page.locator('[role="dialog"], [class*="modal" i]');
 
-      if (await walletModal.count() > 0) {
+      if ((await walletModal.count()) > 0) {
         await expect(walletModal.first()).toBeVisible({ timeout: 3000 });
 
         // Should show wallet options (Phantom, Solflare, etc.)
-        const walletOptions = page.locator('button:has-text("Phantom"), button:has-text("Solflare"), [class*="wallet" i] button');
-        if (await walletOptions.count() > 0) {
+        const walletOptions = page.locator(
+          'button:has-text("Phantom"), button:has-text("Solflare"), [class*="wallet" i] button'
+        );
+        if ((await walletOptions.count()) > 0) {
           await expect(walletOptions.first()).toBeVisible();
         }
       }
@@ -42,7 +44,7 @@ test.describe('Wallet Authentication', () => {
     // Look for disconnect button (appears when wallet is connected)
     const disconnectButton = page.locator('button:has-text("Disconnect")');
 
-    if (await disconnectButton.count() > 0) {
+    if ((await disconnectButton.count()) > 0) {
       await disconnectButton.first().click();
 
       // After disconnect, connect button should appear again
@@ -57,9 +59,11 @@ test.describe('Authenticated Features', () => {
     await page.goto('/');
 
     // Check for user-specific features
-    const userFeatures = page.locator('[class*="profile" i], [class*="dashboard" i], text=/my card|my profile/i');
+    const userFeatures = page.locator(
+      '[class*="profile" i], [class*="dashboard" i], text=/my card|my profile/i'
+    );
 
-    if (await userFeatures.count() > 0) {
+    if ((await userFeatures.count()) > 0) {
       // User features should be visible when authenticated
       await expect(userFeatures.first()).toBeVisible();
     }
@@ -71,7 +75,7 @@ test.describe('Authenticated Features', () => {
     // Look for settings link/button
     const settingsLink = page.locator('a[href*="settings" i], button:has-text("Settings")');
 
-    if (await settingsLink.count() > 0) {
+    if ((await settingsLink.count()) > 0) {
       await settingsLink.first().click();
       await expect(page).toHaveURL(/.*settings.*/);
     }
@@ -81,9 +85,11 @@ test.describe('Authenticated Features', () => {
     await page.goto('/settings');
 
     // Check for profile form fields
-    const profileFields = page.locator('input[name*="name" i], input[name*="bio" i], textarea[name*="bio" i]');
+    const profileFields = page.locator(
+      'input[name*="name" i], input[name*="bio" i], textarea[name*="bio" i]'
+    );
 
-    if (await profileFields.count() > 0) {
+    if ((await profileFields.count()) > 0) {
       await expect(profileFields.first()).toBeVisible();
     }
   });
@@ -94,10 +100,9 @@ test.describe('Security', () => {
     await page.goto('/api/admin/sync-database');
 
     // Should not allow unauthenticated access
-    const response = await page.waitForResponse(
-      (response) => response.url().includes('/api/admin'),
-      { timeout: 5000 }
-    ).catch(() => null);
+    const response = await page
+      .waitForResponse((response) => response.url().includes('/api/admin'), { timeout: 5000 })
+      .catch(() => null);
 
     if (response) {
       expect([401, 403, 404]).toContain(response.status());

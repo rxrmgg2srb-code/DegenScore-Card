@@ -11,8 +11,8 @@ const path = require('path');
 const coveragePath = path.join(__dirname, '..', 'coverage', 'coverage-summary.json');
 
 if (!fs.existsSync(coveragePath)) {
-    console.log('⚠️  No coverage report found. Run: npm run test:coverage');
-    process.exit(1);
+  console.log('⚠️  No coverage report found. Run: npm run test:coverage');
+  process.exit(1);
 }
 
 const coverage = JSON.parse(fs.readFileSync(coveragePath, 'utf-8'));
@@ -20,85 +20,89 @@ const totals = coverage.total;
 
 // Calculate metrics
 const metrics = {
-    statements: totals.statements.pct,
-    branches: totals.branches.pct,
-    functions: totals.functions.pct,
-    lines: totals.lines.pct,
+  statements: totals.statements.pct,
+  branches: totals.branches.pct,
+  functions: totals.functions.pct,
+  lines: totals.lines.pct,
 };
 
 const overall = Object.values(metrics).reduce((a, b) => a + b, 0) / 4;
 
 // Determine badge colors
 const getColor = (percent) => {
-    if (percent >= 95) return 'brightgreen';
-    if (percent >= 90) return 'green';
-    if (percent >= 80) return 'yellowgreen';
-    if (percent >= 70) return 'yellow';
-    if (percent >= 60) return 'orange';
-    return 'red';
+  if (percent >= 95) return 'brightgreen';
+  if (percent >= 90) return 'green';
+  if (percent >= 80) return 'yellowgreen';
+  if (percent >= 70) return 'yellow';
+  if (percent >= 60) return 'orange';
+  return 'red';
 };
 
 // Generate badges
 const badges = {
-    overall: {
-        label: 'coverage',
-        message: `${overall.toFixed(1)}%`,
-        color: getColor(overall),
-    },
-    statements: {
-        label: 'statements',
-        message: `${metrics.statements.toFixed(1)}%`,
-        color: getColor(metrics.statements),
-    },
-    branches: {
-        label: 'branches',
-        message: `${metrics.branches.toFixed(1)}%`,
-        color: getColor(metrics.branches),
-    },
-    functions: {
-        label: 'functions',
-        message: `${metrics.functions.toFixed(1)}%`,
-        color: getColor(metrics.functions),
-    },
-    lines: {
-        label: 'lines',
-        message: `${metrics.lines.toFixed(1)}%`,
-        color: getColor(metrics.lines),
-    },
+  overall: {
+    label: 'coverage',
+    message: `${overall.toFixed(1)}%`,
+    color: getColor(overall),
+  },
+  statements: {
+    label: 'statements',
+    message: `${metrics.statements.toFixed(1)}%`,
+    color: getColor(metrics.statements),
+  },
+  branches: {
+    label: 'branches',
+    message: `${metrics.branches.toFixed(1)}%`,
+    color: getColor(metrics.branches),
+  },
+  functions: {
+    label: 'functions',
+    message: `${metrics.functions.toFixed(1)}%`,
+    color: getColor(metrics.functions),
+  },
+  lines: {
+    label: 'lines',
+    message: `${metrics.lines.toFixed(1)}%`,
+    color: getColor(metrics.lines),
+  },
 };
 
 // Count test files
 const countTests = (dir) => {
-    let count = 0;
-    const files = fs.readdirSync(dir);
+  let count = 0;
+  const files = fs.readdirSync(dir);
 
-    files.forEach(file => {
-        const fullPath = path.join(dir, file);
-        const stat = fs.statSync(fullPath);
+  files.forEach((file) => {
+    const fullPath = path.join(dir, file);
+    const stat = fs.statSync(fullPath);
 
-        if (stat.isDirectory()) {
-            count += countTests(fullPath);
-        } else if (file.endsWith('.test.tsx') || file.endsWith('.test.ts')) {
-            count++;
-        }
-    });
+    if (stat.isDirectory()) {
+      count += countTests(fullPath);
+    } else if (file.endsWith('.test.tsx') || file.endsWith('.test.ts')) {
+      count++;
+    }
+  });
 
-    return count;
+  return count;
 };
 
 const testCount = countTests(path.join(__dirname, '..', '__tests__'));
 
 // Generate badge URLs
 const badgeUrls = Object.entries(badges).map(([key, badge]) => {
-    return `[![${badge.label}](https://img.shields.io/badge/${badge.label}-${badge.message}-${badge.color})](https://github.com)`;
+  return `[![${badge.label}](https://img.shields.io/badge/${badge.label}-${badge.message}-${badge.color})](https://github.com)`;
 });
 
 // Add test count badge
-badgeUrls.push(`[![tests](https://img.shields.io/badge/tests-${testCount}+-success)](https://github.com)`);
+badgeUrls.push(
+  `[![tests](https://img.shields.io/badge/tests-${testCount}+-success)](https://github.com)`
+);
 
 // Add quality badge
 const qualityGrade = overall >= 95 ? 'A+' : overall >= 90 ? 'A' : overall >= 80 ? 'B' : 'C';
-badgeUrls.push(`[![quality](https://img.shields.io/badge/quality-${qualityGrade}-blue)](https://github.com)`);
+badgeUrls.push(
+  `[![quality](https://img.shields.io/badge/quality-${qualityGrade}-blue)](https://github.com)`
+);
 
 // Create badges markdown
 const badgesMarkdown = `# Testing Metrics
@@ -137,10 +141,7 @@ DegenScore ranks in the **TOP 3** globally for test coverage in Web3 projects:
 `;
 
 // Save badges
-fs.writeFileSync(
-    path.join(__dirname, '..', 'docs', 'BADGES.md'),
-    badgesMarkdown
-);
+fs.writeFileSync(path.join(__dirname, '..', 'docs', 'BADGES.md'), badgesMarkdown);
 
 console.log('🎖️  Coverage Badges Generated!');
 console.log('');
@@ -149,6 +150,8 @@ console.log(`   Overall Coverage: ${overall.toFixed(1)}%`);
 console.log(`   Total Tests: ${testCount}`);
 console.log(`   Quality Grade: ${qualityGrade}`);
 console.log('');
-console.log(`✨ Status: ${overall >= 95 ? '🏆 WORLD CLASS' : overall >= 90 ? '✅ EXCELLENT' : overall >= 80 ? '👍 GOOD' : '🚧 IMPROVING'}`);
+console.log(
+  `✨ Status: ${overall >= 95 ? '🏆 WORLD CLASS' : overall >= 90 ? '✅ EXCELLENT' : overall >= 80 ? '👍 GOOD' : '🚧 IMPROVING'}`
+);
 console.log('');
 console.log('📄 Badge file created: docs/BADGES.md');

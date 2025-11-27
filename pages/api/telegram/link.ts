@@ -30,9 +30,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     // Parse telegramId (can be string or number)
-    const telegramIdNum = typeof telegramId === 'string'
-      ? parseInt(telegramId)
-      : telegramId;
+    const telegramIdNum = typeof telegramId === 'string' ? parseInt(telegramId) : telegramId;
 
     if (isNaN(telegramIdNum)) {
       return res.status(400).json({ error: 'Invalid telegramId' });
@@ -50,7 +48,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       message: 'Telegram account linked successfully',
     });
   } catch (error: any) {
-    logger.error('Error in /api/telegram/link:', error instanceof Error ? error : new Error(String(error)));
+    logger.error(
+      'Error in /api/telegram/link:',
+      error instanceof Error ? error : new Error(String(error))
+    );
     return res.status(500).json({
       error: 'Server error',
       message: error.message,

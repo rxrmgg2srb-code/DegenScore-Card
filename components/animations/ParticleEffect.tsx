@@ -8,7 +8,9 @@ interface ParticleEffectProps {
 
 export const ParticleEffect = ({ trigger, type = 'confetti' }: ParticleEffectProps) => {
   useEffect(() => {
-    if (!trigger) {return;}
+    if (!trigger) {
+      return;
+    }
 
     const effects = {
       confetti: () => {

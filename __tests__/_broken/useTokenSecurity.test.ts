@@ -63,12 +63,10 @@ describe('useTokenSecurity', () => {
   });
 
   it('should retry on failure', async () => {
-    (global.fetch as jest.Mock)
-      .mockRejectedValueOnce(new Error('Fail 1'))
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ score: 90 }),
-      });
+    (global.fetch as jest.Mock).mockRejectedValueOnce(new Error('Fail 1')).mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ score: 90 }),
+    });
 
     const { result, waitForNextUpdate } = renderHook(() => useTokenSecurity(mockTokenAddress));
     await waitForNextUpdate();

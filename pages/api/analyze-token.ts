@@ -30,10 +30,7 @@ import { cacheGet, cacheSet } from '@/lib/cache/redis';
 const CACHE_TTL = 3600; // 1 hour cache
 const STALE_THRESHOLD = 24 * 60 * 60 * 1000; // 24 hours
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -99,7 +96,10 @@ export default async function handler(
 
         // If analysis is less than 24 hours old, return it
         if (age < STALE_THRESHOLD) {
-          logger.info('✅ Returning database cached analysis', { tokenAddress, ageHours: age / 3600000 });
+          logger.info('✅ Returning database cached analysis', {
+            tokenAddress,
+            ageHours: age / 3600000,
+          });
 
           // Update view count
           await prisma.tokenAnalysis.update({
@@ -152,7 +152,6 @@ export default async function handler(
       report,
       cached: false,
     });
-
   } catch (error: any) {
     logger.error('❌ Token analysis failed', error instanceof Error ? error : undefined, {
       error: String(error),
@@ -262,10 +261,14 @@ async function saveAnalysisToDatabase(tokenAddress: string, report: any) {
 
     logger.info('✅ Analysis saved to database', { tokenAddress });
   } catch (error) {
-    logger.error('Failed to save analysis to database', error instanceof Error ? error : undefined, {
-      tokenAddress,
-      error: String(error),
-    });
+    logger.error(
+      'Failed to save analysis to database',
+      error instanceof Error ? error : undefined,
+      {
+        tokenAddress,
+        error: String(error),
+      }
+    );
     // Don't throw - analysis was successful even if DB save failed
   }
 }

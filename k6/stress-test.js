@@ -4,16 +4,16 @@ import { check, sleep } from 'k6';
 // Stress test configuration - push the system beyond normal limits
 export const options = {
   stages: [
-    { duration: '1m', target: 100 },   // Ramp up to 100 users
-    { duration: '3m', target: 200 },   // Ramp up to 200 users
-    { duration: '2m', target: 300 },   // Push to 300 users
-    { duration: '1m', target: 500 },   // Spike to 500 users
-    { duration: '5m', target: 500 },   // Sustain 500 users
-    { duration: '2m', target: 0 },     // Ramp down
+    { duration: '1m', target: 100 }, // Ramp up to 100 users
+    { duration: '3m', target: 200 }, // Ramp up to 200 users
+    { duration: '2m', target: 300 }, // Push to 300 users
+    { duration: '1m', target: 500 }, // Spike to 500 users
+    { duration: '5m', target: 500 }, // Sustain 500 users
+    { duration: '2m', target: 0 }, // Ramp down
   ],
   thresholds: {
-    http_req_duration: ['p(95)<2000'],  // 95% under 2s during stress
-    http_req_failed: ['rate<0.05'],      // Error rate under 5%
+    http_req_duration: ['p(95)<2000'], // 95% under 2s during stress
+    http_req_failed: ['rate<0.05'], // Error rate under 5%
   },
 };
 

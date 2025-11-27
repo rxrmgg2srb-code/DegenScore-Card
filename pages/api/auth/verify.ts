@@ -1,5 +1,9 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { verifyAuthentication, generateSessionToken, WalletAuthResponse } from '../../../lib/walletAuth';
+import {
+  verifyAuthentication,
+  generateSessionToken,
+  WalletAuthResponse,
+} from '../../../lib/walletAuth';
 import { isValidSolanaAddress } from '../../../lib/validation';
 import { rateLimit } from '../../../lib/rateLimit';
 import { logger } from '../../../lib/logger';
@@ -8,10 +12,7 @@ import { logger } from '../../../lib/logger';
  * Verify wallet signature and issue session token
  * POST /api/auth/verify
  */
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -35,7 +36,7 @@ export default async function handler(
 
     if (!nonce) {
       return res.status(400).json({
-        error: 'Missing nonce in authentication request'
+        error: 'Missing nonce in authentication request',
       });
     }
 
@@ -49,11 +50,11 @@ export default async function handler(
     if (!verification.valid) {
       logger.warn('Authentication failed:', {
         error: verification.error,
-        publicKey: redactedWallet
+        publicKey: redactedWallet,
       });
       // ✅ SECURITY: Generic error message to user
       return res.status(401).json({
-        error: 'Authentication failed'
+        error: 'Authentication failed',
       });
     }
 

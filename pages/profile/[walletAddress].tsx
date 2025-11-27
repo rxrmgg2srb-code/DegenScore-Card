@@ -52,7 +52,9 @@ export default function ProfilePage() {
   }, [walletAddress]);
 
   const fetchCardData = async () => {
-    if (!walletAddress || typeof walletAddress !== 'string') {return;}
+    if (!walletAddress || typeof walletAddress !== 'string') {
+      return;
+    }
 
     if (!isValidSolanaAddress(walletAddress)) {
       setError('Invalid Solana wallet address');
@@ -86,7 +88,9 @@ export default function ProfilePage() {
   };
 
   const downloadCard = () => {
-    if (!cardImageUrl || !walletAddress) {return;}
+    if (!cardImageUrl || !walletAddress) {
+      return;
+    }
 
     const link = document.createElement('a');
     link.href = cardImageUrl;
@@ -97,10 +101,14 @@ export default function ProfilePage() {
   };
 
   const exportData = async (format: 'json' | 'csv') => {
-    if (!walletAddress) {return;}
+    if (!walletAddress) {
+      return;
+    }
 
     try {
-      const response = await fetch(`/api/export/card?walletAddress=${walletAddress}&format=${format}`);
+      const response = await fetch(
+        `/api/export/card?walletAddress=${walletAddress}&format=${format}`
+      );
 
       if (!response.ok) {
         throw new Error('Failed to export data');
@@ -189,9 +197,7 @@ export default function ProfilePage() {
               <h2 className="text-2xl font-bold text-white mb-1">
                 {cardData.profileName || `Degen ${cardData.walletAddress.slice(0, 6)}`}
               </h2>
-              <p className="text-gray-400 text-sm mb-2 font-mono">
-                {cardData.walletAddress}
-              </p>
+              <p className="text-gray-400 text-sm mb-2 font-mono">{cardData.walletAddress}</p>
               {cardData.profileBio && (
                 <p className="text-gray-300 text-sm mb-3">{cardData.profileBio}</p>
               )}

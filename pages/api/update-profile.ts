@@ -14,10 +14,7 @@ export const config = {
   },
 };
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -33,13 +30,7 @@ export default async function handler(
   }
 
   try {
-    const {
-      walletAddress,
-      displayName,
-      twitter,
-      telegram,
-      profileImage
-    } = req.body;
+    const { walletAddress, displayName, twitter, telegram, profileImage } = req.body;
 
     // Validate wallet address
     if (!walletAddress || !isValidSolanaAddress(walletAddress)) {
@@ -77,9 +68,10 @@ export default async function handler(
       error: String(error),
     });
 
-    const errorMessage = process.env.NODE_ENV === 'development' && error instanceof Error
-      ? error.message
-      : 'Failed to update profile';
+    const errorMessage =
+      process.env.NODE_ENV === 'development' && error instanceof Error
+        ? error.message
+        : 'Failed to update profile';
 
     res.status(500).json({ error: errorMessage });
   }

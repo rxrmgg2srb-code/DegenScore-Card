@@ -1,5 +1,7 @@
+/* eslint-disable react/no-unescaped-entities */
 import { useState } from 'react';
 import Head from 'next/head';
+import Link from 'next/link';
 import { LanguageSelector } from '../components/LanguageSelector';
 import { NavigationButtons } from '../components/NavigationButtons';
 import { sections } from './docs/constants';
@@ -275,7 +277,10 @@ export function Documentation() {
                       </div>
                     </div>
                     <div className="mt-4 bg-black/30 rounded-lg p-3 text-sm text-gray-300">
-                      💡 <strong>Tip:</strong> View all 60+ badges with full details on the <a href="/achievements" className="text-purple-400 hover:text-purple-300 underline">Achievements Page</a>
+                      💡 <strong>Tip:</strong> View all 60+ badges with full details on the{' '}
+                      <Link href="/achievements" className="text-purple-400 hover:text-purple-300 underline">
+                        Achievements Page
+                      </Link>
                     </div>
                   </div>
 

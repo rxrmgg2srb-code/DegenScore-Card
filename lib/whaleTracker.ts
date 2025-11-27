@@ -47,11 +47,14 @@ export async function calculateWhaleMetrics(walletAddress: string): Promise<Whal
     });
 
     // Get top tokens from hot trades
-    const tokenCounts = hotTrades.reduce((acc, trade) => {
-      const symbol = trade.tokenSymbol || 'UNKNOWN';
-      acc[symbol] = (acc[symbol] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
+    const tokenCounts = hotTrades.reduce(
+      (acc, trade) => {
+        const symbol = trade.tokenSymbol || 'UNKNOWN';
+        acc[symbol] = (acc[symbol] || 0) + 1;
+        return acc;
+      },
+      {} as Record<string, number>
+    );
 
     const topTokens = Object.entries(tokenCounts)
       .sort(([, a], [, b]) => b - a)
@@ -114,8 +117,7 @@ export async function detectAndRegisterWhale(walletAddress: string): Promise<boo
 
     // Determine tier based on total volume
     const tier =
-      metrics.totalVolume >= 1000 ? 'megawhale' :
-      metrics.totalVolume >= 100 ? 'whale' : 'shark';
+      metrics.totalVolume >= 1000 ? 'megawhale' : metrics.totalVolume >= 100 ? 'whale' : 'shark';
 
     // Register as whale
     await prisma.whaleWallet.create({
@@ -162,8 +164,7 @@ export async function updateWhaleMetrics(walletAddress: string): Promise<void> {
 
     // Determine tier based on total volume
     const tier =
-      metrics.totalVolume >= 1000 ? 'megawhale' :
-      metrics.totalVolume >= 100 ? 'whale' : 'shark';
+      metrics.totalVolume >= 1000 ? 'megawhale' : metrics.totalVolume >= 100 ? 'whale' : 'shark';
 
     await prisma.whaleWallet.update({
       where: { walletAddress },
@@ -218,14 +219,11 @@ export async function createWhaleAlert(
 export async function getTopWhales(limit = 50) {
   try {
     const whales = await prisma.whaleWallet.findMany({
-      orderBy: [
-        { totalVolume: 'desc' },
-        { winRate: 'desc' },
-      ],
+      orderBy: [{ totalVolume: 'desc' }, { winRate: 'desc' }],
       take: limit,
     });
 
-    return whales.map(whale => ({
+    return whales.map((whale) => ({
       ...whale,
       topTokens: whale.tags ? JSON.parse(whale.tags) : [],
     }));
@@ -238,10 +236,7 @@ export async function getTopWhales(limit = 50) {
 /**
  * Get whale alerts for followed whales
  */
-export async function getWhaleAlertsForUser(
-  walletAddress: string,
-  limit = 20
-) {
+export async function getWhaleAlertsForUser(walletAddress: string, limit = 20) {
   try {
     // Get followed whales
     const follows = await prisma.whaleFollower.findMany({
@@ -252,7 +247,7 @@ export async function getWhaleAlertsForUser(
       select: { whaleAddress: true },
     });
 
-    const whaleAddresses = follows.map(f => f.whaleAddress);
+    const whaleAddresses = follows.map((f) => f.whaleAddress);
 
     if (whaleAddresses.length === 0) {
       return [];
@@ -266,7 +261,7 @@ export async function getWhaleAlertsForUser(
       select: { id: true },
     });
 
-    const whaleIds = whaleWallets.map(w => w.id);
+    const whaleIds = whaleWallets.map((w) => w.id);
 
     // Get recent alerts
     const alerts = await prisma.whaleAlert.findMany({
@@ -295,10 +290,7 @@ export async function getWhaleAlertsForUser(
 /**
  * Follow a whale
  */
-export async function followWhale(
-  walletAddress: string,
-  whaleAddress: string
-): Promise<boolean> {
+export async function followWhale(walletAddress: string, whaleAddress: string): Promise<boolean> {
   try {
     // Check if whale exists
     const whale = await prisma.whaleWallet.findUnique({
@@ -328,10 +320,7 @@ export async function followWhale(
 /**
  * Unfollow a whale
  */
-export async function unfollowWhale(
-  walletAddress: string,
-  whaleAddress: string
-): Promise<boolean> {
+export async function unfollowWhale(walletAddress: string, whaleAddress: string): Promise<boolean> {
   try {
     const deleted = await prisma.whaleFollower.deleteMany({
       where: {
@@ -382,7 +371,7 @@ export async function getFollowedWhales(walletAddress: string) {
     });
 
     // Get whale details for each follow
-    const whaleAddresses = follows.map(f => f.whaleAddress);
+    const whaleAddresses = follows.map((f) => f.whaleAddress);
     const whales = await prisma.whaleWallet.findMany({
       where: {
         walletAddress: { in: whaleAddresses },
@@ -390,9 +379,9 @@ export async function getFollowedWhales(walletAddress: string) {
     });
 
     // Create a map for quick lookup
-    const whaleMap = new Map(whales.map(w => [w.walletAddress, w]));
+    const whaleMap = new Map(whales.map((w) => [w.walletAddress, w]));
 
-    return follows.map(f => {
+    return follows.map((f) => {
       const whale = whaleMap.get(f.whaleAddress);
       return {
         ...whale,
@@ -439,8 +428,13 @@ export async function processTradeForWhaleDetection(
     // If whale, create alert for large trades
     if (whale && trade.solAmount >= 50) {
       const alertType: WhaleAlertType =
-        trade.solAmount >= 500 ? (trade.type === 'buy' ? 'large_buy' : 'large_sell') :
-        trade.type === 'buy' ? 'new_position' : 'position_close';
+        trade.solAmount >= 500
+          ? trade.type === 'buy'
+            ? 'large_buy'
+            : 'large_sell'
+          : trade.type === 'buy'
+            ? 'new_position'
+            : 'position_close';
 
       const description = `${trade.type === 'buy' ? 'Bought' : 'Sold'} ${trade.tokenSymbol} for ${trade.solAmount.toFixed(2)} SOL`;
 

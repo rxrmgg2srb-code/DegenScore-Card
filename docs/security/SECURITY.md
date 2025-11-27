@@ -10,10 +10,10 @@ DegenScore takes security seriously. This document outlines our security policy,
 
 We release security updates for the following versions:
 
-| Version | Supported          |
-| ------- | ------------------ |
-| 1.x.x   | ✅ Yes             |
-| < 1.0   | ❌ No              |
+| Version | Supported |
+| ------- | --------- |
+| 1.x.x   | ✅ Yes    |
+| < 1.0   | ❌ No     |
 
 ## 🐛 Reporting a Vulnerability
 
@@ -67,12 +67,12 @@ When you submit a vulnerability report, you can expect:
 
 We run a bug bounty program to reward security researchers:
 
-| Severity | Bounty Range |
-| -------- | ------------ |
+| Severity | Bounty Range    |
+| -------- | --------------- |
 | Critical | $1,000 - $5,000 |
-| High     | $500 - $1,000 |
-| Medium   | $100 - $500 |
-| Low      | $50 - $100 |
+| High     | $500 - $1,000   |
+| Medium   | $100 - $500     |
+| Low      | $50 - $100      |
 
 **Scope**: All production systems and smart contracts
 **Out of Scope**: Third-party services, social engineering, physical attacks
@@ -84,6 +84,7 @@ We run a bug bounty program to reward security researchers:
 DegenScore implements multiple layers of security:
 
 ### Smart Contract Security
+
 - ✅ Anchor framework with built-in security checks
 - ✅ On-chain validation for all critical operations
 - ✅ Access control with PDA-based authorization
@@ -91,6 +92,7 @@ DegenScore implements multiple layers of security:
 - ✅ Third-party audit (planned Q1 2025)
 
 ### Web Application Security
+
 - ✅ Strict Content Security Policy (CSP)
 - ✅ HTTP Strict Transport Security (HSTS)
 - ✅ XSS Protection headers
@@ -101,6 +103,7 @@ DegenScore implements multiple layers of security:
 - ✅ Environment variable protection
 
 ### API Security
+
 - ✅ Rate limiting (100 req/min per IP)
 - ✅ Input validation with Zod schemas
 - ✅ Authentication via wallet signatures
@@ -108,6 +111,7 @@ DegenScore implements multiple layers of security:
 - ✅ Error messages sanitized (no stack traces in production)
 
 ### Infrastructure Security
+
 - ✅ Automated dependency scanning (npm audit)
 - ✅ Secret detection in CI/CD (TruffleHog)
 - ✅ Sentry error monitoring
@@ -116,6 +120,7 @@ DegenScore implements multiple layers of security:
 - ✅ Regular backups (daily snapshots)
 
 ### Monitoring & Response
+
 - ✅ Real-time error tracking (Sentry)
 - ✅ Automated security scanning in CI/CD
 - ✅ Log aggregation and analysis
