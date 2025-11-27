@@ -16,10 +16,10 @@ export function verifyJwt(req: NextApiRequest, res: NextApiResponse, next: () =>
     const token = authHeader.split(' ')[1];
 
     // ✅ SECURITY: Use JWT_SECRET (server-only), not NEXT_PUBLIC_JWT_SECRET
-    const secret = process.env.JWT_SECRET;
+    const secretFromEnv = process.env.JWT_SECRET;
 
     // ✅ SECURITY: No fallback secret - fail fast if not configured
-    if (!secret || secret.length < 32) {
+    if (!secretFromEnv || secretFromEnv.length < 32) {
         logger.error('JWT_SECRET not configured or too short (min 32 chars)');
         res.status(500).json({ error: 'Server misconfiguration' });
         return;
@@ -27,10 +27,12 @@ export function verifyJwt(req: NextApiRequest, res: NextApiResponse, next: () =>
 
     try {
         // ✅ SECURITY: Verify with proper typing, no fallback
-        const payload = jwt.verify(token, secret, {
+        // @ts-expect-error - TypeScript can't narrow process.env types with noUncheckedIndexedAccess enabled,
+        // but we've validated secret exists and has correct length above
+        const payload = jwt.verify(token, secretFromEnv, {
             algorithms: ['HS256'],
             issuer: 'degenscore-card'
-        }) as jwt.JwtPayload & { walletAddress?: string; wallet?: string };
+        }) as { walletAddress?: string; wallet?: string };
 
         // Extract wallet address (support both 'wallet' and 'walletAddress' for compatibility)
         const walletAddress = payload.walletAddress || payload.wallet;

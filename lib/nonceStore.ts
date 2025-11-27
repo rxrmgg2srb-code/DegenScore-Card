@@ -1,4 +1,4 @@
-import { redis } from './cache/redis';
+import redis from './cache/redis';
 import { logger } from './logger';
 
 /**
