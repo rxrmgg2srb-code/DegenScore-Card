@@ -155,7 +155,7 @@ export default function FIFALeaderboardContent() {
                         🏆 TOP TRADERS
                     </h1>
                     <p className="text-gray-300 text-xl">
-                        The ultimate FIFA-style leaderboard of Solana's best traders
+                        The Ultimate FIFA-Style Leaderboard of Solana's Best Traders
                     </p>
                 </motion.div>
 

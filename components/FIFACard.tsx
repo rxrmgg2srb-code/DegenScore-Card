@@ -236,7 +236,7 @@ export default function FIFACard({
                                 </svg>
                             </button>
 
-                            <h3 className="text-3xl font-black text-white mb-6 text-center uppercase italic tracking-wider">Player Stats</h3>
+                            <h3 className="text-3xl font-black text-white mb-6 text-center uppercase italic tracking-wider">Trader Stats</h3>
                             <div className="grid grid-cols-2 gap-4">
                                 <DetailRow label="Win Rate" value={`${stats.winRate}%`} />
                                 <DetailRow label="Volume" value={`${stats.totalVolume} SOL`} />

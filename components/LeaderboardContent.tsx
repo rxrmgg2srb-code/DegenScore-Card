@@ -116,7 +116,7 @@ export function Leaderboard() {
     <>
       <Head>
         <title>Leaderboard | DegenScore</title>
-        <meta name="description" content="Top Solana traders ranked by DegenScore" />
+        <meta name="description" content="Top Solana Traders Ranked by DegenScore" />
       </Head>
 
       <style jsx global>{`
