@@ -371,7 +371,7 @@ export async function notifyWhaleFollowers(
           Number(telegramUser.telegramId),
           alertMessage
         );
-        if (sent) notifiedCount++;
+        if (sent) {notifiedCount++;}
       }
     }
 

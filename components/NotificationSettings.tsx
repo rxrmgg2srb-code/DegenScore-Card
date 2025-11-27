@@ -43,7 +43,7 @@ export default function NotificationSettings() {
   }, [sessionToken]);
 
   const generateToken = () => {
-    if (!publicKey) return;
+    if (!publicKey) {return;}
 
     try {
       const token = generateSessionToken(publicKey.toBase58());
@@ -55,7 +55,7 @@ export default function NotificationSettings() {
   };
 
   const fetchPreferences = async () => {
-    if (!sessionToken) return;
+    if (!sessionToken) {return;}
 
     setLoading(true);
 

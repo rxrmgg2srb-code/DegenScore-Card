@@ -109,7 +109,7 @@ export default async function handler(
       );
 
       // Sort by requested field
-      let sortedCards = [...cardsWithExtras];
+      const sortedCards = [...cardsWithExtras];
 
       if (sortField === 'newest') {
         // Más nuevas primero (DESC por fecha de mintedAt)

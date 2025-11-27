@@ -176,7 +176,7 @@ export default function FIFACard({
                                     <button
                                         onClick={(e) => {
                                             e.stopPropagation();
-                                            if (onLike && id) onLike(id);
+                                            if (onLike && id) {onLike(id);}
                                         }}
                                         className={`flex flex-col items-center justify-center py-1 rounded-lg transition-all ${
                                             userHasLiked
@@ -271,7 +271,7 @@ const DetailRow = ({ label, value }: { label: string, value: string | number }) 
 );
 
 function abbreviateNumber(num: number): string {
-    if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
-    if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
+    if (num >= 1000000) {return (num / 1000000).toFixed(1) + 'M';}
+    if (num >= 1000) {return (num / 1000).toFixed(1) + 'K';}
     return num.toFixed(0);
 }

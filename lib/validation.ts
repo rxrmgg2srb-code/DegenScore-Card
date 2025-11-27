@@ -25,7 +25,7 @@ export function isValidUUID(uuid: string): boolean {
  * Sanitizes a social media handle
  */
 export function sanitizeHandle(handle: string): string {
-  if (!handle) return '';
+  if (!handle) {return '';}
   return handle.replace(/[^a-zA-Z0-9_]/g, '').slice(0, 200);
 }
 
@@ -33,7 +33,7 @@ export function sanitizeHandle(handle: string): string {
  * Sanitizes display name
  */
 export function sanitizeDisplayName(name: string): string {
-  if (!name) return '';
+  if (!name) {return '';}
   // Allow letters, numbers, spaces, and common punctuation
   return name.replace(/[^\w\s\-_.]/g, '').slice(0, 50);
 }
@@ -77,7 +77,7 @@ export function getFileMagicNumbers(buffer: Buffer): number[] {
 
 export function isValidImageType(buffer: Buffer, declaredType: string): boolean {
   const magic = VALID_IMAGE_TYPES[declaredType as keyof typeof VALID_IMAGE_TYPES];
-  if (!magic) return false;
+  if (!magic) {return false;}
 
   const fileHeader = getFileMagicNumbers(buffer);
   return magic.every((byte, i) => fileHeader[i] === byte);
@@ -87,13 +87,13 @@ export function isValidImageType(buffer: Buffer, declaredType: string): boolean 
 export const validateWalletAddress = isValidSolanaAddress;
 
 export function validateSignature(signature: string): boolean {
-  if (!signature || typeof signature !== 'string') return false;
+  if (!signature || typeof signature !== 'string') {return false;}
   // Basic base58 check. Solana signatures are usually 87-88 chars.
   // The test uses 'A'.repeat(87) which is valid base58.
   return /^[1-9A-HJ-NP-Za-km-z]{80,90}$/.test(signature);
 }
 
 export function validateEmail(email: string): boolean {
-  if (!email || typeof email !== 'string') return false;
+  if (!email || typeof email !== 'string') {return false;}
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }

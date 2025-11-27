@@ -50,7 +50,7 @@ export default function ScarcityBanner({
   const percentageFilled = (remaining / maxSlots) * 100;
 
   // Don't show if slots are full or banner is dismissed
-  if (remaining <= 0 || !showBanner) return null;
+  if (remaining <= 0 || !showBanner) {return null;}
 
   // Determine urgency level
   const isUrgent = remaining < 100;

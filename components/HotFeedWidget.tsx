@@ -65,7 +65,7 @@ export default function HotFeedWidget({ walletAddress }: { walletAddress?: strin
     );
   }
 
-  if (!feedData) return null;
+  if (!feedData) {return null;}
 
   return (
     <div className="bg-gray-800/50 backdrop-blur-lg rounded-2xl p-6 border border-gray-700 shadow-xl">

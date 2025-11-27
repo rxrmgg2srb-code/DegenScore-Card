@@ -2,7 +2,7 @@ import Script from 'next/script';
 import { GA_TRACKING_ID } from '../lib/analytics';
 
 const Analytics = () => {
-    if (!GA_TRACKING_ID) return null;
+    if (!GA_TRACKING_ID) {return null;}
 
     return (
         <>

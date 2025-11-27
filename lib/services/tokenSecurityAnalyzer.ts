@@ -150,30 +150,30 @@ export async function analyzeTokenSecurity(
   try {
     logger.info('🔒 Token Security Analysis Started', { tokenAddress });
 
-    if (onProgress) onProgress(5, 'Validating token address...');
+    if (onProgress) {onProgress(5, 'Validating token address...');}
 
     // Validate address (throws if invalid)
     new PublicKey(tokenAddress);
 
-    if (onProgress) onProgress(10, 'Fetching token metadata...');
+    if (onProgress) {onProgress(10, 'Fetching token metadata...');}
     const metadata = await getTokenMetadata(tokenAddress);
 
-    if (onProgress) onProgress(25, 'Analyzing token authorities...');
+    if (onProgress) {onProgress(25, 'Analyzing token authorities...');}
     const authorities = await analyzeTokenAuthorities(tokenAddress);
 
-    if (onProgress) onProgress(40, 'Analyzing holder distribution...');
+    if (onProgress) {onProgress(40, 'Analyzing holder distribution...');}
     const holderDist = await analyzeHolderDistribution(tokenAddress);
 
-    if (onProgress) onProgress(55, 'Analyzing liquidity...');
+    if (onProgress) {onProgress(55, 'Analyzing liquidity...');}
     const liquidity = await analyzeLiquidity(tokenAddress);
 
-    if (onProgress) onProgress(70, 'Detecting trading patterns...');
+    if (onProgress) {onProgress(70, 'Detecting trading patterns...');}
     const tradingPatterns = await analyzeTradingPatterns(tokenAddress);
 
-    if (onProgress) onProgress(85, 'Analyzing market metrics...');
+    if (onProgress) {onProgress(85, 'Analyzing market metrics...');}
     const marketMetrics = await analyzeMarketMetrics(tokenAddress);
 
-    if (onProgress) onProgress(95, 'Calculating security score...');
+    if (onProgress) {onProgress(95, 'Calculating security score...');}
 
     // Detect red flags
     const redFlags = detectRedFlags(
@@ -198,7 +198,7 @@ export async function analyzeTokenSecurity(
     const riskLevel = getRiskLevel(securityScore);
     const recommendation = getRecommendation(securityScore, redFlags);
 
-    if (onProgress) onProgress(100, 'Analysis complete!');
+    if (onProgress) {onProgress(100, 'Analysis complete!');}
 
     const report: TokenSecurityReport = {
       tokenAddress,
@@ -595,9 +595,9 @@ async function getTokenMetadata(tokenAddress: string): Promise<TokenMetadata> {
       const verified = asset?.grouping?.some((g: any) => g.group_key === 'verified') || false;
 
       let score = 0;
-      if (verified) score += 5;
-      if (hasWebsite) score += 3;
-      if (hasSocials) score += 2;
+      if (verified) {score += 5;}
+      if (hasWebsite) {score += 3;}
+      if (hasSocials) {score += 2;}
 
       return {
         symbol,
@@ -661,12 +661,12 @@ async function analyzeMarketMetrics(tokenAddress: string): Promise<MarketMetrics
       const isPumpAndDump = ageInDays < 1 && transactions.length > 500;
 
       let score = 10;
-      if (ageInDays > 30) score = 10;
-      else if (ageInDays > 7) score = 7;
-      else if (ageInDays > 1) score = 5;
-      else score = 2;
+      if (ageInDays > 30) {score = 10;}
+      else if (ageInDays > 7) {score = 7;}
+      else if (ageInDays > 1) {score = 5;}
+      else {score = 2;}
 
-      if (isPumpAndDump) score = Math.max(0, score - 5);
+      if (isPumpAndDump) {score = Math.max(0, score - 5);}
 
       return {
         ageInDays,
@@ -881,10 +881,10 @@ function calculateSecurityScore(
 }
 
 function getRiskLevel(score: number): TokenSecurityReport['riskLevel'] {
-  if (score >= 90) return 'ULTRA_SAFE';
-  if (score >= 70) return 'LOW_RISK';
-  if (score >= 50) return 'MODERATE_RISK';
-  if (score >= 25) return 'HIGH_RISK';
+  if (score >= 90) {return 'ULTRA_SAFE';}
+  if (score >= 70) {return 'LOW_RISK';}
+  if (score >= 50) {return 'MODERATE_RISK';}
+  if (score >= 25) {return 'HIGH_RISK';}
   return 'EXTREME_DANGER';
 }
 
@@ -913,13 +913,13 @@ function getRecommendation(score: number, redFlags: RedFlags): string {
 // ============================================================================
 
 function calculateGini(amounts: number[]): number {
-  if (amounts.length === 0) return 1;
+  if (amounts.length === 0) {return 1;}
 
   const sorted = [...amounts].sort((a, b) => a - b);
   const n = sorted.length;
   const sum = sorted.reduce((a, b) => a + b, 0);
 
-  if (sum === 0) return 1;
+  if (sum === 0) {return 1;}
 
   let numerator = 0;
   sorted.forEach((amount, i) => {
@@ -1024,7 +1024,7 @@ async function fetchLiquidityPools(tokenAddress: string): Promise<any[]> {
             pair.baseToken?.symbol === 'SOL' ||
             pair.baseToken?.symbol === 'WSOL';
 
-          if (!isSOLPair) continue;
+          if (!isSOLPair) {continue;}
 
           // Extract liquidity data
           const liquidityUSD = pair.liquidity?.usd || 0;

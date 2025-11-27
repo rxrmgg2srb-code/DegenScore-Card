@@ -213,8 +213,8 @@ function isCacheExpired(cached: CachedWalletData): boolean {
 }
 
 function getTTL(hitCount: number): number {
-  if (hitCount > 20) return CACHE_TTL.HOT_WALLET;
-  if (hitCount > 5) return CACHE_TTL.NORMAL_WALLET;
+  if (hitCount > 20) {return CACHE_TTL.HOT_WALLET;}
+  if (hitCount > 5) {return CACHE_TTL.NORMAL_WALLET;}
   return CACHE_TTL.COLD_WALLET;
 }
 

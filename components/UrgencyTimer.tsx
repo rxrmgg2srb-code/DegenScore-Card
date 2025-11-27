@@ -51,14 +51,14 @@ export default function UrgencyTimer({
       if (newTimeLeft.total <= 0) {
         setIsExpired(true);
         clearInterval(timer);
-        if (onExpire) onExpire();
+        if (onExpire) {onExpire();}
       }
     }, 1000);
 
     return () => clearInterval(timer);
   }, [endTime]);
 
-  if (isExpired) return null;
+  if (isExpired) {return null;}
 
   const isCritical = timeLeft.total < 3600000; // Less than 1 hour
   const isUrgent = timeLeft.total < 7200000; // Less than 2 hours

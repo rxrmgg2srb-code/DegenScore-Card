@@ -52,7 +52,7 @@ export default function ProfilePage() {
   }, [walletAddress]);
 
   const fetchCardData = async () => {
-    if (!walletAddress || typeof walletAddress !== 'string') return;
+    if (!walletAddress || typeof walletAddress !== 'string') {return;}
 
     if (!isValidSolanaAddress(walletAddress)) {
       setError('Invalid Solana wallet address');
@@ -86,7 +86,7 @@ export default function ProfilePage() {
   };
 
   const downloadCard = () => {
-    if (!cardImageUrl || !walletAddress) return;
+    if (!cardImageUrl || !walletAddress) {return;}
 
     const link = document.createElement('a');
     link.href = cardImageUrl;
@@ -97,7 +97,7 @@ export default function ProfilePage() {
   };
 
   const exportData = async (format: 'json' | 'csv') => {
-    if (!walletAddress) return;
+    if (!walletAddress) {return;}
 
     try {
       const response = await fetch(`/api/export/card?walletAddress=${walletAddress}&format=${format}`);

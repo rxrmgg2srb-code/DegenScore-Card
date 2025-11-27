@@ -37,7 +37,7 @@ export default function FollowingContent() {
   }, [connected, publicKey]);
 
   const fetchFollowedWallets = async () => {
-    if (!publicKey) return;
+    if (!publicKey) {return;}
 
     setLoading(true);
     setError(null);

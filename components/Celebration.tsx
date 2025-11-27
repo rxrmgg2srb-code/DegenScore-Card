@@ -33,7 +33,7 @@ export const Celebration: React.FC<CelebrationProps> = ({
               origin: { x: 1, y: 0.6 },
               colors: ['#FFD700', '#FFA500', '#FF6347'],
             });
-            if (Date.now() < end) requestAnimationFrame(frame);
+            if (Date.now() < end) {requestAnimationFrame(frame);}
           };
           frame();
           break;

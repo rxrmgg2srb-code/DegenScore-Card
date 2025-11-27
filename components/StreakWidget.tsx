@@ -35,7 +35,7 @@ export default function StreakWidget() {
   }, [sessionToken]);
 
   const generateToken = async () => {
-    if (!publicKey || !signMessage) return;
+    if (!publicKey || !signMessage) {return;}
 
     try {
       const token = generateSessionToken(publicKey.toString());
@@ -46,7 +46,7 @@ export default function StreakWidget() {
   };
 
   const checkStreak = async () => {
-    if (!sessionToken) return;
+    if (!sessionToken) {return;}
 
     setLoading(true);
 

@@ -50,7 +50,7 @@ export default function WeeklyChallengeBanner() {
   }
 
   const { challenge, currentLeader } = challengeData;
-  if (!challenge) return null;
+  if (!challenge) {return null;}
 
   const getMetricIcon = (metric: string) => {
     switch (metric) {

@@ -288,7 +288,7 @@ async function updateUserLevel(walletAddress: string) {
       where: { walletAddress },
     });
 
-    if (!analytics) return;
+    if (!analytics) {return;}
 
     // Calculate level (simple formula: level = sqrt(XP / 100))
     const newLevel = Math.floor(Math.sqrt(analytics.totalXP / 100)) + 1;
@@ -371,13 +371,13 @@ async function calculateChallengeStreak(walletAddress: string): Promise<number> 
       },
     });
 
-    if (completions.length === 0) return 0;
+    if (completions.length === 0) {return 0;}
 
     let streak = 0;
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    let currentDay = new Date(today);
+    const currentDay = new Date(today);
 
     for (let i = 0; i < 365; i++) {
       // Max 365 day streak

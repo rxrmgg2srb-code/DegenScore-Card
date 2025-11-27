@@ -57,8 +57,8 @@ export default async function handler(
 
     // 2. Calcular el delay según el tier (PLAN DE NEGOCIO)
     let delayHours = 72; // FREE: 72h delay
-    if (tier === 'PREMIUM') delayHours = 6; // PREMIUM: 6h delay (después del trial)
-    if (tier === 'PRO') delayHours = 1; // PRO: Near real-time (1h delay for safety)
+    if (tier === 'PREMIUM') {delayHours = 6;} // PREMIUM: 6h delay (después del trial)
+    if (tier === 'PRO') {delayHours = 1;} // PRO: Near real-time (1h delay for safety)
 
     const delayTimestamp = new Date(Date.now() - delayHours * 60 * 60 * 1000);
 
@@ -111,8 +111,8 @@ export default async function handler(
 function getTimeAgo(timestamp: Date): string {
   const seconds = Math.floor((Date.now() - timestamp.getTime()) / 1000);
 
-  if (seconds < 60) return `${seconds}s ago`;
-  if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
-  if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
+  if (seconds < 60) {return `${seconds}s ago`;}
+  if (seconds < 3600) {return `${Math.floor(seconds / 60)}m ago`;}
+  if (seconds < 86400) {return `${Math.floor(seconds / 3600)}h ago`;}
   return `${Math.floor(seconds / 86400)}d ago`;
 }

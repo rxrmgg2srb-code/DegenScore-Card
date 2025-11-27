@@ -235,10 +235,10 @@ async function awardStreakBadge(walletAddress: string, badgeKey: string, streakD
  * Get badge rarity based on streak length
  */
 function getBadgeRarity(days: number): string {
-  if (days >= 100) return 'Legendary';
-  if (days >= 60) return 'Epic';
-  if (days >= 30) return 'Rare';
-  if (days >= 7) return 'Uncommon';
+  if (days >= 100) {return 'Legendary';}
+  if (days >= 60) {return 'Epic';}
+  if (days >= 30) {return 'Rare';}
+  if (days >= 7) {return 'Uncommon';}
   return 'Common';
 }
 

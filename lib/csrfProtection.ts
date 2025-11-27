@@ -41,7 +41,7 @@ export function validateOrigin(req: NextApiRequest, res: NextApiResponse): boole
   }
 
   const isAllowed = allowedOrigins.some(allowed => {
-    if (!allowed) return false;
+    if (!allowed) {return false;}
     return origin.startsWith(allowed);
   });
 

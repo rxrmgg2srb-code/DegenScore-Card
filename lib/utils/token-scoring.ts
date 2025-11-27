@@ -3,10 +3,10 @@
  */
 
 export function getScoreColor(score: number): string {
-    if (score >= 800) return 'text-green-400';
-    if (score >= 650) return 'text-blue-400';
-    if (score >= 500) return 'text-yellow-400';
-    if (score >= 350) return 'text-orange-400';
+    if (score >= 800) {return 'text-green-400';}
+    if (score >= 650) {return 'text-blue-400';}
+    if (score >= 500) {return 'text-yellow-400';}
+    if (score >= 350) {return 'text-orange-400';}
     return 'text-red-400';
 }
 

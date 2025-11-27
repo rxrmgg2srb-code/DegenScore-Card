@@ -90,13 +90,13 @@ export const sanitizeDisplayName = (name: string) => {
 };
 export const sanitizeUrl = sanitizeURL;
 export const sanitizeSocialHandle = (handle: string) => {
-  if (!handle) return '';
+  if (!handle) {return '';}
   let sanitized = handle.replace(/^@/, '');
   sanitized = sanitized.replace(/[^a-zA-Z0-9_-]/g, '');
   return sanitized.length > 30 ? sanitized.slice(0, 30) : sanitized;
 };
 export const sanitizePromoCode = (code: string) => {
-  if (!code) return '';
+  if (!code) {return '';}
   return code.toUpperCase().replace(/[^A-Z0-9]/g, '');
 };
 

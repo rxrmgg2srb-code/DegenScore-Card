@@ -34,7 +34,7 @@ export default async function handler(
 
     const [fields, files] = await new Promise<[any, any]>((resolve, reject) => {
       form.parse(req, (err, fields, files) => {
-        if (err) reject(err);
+        if (err) {reject(err);}
         resolve([fields, files]);
       });
     });

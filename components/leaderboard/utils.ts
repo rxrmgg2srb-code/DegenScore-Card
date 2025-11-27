@@ -78,38 +78,38 @@ export const getTierConfig = (score: number) => {
 };
 
 export const getLevelPhrase = (level: number): string => {
-    if (level >= 50) return "🔥 Absolute Gigachad";
-    if (level >= 40) return "💪 Degen Overlord";
-    if (level >= 30) return "🚀 Moon Mission Commander";
-    if (level >= 20) return "💎 Diamond Handed Legend";
-    if (level >= 15) return "⚡ Certified Degen";
-    if (level >= 10) return "🎯 Getting There";
-    if (level >= 5) return "🐣 Baby Degen";
+    if (level >= 50) {return "🔥 Absolute Gigachad";}
+    if (level >= 40) {return "💪 Degen Overlord";}
+    if (level >= 30) {return "🚀 Moon Mission Commander";}
+    if (level >= 20) {return "💎 Diamond Handed Legend";}
+    if (level >= 15) {return "⚡ Certified Degen";}
+    if (level >= 10) {return "🎯 Getting There";}
+    if (level >= 5) {return "🐣 Baby Degen";}
     return "😅 Just Started";
 };
 
 export const formatNumber = (num: number, decimals: number = 2): string => {
-    if (num === undefined || num === null) return 'N/A';
-    if (num >= 1e9) return `${(num / 1e9).toFixed(decimals)}B`;
-    if (num >= 1e6) return `${(num / 1e6).toFixed(decimals)}M`;
-    if (num >= 1e3) return `${(num / 1e3).toFixed(decimals)}K`;
+    if (num === undefined || num === null) {return 'N/A';}
+    if (num >= 1e9) {return `${(num / 1e9).toFixed(decimals)}B`;}
+    if (num >= 1e6) {return `${(num / 1e6).toFixed(decimals)}M`;}
+    if (num >= 1e3) {return `${(num / 1e3).toFixed(decimals)}K`;}
     return num.toFixed(decimals);
 };
 
 export const getFOMOPhrase = (score: number): string => {
-    if (score >= 95) return "🔥 GOD MODE - They Bow to You";
-    if (score >= 90) return "👑 APEX PREDATOR - Pure Domination";
-    if (score >= 85) return "💎 GENERATIONAL WEALTH - GG EZ";
-    if (score >= 80) return "⚡ MAIN CHARACTER - Eating Good";
-    if (score >= 75) return "🚀 MOON MISSION - Keep Stacking";
-    if (score >= 70) return "🔥 KILLING IT - Above Average Chad";
-    if (score >= 65) return "💪 SOLID - You'll Make It Anon";
-    if (score >= 60) return "📈 MID CURVE - Touch Grass King";
-    if (score >= 55) return "🎯 SLIGHTLY MID - Do Better";
-    if (score >= 50) return "😬 NGMI VIBES - Yikes";
-    if (score >= 40) return "📉 EXIT LIQUIDITY - That's You";
-    if (score >= 30) return "💀 ABSOLUTELY COOKED - RIP";
-    if (score >= 20) return "🤡 CIRCUS CLOWN - Everyone's Laughing";
-    if (score >= 10) return "⚰️ DELETE APP - Uninstall Now";
+    if (score >= 95) {return "🔥 GOD MODE - They Bow to You";}
+    if (score >= 90) {return "👑 APEX PREDATOR - Pure Domination";}
+    if (score >= 85) {return "💎 GENERATIONAL WEALTH - GG EZ";}
+    if (score >= 80) {return "⚡ MAIN CHARACTER - Eating Good";}
+    if (score >= 75) {return "🚀 MOON MISSION - Keep Stacking";}
+    if (score >= 70) {return "🔥 KILLING IT - Above Average Chad";}
+    if (score >= 65) {return "💪 SOLID - You'll Make It Anon";}
+    if (score >= 60) {return "📈 MID CURVE - Touch Grass King";}
+    if (score >= 55) {return "🎯 SLIGHTLY MID - Do Better";}
+    if (score >= 50) {return "😬 NGMI VIBES - Yikes";}
+    if (score >= 40) {return "📉 EXIT LIQUIDITY - That's You";}
+    if (score >= 30) {return "💀 ABSOLUTELY COOKED - RIP";}
+    if (score >= 20) {return "🤡 CIRCUS CLOWN - Everyone's Laughing";}
+    if (score >= 10) {return "⚰️ DELETE APP - Uninstall Now";}
     return "🪦 QUIT FOREVER - It's Over Bro";
 };

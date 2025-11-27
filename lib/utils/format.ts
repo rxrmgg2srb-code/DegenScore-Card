@@ -3,7 +3,7 @@
  */
 
 export function truncate(text: string, length: number): string {
-    if (text.length <= length) return text;
+    if (text.length <= length) {return text;}
     return `${text.substring(0, length)}...`;
 }
 
@@ -12,18 +12,18 @@ export function capitalize(text: string): string {
 }
 
 export function formatAddress(address: string, chars: number = 4): string {
-    if (!address) return '';
-    if (address.length <= chars * 2) return address;
+    if (!address) {return '';}
+    if (address.length <= chars * 2) {return address;}
     return `${address.substring(0, chars)}...${address.substring(address.length - chars)}`;
 }
 
 export function pluralize(count: number, singular: string, plural?: string): string {
-    if (count === 1) return singular;
+    if (count === 1) {return singular;}
     return plural || `${singular}s`;
 }
 
 export function formatBytes(bytes: number, decimals: number = 2): string {
-    if (bytes === 0) return '0 Bytes';
+    if (bytes === 0) {return '0 Bytes';}
 
     const k = 1024;
     const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];

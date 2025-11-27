@@ -39,7 +39,7 @@ export default function AITradingCoach() {
   }, [sessionToken]);
 
   const generateToken = async () => {
-    if (!publicKey) return;
+    if (!publicKey) {return;}
 
     try {
       const token = generateSessionToken(publicKey.toString());
@@ -50,7 +50,7 @@ export default function AITradingCoach() {
   };
 
   const fetchAnalysis = async () => {
-    if (!sessionToken) return;
+    if (!sessionToken) {return;}
 
     setLoading(true);
 

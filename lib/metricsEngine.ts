@@ -94,7 +94,7 @@ export async function calculateAdvancedMetrics(
   try {
     logger.info('🔥 DegenScore Engine v2.0 - Professional Analysis Starting');
 
-    if (onProgress) onProgress(5, '📡 Fetching transactions...');
+    if (onProgress) {onProgress(5, '📡 Fetching transactions...');}
 
     const allTransactions = await fetchAllTransactions(walletAddress, onProgress);
 
@@ -106,7 +106,7 @@ export async function calculateAdvancedMetrics(
 
     logger.info(`📊 Total transactions fetched: ${allTransactions.length}`);
 
-    if (onProgress) onProgress(75, '💱 Analyzing trades...');
+    if (onProgress) {onProgress(75, '💱 Analyzing trades...');}
 
     // Extract all trades
     const trades = extractTrades(allTransactions, walletAddress);
@@ -119,18 +119,18 @@ export async function calculateAdvancedMetrics(
       return getDefaultMetrics();
     }
 
-    if (onProgress) onProgress(85, '📈 Building positions...');
+    if (onProgress) {onProgress(85, '📈 Building positions...');}
 
     // Build positions from trades
     const positions = buildPositions(trades);
     logger.info(`📦 Built ${positions.length} positions`);
 
-    if (onProgress) onProgress(95, '🎯 Calculating metrics...');
+    if (onProgress) {onProgress(95, '🎯 Calculating metrics...');}
 
     // Calculate all metrics
     const metrics = calculateMetrics(trades, positions, allTransactions);
 
-    if (onProgress) onProgress(100, '✅ Analysis complete!');
+    if (onProgress) {onProgress(100, '✅ Analysis complete!');}
 
     return metrics;
   } catch (error) {
@@ -240,8 +240,8 @@ function extractTrades(
       continue;
     }
 
-    if (!tx.tokenTransfers || tx.tokenTransfers.length === 0) continue;
-    if (!tx.nativeTransfers || tx.nativeTransfers.length === 0) continue;
+    if (!tx.tokenTransfers || tx.tokenTransfers.length === 0) {continue;}
+    if (!tx.nativeTransfers || tx.nativeTransfers.length === 0) {continue;}
 
     // Calculate net SOL change for the wallet
     let solNet = 0;
@@ -255,7 +255,7 @@ function extractTrades(
     }
 
     // Ignore tiny swaps (dust)
-    if (Math.abs(solNet) < 0.001) continue;
+    if (Math.abs(solNet) < 0.001) {continue;}
 
     // Get token transfers involving this wallet
     const tokenTransfers = tx.tokenTransfers.filter(t =>
@@ -263,10 +263,10 @@ function extractTrades(
       (t.fromUserAccount === walletAddress || t.toUserAccount === walletAddress)
     );
 
-    if (tokenTransfers.length === 0) continue;
+    if (tokenTransfers.length === 0) {continue;}
 
     const tokenTransfer = tokenTransfers[0];
-    if (!tokenTransfer) continue;
+    if (!tokenTransfer) {continue;}
 
     // Determine if this is a buy or sell
     // Buy = SOL goes out (negative solNet), tokens come in
@@ -277,13 +277,13 @@ function extractTrades(
       ? tokenTransfers.find(t => t.toUserAccount === walletAddress)?.tokenAmount || 0
       : tokenTransfers.find(t => t.fromUserAccount === walletAddress)?.tokenAmount || 0;
 
-    if (tokenAmount === 0) continue;
+    if (tokenAmount === 0) {continue;}
 
     const pricePerToken = Math.abs(solNet) / tokenAmount;
 
     // Sanity checks
-    if (pricePerToken > 1 || pricePerToken < 0.0000001) continue;
-    if (Math.abs(solNet) > 50) continue; // Ignore whale-sized swaps (likely arbitrage)
+    if (pricePerToken > 1 || pricePerToken < 0.0000001) {continue;}
+    if (Math.abs(solNet) > 50) {continue;} // Ignore whale-sized swaps (likely arbitrage)
 
     trades.push({
       timestamp: tx.timestamp,
@@ -339,7 +339,7 @@ function buildPositions(trades: Trade[]): Position[] {
 
       while (tokensToSell > 0 && tokenPositions.length > 0) {
         const position = tokenPositions[0];
-        if (!position) break;
+        if (!position) {break;}
 
         if (!position.isOpen) {
           tokenPositions.shift();
@@ -614,13 +614,13 @@ function calculateStreaks(positions: Position[]): {
 }
 
 function calculateVolatility(positions: Position[]): number {
-  if (positions.length === 0) return 0;
+  if (positions.length === 0) {return 0;}
 
   const returns = positions
     .filter(p => p.profitLossPercent !== undefined)
     .map(p => p.profitLossPercent!);
 
-  if (returns.length === 0) return 0;
+  if (returns.length === 0) {return 0;}
 
   const mean = returns.reduce((sum, r) => sum + r, 0) / returns.length;
   const variance = returns.reduce((sum, r) => sum + Math.pow(r - mean, 2), 0) / returns.length;

@@ -199,7 +199,7 @@ export function checkActivityBadges(metrics: CardMetrics): BadgeDefinition[] {
   tradeBadges.forEach(({ key, threshold }) => {
     if (metrics.totalTrades >= threshold) {
       const badge = ACTIVITY_BADGES.find(b => b.key === key);
-      if (badge) badges.push(badge);
+      if (badge) {badges.push(badge);}
     }
   });
 
@@ -213,20 +213,20 @@ export function checkActivityBadges(metrics: CardMetrics): BadgeDefinition[] {
   dayBadges.forEach(({ key, threshold }) => {
     if (metrics.tradingDays >= threshold) {
       const badge = ACTIVITY_BADGES.find(b => b.key === key);
-      if (badge) badges.push(badge);
+      if (badge) {badges.push(badge);}
     }
   });
 
   // Moonshot hunter
   if (metrics.moonshots >= 5) {
     const badge = ACTIVITY_BADGES.find(b => b.key === 'moonshot_hunter');
-    if (badge) badges.push(badge);
+    if (badge) {badges.push(badge);}
   }
 
   // Diamond hands
   if (metrics.diamondHands >= 10) {
     const badge = ACTIVITY_BADGES.find(b => b.key === 'diamond_hands');
-    if (badge) badges.push(badge);
+    if (badge) {badges.push(badge);}
   }
 
   return badges;
@@ -237,27 +237,27 @@ export function checkPremiumBadges(metrics: CardMetrics): BadgeDefinition[] {
 
   if (metrics.isPaid) {
     const premiumBadge = PREMIUM_BADGES.find(b => b.key === 'premium_trader');
-    if (premiumBadge) badges.push(premiumBadge);
+    if (premiumBadge) {badges.push(premiumBadge);}
   }
 
   if (metrics.twitter) {
     const twitterBadge = PREMIUM_BADGES.find(b => b.key === 'social_flex');
-    if (twitterBadge) badges.push(twitterBadge);
+    if (twitterBadge) {badges.push(twitterBadge);}
   }
 
   if (metrics.telegram) {
     const telegramBadge = PREMIUM_BADGES.find(b => b.key === 'telegram_verified');
-    if (telegramBadge) badges.push(telegramBadge);
+    if (telegramBadge) {badges.push(telegramBadge);}
   }
 
   if (metrics.profileImage) {
     const logoBadge = PREMIUM_BADGES.find(b => b.key === 'logo_pro');
-    if (logoBadge) badges.push(logoBadge);
+    if (logoBadge) {badges.push(logoBadge);}
   }
 
   if (metrics.isPaid && metrics.twitter && metrics.telegram && metrics.profileImage && metrics.displayName) {
     const fullProfileBadge = PREMIUM_BADGES.find(b => b.key === 'full_profile');
-    if (fullProfileBadge) badges.push(fullProfileBadge);
+    if (fullProfileBadge) {badges.push(fullProfileBadge);}
   }
 
   return badges;

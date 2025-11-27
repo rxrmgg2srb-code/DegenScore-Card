@@ -11,23 +11,23 @@ interface ShareModalProps {
 export default function ShareModal({ isOpen, onShared, onSkip, walletAddress: _walletAddress, degenScore }: ShareModalProps) {
   const [hasShared, setHasShared] = useState(false);
 
-  if (!isOpen) return null;
+  if (!isOpen) {return null;}
 
   const getTierEmoji = (score: number) => {
-    if (score >= 90) return '👑';
-    if (score >= 80) return '💎';
-    if (score >= 70) return '💠';
-    if (score >= 60) return '⚡';
-    if (score >= 50) return '🌟';
+    if (score >= 90) {return '👑';}
+    if (score >= 80) {return '💎';}
+    if (score >= 70) {return '💠';}
+    if (score >= 60) {return '⚡';}
+    if (score >= 50) {return '🌟';}
     return '🎮';
   };
 
   const getTierName = (score: number) => {
-    if (score >= 90) return 'LEGENDARY';
-    if (score >= 80) return 'MASTER';
-    if (score >= 70) return 'DIAMOND';
-    if (score >= 60) return 'PLATINUM';
-    if (score >= 50) return 'GOLD';
+    if (score >= 90) {return 'LEGENDARY';}
+    if (score >= 80) {return 'MASTER';}
+    if (score >= 70) {return 'DIAMOND';}
+    if (score >= 60) {return 'PLATINUM';}
+    if (score >= 50) {return 'GOLD';}
     return 'DEGEN';
   };
 

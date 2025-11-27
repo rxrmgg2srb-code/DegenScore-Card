@@ -18,7 +18,7 @@ export function AchievementPopup({ achievement, onClose }: AchievementPopupProps
   const [show, setShow] = useState(false);
 
   useEffect(() => {
-    if (!achievement) return;
+    if (!achievement) {return;}
 
     setShow(true);
     const timer = setTimeout(() => {
@@ -29,7 +29,7 @@ export function AchievementPopup({ achievement, onClose }: AchievementPopupProps
     return () => clearTimeout(timer);
   }, [achievement, onClose]);
 
-  if (!achievement) return null;
+  if (!achievement) {return null;}
 
   const rarityColors = {
     common: {

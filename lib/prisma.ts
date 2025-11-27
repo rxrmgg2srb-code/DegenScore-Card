@@ -7,7 +7,7 @@ const globalForPrisma = global as unknown as { prisma: PrismaClient };
 const getOptimalDatabaseUrl = () => {
     let url = process.env.DATABASE_URL;
 
-    if (!url) return undefined;
+    if (!url) {return undefined;}
 
     // 🚀 AUTOMATIC OPTIMIZATION FOR SUPABASE + VERCEL
     // If we are in production and using Supabase on port 5432 (Session Pooler),
@@ -50,4 +50,4 @@ export const prisma = globalForPrisma.prisma || new PrismaClient({
     log: process.env.NODE_ENV === 'development' ? ['error', 'warn'] : ['error'],
 });
 
-if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
+if (process.env.NODE_ENV !== 'production') {globalForPrisma.prisma = prisma;}

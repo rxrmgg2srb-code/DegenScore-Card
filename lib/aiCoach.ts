@@ -52,7 +52,7 @@ async function checkAIBudget(estimatedInputTokens: number): Promise<void> {
  * Track actual cost after API call
  */
 async function trackAICost(usage: OpenAI.CompletionUsage | undefined): Promise<void> {
-  if (!usage) return;
+  if (!usage) {return;}
 
   const today = new Date().toISOString().split('T')[0];
   const costKey = `ai:cost:${today}`;

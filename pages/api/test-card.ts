@@ -54,7 +54,7 @@ export default async function handler(
     ctx.fillText('TEST SCORE', width / 2, 320);
 
     // Métricas de prueba
-    let y = 400;
+    const y = 400;
     ctx.textAlign = 'left';
     ctx.fillStyle = '#999999';
     ctx.font = '700 13px "Noto Sans Bold", sans-serif';

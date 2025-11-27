@@ -55,7 +55,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return res.status(500).json({ error: 'Server misconfiguration' });
     }
 
-    // @ts-ignore
     const token = jwt.sign({ walletAddress }, secret || 'fallback_secret', { expiresIn: '15m' });
     logger.info('JWT issued for wallet', { walletAddress });
     return res.status(200).json({ token });

@@ -149,7 +149,7 @@ export async function getWalletTransactions(
  * Obtiene información detallada de tokens usando Helius DAS API
  */
 export async function getTokenMetadata(mintAddresses: string[]): Promise<Map<string, any>> {
-  if (mintAddresses.length === 0) return new Map();
+  if (mintAddresses.length === 0) {return new Map();}
 
   return heliusCircuitBreaker.execute(() =>
     retry(async () => {

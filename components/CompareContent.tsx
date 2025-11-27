@@ -55,15 +55,15 @@ export default function CompareContent() {
   };
 
   const formatNumber = (num: number, decimals: number = 2) => {
-    if (num >= 1e9) return `${(num / 1e9).toFixed(decimals)}B`;
-    if (num >= 1e6) return `${(num / 1e6).toFixed(decimals)}M`;
-    if (num >= 1e3) return `${(num / 1e3).toFixed(decimals)}K`;
+    if (num >= 1e9) {return `${(num / 1e9).toFixed(decimals)}B`;}
+    if (num >= 1e6) {return `${(num / 1e6).toFixed(decimals)}M`;}
+    if (num >= 1e3) {return `${(num / 1e3).toFixed(decimals)}K`;}
     return num.toFixed(decimals);
   };
 
   const getWinnerIcon = (winner: string) => {
-    if (winner === 'wallet1') return '🥇';
-    if (winner === 'wallet2') return '🥈';
+    if (winner === 'wallet1') {return '🥇';}
+    if (winner === 'wallet2') {return '🥈';}
     return '🤝';
   };
 

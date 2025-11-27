@@ -6,7 +6,7 @@ interface LeaderboardStatsProps {
 }
 
 export const LeaderboardStats = ({ stats }: LeaderboardStatsProps) => {
-    if (!stats) return null;
+    if (!stats) {return null;}
 
     return (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">

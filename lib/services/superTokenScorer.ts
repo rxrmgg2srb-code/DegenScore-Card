@@ -337,17 +337,17 @@ export async function analyzeSuperTokenScore(
   try {
     logger.info('🚀 SUPER TOKEN SCORE ANALYSIS STARTED', { tokenAddress });
 
-    if (onProgress) onProgress(0, 'Iniciando análisis comprehensivo...');
+    if (onProgress) {onProgress(0, 'Iniciando análisis comprehensivo...');}
 
     // Validar address
     new PublicKey(tokenAddress);
 
     // PASO 1: Análisis base (reutilizamos el existente)
-    if (onProgress) onProgress(5, 'Ejecutando análisis de seguridad base...');
+    if (onProgress) {onProgress(5, 'Ejecutando análisis de seguridad base...');}
     const baseSecurityReport = await analyzeTokenSecurity(tokenAddress);
 
     // PASO 2: Fetch de datos de APIs externas (en paralelo para velocidad)
-    if (onProgress) onProgress(15, 'Consultando múltiples APIs externas...');
+    if (onProgress) {onProgress(15, 'Consultando múltiples APIs externas...');}
     const [rugCheckData, dexScreenerData, birdeyeData, solscanData, jupiterLiquidity] = await Promise.allSettled([
       fetchRugCheckData(tokenAddress),
       fetchDexScreenerData(tokenAddress),
@@ -357,43 +357,43 @@ export async function analyzeSuperTokenScore(
     ]);
 
     // PASO 3: Análisis de wallets nuevas
-    if (onProgress) onProgress(25, 'Analizando edad de wallets holders...');
+    if (onProgress) {onProgress(25, 'Analizando edad de wallets holders...');}
     const newWalletAnalysis = await analyzeNewWallets(tokenAddress);
 
     // PASO 4: Análisis de insiders
-    if (onProgress) onProgress(35, 'Detectando actividad de insiders...');
+    if (onProgress) {onProgress(35, 'Detectando actividad de insiders...');}
     const insiderAnalysis = await analyzeInsiders(tokenAddress);
 
     // PASO 5: Análisis de volumen real vs fake
-    if (onProgress) onProgress(45, 'Analizando volumen real vs manipulado...');
+    if (onProgress) {onProgress(45, 'Analizando volumen real vs manipulado...');}
     const volumeAnalysis = await analyzeVolume(tokenAddress, dexScreenerData.status === 'fulfilled' ? dexScreenerData.value : undefined);
 
     // PASO 6: Análisis de redes sociales
-    if (onProgress) onProgress(55, 'Verificando presencia en redes sociales...');
+    if (onProgress) {onProgress(55, 'Verificando presencia en redes sociales...');}
     const socialAnalysis = await analyzeSocials(tokenAddress, baseSecurityReport.metadata);
 
     // PASO 7: Detección avanzada de bots
-    if (onProgress) onProgress(65, 'Detectando bots y actividad automatizada...');
+    if (onProgress) {onProgress(65, 'Detectando bots y actividad automatizada...');}
     const botDetection = await detectBotsAdvanced(tokenAddress);
 
     // PASO 8: Análisis de Smart Money
-    if (onProgress) onProgress(70, 'Analizando actividad de Smart Money...');
+    if (onProgress) {onProgress(70, 'Analizando actividad de Smart Money...');}
     const smartMoneyAnalysis = await analyzeSmartMoney(tokenAddress);
 
     // PASO 9: Análisis del team
-    if (onProgress) onProgress(75, 'Analizando tokens del equipo...');
+    if (onProgress) {onProgress(75, 'Analizando tokens del equipo...');}
     const teamAnalysis = await analyzeTeam(tokenAddress, baseSecurityReport);
 
     // PASO 10: Análisis de patrones de precio
-    if (onProgress) onProgress(80, 'Analizando patrones de precio...');
+    if (onProgress) {onProgress(80, 'Analizando patrones de precio...');}
     const pricePattern = await analyzePricePattern(tokenAddress, dexScreenerData.status === 'fulfilled' ? dexScreenerData.value : undefined);
 
     // PASO 11: Análisis histórico de holders
-    if (onProgress) onProgress(85, 'Analizando histórico de holders...');
+    if (onProgress) {onProgress(85, 'Analizando histórico de holders...');}
     const historicalHolders = await analyzeHistoricalHolders(tokenAddress);
 
     // PASO 12: Análisis de profundidad de liquidez
-    if (onProgress) onProgress(90, 'Analizando profundidad de liquidez...');
+    if (onProgress) {onProgress(90, 'Analizando profundidad de liquidez...');}
     const liquidityDepth = await analyzeLiquidityDepth(
       tokenAddress,
       baseSecurityReport,
@@ -402,15 +402,15 @@ export async function analyzeSuperTokenScore(
     );
 
     // PASO 13: Análisis cross-chain
-    if (onProgress) onProgress(93, 'Verificando bridges cross-chain...');
+    if (onProgress) {onProgress(93, 'Verificando bridges cross-chain...');}
     const crossChainAnalysis = await analyzeCrossChain(tokenAddress);
 
     // PASO 14: Análisis de competidores
-    if (onProgress) onProgress(96, 'Analizando competencia en el mercado...');
+    if (onProgress) {onProgress(96, 'Analizando competencia en el mercado...');}
     const competitorAnalysis = await analyzeCompetitors(tokenAddress, baseSecurityReport.metadata.symbol);
 
     // PASO 15: Calcular score final
-    if (onProgress) onProgress(98, 'Calculando Super Score final...');
+    if (onProgress) {onProgress(98, 'Calculando Super Score final...');}
 
     const scoreBreakdown = {
       baseSecurityScore: baseSecurityReport.securityScore,
@@ -463,7 +463,7 @@ export async function analyzeSuperTokenScore(
     // Generar recomendación detallada
     const recommendation = generateDetailedRecommendation(superScore, globalRiskLevel, allRedFlags, greenFlags);
 
-    if (onProgress) onProgress(100, '¡Análisis completado!');
+    if (onProgress) {onProgress(100, '¡Análisis completado!');}
 
     const analysisTimeMs = Date.now() - startTime;
 
@@ -1201,9 +1201,9 @@ async function analyzeSocials(_tokenAddress: string, metadata: any): Promise<Soc
     let socialScore = 0;
 
     // Score based on what we actually know
-    if (hasWebsite) socialScore += 8; // Having a website is a good sign
-    if (hasSocials) socialScore += 12; // Having social links is important
-    if (metadata.verified) socialScore += 10; // Verified metadata is valuable
+    if (hasWebsite) {socialScore += 8;} // Having a website is a good sign
+    if (hasSocials) {socialScore += 12;} // Having social links is important
+    if (metadata.verified) {socialScore += 10;} // Verified metadata is valuable
 
     // Bonus if they have description (shows effort)
     if (metadata.description && metadata.description.length > 50) {
@@ -1339,10 +1339,10 @@ async function detectBotsAdvanced(tokenAddress: string): Promise<BotDetectionAdv
 
     // Suspicious patterns detection
     const suspiciousPatterns: string[] = [];
-    if (mevBots > 10) suspiciousPatterns.push(`${mevBots} slots con actividad MEV detectada`);
-    if (bundleBots > 5) suspiciousPatterns.push(`${bundleBots} bundle bots coordinados detectados`);
-    if (washTradingBots > 5) suspiciousPatterns.push(`${washTradingBots} wallets con posible wash trading`);
-    if (copyTradingBots > 3) suspiciousPatterns.push(`${copyTradingBots} copy trading bots detectados`);
+    if (mevBots > 10) {suspiciousPatterns.push(`${mevBots} slots con actividad MEV detectada`);}
+    if (bundleBots > 5) {suspiciousPatterns.push(`${bundleBots} bundle bots coordinados detectados`);}
+    if (washTradingBots > 5) {suspiciousPatterns.push(`${washTradingBots} wallets con posible wash trading`);}
+    if (copyTradingBots > 3) {suspiciousPatterns.push(`${copyTradingBots} copy trading bots detectados`);}
 
     // Bot activity in last 24h (heuristic: recent 100 signatures)
     const recent24h = signatures.slice(0, 100);
@@ -1460,7 +1460,7 @@ async function analyzeSmartMoney(tokenAddress: string): Promise<SmartMoneyAnalys
         const ownerPubkey = new PublicKey(holder.owner);
         const holderSigs = await connection.getSignaturesForAddress(ownerPubkey, { limit: 500 });
 
-        if (holderSigs.length === 0) continue;
+        if (holderSigs.length === 0) {continue;}
 
         // Calculate wallet characteristics
         const oldestSig = holderSigs[holderSigs.length - 1];
@@ -1905,7 +1905,7 @@ async function analyzeCompetitors(_tokenAddress: string, _symbol: string): Promi
     const competitiveAdvantage = 'Análisis de competencia no disponible';
 
     // Neutral score since we don't have competitor data
-    let score = 20;
+    const score = 20;
 
     return {
       similarTokens,
@@ -1930,21 +1930,21 @@ async function analyzeCompetitors(_tokenAddress: string, _symbol: string): Promi
 function calculateDexScreenerScore(data: DexScreenerData): number {
   let score = 0;
 
-  if (data.liquidity > 100000) score += 20;
-  else if (data.liquidity > 50000) score += 15;
-  else if (data.liquidity > 10000) score += 10;
-  else if (data.liquidity > 1000) score += 5;
+  if (data.liquidity > 100000) {score += 20;}
+  else if (data.liquidity > 50000) {score += 15;}
+  else if (data.liquidity > 10000) {score += 10;}
+  else if (data.liquidity > 1000) {score += 5;}
 
-  if (data.volume24h > 100000) score += 15;
-  else if (data.volume24h > 50000) score += 10;
-  else if (data.volume24h > 10000) score += 5;
+  if (data.volume24h > 100000) {score += 15;}
+  else if (data.volume24h > 50000) {score += 10;}
+  else if (data.volume24h > 10000) {score += 5;}
 
   const txnRatio = data.txns24h.buys / (data.txns24h.buys + data.txns24h.sells + 1);
-  if (Math.abs(txnRatio - 0.5) < 0.1) score += 15; // Balanced
-  else if (Math.abs(txnRatio - 0.5) < 0.2) score += 10;
+  if (Math.abs(txnRatio - 0.5) < 0.1) {score += 15;} // Balanced
+  else if (Math.abs(txnRatio - 0.5) < 0.2) {score += 10;}
 
-  if (data.holders > 1000) score += 10;
-  else if (data.holders > 500) score += 5;
+  if (data.holders > 1000) {score += 10;}
+  else if (data.holders > 500) {score += 5;}
 
   return Math.min(60, score);
 }
@@ -1952,17 +1952,17 @@ function calculateDexScreenerScore(data: DexScreenerData): number {
 function calculateBirdeyeScore(data: BirdeyeData): number {
   let score = 0;
 
-  if (data.liquidity > 100000) score += 15;
-  else if (data.liquidity > 50000) score += 10;
-  else if (data.liquidity > 10000) score += 5;
+  if (data.liquidity > 100000) {score += 15;}
+  else if (data.liquidity > 50000) {score += 10;}
+  else if (data.liquidity > 10000) {score += 5;}
 
-  if (data.volume24h > 100000) score += 15;
-  else if (data.volume24h > 50000) score += 10;
+  if (data.volume24h > 100000) {score += 15;}
+  else if (data.volume24h > 50000) {score += 10;}
 
-  if (data.holder > 1000) score += 10;
-  else if (data.holder > 500) score += 5;
+  if (data.holder > 1000) {score += 10;}
+  else if (data.holder > 500) {score += 5;}
 
-  if (data.uniqueWallets24h > 100) score += 10;
+  if (data.uniqueWallets24h > 100) {score += 10;}
 
   return Math.min(50, score);
 }
@@ -1970,12 +1970,12 @@ function calculateBirdeyeScore(data: BirdeyeData): number {
 function calculateJupiterScore(data: JupiterLiquidityData): number {
   let score = 0;
 
-  if (data.totalLiquidityUSD > 100000) score += 30;
-  else if (data.totalLiquidityUSD > 50000) score += 20;
-  else if (data.totalLiquidityUSD > 10000) score += 10;
+  if (data.totalLiquidityUSD > 100000) {score += 30;}
+  else if (data.totalLiquidityUSD > 50000) {score += 20;}
+  else if (data.totalLiquidityUSD > 10000) {score += 10;}
 
-  if (data.pools.length > 3) score += 10;
-  else if (data.pools.length > 1) score += 5;
+  if (data.pools.length > 3) {score += 10;}
+  else if (data.pools.length > 1) {score += 5;}
 
   return Math.min(50, score);
 }
@@ -2064,13 +2064,13 @@ function calculateSuperScore(breakdown: SuperTokenScore['scoreBreakdown']): numb
 }
 
 function getGlobalRiskLevel(score: number): SuperTokenScore['globalRiskLevel'] {
-  if (score >= 90) return 'ULTRA_SAFE';
-  if (score >= 80) return 'VERY_SAFE';
-  if (score >= 65) return 'SAFE';
-  if (score >= 50) return 'MODERATE';
-  if (score >= 35) return 'RISKY';
-  if (score >= 20) return 'VERY_RISKY';
-  if (score >= 10) return 'EXTREME_DANGER';
+  if (score >= 90) {return 'ULTRA_SAFE';}
+  if (score >= 80) {return 'VERY_SAFE';}
+  if (score >= 65) {return 'SAFE';}
+  if (score >= 50) {return 'MODERATE';}
+  if (score >= 35) {return 'RISKY';}
+  if (score >= 20) {return 'VERY_RISKY';}
+  if (score >= 10) {return 'EXTREME_DANGER';}
   return 'SCAM';
 }
 

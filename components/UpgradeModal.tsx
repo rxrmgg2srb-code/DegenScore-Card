@@ -35,7 +35,7 @@ export default function UpgradeModal({ isOpen, onClose, onUpgrade, onSkip, onPro
     return () => clearInterval(interval);
   }, []);
 
-  if (!isOpen) return null;
+  if (!isOpen) {return null;}
 
   const handlePromoCode = async () => {
     if (!publicKey) {

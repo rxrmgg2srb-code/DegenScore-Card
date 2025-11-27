@@ -58,7 +58,7 @@ export function LiveActivityFeed() {
 
   const currentActivity = activities[currentIndex];
 
-  if (!currentActivity) return null;
+  if (!currentActivity) {return null;}
 
   const getActivityMessage = (activity: Activity) => {
     switch (activity.type) {

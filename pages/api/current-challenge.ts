@@ -33,7 +33,7 @@ export default async function handler(
     }
 
     // Get current leader based on metric
-    let leaderQuery: any = {
+    const leaderQuery: any = {
       where: { isPaid: true },
       orderBy: {},
       take: 1,

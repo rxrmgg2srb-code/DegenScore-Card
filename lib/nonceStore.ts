@@ -55,7 +55,7 @@ export async function markNonceAsUsed(nonce: string): Promise<void> {
  * Delete a nonce (for testing/cleanup)
  */
 export async function deleteNonce(nonce: string): Promise<void> {
-  if (!redis) return;
+  if (!redis) {return;}
 
   try {
     const key = `${NONCE_PREFIX}${nonce}`;

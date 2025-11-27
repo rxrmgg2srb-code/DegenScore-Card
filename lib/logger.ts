@@ -53,9 +53,9 @@ class Logger {
 
     // Send to Sentry in production
     if (this.isProduction && typeof window !== 'undefined') {
-      // @ts-ignore - Sentry global
+      // @ts-expect-error - Sentry global injected at runtime
       if (window.Sentry) {
-        // @ts-ignore
+        // @ts-expect-error - Sentry global injected at runtime
         window.Sentry.captureException(error || new Error(message), {
           tags: context,
         });

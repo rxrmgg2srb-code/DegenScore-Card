@@ -87,7 +87,7 @@ export async function getActiveFlashSales(): Promise<FlashSale[]> {
 
     // Filter out sales that have reached max redemptions
     return sales.filter(sale => {
-      if (!sale.maxRedemptions) return true;
+      if (!sale.maxRedemptions) {return true;}
       return sale.currentRedemptions < sale.maxRedemptions;
     }) as FlashSale[];
   } catch (error: any) {
@@ -234,7 +234,7 @@ export async function getFlashSaleStats(saleId: string) {
       },
     });
 
-    if (!sale) return null;
+    if (!sale) {return null;}
 
     const now = new Date();
     const timeLeft = sale.endTime.getTime() - now.getTime();
@@ -264,7 +264,7 @@ export function getRecommendedFlashSale(userTier?: string): FlashSaleConfig {
 
   // Find the best sale for user's tier
   const filteredSales = FLASH_SALE_PRESETS.filter(sale => {
-    if (!sale.tier) return true;
+    if (!sale.tier) {return true;}
     const saleTierValue = tierPriority[sale.tier];
     return saleTierValue >= userTierValue;
   }).sort((a, b) => b.discountPercent - a.discountPercent);

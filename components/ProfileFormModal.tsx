@@ -40,11 +40,11 @@ export default function ProfileFormModal({
   const [isPaying, setIsPaying] = useState(false);
   const [paymentError, setPaymentError] = useState<string | null>(null);
 
-  if (!isOpen) return null;
+  if (!isOpen) {return null;}
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (!file) {return;}
 
     // Validate size using config
     if (file.size > UPLOAD_CONFIG.MAX_FILE_SIZE) {
@@ -106,7 +106,7 @@ export default function ProfileFormModal({
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ walletAddress, ...formData }),
         });
-        if (!response.ok) throw new Error('Failed to save profile');
+        if (!response.ok) {throw new Error('Failed to save profile');}
         onSubmit(formData);
       } catch (error: any) {
         alert('Error saving profile: ' + error.message);
@@ -145,7 +145,7 @@ export default function ProfileFormModal({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ walletAddress, ...formData }),
       });
-      if (!profileResponse.ok) throw new Error('Failed to save profile');
+      if (!profileResponse.ok) {throw new Error('Failed to save profile');}
 
       const paymentResponse = await fetch('/api/verify-payment', {
         method: 'POST',

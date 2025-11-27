@@ -21,7 +21,7 @@ export const DailyCheckIn = () => {
   const [message, setMessage] = useState('');
 
   const handleCheckIn = async () => {
-    if (!publicKey || isLoading) return;
+    if (!publicKey || isLoading) {return;}
 
     setIsLoading(true);
     setMessage('');
