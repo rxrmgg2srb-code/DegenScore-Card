@@ -335,7 +335,7 @@ export async function getUserChallengeStats(walletAddress: string) {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const todayCompletions = completions.filter((c) => {
+    const todayCompletions = completions.filter((c: any) => {
       const completedDate = new Date(c.completedAt!);
       completedDate.setHours(0, 0, 0, 0);
       return completedDate.getTime() === today.getTime();
@@ -381,7 +381,7 @@ async function calculateChallengeStreak(walletAddress: string): Promise<number> 
 
     for (let i = 0; i < 365; i++) {
       // Max 365 day streak
-      const dayCompletions = completions.filter((c) => {
+      const dayCompletions = completions.filter((c: any) => {
         const completedDate = new Date(c.completedAt!);
         completedDate.setHours(0, 0, 0, 0);
         return completedDate.getTime() === currentDay.getTime();

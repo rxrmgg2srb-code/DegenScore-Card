@@ -47,16 +47,16 @@ export async function calculateWhaleMetrics(walletAddress: string): Promise<Whal
     });
 
     // Get top tokens from hot trades
-    const tokenCounts = hotTrades.reduce((acc, trade) => {
+    const tokenCounts = hotTrades.reduce((acc: any, trade: any) => {
       const symbol = trade.tokenSymbol || 'UNKNOWN';
       acc[symbol] = (acc[symbol] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
 
     const topTokens = Object.entries(tokenCounts)
-      .sort(([, a], [, b]) => b - a)
+      .sort(([, a]: any, [, b]: any) => b - a)
       .slice(0, 5)
-      .map(([symbol]) => symbol);
+      .map(([symbol]: any) => symbol);
 
     return {
       totalVolume: card.totalVolume,

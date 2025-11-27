@@ -52,7 +52,7 @@ export default async function handler(
     }
 
     // Use transaction to ensure atomicity and prevent duplicate payments
-    const result = await prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async (tx: any) => {
       // SECURITY: Check for duplicate payment signature to prevent replay attacks
       const existingPayment = await tx.payment.findUnique({
         where: { signature },

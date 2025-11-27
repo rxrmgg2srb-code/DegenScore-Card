@@ -49,7 +49,7 @@ ${staticPages
   .join('\n')}
 ${publicCards
   .map(
-    (card) => `  <url>
+    (card: any) => `  <url>
     <loc>${baseUrl}/card/${card.walletAddress}</loc>
     <lastmod>${card.updatedAt.toISOString()}</lastmod>
     <changefreq>weekly</changefreq>

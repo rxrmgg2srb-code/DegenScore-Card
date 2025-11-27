@@ -41,7 +41,7 @@ export default async function handler(
 
     // Fetch card data for all followed wallets
     const followedWallets = await Promise.all(
-      follows.map(async (follow) => {
+      follows.map(async (follow: any) => {
         const card = await prisma.degenCard.findUnique({
           where: { walletAddress: follow.following },
           select: {
@@ -66,7 +66,7 @@ export default async function handler(
     );
 
     // Filter out wallets that no longer exist
-    const validFollows = followedWallets.filter((f) => f.card !== null);
+    const validFollows = followedWallets.filter((f: any) => f.card !== null);
 
     res.status(200).json({
       walletAddress,

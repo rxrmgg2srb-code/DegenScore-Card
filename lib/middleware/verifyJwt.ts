@@ -29,7 +29,7 @@ export function verifyJwt(req: NextApiRequest, res: NextApiResponse, next: () =>
         // Attach wallet address to request for downstream handlers
         (req as any).walletAddress = payload.walletAddress;
         next();
-    } catch (err) {
+    } catch (err: any) {
         logger.warn('Invalid JWT', err as Error);
         res.status(401).json({ error: 'Invalid token' });
     }

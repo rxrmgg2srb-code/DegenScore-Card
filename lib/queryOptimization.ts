@@ -280,7 +280,7 @@ export async function getScoreHistoryOptimized(
   // Downsample if too many points (keep max 100 points for chart)
   if (history.length > 100) {
     const step = Math.floor(history.length / 100);
-    return history.filter((_, index) => index % step === 0);
+    return history.filter((_: any, index: number) => index % step === 0);
   }
 
   return history;

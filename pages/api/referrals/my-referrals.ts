@@ -31,7 +31,7 @@ export default async function handler(
 
     // Contar stats
     const totalReferrals = referrals.length;
-    const paidReferrals = referrals.filter(r => r.hasPaid).length;
+    const paidReferrals = referrals.filter((r: any) => r.hasPaid).length;
     const pendingReferrals = totalReferrals - paidReferrals;
 
     // Calcular potencial reward (para mostrar cuánto ganarían)
@@ -46,7 +46,7 @@ export default async function handler(
         pending: pendingReferrals,
         potentialEarnings, // SOL
       },
-      referrals: referrals.map(r => ({
+      referrals: referrals.map((r: any) => ({
         id: r.id,
         referredAddress: r.referredAddress,
         hasPaid: r.hasPaid,

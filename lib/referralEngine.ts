@@ -309,7 +309,7 @@ export async function getReferralStats(wallet: string): Promise<ReferralStats> {
   const totalReferrals = referrals.length;
 
   // Use rewardAmount field from schema (not totalEarnings/rewardsClaimed)
-  const totalEarnings = referrals.reduce((sum, r) => sum + (r.rewardAmount || 0), 0);
+  const totalEarnings = referrals.reduce((sum: number, r: any) => sum + (r.rewardAmount || 0), 0);
   const claimedRewards = 0; // Schema doesn't track claimed rewards separately
   const pendingRewards = totalEarnings - claimedRewards;
 
@@ -385,7 +385,7 @@ export async function getReferralLeaderboard(limit: number = 100): Promise<any[]
 
   // Enrich with wallet data
   const enriched = await Promise.all(
-    topReferrers.map(async (item) => {
+    topReferrers.map(async (item: any) => {
       const card = await prisma.degenCard.findUnique({
         where: { walletAddress: item.referrerAddress },
         select: {

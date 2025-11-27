@@ -265,7 +265,7 @@ export async function notifyFollowersOfTrade(
 
     // Send notifications to all followers
     await Promise.all(
-      followers.map((f) => notifyWallet(f.follower, notificationData))
+      followers.map((f: any) => notifyWallet(f.follower, notificationData))
     );
 
     logger.info('Notified followers of trade:', {

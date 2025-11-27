@@ -34,7 +34,7 @@ export default async function handler(
     });
 
     // Format activities for display
-    const formatted = activities.map(activity => {
+    const formatted = activities.map((activity: any) => {
       const wallet = activity.walletAddress;
       const shortWallet = `${wallet.slice(0, 4)}...${wallet.slice(-4)}`;
 

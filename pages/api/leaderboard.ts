@@ -47,7 +47,7 @@ export default async function handler(
 
       // Calcular badgePoints y referralCount para cada card
       const cardsWithExtras = await Promise.all(
-        cards.map(async (card) => {
+        cards.map(async (card: any) => {
           // Calcular badge points y obtener badges desbloqueados
           const { badges, totalPoints } = checkAllBadges({
             totalVolume: card.totalVolume || 0,

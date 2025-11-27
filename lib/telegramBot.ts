@@ -174,7 +174,7 @@ export async function getChallengeMessage(walletAddress: string): Promise<string
 
     let message = '🎯 **Desafíos Diarios**\n\n';
 
-    challenges.forEach((challenge, idx) => {
+    challenges.forEach((challenge: any, idx: number) => {
       const completion = challenge.completions[0];
       const progress = completion?.progress || 0;
       const completed = completion?.completed || false;
@@ -214,7 +214,7 @@ export async function getWhaleMessage(walletAddress?: string): Promise<string> {
       return '🐋 No sigues ninguna whale.\n\n🌐 Descubre whales en: https://www.solanamillondollar.com';
     }
 
-    const whaleAddresses = follows.map(f => f.whaleAddress);
+    const whaleAddresses = follows.map((f: any) => f.whaleAddress);
 
     // Get whale wallets to get their IDs
     const whaleWallets = await prisma.whaleWallet.findMany({
@@ -224,7 +224,7 @@ export async function getWhaleMessage(walletAddress?: string): Promise<string> {
       select: { id: true },
     });
 
-    const whaleIds = whaleWallets.map(w => w.id);
+    const whaleIds = whaleWallets.map((w: any) => w.id);
 
     const alerts = await prisma.whaleAlert.findMany({
       where: {
@@ -246,7 +246,7 @@ export async function getWhaleMessage(walletAddress?: string): Promise<string> {
 
     let message = '🐋 **Actividad de Whales (últimas 24h)**\n\n';
 
-    alerts.forEach((alert, idx) => {
+    alerts.forEach((alert: any, idx: number) => {
       const isBuy = alert.alertType === 'large_buy';
       const emoji = isBuy ? '💰' : '💸';
       const whale = alert.whale;

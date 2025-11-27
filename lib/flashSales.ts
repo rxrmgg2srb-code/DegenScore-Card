@@ -86,7 +86,7 @@ export async function getActiveFlashSales(): Promise<FlashSale[]> {
     });
 
     // Filter out sales that have reached max redemptions
-    return sales.filter(sale => {
+    return sales.filter((sale: any) => {
       if (!sale.maxRedemptions) return true;
       return sale.currentRedemptions < sale.maxRedemptions;
     }) as FlashSale[];

@@ -74,7 +74,7 @@ export default async function handler(
     });
 
     // 4. Formatear respuesta según tier
-    const formattedTrades = trades.map(trade => ({
+    const formattedTrades = trades.map((trade: any) => ({
       id: trade.id,
       degen: tier === 'FREE'
         ? `${trade.walletAddress.slice(0, 4)}...${trade.walletAddress.slice(-4)}`

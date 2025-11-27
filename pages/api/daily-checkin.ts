@@ -106,7 +106,7 @@ export default async function handler(
 
       for (const milestone of milestonesReached) {
         // Check if badge already exists
-        const hasBadge = card.badges.some(b => b.name === milestone.badge);
+        const hasBadge = card.badges.some((b: any) => b.name === milestone.badge);
 
         if (!hasBadge) {
           await tx.badge.create({
