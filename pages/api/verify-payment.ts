@@ -30,8 +30,14 @@ export default async function handler(
       });
     }
 
-    logger.info(`💰 Verifying payment for: ${walletAddress}`);
-    logger.info(`📝 Payment signature: ${paymentSignature}`);
+    // ✅ SECURITY: Redact sensitive info in production
+    if (process.env.NODE_ENV === 'production') {
+      logger.info(`💰 Verifying payment for: ${walletAddress.slice(0, 4)}...${walletAddress.slice(-4)}`);
+      logger.info(`📝 Payment signature: ${paymentSignature.slice(0, 8)}...`);
+    } else {
+      logger.debug(`💰 Verifying payment for: ${walletAddress}`);
+      logger.debug(`📝 Payment signature: ${paymentSignature}`);
+    }
 
     const connection = new Connection(
       process.env.HELIUS_RPC_URL || 'https://api.mainnet-beta.solana.com',
@@ -80,8 +86,10 @@ export default async function handler(
     }
 
     if (senderIndex === -1) {
+      // ✅ SECURITY: Generic error message for users
+      logger.warn('Payment validation failed: wallet not in transaction', { wallet: walletAddress.slice(0, 8) });
       return res.status(400).json({
-        error: 'Wallet address not found in transaction. Possible fraud attempt.'
+        error: 'Payment verification failed'
       });
     }
 
@@ -110,9 +118,14 @@ export default async function handler(
     const senderPaidAmount = Math.abs(senderBalanceChange);
     const treasuryReceivedAmount = treasuryBalanceChange;
 
-    logger.info(`💰 Payment verification:`);
-    logger.info(`   Sender (${walletAddress}) balance change: ${senderBalanceChange.toFixed(4)} SOL`);
-    logger.info(`   Treasury balance change: ${treasuryBalanceChange.toFixed(4)} SOL`);
+    // ✅ SECURITY: Hide balance details in production
+    if (process.env.NODE_ENV === 'production') {
+      logger.info('💰 Payment verification successful');
+    } else {
+      logger.debug(`💰 Payment verification:`);
+      logger.debug(`   Sender (${walletAddress}) balance change: ${senderBalanceChange.toFixed(4)} SOL`);
+      logger.debug(`   Treasury balance change: ${treasuryBalanceChange.toFixed(4)} SOL`);
+    }
 
     // CRITICAL VALIDATION: Sender must have sent money (negative balance change)
     if (senderBalanceChange >= 0) {
@@ -161,7 +174,12 @@ export default async function handler(
         },
       });
 
-      logger.info(`✅ Payment saved: ${paymentSignature}`);
+      // ✅ SECURITY: Redact in production
+      if (process.env.NODE_ENV === 'production') {
+        logger.info('✅ Payment saved');
+      } else {
+        logger.debug(`✅ Payment saved: ${paymentSignature}`);
+      }
 
       // Update card as paid
       const updatedCard = await tx.degenCard.update({
@@ -173,7 +191,11 @@ export default async function handler(
         },
       });
 
-      logger.info(`✅ Card marked as paid for wallet: ${walletAddress}`);
+      if (process.env.NODE_ENV === 'production') {
+        logger.info('✅ Card marked as paid');
+      } else {
+        logger.debug(`✅ Card marked as paid for wallet: ${walletAddress}`);
+      }
 
       // Create or update subscription with 30-day PRO trial
       const trialEndDate = new Date();
@@ -194,7 +216,9 @@ export default async function handler(
         }
       });
 
-      logger.info(`✅ PRO subscription created with 30-day trial (expires: ${trialEndDate.toISOString()})`);
+      if (process.env.NODE_ENV !== 'production') {
+        logger.debug(`✅ PRO subscription created with 30-day trial (expires: ${trialEndDate.toISOString()})`);
+      }
 
       return updatedCard;
     }, {

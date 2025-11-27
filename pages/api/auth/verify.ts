@@ -31,8 +31,8 @@ export default async function handler(
 
     logger.debug('Verifying auth for:', { publicKey: authResponse.publicKey });
 
-    // Verify authentication
-    const verification = verifyAuthentication(authResponse);
+    // Verify authentication (now async)
+    const verification = await verifyAuthentication(authResponse);
 
     if (!verification.valid) {
       logger.warn('Authentication failed:', { error: verification.error });

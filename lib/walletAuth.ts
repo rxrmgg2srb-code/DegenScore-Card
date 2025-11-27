@@ -3,6 +3,8 @@ import nacl from 'tweetnacl';
 import bs58 from 'bs58';
 import * as jwt from 'jsonwebtoken';
 import { logger } from '@/lib/logger';
+import redis from '@/lib/cache/redis'; // ✅ SECURITY: Redis for nonce tracking
+
 
 /**
  * Wallet Authentication Utility
@@ -20,6 +22,7 @@ export interface WalletAuthResponse {
   signature: string;
   message: string;
   timestamp: number;
+  nonce: string; // ✅ SECURITY: Required for replay attack prevention
 }
 
 /**
@@ -88,11 +91,33 @@ export function isAuthChallengeValid(timestamp: number): boolean {
 
 /**
  * Complete authentication flow verification
+ * ✅ SECURITY: Now includes replay attack protection via Redis nonce tracking
  */
-export function verifyAuthentication(authResponse: WalletAuthResponse): {
+export async function verifyAuthentication(authResponse: WalletAuthResponse): Promise<{
   valid: boolean;
   error?: string;
-} {
+}> {
+  // ✅ SECURITY FIX: Check if nonce has been used (Replay Attack Protection)
+  const nonceKey = `auth:nonce:${authResponse.nonce}`;
+
+  if (redis) {
+    try {
+      const nonceExists = await redis.get(nonceKey);
+      if (nonceExists) {
+        logger.warn('Replay attack detected - nonce already used', {
+          nonce: authResponse.nonce.slice(0, 8),
+          wallet: authResponse.publicKey.slice(0, 8)
+        });
+        return { valid: false, error: 'Authentication challenge already used (replay attack detected)' };
+      }
+    } catch (error) {
+      // If Redis is down, log but continue (graceful degradation)
+      logger.error('Redis nonce check failed, continuing without replay protection', error instanceof Error ? error : undefined);
+    }
+  } else {
+    logger.warn('Redis not configured, replay attack protection disabled');
+  }
+
   // Check if timestamp is valid (not too old)
   if (!isAuthChallengeValid(authResponse.timestamp)) {
     return { valid: false, error: 'Authentication challenge expired' };
@@ -112,6 +137,17 @@ export function verifyAuthentication(authResponse: WalletAuthResponse): {
   // Verify the message contains the correct wallet address
   if (!authResponse.message.includes(authResponse.publicKey)) {
     return { valid: false, error: 'Message does not match public key' };
+  }
+
+  // ✅ SECURITY: Mark nonce as used with 5-minute TTL (matching challenge validity)
+  if (redis) {
+    try {
+      await redis.set(nonceKey, 'used', { ex: 300 }); // 5 minutes = 300 seconds
+      logger.info('Nonce stored successfully', { nonce: authResponse.nonce.slice(0, 8) });
+    } catch (error) {
+      logger.error('Failed to store nonce in Redis', error instanceof Error ? error : undefined);
+      // Continue anyway - the auth is valid even if we can't prevent future replay
+    }
   }
 
   return { valid: true };

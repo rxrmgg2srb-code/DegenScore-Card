@@ -1,35 +1,10 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { RATE_LIMIT_CONFIG } from './config';
 import { logger } from '@/lib/logger';
+import redis from '@/lib/cache/redis'; // ✅ SECURITY: Distributed rate limiting
 
-interface RateLimitStore {
-  [key: string]: {
-    count: number;
-    resetTime: number;
-  };
-}
-
-const store: RateLimitStore = {};
-
-// Optimized cleanup for high concurrency: every 5 minutes
-setInterval(() => {
-  const now = Date.now();
-  const keys = Object.keys(store);
-
-  // Only clean if we have many entries (memory optimization)
-  if (keys.length > 500) {
-    let cleaned = 0;
-    keys.forEach((key) => {
-      if (store[key] && store[key].resetTime < now) {
-        delete store[key];
-        cleaned++;
-      }
-    });
-    if (cleaned > 0) {
-      logger.info(`[RateLimit] Cleaned ${cleaned}/${keys.length} expired entries`);
-    }
-  }
-}, 5 * 60 * 1000);
+// ✅ REMOVED: In-memory store (not suitable for production/scaling)
+// const store: RateLimitStore = {};
 
 function getClientIdentifier(req: NextApiRequest): string {
   // Try to get the real IP from various headers (for proxies/load balancers)
@@ -56,49 +31,72 @@ export type RateLimitConfig = {
 };
 
 /**
- * Rate limiting middleware
+ * Rate limiting middleware - Redis-based (distributed & persistent)
+ * ✅ SECURITY FIX: Migrated from in-memory to Redis for:
+ *    - Horizontal scaling support
+ *    - Persistence across restarts
+ *    - Multi-instance compatibility
  * Returns true if request should be allowed, false if rate limited
  */
-export function rateLimit(
+export async function rateLimit(
   req: NextApiRequest,
   res: NextApiResponse,
   config: RateLimitConfig = {}
-): boolean {
+): Promise<boolean> {
   const windowMs = config.windowMs || RATE_LIMIT_CONFIG.WINDOW_MS;
   const maxRequests = config.maxRequests || RATE_LIMIT_CONFIG.MAX_REQUESTS;
 
   const identifier = getClientIdentifier(req);
-  const key = `${req.url}:${identifier}`;
-  const now = Date.now();
+  const key = `ratelimit:${req.url}:${identifier}`;
 
-  if (!store[key] || store[key].resetTime < now) {
-    store[key] = {
-      count: 1,
-      resetTime: now + windowMs,
-    };
-    return true;
+  // ✅ Handle Redis not configured (graceful degradation)
+  if (!redis) {
+    logger.warn('Redis not configured, rate limiting disabled');
+    return true; // Allow request if Redis is not available
   }
 
-  if (store[key].count < maxRequests) {
-    store[key].count++;
-    return true;
+  try {
+    // ✅ Use Redis for distributed rate limiting
+    const currentCount = await redis.get(key);
+
+    if (!currentCount) {
+      // First request in this window
+      await redis.set(key, '1', { px: windowMs }); // px = milliseconds
+      return true;
+    }
+
+    const count = parseInt(currentCount as string, 10);
+
+    if (count < maxRequests) {
+      // Increment counter
+      await redis.incr(key);
+      return true;
+    }
+
+    // Rate limit exceeded
+    const ttl = await redis.pttl(key); // Time to live in milliseconds
+    const resetTime = Math.ceil((ttl || 0) / 1000); // Convert to seconds
+
+    res.status(429).json({
+      error: 'Too many requests',
+      retryAfter: resetTime,
+    });
+    res.setHeader('Retry-After', resetTime.toString());
+
+    logger.warn('Rate limit exceeded', { identifier, url: req.url, count });
+    return false;
+
+  } catch (error) {
+    // ✅ Graceful degradation: If Redis is down, allow request but log error
+    logger.error('Redis rate limit check failed, allowing request', error instanceof Error ? error : undefined);
+    return true; // Fail open to avoid blocking users if Redis is down
   }
-
-  // Rate limit exceeded
-  const resetTime = Math.ceil((store[key].resetTime - now) / 1000);
-  res.status(429).json({
-    error: 'Too many requests',
-    retryAfter: resetTime,
-  });
-  res.setHeader('Retry-After', resetTime.toString());
-
-  return false;
 }
 
 /**
  * Strict rate limiter for expensive operations (analyze, generate-card)
  */
-export function strictRateLimit(req: NextApiRequest, res: NextApiResponse): boolean {
+export async function strictRateLimit(req: NextApiRequest, res: NextApiResponse): Promise<boolean> {
   return rateLimit(req, res, {
     windowMs: RATE_LIMIT_CONFIG.STRICT_WINDOW_MS,
     maxRequests: RATE_LIMIT_CONFIG.STRICT_MAX_REQUESTS,
@@ -108,9 +106,10 @@ export function strictRateLimit(req: NextApiRequest, res: NextApiResponse): bool
 /**
  * Payment rate limiter (prevents payment spam/attacks)
  */
-export function paymentRateLimit(req: NextApiRequest, res: NextApiResponse): boolean {
+export async function paymentRateLimit(req: NextApiRequest, res: NextApiResponse): Promise<boolean> {
   return rateLimit(req, res, {
     windowMs: RATE_LIMIT_CONFIG.PAYMENT_WINDOW_MS,
     maxRequests: RATE_LIMIT_CONFIG.PAYMENT_MAX_REQUESTS,
   });
 }
+
