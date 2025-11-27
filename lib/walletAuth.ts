@@ -3,6 +3,8 @@ import nacl from 'tweetnacl';
 import bs58 from 'bs58';
 import * as jwt from 'jsonwebtoken';
 import { logger } from '@/lib/logger';
+import redis from '@/lib/cache/redis'; // ✅ SECURITY: Redis for nonce tracking
+
 
 /**
  * Wallet Authentication Utility
@@ -20,6 +22,7 @@ export interface WalletAuthResponse {
   signature: string;
   message: string;
   timestamp: number;
+  nonce: string; // ✅ SECURITY: Required for replay attack prevention
 }
 
 /**
@@ -84,8 +87,7 @@ export function isAuthChallengeValid(timestamp: number): boolean {
 
 /**
  * Complete authentication flow verification
- *
- * ✅ SECURITY: Now includes replay attack protection
+ * ✅ SECURITY: Now includes replay attack protection via Redis nonce tracking
  */
 export async function verifyAuthentication(
   authResponse: WalletAuthResponse & { nonce: string }

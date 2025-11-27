@@ -3,6 +3,7 @@ import Head from 'next/head';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { LanguageSelector } from '../components/LanguageSelector';
+import FIFACard, { FIFACardProps } from '../components/FIFACard';
 import { LeaderboardEntry, Stats, ViewMode, SortBy } from './leaderboard/types';
 import { FIFALeaderboardCard } from './leaderboard/FIFALeaderboardCard';
 import { LeaderboardTable } from './leaderboard/LeaderboardTable';
@@ -167,6 +168,33 @@ export function Leaderboard() {
                 searchWallet={searchWallet}
                 setSearchWallet={setSearchWallet}
               />
+              {/* Sorting Buttons */}
+              <div className="flex gap-2 mt-4 justify-center">
+                <button
+                  className={`px-4 py-2 rounded ${sortBy === 'likes' ? 'bg-yellow-500 text-black' : 'bg-gray-800 text-gray-200'}`}
+                  onClick={() => setSortBy('likes')}
+                >
+                  Likes
+                </button>
+                <button
+                  className={`px-4 py-2 rounded ${sortBy === 'newest' ? 'bg-yellow-500 text-black' : 'bg-gray-800 text-gray-200'}`}
+                  onClick={() => setSortBy('newest')}
+                >
+                  Newest
+                </button>
+                <button
+                  className={`px-4 py-2 rounded ${sortBy === 'oldest' ? 'bg-yellow-500 text-black' : 'bg-gray-800 text-gray-200'}`}
+                  onClick={() => setSortBy('oldest')}
+                >
+                  Oldest
+                </button>
+                <button
+                  className={`px-4 py-2 rounded ${sortBy === 'all' ? 'bg-yellow-500 text-black' : 'bg-gray-800 text-gray-200'}`}
+                  onClick={() => setSortBy('all')}
+                >
+                  All
+                </button>
+              </div>
 
               {loading ? (
                 <div className="text-center py-20">
@@ -182,10 +210,23 @@ export function Leaderboard() {
                           {filteredLeaderboard.map((entry, index) => (
                             <FIFALeaderboardCard
                               key={entry.id}
-                              entry={entry}
-                              index={index}
-                              handleLike={handleLike}
-                              userLikes={userLikes}
+                              rank={entry.rank ?? index + 1}
+                              walletAddress={entry.walletAddress}
+                              displayName={entry.displayName}
+                              profileImage={entry.profileImage}
+                              degenScore={entry.degenScore ?? 0}
+                              tier={entry.tier ?? 'Bronze'}
+                              stats={entry.stats ?? {
+                                winRate: 0,
+                                totalVolume: 0,
+                                profitLoss: 0,
+                                totalTrades: 0,
+                                avgHoldTime: 0,
+                                level: 0,
+                              }}
+                              badges={entry.badges ?? []}
+                              twitter={entry.twitter}
+                              telegram={entry.telegram}
                             />
                           ))}
                         </div>
@@ -212,6 +253,15 @@ export function Leaderboard() {
 
             <div className="lg:col-span-1">
               <div className="space-y-6">
+                {/* Awards Classification Sidebar */}
+                <div className="bg-gray-800 p-4 rounded-xl">
+                  <h3 className="text-lg font-bold text-yellow-400 mb-2">Awards</h3>
+                  <ul className="list-disc list-inside text-gray-200 space-y-1">
+                    <li>Gold: Top 1</li>
+                    <li>Silver: Top 2‑5</li>
+                    <li>Bronze: Top 6‑10</li>
+                  </ul>
+                </div>
                 <RankingsWidget />
                 <ChallengeWinnersWidget />
               </div>
