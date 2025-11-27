@@ -25,7 +25,7 @@ export function Leaderboard() {
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
-  const [sortBy, setSortBy] = useState<SortBy>('newest');
+  const [sortBy, setSortBy] = useState<SortBy>('all');
   const [searchWallet, setSearchWallet] = useState('');
   const [viewMode, setViewMode] = useState<ViewMode>('cards');
   const [userLikes, setUserLikes] = useState<{ [key: string]: boolean }>({});
@@ -190,7 +190,7 @@ export function Leaderboard() {
                 </button>
                 <button
                   className={`px-4 py-2 rounded ${sortBy === 'all' ? 'bg-yellow-500 text-black' : 'bg-gray-800 text-gray-200'}`}
-                  onClick={() => setSortBy('all')}
+                  onClick={() => setSortBy('all' as SortBy)}
                 >
                   All
                 </button>

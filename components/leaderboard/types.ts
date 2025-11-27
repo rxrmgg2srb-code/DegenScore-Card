@@ -21,6 +21,9 @@ export interface LeaderboardEntry {
     badgePoints?: number;
     referralCount?: number;
     calculatedBadges?: any[]; // Badges desbloqueados con su info completa
+    rank?: number;
+    tier?: string;
+    stats?: Stats;
 }
 
 export interface Stats {

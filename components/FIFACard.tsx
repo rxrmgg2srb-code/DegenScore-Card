@@ -4,8 +4,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 export interface FIFACardProps {
     rank: number;
     walletAddress: string;
-    displayName?: string;
-    profileImage?: string;
+    displayName?: string | undefined;
+    profileImage?: string | undefined;
     degenScore: number;
     tier: string;
     stats: {
