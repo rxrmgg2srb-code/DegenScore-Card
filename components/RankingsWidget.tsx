@@ -150,7 +150,7 @@ export default function RankingsWidget() {
       {loading ? (
         <div className="text-center py-8">
           <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-cyan-500"></div>
-          <p className="text-gray-400 mt-2 text-sm">Cargando...</p>
+          <p className="text-gray-400 mt-2 text-sm">Loading...</p>
         </div>
       ) : (
         <div className="space-y-2">

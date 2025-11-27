@@ -126,7 +126,7 @@ export default function ProfilePage() {
       <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-purple-500 mx-auto mb-4"></div>
-          <p className="text-white">Cargando perfil...</p>
+          <p className="text-white">Loading profile...</p>
         </div>
       </div>
     );

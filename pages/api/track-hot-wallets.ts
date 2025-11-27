@@ -40,7 +40,7 @@ export default async function handler(
         // Obtener últimas 20 transacciones
         const transactions = await getWalletTransactions(wallet.walletAddress, 20);
 
-        // Filtrar solo swaps recientes (últimas 6 horas)
+        // Filter only recent swaps (últimas 6 horas)
         const sixHoursAgo = Date.now() / 1000 - (6 * 60 * 60);
         const recentSwaps = transactions.filter(tx => 
           (tx.type === 'SWAP' || tx.description?.toLowerCase().includes('swap')) &&

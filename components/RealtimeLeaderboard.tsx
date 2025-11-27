@@ -25,7 +25,7 @@ export default function RealtimeLeaderboard() {
     const pusher = getPusherClient();
     if (!pusher) {
       logger.warn('Pusher not configured, falling back to polling');
-      // Fallback: polling cada 30 segundos
+      // Fallback: polling every 30 seconds
       const interval = setInterval(fetchLeaderboard, 30000);
       return () => clearInterval(interval);
     }
@@ -50,7 +50,7 @@ export default function RealtimeLeaderboard() {
       (data: { walletAddress: string; username?: string; score: number }) => {
         logger.info('👑 New top scorer:', data);
         setNewTopScorer(data.username || data.walletAddress);
-        // Mostrar notificación por 5 segundos
+        // Show notification for 5 seconds
         setTimeout(() => setNewTopScorer(null), 5000);
         // Refresh leaderboard
         fetchLeaderboard();

@@ -86,7 +86,7 @@ export default function SettingsContent() {
                   Tus datos de notificaciones son privados y encriptados.
                 </p>
                 <p>
-                  <strong className="text-white">🔕 Control:</strong> Puedes desactivar notificaciones en cualquier momento.
+                  <strong className="text-white">🔕 Control:</strong> You can disable notifications at any time.
                   Tus preferencias se guardan de forma segura.
                 </p>
               </div>

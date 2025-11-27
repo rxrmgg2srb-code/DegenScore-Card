@@ -351,7 +351,7 @@ export function Documentation() {
 
                     <TierCard
                       tier="PRO"
-                      price="$10/mes"
+                      price="$10/month"
                       features={[
                         'Everything from PREMIUM +',
                         'Alpha Feed (1h delay)',
@@ -364,14 +364,14 @@ export function Documentation() {
                   </div>
 
                   <div className="bg-gradient-to-r from-purple-900/50 to-pink-900/50 border-2 border-purple-500 rounded-xl p-6">
-                    <h4 className="text-2xl font-bold mb-3">🎉 Oferta de Lanzamiento</h4>
+                    <h4 className="text-2xl font-bold mb-3">🎉 Launch Offer</h4>
                     <p className="text-gray-200 mb-4">
-                      Usa el código <code className="bg-purple-600 px-3 py-1 rounded font-bold">DEGENLAUNCH2024</code> para:
+                      Use code <code className="bg-purple-600 px-3 py-1 rounded font-bold">DEGENLAUNCH2024</code> para:
                     </p>
                     <ul className="space-y-2 text-gray-200">
-                      <li>✓ Acceso PREMIUM gratis</li>
-                      <li>✓ 30 días de PRO incluidos</li>
-                      <li>✓ Primeros 100 usuarios solamente</li>
+                      <li>✓ Free PREMIUM access</li>
+                      <li>✓ 30 days of PRO included</li>
+                      <li>✓ First 100 users only</li>
                     </ul>
                   </div>
                 </DocSection>
@@ -385,35 +385,35 @@ export function Documentation() {
                   <div className="bg-gradient-to-r from-orange-900/30 to-red-900/30 border border-orange-500/30 rounded-xl p-6 mb-6">
                     <h4 className="text-xl font-bold mb-4">How It Works</h4>
                     <div className="space-y-3 text-gray-200">
-                      <p>1. <strong>Visit daily</strong> y haz clic en "Check In"</p>
-                      <p>2. <strong>Earn XP</strong>: +50 XP base + bonus por racha</p>
+                      <p>1. <strong>Visit daily</strong> and click on "Check In"</p>
+                      <p>2. <strong>Earn XP</strong>: +50 XP base + streak bonus</p>
                       <p>3. <strong>Maintain your streak</strong>: Cada día consecutivo aumenta el bonus</p>
-                      <p>4. <strong>Unlock badges</strong> en milestones (3, 7, 14, 30, 60, 90, 180 días)</p>
+                      <p>4. <strong>Unlock badges</strong> at milestones (3, 7, 14, 30, 60, 90, 180 days)</p>
                     </div>
                   </div>
 
                   <div className="space-y-4">
                     <div className="bg-black/30 rounded-lg p-4 border border-gray-700">
-                      <h5 className="font-bold mb-2">Recompensas por Racha:</h5>
+                      <h5 className="font-bold mb-2">Streak Rewards:</h5>
                       <div className="space-y-2 text-sm text-gray-300">
                         <div className="flex justify-between">
                           <span>🔥 1 día</span>
                           <span className="text-green-400">+50 XP</span>
                         </div>
                         <div className="flex justify-between">
-                          <span>🔥🔥 3 días</span>
+                          <span>🔥🔥 3 days</span>
                           <span className="text-green-400">+80 XP + Badge "Consistent Degen"</span>
                         </div>
                         <div className="flex justify-between">
-                          <span>🔥🔥🔥 7 días</span>
+                          <span>🔥🔥🔥 7 days</span>
                           <span className="text-green-400">+120 XP + Badge "Weekly Warrior"</span>
                         </div>
                         <div className="flex justify-between">
-                          <span>🔥🔥🔥🔥 30 días</span>
+                          <span>🔥🔥🔥🔥 30 days</span>
                           <span className="text-purple-400">+350 XP + Badge "Diamond Hands"</span>
                         </div>
                         <div className="flex justify-between">
-                          <span>🔥🔥🔥🔥🔥 180 días</span>
+                          <span>🔥🔥🔥🔥🔥 180 days</span>
                           <span className="text-orange-400">+1050 XP + Badge "Immortal"</span>
                         </div>
                       </div>
@@ -421,7 +421,7 @@ export function Documentation() {
 
                     <div className="bg-red-900/20 border border-red-500/30 rounded-lg p-4">
                       <p className="text-red-200 text-sm">
-                        ⚠️ <strong>Cuidado:</strong> Si no checkeas por 24+ horas, pierdes tu racha y vuelves a empezar desde 1 día.
+                        ⚠️ <strong>Warning:</strong> Si no checkeas por 24+ horas, pierdes tu racha y vuelves a empezar desde 1 día.
                       </p>
                     </div>
                   </div>
@@ -437,7 +437,7 @@ export function Documentation() {
                     <ReferralTier
                       count={3}
                       title="🎯 Influencer"
-                      rewards={['Badge "Influencer"', '+1 mes PRO gratis']}
+                      rewards={['Badge "Influencer"', '+1 month PRO free']}
                     />
                     <ReferralTier
                       count={10}
@@ -447,7 +447,7 @@ export function Documentation() {
                     <ReferralTier
                       count={25}
                       title="👑 Viral King"
-                      rewards={['Badge "Viral King"', '+3 meses PRO', '+0.3 SOL']}
+                      rewards={['Badge "Viral King"', '+3 months PRO', '+0.3 SOL']}
                     />
                     <ReferralTier
                       count={50}
@@ -471,7 +471,7 @@ export function Documentation() {
                 {/* Weekly Challenges */}
                 <DocSection id="challenges" title="Weekly Challenges" icon="⚔️">
                   <p className="text-gray-300 mb-6">
-                    Compete weekly for <strong className="text-yellow-400">1 SOL</strong>. El challenge se activa cuando haya <strong>100 cards generadas</strong>.
+                    Compete weekly for <strong className="text-yellow-400">1 SOL</strong>. The challenge activates when there are <strong>100 cards generadas</strong>.
                   </p>
 
                   <div className="bg-gradient-to-r from-yellow-900/30 to-orange-900/30 border-2 border-yellow-500 rounded-xl p-6 mb-6">
@@ -480,9 +480,9 @@ export function Documentation() {
                       Get the most likes on your card and win <strong>1 SOL</strong>.
                     </p>
                     <div className="bg-black/30 rounded-lg p-4">
-                      <p className="text-sm text-gray-300">Challenge permanente:</p>
+                      <p className="text-sm text-gray-300">Permanent challenge:</p>
                       <p className="text-lg font-bold text-white mt-2">"❤️ Más Likes en tu Card"</p>
-                      <p className="text-sm text-gray-400 mt-1">Gana quien tenga más likes al final de cada semana. Se activa cuando haya 100 cards generadas.</p>
+                      <p className="text-sm text-gray-400 mt-1">Whoever has the most likes at the end of each week wins. Activates when there are 100 cards generated.</p>
                     </div>
                   </div>
 
@@ -493,7 +493,7 @@ export function Documentation() {
                         <span className="text-2xl">1️⃣</span>
                         <div>
                           <p className="font-bold text-white">Genera tu Card</p>
-                          <p className="text-sm text-gray-400">Conecta tu wallet y genera tu DegenScore Card</p>
+                          <p className="text-sm text-gray-400">Connect your wallet and generate your DegenScore Card</p>
                         </div>
                       </div>
                       <div className="flex items-start gap-3">
@@ -564,7 +564,7 @@ export function Documentation() {
                   <div className="mt-6 bg-yellow-900/20 border border-yellow-500/30 rounded-lg p-4">
                     <p className="text-yellow-200 text-sm">
                       ⚠️ <strong>Disclaimer:</strong> El Alpha Feed es informativo. No somos asesores financieros.
-                      DYOR (Do Your Own Research) antes de copiar cualquier trade.
+                      DYOR (Do Your Own Research) before copying any trade.
                     </p>
                   </div>
                 </DocSection>
@@ -578,23 +578,23 @@ export function Documentation() {
                   <div className="grid md:grid-cols-2 gap-4">
                     <LeaderboardCategory
                       icon="🎯"
-                      title="Por DegenScore"
-                      description="Ranking de los mejores traders overall (score 0-100)"
+                      title="By DegenScore"
+                      description="Overall top traders ranking (score 0-100)"
                     />
                     <LeaderboardCategory
                       icon="💰"
-                      title="Por Volumen Total"
-                      description="Quién ha movido más dinero en total"
+                      title="By Total Volume"
+                      description="Who has moved the most money in total"
                     />
                     <LeaderboardCategory
                       icon="📈"
-                      title="Por Win Rate"
-                      description="Mayor porcentaje de trades exitosos"
+                      title="By Win Rate"
+                      description="Highest percentage of successful trades"
                     />
                     <LeaderboardCategory
                       icon="❤️"
-                      title="Por Likes"
-                      description="Cards más populares de la comunidad"
+                      title="By Likes"
+                      description="Community's most popular cards"
                     />
                   </div>
 
@@ -634,7 +634,7 @@ export function Documentation() {
                         <TierRow feature="Weekly Challenges" free="—" premium="✓" pro="✓" />
                         <TierRow feature="Alpha Feed Delay" free="72h" premium="6h" pro="1h" />
                         <TierRow feature="Trades Visibles" free="5 (hidden)" premium="10" pro="20" />
-                        <TierRow feature="Dashboard Avanzado" free="—" premium="—" pro="✓" />
+                        <TierRow feature="Advanced Dashboard" free="—" premium="—" pro="✓" />
                         <TierRow feature="Priority Support" free="—" premium="—" pro="✓" />
                       </tbody>
                     </table>
@@ -645,44 +645,44 @@ export function Documentation() {
                 <DocSection id="faq" title="Frequently Asked Questions" icon="❓">
                   <div className="space-y-4">
                     <FAQ
-                      question="¿Es gratis generar mi card?"
-                      answer="Sí, 100% gratis. Solo necesitas conectar tu wallet de Solana y el análisis es automático."
+                      question="Is it free to generate my card?"
+                      answer="Yes, 100% free. Just connect your Solana wallet and the analysis is automatic."
                     />
                     <FAQ
-                      question="¿Cómo se calcula el DegenScore?"
-                      answer="Es un algoritmo complejo que considera: win rate (30%), profit/loss (25%), volumen (15%), experiencia (15%), gestión de riesgo (10%), y consistencia (5%)."
+                      question="How is DegenScore calculated?"
+                      answer="It's a complex algorithm that considers: win rate (30%), profit/loss (25%), volumen (15%), experiencia (15%), risk management (10%), y consistency (5%)."
                     />
                     <FAQ
-                      question="¿Puedo regenerar mi card?"
-                      answer="Sí, puedes volver a analizarla cuando quieras. Tus métricas se actualizan con tu historial más reciente."
+                      question="Can I regenerate my card?"
+                      answer="Sí, you can re-analyze it whenever you want. Your metrics update with your most recent history."
                     />
                     <FAQ
-                      question="¿Qué wallets son compatibles?"
-                      answer="Cualquier wallet de Solana con transacciones en Helius: Phantom, Solflare, Backpack, Ledger, etc."
+                      question="What wallets are compatible?"
+                      answer="Any Solana wallet with transactions on Helius: Phantom, Solflare, Backpack, Ledger, etc."
                     />
                     <FAQ
-                      question="¿Mis datos están seguros?"
-                      answer="Sí. Solo leemos data pública de la blockchain. Nunca pedimos tu seed phrase ni hacemos transacciones sin tu permiso."
+                      question="Is my data safe?"
+                      answer="Sí. We only read public blockchain data. We never ask for your seed phrase or make transactions without your permission."
                     />
                     <FAQ
-                      question="¿Cómo funciona el pago con SOL?"
-                      answer="Cuando upgradeas a PREMIUM, envías 0.2 SOL a nuestra treasury wallet. Verificamos la transacción on-chain y activamos tu tier automáticamente."
+                      question="How does payment with SOL work?"
+                      answer="When you upgrade to PREMIUM, you send 0.2 SOL to our treasury wallet. We verify the on-chain transaction and activate your tier automatically."
                     />
                     <FAQ
-                      question="¿Puedo cancelar mi suscripción PRO?"
-                      answer="Sí, en cualquier momento. Tu acceso PRO continúa hasta que expire el periodo actual."
+                      question="Can I cancel my PRO subscription?"
+                      answer="Sí, at any time. Your PRO access continues until the current period expires."
                     />
                     <FAQ
-                      question="¿Los referidos tienen que pagar para que cuenten?"
-                      answer="Sí, solo cuentan los referidos que upgraden a PREMIUM o PRO. Referidos FREE no cuentan para rewards."
+                      question="Do referrals have to pay to count?"
+                      answer="Sí, only referrals who upgrade to PREMIUM or PRO count. FREE referrals don't count for rewards."
                     />
                     <FAQ
-                      question="¿Qué pasa si pierdo mi racha de check-in?"
-                      answer="Vuelves a empezar desde 1 día. Pero tu longest streak se guarda para siempre en tu perfil."
+                      question="What happens if I lose my check-in streak?"
+                      answer="You start over from day 1. But your longest streak is saved forever in your profile."
                     />
                     <FAQ
-                      question="¿Cómo se selecciona el ganador del Weekly Challenge?"
-                      answer="Al final de la semana, automáticamente verificamos quién cumple los requisitos y tiene la mejor métrica. El premio se envía en las 48h siguientes."
+                      question="How is the Weekly Challenge winner selected?"
+                      answer="At the end of the week, we automatically verify who meets the requirements and has the best metric. The prize is sent within 48 hours."
                     />
                   </div>
                 </DocSection>
@@ -691,7 +691,7 @@ export function Documentation() {
               {/* Footer */}
               <div className="mt-16 pt-8 border-t border-gray-800 text-center">
                 <p className="text-gray-400 mb-4">
-                  Still have questions? Únete a nuestro Discord o escríbenos en Twitter.
+                  Still have questions? Join our Discord or write to us on Twitter.
                 </p>
                 <div className="flex justify-center gap-4">
                   <a href="#" className="bg-purple-600 hover:bg-purple-700 px-6 py-2 rounded-lg font-medium transition-colors">

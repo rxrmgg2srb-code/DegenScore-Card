@@ -110,7 +110,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 Para vincular tu wallet de Solana:
 
 1. Visita: https://www.solanamillondollar.com/telegram-link
-2. Conecta tu wallet
+2. Connect your wallet
 3. Ingresa tu código: \`${telegramId}\`
 
 ¡Después podrás usar todos los comandos!`;

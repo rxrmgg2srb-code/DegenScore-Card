@@ -183,7 +183,7 @@ export default function ProfileFormModal({
 
       onSubmit(formData);
 
-      // Redirigir al leaderboard después de 1 segundo
+      // Redirect to leaderboard after 1 segundo
       setTimeout(() => {
         window.location.href = '/leaderboard';
       }, 1000);

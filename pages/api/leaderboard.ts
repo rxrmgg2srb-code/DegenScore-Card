@@ -108,7 +108,7 @@ export default async function handler(
         })
       );
 
-      // Ordenar según el campo solicitado
+      // Sort by requested field
       let sortedCards = [...cardsWithExtras];
 
       if (sortField === 'newest') {

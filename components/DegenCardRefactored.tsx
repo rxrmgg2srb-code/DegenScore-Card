@@ -105,7 +105,7 @@ export default function DegenCardRefactored() {
         downloadCard(true);
       }, 500);
 
-      // 🏆 Redirigir al leaderboard después de 2 segundos
+      // 🏆 Redirect to leaderboard after 2 seconds
       logger.info('🏆 Redirecting to leaderboard...');
       setTimeout(() => {
         window.location.href = '/leaderboard';

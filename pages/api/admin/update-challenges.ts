@@ -24,7 +24,7 @@ export default async function handler(
     logger.info(`🔐 Admin authorized: ${authResult.wallet}`);
     logger.info('🔄 Updating weekly challenge prizes...');
 
-    // Actualizar todos los challenges que tengan 3.0 SOL a 1.0 SOL
+    // Update all challenges que tengan 3.0 SOL a 1.0 SOL
     const result = await prisma.weeklyChallenge.updateMany({
       where: {
         prizeSOL: 3.0,

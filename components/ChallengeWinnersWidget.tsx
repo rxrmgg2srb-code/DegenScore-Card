@@ -95,7 +95,7 @@ export default function ChallengeWinnersWidget() {
       {loading ? (
         <div className="text-center py-12">
           <div className="inline-block animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-yellow-500"></div>
-          <p className="text-gray-400 mt-4 text-sm">Cargando ganadores...</p>
+          <p className="text-gray-400 mt-4 text-sm">Loading winners...</p>
         </div>
       ) : winners.length > 0 ? (
         <div className="space-y-4">

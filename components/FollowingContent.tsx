@@ -97,7 +97,7 @@ export default function FollowingContent() {
             <div className="text-6xl mb-4">🔒</div>
             <h2 className="text-2xl font-bold text-white mb-2">Connect Your Wallet</h2>
             <p className="text-gray-400 mb-6">
-              Conecta tu wallet para ver las wallets que sigues
+              Connect your wallet to see the wallets you follow
             </p>
             <WalletMultiButton />
           </div>

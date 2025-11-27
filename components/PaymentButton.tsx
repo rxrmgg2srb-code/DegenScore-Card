@@ -67,7 +67,7 @@ export default function PaymentButton({ walletAddress, onPaymentSuccess }: Payme
 
       logger.info('⏳ Waiting for confirmation...', { signature });
 
-      // SEGURIDAD: Esperar confirmación con timeout de 30 segundos
+      // SEGURIDAD: Wait for confirmation with timeout of 30 seconds
       const confirmationPromise = connection.confirmTransaction(signature, 'confirmed');
       const timeoutPromise = new Promise<never>((_, reject) =>
         setTimeout(() => reject(new Error('Transaction confirmation timeout (30s)')), 30000)

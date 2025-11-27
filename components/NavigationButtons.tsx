@@ -2,8 +2,8 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 
 /**
- * Componente de navegación reutilizable para todas las páginas
- * Muestra todos los botones principales de la aplicación
+ * Reusable navigation component for all pages
+ * Shows all main application buttons
  */
 export function NavigationButtons() {
   const router = useRouter();
