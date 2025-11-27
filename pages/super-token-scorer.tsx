@@ -1,9 +1,6 @@
 import dynamic from 'next/dynamic';
 import Head from 'next/head';
 
-// Force dynamic rendering - uses Solana wallet hooks
-export const dynamic = 'force-dynamic';
-
 const SuperTokenScorerContent = dynamic(
   () => import('../components/SuperTokenScorerContent').then((mod) => mod.default),
   {

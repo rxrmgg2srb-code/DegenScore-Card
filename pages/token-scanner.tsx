@@ -1,9 +1,6 @@
 import dynamic from 'next/dynamic';
 import Head from 'next/head';
 
-// Force dynamic rendering - uses Solana wallet hooks
-export const dynamic = 'force-dynamic';
-
 const TokenScannerContent = dynamic(() => import('../components/TokenScannerContent'), {
   ssr: false,
   loading: () => (
