@@ -72,21 +72,21 @@ export default function RankingsWidget() {
 
   const categoryConfig = {
     likes: {
-      title: 'Más Likes',
+      title: 'Most Likes',
       emoji: '❤️',
       color: 'from-red-500 to-pink-500',
       borderColor: 'border-red-500/30',
       bgColor: 'bg-red-900/20',
     },
     referrals: {
-      title: 'Más Referidos',
+      title: 'Most Referrals',
       emoji: '👥',
       color: 'from-blue-500 to-cyan-500',
       borderColor: 'border-blue-500/30',
       bgColor: 'bg-blue-900/20',
     },
     badges: {
-      title: 'Más Logros',
+      title: 'Most Achievements',
       emoji: '⭐',
       color: 'from-yellow-500 to-orange-500',
       borderColor: 'border-yellow-500/30',
@@ -100,7 +100,7 @@ export default function RankingsWidget() {
   return (
     <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 p-6">
       <h2 className="text-2xl font-bold text-white mb-4 flex items-center gap-2">
-        🏆 Rankings Temporada
+        🏆 Season Rankings
       </h2>
 
       {/* Tabs de categorías */}
@@ -206,17 +206,17 @@ export default function RankingsWidget() {
             ))
           ) : (
             <div className="text-center py-8 text-gray-400 text-sm">
-              No hay datos disponibles
+              No data available
             </div>
           )}
         </div>
       )}
 
-      {/* Info sobre premios */}
+      {/* Prize info */}
       <div className="mt-4 p-3 bg-purple-900/20 border border-purple-500/30 rounded-lg">
         <div className="text-xs text-gray-300 text-center">
-          <div className="font-bold text-purple-300 mb-1">🎁 Premio por Categoría</div>
-          <div>1 SOL por cada 100 participantes</div>
+          <div className="font-bold text-purple-300 mb-1">🎁 Prize per Category</div>
+          <div>1 SOL per 100 participants</div>
         </div>
       </div>
     </div>

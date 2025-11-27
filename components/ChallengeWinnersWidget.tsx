@@ -82,11 +82,11 @@ export default function ChallengeWinnersWidget() {
       {/* Subtitle */}
       <div className="text-center mb-6">
         <p className="text-gray-300 text-sm font-medium">
-          Ganadores de Challenges Pasados
+          Past Challenge Winners
         </p>
         <div className="flex items-center justify-center gap-2 mt-2">
           <div className="h-px flex-1 bg-gradient-to-r from-transparent via-yellow-500/50 to-transparent"></div>
-          <span className="text-yellow-400 text-xs font-bold">LEYENDAS</span>
+          <span className="text-yellow-400 text-xs font-bold">LEGENDS</span>
           <div className="h-px flex-1 bg-gradient-to-r from-transparent via-yellow-500/50 to-transparent"></div>
         </div>
       </div>
@@ -120,7 +120,7 @@ export default function ChallengeWinnersWidget() {
                       {winner.title}
                     </div>
                     <div className="text-gray-400 text-xs mt-0.5">
-                      Semana {winner.week}, {winner.year}
+                      Week {winner.week}, {winner.year}
                     </div>
                   </div>
                 </div>
@@ -166,19 +166,19 @@ export default function ChallengeWinnersWidget() {
         <div className="text-center py-12">
           <div className="text-6xl mb-4 opacity-50">🏆</div>
           <p className="text-gray-400 text-sm font-medium">
-            Próximamente...
+            Coming soon...
           </p>
           <p className="text-gray-500 text-xs mt-2">
-            Los primeros ganadores aparecerán aquí
+            First winners will appear here
           </p>
           <div className="mt-6 inline-block">
             <div className="bg-gradient-to-r from-yellow-900/20 to-orange-900/20 border border-yellow-500/30 rounded-lg px-4 py-2">
               <div className="text-yellow-400 text-xs font-bold mb-1">
-                💡 ¿Cómo ganar?
+                💡 How to win?
               </div>
               <div className="text-gray-300 text-xs">
-                Participa en challenges semanales<br />
-                y gana premios en SOL
+                Participate in weekly challenges<br />
+                and earn SOL prizes
               </div>
             </div>
           </div>
@@ -191,7 +191,7 @@ export default function ChallengeWinnersWidget() {
           <svg className="w-3 h-3 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
             <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
           </svg>
-          <span>Challenges activos cada semana</span>
+          <span>Active challenges every week</span>
         </div>
       </div>
     </div>
