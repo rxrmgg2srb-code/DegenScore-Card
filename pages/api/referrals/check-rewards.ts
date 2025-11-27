@@ -106,7 +106,7 @@ export default async function handler(
     const claimableRewards = [];
     for (const reward of unlockedRewards) {
       // Check if badge already awarded
-      const hasBadge = card?.badges.some(b => b.name === reward.badge);
+      const hasBadge = card?.badges.some((b: any) => b.name === reward.badge);
 
       if (!hasBadge) {
         claimableRewards.push(reward);
@@ -121,7 +121,7 @@ export default async function handler(
     const response = {
       totalReferrals: referrals.length,
       paidReferrals: paidReferralsCount,
-      pendingReferrals: referrals.filter(r => !r.hasPaid).length,
+      pendingReferrals: referrals.filter((r: any) => !r.hasPaid).length,
       unlockedRewards,
       claimableRewards,
       nextMilestone: nextReward

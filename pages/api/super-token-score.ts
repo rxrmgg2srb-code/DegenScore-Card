@@ -307,7 +307,7 @@ async function saveSuperScoreToDatabase(tokenAddress: string, result: SuperToken
         analyzedAt: new Date(),
         analysisTimeMs: result.analysisTimeMs,
       },
-    }).catch((err) => {
+    }).catch((err: any) => {
       // If table doesn't exist, skip database save
       logger.warn('Super Token Analysis table not found, skipping DB save', { error: String(err) });
     });

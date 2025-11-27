@@ -47,7 +47,7 @@ export default async function handler(
     logger.info(`Found ${topCards.length} cards to record`);
 
     // Guardar snapshot de cada card
-    const snapshots = topCards.map((card, index) => ({
+    const snapshots = topCards.map((card: any, index: number) => ({
       walletAddress: card.walletAddress,
       score: card.degenScore,
       rank: index + 1,

@@ -1,0 +1,31 @@
+Severity Finding,Location,CVSS Score,CWE,Impact,Remediation Priority,Estimated Fix Time
+C-001: Smart Contract Treasury Hijack,programs/degen-token/src/lib.rs:181-182,9.3,CWE-862,Critical,Immediate,4-6 hours
+C-002: JWT Secret Exposure Risk,pages/api/auth.ts:52-59,8.9,CWE-200,Critical,Immediate,1-2 hours
+C-003: Payment Replay Attack Vulnerability,pages/api/verify-payment.ts:158-165,8.7,CWE-362,Critical,Immediate,6-8 hours
+H-001: SQL Injection via Dynamic Queries,Multiple API endpoints,8.1,CWE-89,High,Urgent,1-2 days
+H-002: Smart Contract Integer Overflow,programs/degen-token/src/lib.rs:79-81,7.8,CWE-190,High,Urgent,2-3 hours
+H-003: Insufficient Rate Limiting,lib/rateLimitRedis.ts:88-97,7.5,CWE-770,High,Urgent,4-6 hours
+H-004: Weak Content Security Policy,next.config.js:76-89,7.3,CWE-693,High,Urgent,2-3 hours
+H-005: Missing Input Validation,Multiple API routes,7.2,CWE-20,High,Urgent,1-2 days
+H-006: Insecure Database Connection,lib/prisma.ts,7.0,CWE-538,High,Urgent,2-4 hours
+H-007: Insecure Direct Object References,Multiple API endpoints,6.9,CWE-639,High,Urgent,1-2 days
+M-001: Insufficient Error Handling,Various API routes,6.5,CWE-209,Medium,High,1-2 days
+M-002: Missing Audit Logging,Critical operations,6.4,CWE-532,Medium,High,2-3 days
+M-003: Weak Session Management,JWT implementation,6.2,CWE-613,Medium,High,1-2 days
+M-004: Missing CORS Configuration,API endpoints,6.1,CWE-346,Medium,High,2-4 hours
+M-005: Insufficient Monitoring,Application monitoring,6.0,CWE-778,Medium,High,2-3 days
+M-006: Dependency Vulnerabilities,package.json,5.9,CWE-1035,Medium,Medium,4-6 hours
+M-007: Insecure File Upload,pages/api/upload-profile-image.ts,5.8,CWE-434,Medium,Medium,2-3 hours
+M-008: Missing Input Length Limits,Form inputs,5.7,CWE-1284,Medium,Medium,2-4 hours
+M-009: Insufficient Rate Limit Granularity,Rate limiting system,5.6,CWE-1336,Medium,Medium,4-6 hours
+M-010: Weak Encryption Practices,Data encryption,5.5,CWE-311,Medium,Medium,1-2 days
+M-011: Missing Security Testing,Test suite,5.4,CWE-1294,Medium,Medium,1-2 weeks
+M-012: Insecure Environment Variable Handling,Configuration files,5.3,CWE-256,Medium,Medium,2-4 hours
+L-001: Verbose Error Messages,Error responses,4.5,CWE-209,Low,Low,2-4 hours
+L-002: Missing HTTP Security Headers,Server configuration,4.3,CWE-1006,Low,Low,1-2 hours
+L-003: Insecure Cookie Configuration,Session cookies,4.2,CWE-1004,Low,Low,1-2 hours
+L-004: Outdated Dependencies,package.json,4.1,CWE-1104,Low,Low,2-4 hours
+L-005: Missing Code Comments,Complex functions,4.0,CWE-546,Low,Low,1-2 days
+L-006: Insufficient Logging,Application logs,3.9,CWE-532,Low,Low,1-2 days
+L-007: Weak Random Number Generation,Token generation,3.8,CWE-338,Low,Low,2-4 hours
+L-008: Missing Input Trimming,Form inputs,3.7,CWE-20,Low,Low,1-2 hours

@@ -59,7 +59,7 @@ export default async function handler(
 
     const now = new Date();
 
-    const result = await prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async (tx: any) => {
       const card = await tx.degenCard.findUnique({
         where: { walletAddress },
         include: { badges: true },
@@ -106,7 +106,7 @@ export default async function handler(
 
       for (const milestone of milestonesReached) {
         // Check if badge already exists
-        const hasBadge = card.badges.some(b => b.name === milestone.badge);
+        const hasBadge = card.badges.some((b: any) => b.name === milestone.badge);
 
         if (!hasBadge) {
           await tx.badge.create({
@@ -169,7 +169,7 @@ export default async function handler(
             metadata: {
               streak: result.currentStreak,
               xpEarned: result.xpEarned,
-              badgesEarned: result.badgesEarned?.map(b => b.name) || [],
+              badgesEarned: result.badgesEarned?.map((b: any) => b.name) || [],
             },
           },
         });

@@ -49,7 +49,7 @@ export default async function handler(
       success: true,
       message: `Updated ${result.count} challenge(s) from 3 SOL to 1 SOL`,
       updatedCount: result.count,
-      recentChallenges: challenges.map((c) => ({
+      recentChallenges: challenges.map((c: any) => ({
         week: c.week,
         year: c.year,
         title: c.title,

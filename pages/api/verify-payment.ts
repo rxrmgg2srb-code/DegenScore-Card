@@ -154,7 +154,7 @@ export default async function handler(
     logger.info(`✅ Valid payment received: ${paidAmount} SOL`);
 
     // Use transaction to ensure atomicity and prevent race conditions
-    const result = await prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async (tx: any) => {
       // Check for duplicate payment signature
       const existingPayment = await tx.payment.findUnique({
         where: { signature: paymentSignature },

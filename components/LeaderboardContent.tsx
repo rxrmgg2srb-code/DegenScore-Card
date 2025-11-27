@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
-import { LanguageSelector } from '../components/LanguageSelector';
-import FIFACard, { FIFACardProps } from '../components/FIFACard';
+import { LanguageSelector } from './LanguageSelector';
+import FIFACard, { FIFACardProps } from './FIFACard';
 import { LeaderboardEntry, Stats, ViewMode, SortBy } from './leaderboard/types';
 import { LeaderboardCard } from './leaderboard/LeaderboardCard';
 import { LeaderboardTable } from './leaderboard/LeaderboardTable';
@@ -11,12 +11,12 @@ import { LeaderboardStats } from './leaderboard/LeaderboardStats';
 import { LeaderboardFilters } from './leaderboard/LeaderboardFilters';
 
 // Dynamic imports - NO ejecutar en servidor, solo en cliente
-const RankingsWidget = dynamic(() => import('../components/RankingsWidget'), {
+const RankingsWidget = dynamic(() => import('./RankingsWidget'), {
   ssr: false,
   loading: () => <div className="animate-pulse bg-gray-800/50 rounded-2xl h-96"></div>
 });
 
-const ChallengeWinnersWidget = dynamic(() => import('../components/ChallengeWinnersWidget'), {
+const ChallengeWinnersWidget = dynamic(() => import('./ChallengeWinnersWidget'), {
   ssr: false,
   loading: () => <div className="animate-pulse bg-gray-800/50 rounded-2xl h-96"></div>
 });
@@ -25,7 +25,7 @@ export function Leaderboard() {
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
-  const [sortBy, setSortBy] = useState<SortBy>('newest');
+  const [sortBy, setSortBy] = useState<SortBy>('all');
   const [searchWallet, setSearchWallet] = useState('');
   const [viewMode, setViewMode] = useState<ViewMode>('cards');
   const [userLikes, setUserLikes] = useState<{ [key: string]: boolean }>({});
@@ -190,7 +190,7 @@ export function Leaderboard() {
                 </button>
                 <button
                   className={`px-4 py-2 rounded ${sortBy === 'all' ? 'bg-yellow-500 text-black' : 'bg-gray-800 text-gray-200'}`}
-                  onClick={() => setSortBy('all')}
+                  onClick={() => setSortBy('all' as SortBy)}
                 >
                   All
                 </button>
@@ -214,10 +214,10 @@ export function Leaderboard() {
                               rank={entry.rank ?? index + 1}
                               walletAddress={entry.walletAddress}
                               displayName={entry.displayName}
-                              profileImage={entry.profileImage}
+                              profileImage={(entry as any).profileImage || undefined}
                               degenScore={entry.degenScore ?? 0}
-                              tier={entry.tier ?? 'Bronze'}
-                              stats={entry.stats ?? {
+                              tier={(entry as any).tier ?? 'Bronze'}
+                              stats={(entry as any).stats ?? {
                                 winRate: 0,
                                 totalVolume: 0,
                                 profitLoss: 0,
@@ -226,8 +226,8 @@ export function Leaderboard() {
                                 level: 0,
                               }}
                               badges={entry.badges ?? []}
-                              twitter={entry.twitter}
-                              telegram={entry.telegram}
+                              twitter={(entry as any).twitter}
+                              telegram={(entry as any).telegram}
                             />
                           ))}
                         </div>

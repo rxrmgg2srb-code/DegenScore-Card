@@ -72,17 +72,17 @@ export default async function handler(
     }
 
     // Calculate statistics
-    const scores = history.map(h => h.score);
+    const scores = history.map((h: any) => h.score);
     const maxScore = Math.max(...scores);
     const minScore = Math.min(...scores);
-    const avgScore = scores.reduce((a, b) => a + b, 0) / scores.length;
+    const avgScore = scores.reduce((a: number, b: number) => a + b, 0) / scores.length;
     const latestScore = scores[scores.length - 1] as number;
     const firstScore = scores[0] as number;
     const scoreChange = latestScore - firstScore;
     const scoreChangePercent = firstScore > 0 ? ((scoreChange / firstScore) * 100) : 0;
 
     // Best rank
-    const ranks = history.filter(h => h.rank !== null).map(h => h.rank!);
+    const ranks = history.filter((h: any) => h.rank !== null).map((h: any) => h.rank!);
     const bestRank = ranks.length > 0 ? Math.min(...ranks) : null;
 
     res.status(200).json({
@@ -93,7 +93,7 @@ export default async function handler(
         days: daysNum,
       },
       dataPoints: history.length,
-      history: history.map(h => ({
+      history: history.map((h: any) => ({
         timestamp: h.timestamp.toISOString(),
         score: h.score,
         rank: h.rank,

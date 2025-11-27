@@ -220,7 +220,7 @@ export default async function handler(
     // ═══════════════════════════════════════════════════════════
     // 5. ATOMIC TRANSACTION (All or nothing)
     // ═══════════════════════════════════════════════════════════
-    const result = await prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async (tx: any) => {
       // Double-check in transaction to prevent race conditions
       const promo = await tx.promoCode.findUnique({
         where: { code: sanitizedCode },
