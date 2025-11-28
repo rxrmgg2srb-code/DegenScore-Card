@@ -251,37 +251,34 @@ async function fetchAllTransactions(
 
 function extractTrades(transactions: ParsedTransaction[], walletAddress: string): Trade[] {
   const trades: Trade[] = [];
-  let skippedNoType = 0;
   let skippedNoTokenTransfers = 0;
   let skippedNoNativeTransfers = 0;
   let skippedDust = 0;
   let skippedNoToken = 0;
   let skippedZeroAmount = 0;
   let skippedSanity = 0;
+  let skippedTransferOnly = 0;
 
   for (const tx of transactions) {
-    // Filter only SWAP transactions (más flexible)
-    if (
-      tx.type !== 'SWAP' &&
-      !tx.description?.toLowerCase().includes('swap') &&
-      !tx.description?.toLowerCase().includes('trade') &&
-      !tx.description?.toLowerCase().includes('buy') &&
-      !tx.description?.toLowerCase().includes('sell')
-    ) {
-      skippedNoType++;
-      continue;
-    }
+    // =========================================================================
+    // NUEVA ESTRATEGIA: Detectar trades por ESTRUCTURA, no por tipo
+    // Un trade es: intercambio bidireccional de SOL ↔ Token
+    // Una transfer es: movimiento unidireccional de tokens o SOL
+    // =========================================================================
 
+    // 1. Debe tener token transfers (no SOL)
     if (!tx.tokenTransfers || tx.tokenTransfers.length === 0) {
       skippedNoTokenTransfers++;
       continue;
     }
+
+    // 2. Debe tener native transfers (SOL)
     if (!tx.nativeTransfers || tx.nativeTransfers.length === 0) {
       skippedNoNativeTransfers++;
       continue;
     }
 
-    // Calculate net SOL change for the wallet
+    // 3. Calcular movimiento neto de SOL para esta wallet
     let solNet = 0;
     for (const nt of tx.nativeTransfers) {
       if (nt.fromUserAccount === walletAddress) {
@@ -292,13 +289,13 @@ function extractTrades(transactions: ParsedTransaction[], walletAddress: string)
       }
     }
 
-    // Ignore tiny swaps (dust) - reducido de 0.001 a 0.0001 para capturar más trades
-    if (Math.abs(solNet) < 0.0001) {
+    // 4. Debe haber cambio significativo de SOL (no dust)
+    if (Math.abs(solNet) < 0.00001) {
       skippedDust++;
       continue;
     }
 
-    // Get token transfers involving this wallet
+    // 5. Obtener token transfers que involucran esta wallet
     const tokenTransfers = tx.tokenTransfers.filter(
       (t) =>
         t.mint !== SOL_MINT &&
@@ -310,19 +307,34 @@ function extractTrades(transactions: ParsedTransaction[], walletAddress: string)
       continue;
     }
 
-    const tokenTransfer = tokenTransfers[0];
+    // 6. FILTRO CLAVE: Verificar que es un TRADE y no una TRANSFER simple
+    // Trade = SOL va en una dirección Y tokens van en la dirección opuesta
+    // Transfer = Solo tokens se mueven (sin cambio significativo de SOL)
+    const isBuy = solNet < 0; // SOL sale = compra
+    const isSell = solNet > 0; // SOL entra = venta
+
+    // Verificar que hay movimiento de tokens en la dirección correcta
+    const tokensIn = tokenTransfers.filter((t) => t.toUserAccount === walletAddress);
+    const tokensOut = tokenTransfers.filter((t) => t.fromUserAccount === walletAddress);
+
+    // Para una compra: SOL sale (-) y tokens entran (+)
+    // Para una venta: SOL entra (+) y tokens salen (-)
+    const isValidTrade =
+      (isBuy && tokensIn.length > 0) || // Compra: SOL out, tokens in
+      (isSell && tokensOut.length > 0); // Venta: SOL in, tokens out
+
+    if (!isValidTrade) {
+      skippedTransferOnly++;
+      continue;
+    }
+
+    // 7. Obtener el token principal del trade
+    const tokenTransfer = isBuy ? tokensIn[0] : tokensOut[0];
     if (!tokenTransfer) {
       continue;
     }
 
-    // Determine if this is a buy or sell
-    // Buy = SOL goes out (negative solNet), tokens come in
-    // Sell = SOL comes in (positive solNet), tokens go out
-    const isBuy = solNet < 0;
-
-    const tokenAmount = isBuy
-      ? tokenTransfers.find((t) => t.toUserAccount === walletAddress)?.tokenAmount || 0
-      : tokenTransfers.find((t) => t.fromUserAccount === walletAddress)?.tokenAmount || 0;
+    const tokenAmount = tokenTransfer.tokenAmount;
 
     if (tokenAmount === 0) {
       skippedZeroAmount++;
@@ -331,18 +343,25 @@ function extractTrades(transactions: ParsedTransaction[], walletAddress: string)
 
     const pricePerToken = Math.abs(solNet) / tokenAmount;
 
-    // Sanity checks - más flexibles para capturar más rango de precios
-    // Removido límite superior de precio para tokens más caros
-    // Reducido límite de volumen de 50 SOL a 100 SOL
-    if (pricePerToken < 0.00000001) {
-      skippedSanity++;
-      continue; // Solo filtrar precios extremadamente bajos
-    }
-    if (Math.abs(solNet) > 100) {
+    // 8. Sanity checks más flexibles
+    // Solo filtrar casos extremos que probablemente sean errores
+    if (pricePerToken < 0.000000001) {
+      // Extremadamente bajo (precio casi 0)
       skippedSanity++;
       continue;
-    } // Permitir trades más grandes (aumentado de 50 a 100 SOL)
+    }
+    if (pricePerToken > 1000000) {
+      // Extremadamente alto (1M SOL por token)
+      skippedSanity++;
+      continue;
+    }
+    if (Math.abs(solNet) > 1000) {
+      // Trades gigantes (>1000 SOL) probablemente sean errores
+      skippedSanity++;
+      continue;
+    }
 
+    // ✅ Trade válido detectado
     trades.push({
       timestamp: tx.timestamp,
       tokenMint: tokenTransfer.mint,
@@ -353,17 +372,18 @@ function extractTrades(transactions: ParsedTransaction[], walletAddress: string)
     });
   }
 
-  // Log statistics
+  // Log detallado de estadísticas
   logger.info('🔍 Trade extraction stats:', {
     totalTransactions: transactions.length,
     tradesExtracted: trades.length,
+    extractionRate: `${((trades.length / transactions.length) * 100).toFixed(1)}%`,
     skipped: {
-      wrongType: skippedNoType,
       noTokenTransfers: skippedNoTokenTransfers,
       noNativeTransfers: skippedNoNativeTransfers,
       dust: skippedDust,
       noTokenForWallet: skippedNoToken,
       zeroAmount: skippedZeroAmount,
+      transferOnly: skippedTransferOnly,
       failedSanityChecks: skippedSanity,
     },
   });
