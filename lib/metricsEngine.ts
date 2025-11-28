@@ -167,17 +167,37 @@ async function fetchAllTransactions(
   let consecutiveEmpty = 0;
   let consecutiveErrors = 0;
 
-  const MAX_BATCHES = 100; // Reducido de 100 a 30 para evitar timeouts
+  const MAX_BATCHES = 100;
   const BATCH_SIZE = 100;
-  const DELAY_MS = 300; // Reducido de 100ms a 50ms para ser más rápido
+  const DELAY_MS = 300;
   const MAX_EMPTY = 3;
-  const MAX_CONSECUTIVE_ERRORS = 5; // Stop if we get 5 errors in a row
+  const MAX_CONSECUTIVE_ERRORS = 5;
 
-  logger.info(`🔄 Fetching up to ${MAX_BATCHES} batches (${BATCH_SIZE} each)`);
+  // 🔥 FILTRO HELIUS: Solo obtener SWAPs de DEXes conocidos
+  // Esto reduce drásticamente el volumen de datos descargados
+  const DEX_SOURCES = [
+    'PUMP_AMM',
+    'PUMP_FUN',
+    'JUPITER',
+    'RAYDIUM',
+    'ORCA',
+    'SERUM',
+    'OPENBOOK',
+    'METEORA',
+    'DFLOW',
+    'LIFINITY',
+    'PHOENIX',
+  ];
+
+  logger.info(`🔄 Fetching SWAP transactions from DEXes (up to ${MAX_BATCHES} batches)`);
 
   while (fetchCount < MAX_BATCHES) {
     try {
-      const batch = await getWalletTransactions(walletAddress, BATCH_SIZE, before);
+      const batch = await getWalletTransactions(walletAddress, BATCH_SIZE, before, {
+        type: 'SWAP',
+        source: DEX_SOURCES,
+        commitment: 'confirmed',
+      });
 
       if (batch.length > 0) {
         allTransactions.push(...batch);
@@ -204,7 +224,7 @@ async function fetchAllTransactions(
       if (onProgress) {
         onProgress(
           fetchProgress,
-          `📡 Batch ${fetchCount}/${MAX_BATCHES}... (${allTransactions.length} txs)`
+          `📡 Fetching swaps... (${allTransactions.length} found)`
         );
       }
 

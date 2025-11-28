@@ -63,16 +63,24 @@ export interface HeliusTransaction {
   }>;
 }
 
+export interface TransactionFilters {
+  type?: string; // e.g., 'SWAP', 'TRANSFER', etc.
+  source?: string[]; // e.g., ['JUPITER', 'RAYDIUM']
+  commitment?: 'confirmed' | 'finalized';
+}
+
 /**
  * Obtiene las transacciones parseadas de una wallet usando Helius
  * @param walletAddress - Dirección de la wallet
  * @param limit - Número máximo de transacciones a obtener (default 100)
  * @param before - Signature de la última transacción para paginación (opcional)
+ * @param filters - Filtros opcionales para tipo y fuente de transacciones
  */
 export async function getWalletTransactions(
   walletAddress: string,
   limit: number = 100,
-  before?: string
+  before?: string,
+  filters?: TransactionFilters
 ): Promise<ParsedTransaction[]> {
   return heliusCircuitBreaker.execute(() =>
     retry(
@@ -82,6 +90,17 @@ export async function getWalletTransactions(
         // Agregar parámetro de paginación si existe
         if (before) {
           url += `&before=${before}`;
+        }
+
+        // Agregar filtros opcionales
+        if (filters?.type) {
+          url += `&type=${filters.type}`;
+        }
+        if (filters?.source && filters.source.length > 0) {
+          url += `&source=${filters.source.join(',')}`;
+        }
+        if (filters?.commitment) {
+          url += `&commitment=${filters.commitment}`;
         }
 
         // Timeout de 30 segundos para prevenir hangs (aumentado porque Helius puede tardar)
