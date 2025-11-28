@@ -166,14 +166,18 @@ async function fetchAllTransactions(
   let fetchCount = 0;
   let consecutiveEmpty = 0;
   let consecutiveErrors = 0;
+  let rateLimitCount = 0; // Track rate limit errors
 
-  const MAX_BATCHES = 100; // Reducido de 100 a 30 para evitar timeouts
+  const MAX_BATCHES = 50; // Reduced from 100 to 50 to prevent timeouts
   const BATCH_SIZE = 100;
-  const DELAY_MS = 300; // Reducido de 100ms a 50ms para ser más rápido
+  let DELAY_MS = 1200; // Increased from 300ms to 1200ms (1.2s) for rate limiting
+  const BASE_DELAY_MS = 1200; // Base delay to reset to after successful batches
+  const MAX_DELAY_MS = 5000; // Maximum delay cap
   const MAX_EMPTY = 3;
-  const MAX_CONSECUTIVE_ERRORS = 5; // Stop if we get 5 errors in a row
+  const MAX_CONSECUTIVE_ERRORS = 5;
 
   logger.info(`🔄 Fetching up to ${MAX_BATCHES} batches (${BATCH_SIZE} each)`);
+  logger.info(`⏱️  Rate limit protection: ${DELAY_MS}ms delay between batches`);
 
   while (fetchCount < MAX_BATCHES) {
     try {
@@ -183,13 +187,20 @@ async function fetchAllTransactions(
         allTransactions.push(...batch);
         before = batch[batch.length - 1]?.signature;
         consecutiveEmpty = 0;
-        consecutiveErrors = 0; // Reset error counter on success
+        consecutiveErrors = 0;
+
+        // Gradually reduce delay back to base on successful requests
+        if (rateLimitCount > 0 && DELAY_MS > BASE_DELAY_MS) {
+          DELAY_MS = Math.max(BASE_DELAY_MS, DELAY_MS * 0.8);
+          rateLimitCount = Math.max(0, rateLimitCount - 1);
+        }
+
         logger.info(
           `  ✓ Batch ${fetchCount + 1}: ${batch.length} txs (Total: ${allTransactions.length})`
         );
       } else {
         consecutiveEmpty++;
-        consecutiveErrors = 0; // Reset error counter on successful empty response
+        consecutiveErrors = 0;
         logger.info(`  ⚠️ Batch ${fetchCount + 1}: empty (${consecutiveEmpty}/${MAX_EMPTY})`);
 
         if (consecutiveEmpty >= MAX_EMPTY) {
@@ -208,9 +219,20 @@ async function fetchAllTransactions(
         );
       }
 
+      // Apply delay between batches
       await new Promise((resolve) => setTimeout(resolve, DELAY_MS));
     } catch (error: any) {
       consecutiveErrors++;
+
+      // Check if this is a rate limit error (429)
+      const isRateLimit = error?.status === 429 || error?.message?.includes('429') || error?.message?.includes('rate limit');
+
+      if (isRateLimit) {
+        rateLimitCount++;
+        // Exponential backoff for rate limit errors
+        DELAY_MS = Math.min(MAX_DELAY_MS, DELAY_MS * 1.5);
+        logger.warn(`  ⚠️ Rate limit detected! Increasing delay to ${Math.round(DELAY_MS)}ms`);
+      }
 
       logger.error(
         `  ❌ Error batch ${fetchCount + 1}`,
@@ -220,28 +242,32 @@ async function fetchAllTransactions(
           status: error?.status,
           before: before ? `${before.substring(0, 20)}...` : 'none',
           consecutiveErrors,
+          isRateLimit,
+          currentDelay: DELAY_MS,
         }
       );
 
       // If we're getting too many consecutive errors, stop trying
       if (consecutiveErrors >= MAX_CONSECUTIVE_ERRORS) {
         logger.error(`  ⛔ Too many consecutive errors (${consecutiveErrors}), stopping fetch`);
-        // If we have some transactions, use what we have
         if (allTransactions.length > 0) {
           logger.warn(`  ⚠️ Using ${allTransactions.length} transactions fetched before errors`);
           break;
         }
-        // Otherwise, return empty to trigger default metrics
         logger.error(`  ❌ No transactions fetched due to errors`);
         return [];
       }
 
       fetchCount++;
-      await new Promise((resolve) => setTimeout(resolve, 500));
+
+      // For rate limit errors, wait longer before retrying
+      const errorDelay = isRateLimit ? Math.min(MAX_DELAY_MS, DELAY_MS * 1.2) : 1000;
+      await new Promise((resolve) => setTimeout(resolve, errorDelay));
       continue;
     }
   }
 
+  logger.info(`  📊 Fetched ${allTransactions.length} transactions in ${fetchCount} batches`);
   return allTransactions.sort((a, b) => a.timestamp - b.timestamp);
 }
 
