@@ -1,4 +1,3 @@
-import { prisma } from './prisma';
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { logger } from '@/lib/logger';
 
