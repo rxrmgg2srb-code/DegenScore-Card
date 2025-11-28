@@ -61,26 +61,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     logger.debug('Checking referral rewards for:', { walletAddress });
 
+    // DISABLED: Referral model doesn't exist
     // Count paid referrals
-    const referralStats = await prisma.referral.aggregate({
-      where: {
-        referrerAddress: walletAddress,
-        hasPaid: true,
-      },
-      _count: true,
-    });
+    const paidReferralsCount = 0;
+    const referrals: any[] = [];
 
-    const paidReferralsCount = referralStats._count;
-
-    // Get all referrals for details
-    const referrals = await prisma.referral.findMany({
-      where: {
-        referrerAddress: walletAddress,
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
+    // const referralStats = await prisma.referral.aggregate({
+    //   where: { referrerAddress: walletAddress, hasPaid: true },
+    //   _count: true,
+    // });
+    // const paidReferralsCount = referralStats._count;
+    // const referrals = await prisma.referral.findMany({
+    //   where: { referrerAddress: walletAddress },
+    //   orderBy: { createdAt: 'desc' },
+    // });
 
     // Determine which rewards are unlocked
     const unlockedRewards = REFERRAL_REWARDS.filter(

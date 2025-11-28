@@ -74,13 +74,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             displayName: card.displayName,
           });
 
-          // Obtener conteo de referidos (solo los que pagaron)
-          const referralCount = await prisma.referral.count({
-            where: {
-              referrerAddress: card.walletAddress,
-              hasPaid: true,
-            },
-          });
+          // DISABLED: Referral model doesn't exist
+          const referralCount = 0;
+          // const referralCount = await prisma.referral.count({
+          //   where: { referrerAddress: card.walletAddress, hasPaid: true },
+          // });
 
           // Solo retornar los primeros 8 badges y campos esenciales para reducir tamaño de respuesta
           const simplifiedBadges = badges.slice(0, 8).map((badge) => ({

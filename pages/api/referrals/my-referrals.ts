@@ -16,15 +16,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
     }
 
-    // Obtener todos los referidos
-    const referrals = await prisma.referral.findMany({
-      where: {
-        referrerAddress: walletAddress,
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
+    // DISABLED: Referral model doesn't exist
+    const referrals: any[] = [];
+    // const referrals = await prisma.referral.findMany({
+    //   where: { referrerAddress: walletAddress },
+    //   orderBy: { createdAt: 'desc' },
+    // });
 
     // Contar stats
     const totalReferrals = referrals.length;
