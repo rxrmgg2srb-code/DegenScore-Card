@@ -29,12 +29,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     logger.info('Analyzing wallet:', { walletAddress });
 
-    // PERFORMANCE: Timeout de 4 minutos para permitir análisis completo con rate limiting
+    // PERFORMANCE: Timeout de 5 minutos para análisis completo con 100 batches + rate limiting
     const metricsPromise = calculateAdvancedMetrics(walletAddress);
     const timeoutPromise = new Promise<never>((_, reject) =>
       setTimeout(
         () => reject(new Error('Analysis timeout - wallet took too long to analyze')),
-        240000 // Increased from 180s (3min) to 240s (4min) to accommodate rate limiting
+        300000 // Increased to 5 minutes (300s) to accommodate 100 batches with rate limiting
       )
     );
 

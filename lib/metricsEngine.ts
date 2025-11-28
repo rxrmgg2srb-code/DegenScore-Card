@@ -168,7 +168,7 @@ async function fetchAllTransactions(
   let consecutiveErrors = 0;
   let rateLimitCount = 0; // Track rate limit errors
 
-  const MAX_BATCHES = 50; // Reduced from 100 to 50 to prevent timeouts
+  const MAX_BATCHES = 100; // Full batch limit for comprehensive analysis
   const BATCH_SIZE = 100;
   let DELAY_MS = 1200; // Increased from 300ms to 1200ms (1.2s) for rate limiting
   const BASE_DELAY_MS = 1200; // Base delay to reset to after successful batches
