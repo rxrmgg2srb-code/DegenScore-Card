@@ -350,7 +350,8 @@ function extractTrades(transactions: ParsedTransaction[], walletAddress: string)
     }
 
     // 4. Debe haber cambio significativo de SOL (no dust)
-    if (Math.abs(solNet) < 0.00001) {
+    // Reducido drásticamente para capturar micro-trades
+    if (Math.abs(solNet) < 0.000001) {
       skippedDust++;
       continue;
     }
@@ -432,12 +433,18 @@ function extractTrades(transactions: ParsedTransaction[], walletAddress: string)
     });
   }
 
+  // Calcular porcentajes para mejor análisis
+  const txWithBothTransfers = transactions.length - skippedNoTokenTransfers - skippedNoNativeTransfers;
+  const dustPercentage = txWithBothTransfers > 0 ? ((skippedDust / txWithBothTransfers) * 100).toFixed(1) : '0';
+
   // Log detallado de estadísticas
   logger.info('🔍 Trade extraction stats:', {
     totalTransactions: transactions.length,
     tradesExtracted: trades.length,
     extractionRate: `${((trades.length / transactions.length) * 100).toFixed(1)}%`,
     extractedFromAccountData: extractedFromAccountData,
+    txWithTokenAndNative: txWithBothTransfers,
+    dustPercentageOfValid: `${dustPercentage}%`,
     skipped: {
       noTokenTransfers: skippedNoTokenTransfers,
       noNativeTransfers: skippedNoNativeTransfers,

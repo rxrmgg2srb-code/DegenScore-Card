@@ -133,6 +133,20 @@ export async function getWalletTransactions(
 
           const transactions: HeliusTransaction[] = await response.json();
 
+          // Debug: Log primera transacción para ver estructura
+          if (transactions.length > 0 && !before) {
+            const sample = transactions[0];
+            logger.info('[Helius] Sample transaction structure:', {
+              hasTokenTransfers: !!sample?.tokenTransfers,
+              tokenTransfersCount: sample?.tokenTransfers?.length || 0,
+              hasNativeTransfers: !!sample?.nativeTransfers,
+              hasAccountData: !!sample?.accountData,
+              accountDataCount: sample?.accountData?.length || 0,
+              type: sample?.type,
+              keys: Object.keys(sample || {}),
+            });
+          }
+
           return transactions.map((tx) => ({
             signature: tx.signature,
             timestamp: tx.timestamp,
