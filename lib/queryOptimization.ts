@@ -190,7 +190,9 @@ export async function bulkUpdateScores(updates: Array<{ wallet: string; score: n
 
 /**
  * Efficient referral stats calculation
+ * TODO: Re-implement when Referral model is added to schema
  */
+/*
 export async function getReferralStatsOptimized(walletAddress: string) {
   // Use aggregation instead of fetching all records
   const stats = await prisma.referral.aggregate({
@@ -212,6 +214,7 @@ export async function getReferralStatsOptimized(walletAddress: string) {
     totalEarnings: stats._sum.rewardAmount || 0,
   };
 }
+*/
 
 /**
  * Get activity feed with efficient pagination

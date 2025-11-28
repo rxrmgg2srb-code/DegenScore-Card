@@ -812,3 +812,34 @@ model SuperTokenAnalysis {
   @@index([viewCount(sort: Desc)])
   @@index([superScore(sort: Desc), globalRiskLevel])
 }
+
+// Rate Limiting Log for persistent rate limiting
+model RateLimitLog {
+  id         String   @id @default(cuid())
+  identifier String   // IP address or custom identifier
+  endpoint   String?  // Optional endpoint tracking
+  timestamp  DateTime @default(now())
+
+  @@index([identifier, timestamp])
+  @@index([endpoint, timestamp])
+  @@index([timestamp])
+}
+
+// Referral System
+model Referral {
+  id               String    @id @default(cuid())
+  referrerAddress  String    // Wallet that referred
+  referredAddress  String    // Wallet that was referred
+  hasPaid          Boolean   @default(false)
+  paidAt           DateTime? // When the referred user paid
+  rewardAmount     Float     @default(0)
+  rewardPaid       Boolean   @default(false)
+  level            Int       @default(1) // Referral level (1, 2, or 3)
+
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@index([referrerAddress])
+  @@index([referredAddress])
+  @@index([referrerAddress, hasPaid])
+}
