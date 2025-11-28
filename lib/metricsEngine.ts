@@ -253,8 +253,14 @@ function extractTrades(transactions: ParsedTransaction[], walletAddress: string)
   const trades: Trade[] = [];
 
   for (const tx of transactions) {
-    // Filter only SWAP transactions
-    if (tx.type !== 'SWAP' && !tx.description?.toLowerCase().includes('swap')) {
+    // Filter only SWAP transactions (más flexible)
+    if (
+      tx.type !== 'SWAP' &&
+      !tx.description?.toLowerCase().includes('swap') &&
+      !tx.description?.toLowerCase().includes('trade') &&
+      !tx.description?.toLowerCase().includes('buy') &&
+      !tx.description?.toLowerCase().includes('sell')
+    ) {
       continue;
     }
 
@@ -276,8 +282,8 @@ function extractTrades(transactions: ParsedTransaction[], walletAddress: string)
       }
     }
 
-    // Ignore tiny swaps (dust)
-    if (Math.abs(solNet) < 0.001) {
+    // Ignore tiny swaps (dust) - reducido de 0.001 a 0.0001 para capturar más trades
+    if (Math.abs(solNet) < 0.0001) {
       continue;
     }
 
@@ -312,13 +318,15 @@ function extractTrades(transactions: ParsedTransaction[], walletAddress: string)
 
     const pricePerToken = Math.abs(solNet) / tokenAmount;
 
-    // Sanity checks
-    if (pricePerToken > 1 || pricePerToken < 0.0000001) {
-      continue;
+    // Sanity checks - más flexibles para capturar más rango de precios
+    // Removido límite superior de precio para tokens más caros
+    // Reducido límite de volumen de 50 SOL a 100 SOL
+    if (pricePerToken < 0.00000001) {
+      continue; // Solo filtrar precios extremadamente bajos
     }
-    if (Math.abs(solNet) > 50) {
+    if (Math.abs(solNet) > 100) {
       continue;
-    } // Ignore whale-sized swaps (likely arbitrage)
+    } // Permitir trades más grandes (aumentado de 50 a 100 SOL)
 
     trades.push({
       timestamp: tx.timestamp,
