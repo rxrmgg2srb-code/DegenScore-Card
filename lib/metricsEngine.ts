@@ -263,22 +263,27 @@ function extractTrades(transactions: ParsedTransaction[], walletAddress: string)
   for (const tx of transactions) {
     // =========================================================================
     // FILTRADO INTELIGENTE BASADO EN PROGRAMAS
-    // Regla del usuario: Si tiene programas ADEMÁS de System Program y
-    // Compute Budget, es un trade (Jupiter, Raydium, Orca, etc.)
+    // Reglas del usuario para identificar trades:
+    // 1. Si tiene Token Program (implícito por tokenTransfers) + otros programas = trade
+    // 2. Si source != SYSTEM_PROGRAM = probablemente trade (DEX, etc.)
+    // 3. Si solo System Program + sin tokens = simple transfer SOL (SKIP)
     // =========================================================================
 
-    // Filtrar transacciones que claramente NO son trades
-    // Si source es SYSTEM_PROGRAM (solo transfers SOL nativos), skip
-    const isSystemProgramOnly = tx.source === 'SYSTEM_PROGRAM' || tx.source === 'UNKNOWN';
+    // La presencia de tokenTransfers indica que Token Program fue invocado
+    const hasTokenProgram = tx.tokenTransfers && tx.tokenTransfers.length > 0;
 
-    // Si es solo System Program pero tiene tokenTransfers, podría ser trade
-    const hasTokenActivity = tx.tokenTransfers && tx.tokenTransfers.length > 0;
+    // Si source es SYSTEM_PROGRAM = solo transfer SOL nativo
+    const isSystemProgramOnly = tx.source === 'SYSTEM_PROGRAM';
 
-    // Skip solo si es System Program Y no tiene actividad de tokens
-    if (isSystemProgramOnly && !hasTokenActivity) {
+    // SKIP: Solo System Program sin Token Program = transfer SOL simple
+    if (isSystemProgramOnly && !hasTokenProgram) {
       skippedNoTokenTransfers++;
       continue;
     }
+
+    // Si tiene Token Program + System Program = candidato a trade
+    // Si tiene DEX source (Jupiter, Raydium, etc.) = trade confirmado
+    // Continuar procesando...
 
     // IMPORTANTE: Algunos trades solo tienen accountData, no tokenTransfers
     // Intentar extraer tokenTransfers de accountData si no están presentes
