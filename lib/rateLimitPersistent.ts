@@ -105,7 +105,7 @@ export async function checkRateLimitPersistent(
     await prisma.rateLimitLog.create({
       data: {
         identifier,
-        endpoint,
+        endpoint: endpoint || 'unknown',
         timestamp: now,
       },
     });

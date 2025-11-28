@@ -156,6 +156,7 @@ export async function trackReferral(
       data: {
         referrerAddress: referrer.walletAddress,
         referredAddress: newUserWallet,
+        referralCode: referrerCode,
       },
     });
 
@@ -189,6 +190,8 @@ async function createMultiLevelReferrals(level1Referrer: string, newUser: string
       data: {
         referrerAddress: level1Ref.referrerAddress,
         referredAddress: newUser,
+        referralCode: level1Ref.referralCode,
+        tier: 2,
       },
     });
 
@@ -203,6 +206,8 @@ async function createMultiLevelReferrals(level1Referrer: string, newUser: string
         data: {
           referrerAddress: level2Ref.referrerAddress,
           referredAddress: newUser,
+          referralCode: level2Ref.referralCode,
+          tier: 3,
         },
       });
     }
