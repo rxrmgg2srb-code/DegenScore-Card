@@ -52,7 +52,6 @@ export async function checkRateLimitPersistent(
   const { maxRequests, windowMs, identifier: customIdentifier, endpoint } = config;
   const identifier = getClientIdentifier(req, customIdentifier);
   const now = new Date();
-  const windowStart = new Date(now.getTime() - windowMs);
   const key = `${identifier}:${endpoint || 'default'}`;
 
   try {
