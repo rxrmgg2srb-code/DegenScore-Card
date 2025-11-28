@@ -778,17 +778,9 @@ async function fetchJupiterLiquidity(
 // ============================================================================
 
 async function analyzeNewWallets(tokenAddress: string): Promise<NewWalletAnalysis> {
-<<<<<<< HEAD
   return superCircuitBreaker.execute(() =>
     retry(async () => {
       const url = HELIUS_RPC_URL;
-=======
-  return superCircuitBreaker
-    .execute(() =>
-      retry(
-        async () => {
-          const url = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_API_KEY}`;
->>>>>>> 102fb5fa25d3bd81c38f17eb6c0d98ada0aeeeb3
 
           // 🔥 FIX: First, get the REAL total holder count from DAS API
           try {

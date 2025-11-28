@@ -321,19 +321,10 @@ async function analyzeTokenAuthorities(tokenAddress: string): Promise<TokenAutho
 // ============================================================================
 
 async function analyzeHolderDistribution(tokenAddress: string): Promise<HolderDistribution> {
-<<<<<<< HEAD
   return securityCircuitBreaker.execute(() =>
     retry(async () => {
       // Get token holders using Helius DAS API
       const url = HELIUS_RPC_URL;
-=======
-  return securityCircuitBreaker
-    .execute(() =>
-      retry(
-        async () => {
-          // Get token holders using Helius DAS API
-          const url = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_API_KEY}`;
->>>>>>> 102fb5fa25d3bd81c38f17eb6c0d98ada0aeeeb3
 
           const response = await fetch(url, {
             method: 'POST',
@@ -522,19 +513,10 @@ async function analyzeLiquidity(tokenAddress: string): Promise<LiquidityAnalysis
 // ============================================================================
 
 async function analyzeTradingPatterns(tokenAddress: string): Promise<TradingPatterns> {
-<<<<<<< HEAD
   return securityCircuitBreaker.execute(() =>
     retry(async () => {
       // Analyze first 100 transactions to detect patterns
       const url = `https://api.helius.xyz/v0/addresses/${tokenAddress}/transactions?api-key=${getHeliusApiKey()}&limit=100`;
-=======
-  return securityCircuitBreaker
-    .execute(() =>
-      retry(
-        async () => {
-          // Analyze first 100 transactions to detect patterns
-          const url = `https://api.helius.xyz/v0/addresses/${tokenAddress}/transactions?api-key=${HELIUS_API_KEY}&limit=100`;
->>>>>>> 102fb5fa25d3bd81c38f17eb6c0d98ada0aeeeb3
 
           const response = await fetch(url);
           if (!response.ok) {
@@ -617,17 +599,9 @@ async function analyzeTradingPatterns(tokenAddress: string): Promise<TradingPatt
 // ============================================================================
 
 async function getTokenMetadata(tokenAddress: string): Promise<TokenMetadata> {
-<<<<<<< HEAD
   return securityCircuitBreaker.execute(() =>
     retry(async () => {
       const url = HELIUS_RPC_URL;
-=======
-  return securityCircuitBreaker
-    .execute(() =>
-      retry(
-        async () => {
-          const url = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_API_KEY}`;
->>>>>>> 102fb5fa25d3bd81c38f17eb6c0d98ada0aeeeb3
 
           const response = await fetch(url, {
             method: 'POST',
@@ -709,21 +683,11 @@ async function getTokenMetadata(tokenAddress: string): Promise<TokenMetadata> {
 // ============================================================================
 
 async function analyzeMarketMetrics(tokenAddress: string): Promise<MarketMetrics> {
-<<<<<<< HEAD
   return securityCircuitBreaker.execute(() =>
     retry(async () => {
       // This would ideally fetch from CoinGecko/Jupiter/Birdeye
       // For now, we'll use transaction history to estimate age
       const url = `https://api.helius.xyz/v0/addresses/${tokenAddress}/transactions?api-key=${getHeliusApiKey()}&limit=1000`;
-=======
-  return securityCircuitBreaker
-    .execute(() =>
-      retry(
-        async () => {
-          // This would ideally fetch from CoinGecko/Jupiter/Birdeye
-          // For now, we'll use transaction history to estimate age
-          const url = `https://api.helius.xyz/v0/addresses/${tokenAddress}/transactions?api-key=${HELIUS_API_KEY}&limit=1000`;
->>>>>>> 102fb5fa25d3bd81c38f17eb6c0d98ada0aeeeb3
 
           const response = await fetch(url);
           if (!response.ok) {
