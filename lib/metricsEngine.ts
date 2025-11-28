@@ -273,19 +273,8 @@ function extractTrades(transactions: ParsedTransaction[], walletAddress: string)
     let nativeTransfers = tx.nativeTransfers || [];
 
     // Si no hay tokenTransfers pero hay accountData, extraer de ahí
-    if (tokenTransfers.length === 0 && (tx as any).accountData) {
-      const accountData = (tx as any).accountData as Array<{
-        account: string;
-        nativeBalanceChange: number;
-        tokenBalanceChanges?: Array<{
-          mint: string;
-          rawTokenAmount: {
-            tokenAmount: string;
-            decimals: number;
-          };
-          userAccount: string;
-        }>;
-      }>;
+    if (tokenTransfers.length === 0 && tx.accountData) {
+      const accountData = tx.accountData;
 
       // Extraer cambios de tokens para esta wallet
       for (const acc of accountData) {
