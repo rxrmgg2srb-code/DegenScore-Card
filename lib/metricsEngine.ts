@@ -16,7 +16,6 @@ import { ParsedTransaction, getWalletTransactions } from './services/helius';
 import { logger } from '@/lib/logger';
 
 const SOL_MINT = 'So11111111111111111111111111111111111111112';
-const WSOL_MINT = 'So11111111111111111111111111111111111111112'; // Wrapped SOL tiene el mismo mint
 
 // ============================================================================
 // TYPE DEFINITIONS
@@ -367,14 +366,14 @@ function extractTrades(transactions: ParsedTransaction[], walletAddress: string)
       continue;
     }
 
-    // 5. Obtener token transfers que involucran esta wallet
-    const tokenTransfers = tx.tokenTransfers.filter(
+    // 5. Filtrar token transfers que involucran esta wallet (excluir SOL wrapped)
+    const relevantTokenTransfers = tokenTransfers.filter(
       (t) =>
         t.mint !== SOL_MINT &&
         (t.fromUserAccount === walletAddress || t.toUserAccount === walletAddress)
     );
 
-    if (tokenTransfers.length === 0) {
+    if (relevantTokenTransfers.length === 0) {
       skippedNoToken++;
       continue;
     }
@@ -386,8 +385,8 @@ function extractTrades(transactions: ParsedTransaction[], walletAddress: string)
     const isSell = solNet > 0; // SOL entra = venta
 
     // Verificar que hay movimiento de tokens en la dirección correcta
-    const tokensIn = tokenTransfers.filter((t) => t.toUserAccount === walletAddress);
-    const tokensOut = tokenTransfers.filter((t) => t.fromUserAccount === walletAddress);
+    const tokensIn = relevantTokenTransfers.filter((t) => t.toUserAccount === walletAddress);
+    const tokensOut = relevantTokenTransfers.filter((t) => t.fromUserAccount === walletAddress);
 
     // Para una compra: SOL sale (-) y tokens entran (+)
     // Para una venta: SOL entra (+) y tokens salen (-)
