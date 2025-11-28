@@ -181,7 +181,8 @@ export async function getChallengeMessage(walletAddress: string): Promise<string
       const percent = Math.min((progress / challenge.targetValue) * 100, 100);
 
       const status = completed ? '✅' : '⏳';
-      const progressBar = '█'.repeat(Math.floor(percent / 10)) + '░'.repeat(10 - Math.floor(percent / 10));
+      const progressBar =
+        '█'.repeat(Math.floor(percent / 10)) + '░'.repeat(10 - Math.floor(percent / 10));
 
       message += `${idx + 1}. ${status} ${challenge.title}\n`;
       message += `   ${progressBar} ${progress}/${challenge.targetValue}\n`;
@@ -214,7 +215,7 @@ export async function getWhaleMessage(walletAddress?: string): Promise<string> {
       return '🐋 No sigues ninguna whale.\n\n🌐 Descubre whales en: https://www.solanamillondollar.com';
     }
 
-    const whaleAddresses = follows.map(f => f.whaleAddress);
+    const whaleAddresses = follows.map((f) => f.whaleAddress);
 
     // Get whale wallets to get their IDs
     const whaleWallets = await prisma.whaleWallet.findMany({
@@ -224,7 +225,7 @@ export async function getWhaleMessage(walletAddress?: string): Promise<string> {
       select: { id: true },
     });
 
-    const whaleIds = whaleWallets.map(w => w.id);
+    const whaleIds = whaleWallets.map((w) => w.id);
 
     const alerts = await prisma.whaleAlert.findMany({
       where: {
@@ -367,11 +368,10 @@ export async function notifyWhaleFollowers(
       });
 
       if (telegramUser) {
-        const sent = await sendTelegramNotification(
-          Number(telegramUser.telegramId),
-          alertMessage
-        );
-        if (sent) notifiedCount++;
+        const sent = await sendTelegramNotification(Number(telegramUser.telegramId), alertMessage);
+        if (sent) {
+          notifiedCount++;
+        }
       }
     }
 

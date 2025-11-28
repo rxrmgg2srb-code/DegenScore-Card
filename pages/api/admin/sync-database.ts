@@ -7,10 +7,7 @@ import { logger } from '@/lib/logger';
 
 const execAsync = promisify(exec);
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   // Verify admin authentication
   const auth = verifyAdminAuth(req);
   if (!auth.authorized) {
@@ -35,7 +32,9 @@ export default async function handler(
 
     logger.info('✅ Database sync completed');
     logger.info('STDOUT:', { stdout });
-    if (stderr) logger.info('STDERR:', { stderr });
+    if (stderr) {
+      logger.info('STDERR:', { stderr });
+    }
 
     return res.status(200).json({
       success: true,

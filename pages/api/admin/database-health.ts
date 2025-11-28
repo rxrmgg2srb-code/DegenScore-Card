@@ -1,10 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { checkDatabaseHealth, optimizeDatabaseTables } from '../../../lib/queryOptimization';
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   // Simple auth check (replace with proper admin auth)
   const adminKey = req.headers['x-admin-key'];
   if (adminKey !== process.env.ADMIN_API_KEY) {

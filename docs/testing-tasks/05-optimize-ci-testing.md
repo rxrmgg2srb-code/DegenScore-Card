@@ -15,6 +15,7 @@ Transform the CI/CD pipeline from a basic test runner into a sophisticated, mult
 Update `.github/workflows/test.yml` with optimized configuration:
 
 #### Current State
+
 - Single test job runs all tests sequentially
 - No caching strategy
 - Long execution time (20+ minutes)
@@ -22,6 +23,7 @@ Update `.github/workflows/test.yml` with optimized configuration:
 - No test result reporting
 
 #### Target State
+
 - Matrix-based parallel execution
 - Aggressive caching (npm, Prisma, Playwright)
 - Test sharding by domain
@@ -55,19 +57,19 @@ jobs:
         shard: [1, 2, 3]
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-      
+
       - name: Install dependencies
         run: npm ci
-      
+
       - name: Run frontend tests
         run: npm run test:frontend -- --shard=${{ matrix.shard }}/3
-      
+
       - name: Upload coverage
         uses: codecov/codecov-action@v3
         with:
@@ -99,29 +101,29 @@ jobs:
           --health-retries 5
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-      
+
       - name: Install dependencies
         run: npm ci
-      
+
       - name: Setup database
         run: |
           npx prisma generate
           npx prisma migrate deploy
         env:
           DATABASE_URL: postgresql://test_user:test_pass@localhost:5432/test_db
-      
+
       - name: Run backend tests
         run: npm run test:backend
         env:
           DATABASE_URL: postgresql://test_user:test_pass@localhost:5432/test_db
           REDIS_URL: redis://localhost:6379
-      
+
       - name: Upload coverage
         uses: codecov/codecov-action@v3
         with:
@@ -142,21 +144,21 @@ jobs:
           --health-retries 5
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-      
+
       - name: Install dependencies
         run: npm ci
-      
+
       - name: Run worker tests
         run: npm run test:workers
         env:
           REDIS_URL: redis://localhost:6379
-      
+
       - name: Upload coverage
         uses: codecov/codecov-action@v3
         with:
@@ -169,37 +171,37 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-      
+
       - name: Install Rust
         uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
           profile: minimal
-      
+
       - name: Install Solana
         run: |
           sh -c "$(curl -sSfL https://release.solana.com/v1.18.0/install)"
           echo "$HOME/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
-      
+
       - name: Install Anchor
         run: |
           cargo install --git https://github.com/coral-xyz/anchor anchor-cli --locked
-      
+
       - name: Cache Solana
         uses: actions/cache@v3
         with:
           path: ~/.cache/solana
           key: ${{ runner.os }}-solana-${{ hashFiles('**/Cargo.lock') }}
-      
+
       - name: Run Anchor tests
         run: npm run test:anchor
-      
+
       - name: Upload test results
         uses: actions/upload-artifact@v3
         with:
@@ -215,31 +217,31 @@ jobs:
         browser: [chromium, firefox, webkit]
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-      
+
       - name: Install dependencies
         run: npm ci
-      
+
       - name: Install Playwright browsers
         run: npx playwright install --with-deps ${{ matrix.browser }}
-      
+
       - name: Cache Playwright
         uses: actions/cache@v3
         with:
           path: ~/.cache/ms-playwright
           key: ${{ runner.os }}-playwright-${{ hashFiles('**/package-lock.json') }}
-      
+
       - name: Build application
         run: npm run build
-      
+
       - name: Run E2E tests
         run: npm run test:e2e -- --project=${{ matrix.browser }}
-      
+
       - name: Upload test artifacts
         if: failure()
         uses: actions/upload-artifact@v3
@@ -247,7 +249,7 @@ jobs:
           name: playwright-report-${{ matrix.browser }}
           path: playwright-report/
           retention-days: 7
-      
+
       - name: Upload test videos
         if: failure()
         uses: actions/upload-artifact@v3
@@ -263,19 +265,19 @@ jobs:
     needs: [test-frontend, test-backend, test-workers, test-programs, test-e2e]
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-      
+
       - name: Install dependencies
         run: npm ci
-      
+
       - name: Run test audit
         run: npm run test:audit
-      
+
       - name: Check coverage threshold
         run: |
           COVERAGE=$(jq '.summary.coveragePercentage' reports/testing/audit-*.json | tail -1)
@@ -285,10 +287,10 @@ jobs:
           else
             echo "✅ Coverage $COVERAGE% meets threshold"
           fi
-      
+
       - name: Run flaky test detection
         run: npm run test:flaky -- --ci
-      
+
       - name: Upload audit reports
         uses: actions/upload-artifact@v3
         with:
@@ -313,11 +315,11 @@ jobs:
             (needs.test-programs.result == 'success' && 1 || 0) +
             (needs.test-e2e.result == 'success' && 1 || 0)
           }}
-          
+
           SUCCESS_RATE=$((SUCCESSFUL_JOBS * 100 / TOTAL_JOBS))
-          
+
           echo "Success Rate: $SUCCESS_RATE%"
-          
+
           if [ $SUCCESS_RATE -lt 95 ]; then
             echo "❌ Success rate $SUCCESS_RATE% is below 95% threshold"
             exit 1
@@ -336,7 +338,7 @@ Update `package.json` with organized test scripts:
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
-    
+
     "test:frontend": "jest --testPathPattern='(components|hooks)'",
     "test:backend": "jest --testPathPattern='(pages/api|lib)'",
     "test:workers": "jest --testPathPattern='workers'",
@@ -344,11 +346,11 @@ Update `package.json` with organized test scripts:
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:debug": "playwright test --debug",
-    
+
     "test:audit": "ts-node scripts/testing/audit.ts",
     "test:audit:report": "ts-node scripts/testing/audit.ts --format=html",
     "test:flaky": "jest --testPathPattern='(useWhaleRadar|UrgencyTimer|realtime)' --runInBand --verbose",
-    
+
     "test:ci": "npm run test:frontend && npm run test:backend && npm run test:workers",
     "test:all": "npm run test:ci && npm run test:anchor && npm run test:e2e"
   }
@@ -446,12 +448,14 @@ Enforce quality standards automatically:
 Improve local testing experience:
 
 1. **Pre-commit Hook**
+
    ```bash
    # .husky/pre-commit
    npm run test:changed
    ```
 
 2. **Pre-push Hook**
+
    ```bash
    # .husky/pre-push
    npm run test:frontend
@@ -472,6 +476,7 @@ Improve local testing experience:
 ## Acceptance Criteria
 
 ### Workflow Configuration
+
 - [ ] `.github/workflows/test.yml` updated with matrix strategy
 - [ ] 5 parallel test jobs configured:
   - [ ] Frontend tests (components & hooks)
@@ -483,6 +488,7 @@ Improve local testing experience:
 - [ ] Node.js 20 used across all jobs
 
 ### Caching Implementation
+
 - [ ] NPM dependencies cached
 - [ ] Prisma client cached
 - [ ] Playwright browsers cached
@@ -491,6 +497,7 @@ Improve local testing experience:
 - [ ] Cache hit rate >80% in CI
 
 ### Test Scripts
+
 - [ ] NPM scripts organized by domain
 - [ ] `test:audit` command working
 - [ ] `test:flaky` command working
@@ -498,6 +505,7 @@ Improve local testing experience:
 - [ ] `test:all` runs complete suite
 
 ### Quality Gates
+
 - [ ] Coverage threshold enforced (85%)
 - [ ] Success rate gate implemented (95%)
 - [ ] Per-domain coverage thresholds set
@@ -505,6 +513,7 @@ Improve local testing experience:
 - [ ] Flaky test detection automated
 
 ### Reporting & Artifacts
+
 - [ ] Codecov integration configured
 - [ ] Coverage uploaded from all jobs
 - [ ] Test artifacts stored on failure
@@ -513,6 +522,7 @@ Improve local testing experience:
 - [ ] Test results visible in GitHub UI
 
 ### Performance
+
 - [ ] Total CI time <15 minutes
 - [ ] Frontend tests <5 minutes
 - [ ] Backend tests <5 minutes
@@ -522,6 +532,7 @@ Improve local testing experience:
 - [ ] Parallel execution reduces time by 60%+
 
 ### Documentation
+
 - [ ] CI/CD pipeline documented
 - [ ] Troubleshooting guide created
 - [ ] Cache strategy explained
@@ -529,6 +540,7 @@ Improve local testing experience:
 - [ ] Developer workflow guide updated
 
 ### Developer Experience
+
 - [ ] Pre-commit hooks configured
 - [ ] Pre-push hooks configured
 - [ ] Local test commands work

@@ -46,6 +46,7 @@ If applicable, add screenshots to help explain your problem.
 **Transaction Signature** (if relevant): `[transaction signature]`
 
 **Error Messages** (from console):
+
 ```
 Paste any error messages here
 ```

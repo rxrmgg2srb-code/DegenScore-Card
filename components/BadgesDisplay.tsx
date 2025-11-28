@@ -8,7 +8,12 @@ interface BadgesDisplayProps {
   maxDisplay?: number;
 }
 
-export function BadgesDisplay({ badges, totalPoints, showPoints = true, maxDisplay }: BadgesDisplayProps) {
+export function BadgesDisplay({
+  badges,
+  totalPoints,
+  showPoints = true,
+  maxDisplay,
+}: BadgesDisplayProps) {
   const [hoveredBadge, setHoveredBadge] = useState<string | null>(null);
 
   const displayBadges = maxDisplay ? badges.slice(0, maxDisplay) : badges;
@@ -47,10 +52,16 @@ export function BadgesDisplay({ badges, totalPoints, showPoints = true, maxDispl
                   ${hoveredBadge === badge.key ? 'scale-110 bg-gray-700/80' : ''}
                 `}
                 style={{
-                  borderColor: badge.rarity === 'LEGENDARY' ? '#fbbf24' :
-                              badge.rarity === 'MYTHIC' ? '#ec4899' :
-                              badge.rarity === 'EPIC' ? '#a855f7' :
-                              badge.rarity === 'RARE' ? '#3b82f6' : '#9ca3af'
+                  borderColor:
+                    badge.rarity === 'LEGENDARY'
+                      ? '#fbbf24'
+                      : badge.rarity === 'MYTHIC'
+                        ? '#ec4899'
+                        : badge.rarity === 'EPIC'
+                          ? '#a855f7'
+                          : badge.rarity === 'RARE'
+                            ? '#3b82f6'
+                            : '#9ca3af',
                 }}
               >
                 <div className="flex items-center gap-1.5">
@@ -108,6 +119,5 @@ export function BadgePointsCompact({ totalPoints, badgeCount }: BadgePointsCompa
     </div>
   );
 }
-
 
 export default BadgesDisplay;

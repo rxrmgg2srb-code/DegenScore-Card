@@ -9,6 +9,7 @@ This directory contains reusable React hooks that encapsulate complex business l
 Manages the complete lifecycle of trading card generation and customization.
 
 **Features:**
+
 - Wallet connection validation
 - Card analysis and generation
 - Payment processing for premium features
@@ -16,6 +17,7 @@ Manages the complete lifecycle of trading card generation and customization.
 - Achievement tracking and celebrations
 
 **Usage:**
+
 ```typescript
 import { useDegenCard } from '@/hooks/useDegenCard';
 
@@ -43,6 +45,7 @@ function MyComponent() {
 Provides comprehensive token scoring and analysis capabilities.
 
 **Features:**
+
 - Liquidity analysis
 - Holder distribution
 - Trading patterns
@@ -51,6 +54,7 @@ Provides comprehensive token scoring and analysis capabilities.
 - Progress tracking
 
 **Usage:**
+
 ```typescript
 import { useTokenAnalysis } from '@/hooks/useTokenAnalysis';
 
@@ -85,6 +89,7 @@ function TokenScorer() {
 Performs security scanning of Solana tokens.
 
 **Features:**
+
 - Authority analysis (mint, freeze capabilities)
 - Holder concentration detection
 - Liquidity depth and lock status
@@ -93,6 +98,7 @@ Performs security scanning of Solana tokens.
 - Risk scoring (0-100)
 
 **Usage:**
+
 ```typescript
 import { useTokenSecurity } from '@/hooks/useTokenSecurity';
 
@@ -130,6 +136,7 @@ function SecurityScanner() {
 Enables whale wallet tracking and real-time trade alerts.
 
 **Features:**
+
 - Top whales leaderboard
 - Follow/unfollow whale wallets
 - Real-time trade alerts
@@ -137,6 +144,7 @@ Enables whale wallet tracking and real-time trade alerts.
 - Wallet-authenticated sessions
 
 **Usage:**
+
 ```typescript
 import { useWhaleRadar } from '@/hooks/useWhaleRadar';
 
@@ -172,6 +180,7 @@ function WhaleTracker() {
 ## Best Practices
 
 ### 1. **Error Handling**
+
 All hooks include error state management. Always check for errors:
 
 ```typescript
@@ -189,6 +198,7 @@ return <ResultDisplay data={result} />;
 ```
 
 ### 2. **Loading States**
+
 Hooks provide `loading` and `progress` states for better UX:
 
 ```typescript
@@ -201,9 +211,11 @@ Hooks provide `loading` and `progress` states for better UX:
 ```
 
 ### 3. **Cleanup**
+
 Hooks automatically clean up side effects. No manual cleanup needed.
 
 ### 4. **TypeScript Support**
+
 All hooks are fully typed with TypeScript. Import types as needed:
 
 ```typescript
@@ -255,7 +267,7 @@ export function useCustomHook() {
     data,
     loading,
     error,
-    performAction
+    performAction,
   };
 }
 ```

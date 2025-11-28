@@ -7,11 +7,13 @@ export function HeroSection() {
         </h1>
 
         <p className="text-gray-300 text-2xl md:text-3xl font-semibold mb-4">
-          Generate your Solana trader card with <span className="text-cyan-400 font-black">real on-chain metrics</span>
+          Generate your Solana trader card with{' '}
+          <span className="text-cyan-400 font-black">real on-chain metrics</span>
         </p>
 
         <p className="text-gray-400 text-lg md:text-xl max-w-2xl mx-auto mb-8">
-          Analyze wallet performance, compete on leaderboards, and showcase your trading mastery with verifiable blockchain data
+          Analyze wallet performance, compete on leaderboards, and showcase your trading mastery
+          with verifiable blockchain data
         </p>
 
         {/* Trust Badges */}

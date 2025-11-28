@@ -74,9 +74,7 @@ export interface RateLimitOptions {
 // MAIN RATE LIMITING FUNCTION
 // ============================================================================
 
-export async function checkRateLimit(
-  options: RateLimitOptions
-): Promise<RateLimitResult> {
+export async function checkRateLimit(options: RateLimitOptions): Promise<RateLimitResult> {
   try {
     const { identifier, endpoint = 'default', isPremium = false } = options;
 
@@ -173,16 +171,12 @@ export function rateLimitMiddleware(
   endpoint?: string,
   getIdentifier?: (req: NextApiRequest) => string
 ) {
-  return async (
-    req: NextApiRequest,
-    res: NextApiResponse,
-    next?: () => void
-  ): Promise<void> => {
+  return async (req: NextApiRequest, res: NextApiResponse, next?: () => void): Promise<void> => {
     try {
       // Get identifier (IP or wallet)
       const identifier =
         getIdentifier?.(req) ||
-        req.headers['x-forwarded-for'] as string ||
+        (req.headers['x-forwarded-for'] as string) ||
         req.connection.remoteAddress ||
         'unknown';
 
@@ -245,6 +239,7 @@ function getEndpointConfig(
 
 /**
  * Check if user has premium status
+ * ✅ COMPLETED: Now queries database for subscription status
  */
 async function checkPremiumStatus(req: NextApiRequest): Promise<boolean> {
   try {
@@ -260,15 +255,47 @@ async function checkPremiumStatus(req: NextApiRequest): Promise<boolean> {
       const cached = await redis.get(cacheKey);
 
       if (cached !== null) {
+        logger.debug('Premium status from cache', {
+          walletAddress: walletAddress.slice(0, 8),
+          isPremium: cached === '1',
+        });
         return cached === '1';
       }
     }
 
-    // TODO: Query database for premium status
-    // For now, return false
-    return false;
+    // ✅ Query database for premium status
+    const { prisma } = await import('./prisma');
+    const subscription = await prisma.subscription.findUnique({
+      where: { walletAddress },
+      select: {
+        tier: true,
+        expiresAt: true,
+      },
+    });
+
+    // Check if subscription is active and not expired
+    const isPremium =
+      subscription &&
+      (subscription.tier === 'BASIC' || subscription.tier === 'PRO') &&
+      subscription.expiresAt &&
+      subscription.expiresAt > new Date();
+
+    // Cache result in Redis (TTL: 5 minutes)
+    if (isRedisEnabled && redis) {
+      const cacheKey = `premium:${walletAddress}`;
+      await redis.set(cacheKey, isPremium ? '1' : '0', { ex: 300 });
+    }
+
+    logger.debug('Premium status from DB', {
+      walletAddress: walletAddress.slice(0, 8),
+      isPremium: !!isPremium,
+      tier: subscription?.tier,
+    });
+
+    return !!isPremium;
   } catch (error) {
     logger.error('Failed to check premium status', error as Error);
+    // Fail safe - assume not premium on error
     return false;
   }
 }
@@ -276,19 +303,14 @@ async function checkPremiumStatus(req: NextApiRequest): Promise<boolean> {
 /**
  * Manually reset rate limit for a user (admin function)
  */
-export async function resetRateLimit(
-  identifier: string,
-  endpoint?: string
-): Promise<void> {
+export async function resetRateLimit(identifier: string, endpoint?: string): Promise<void> {
   if (!isRedisEnabled || !redis) {
     logger.warn('Redis not available, cannot reset rate limit');
     return;
   }
 
   try {
-    const key = endpoint
-      ? `ratelimit:${endpoint}:${identifier}`
-      : `ratelimit:*:${identifier}`;
+    const key = endpoint ? `ratelimit:${endpoint}:${identifier}` : `ratelimit:*:${identifier}`;
 
     if (endpoint) {
       await redis.del(key);
@@ -438,10 +460,7 @@ export async function rateLimit(
  * Strict rate limiting for expensive operations (analyze, generate-card)
  * Lower limits than default
  */
-export async function strictRateLimit(
-  req: NextApiRequest,
-  res: NextApiResponse
-): Promise<boolean> {
+export async function strictRateLimit(req: NextApiRequest, res: NextApiResponse): Promise<boolean> {
   return rateLimit(req, res, { endpoint: 'generate-card' });
 }
 

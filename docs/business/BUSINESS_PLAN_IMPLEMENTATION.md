@@ -11,11 +11,13 @@ Hemos implementado TODAS las características críticas del plan de negocio para
 ### 1. Pricing Premium ($20 USD / 0.2 SOL)
 
 **Implementado:**
+
 - Precio ajustado de 0.1 SOL → **0.2 SOL** ($40 USD aprox)
 - Actualizado en todos los endpoints y UI
 - Mayor margen de beneficio por usuario
 
 **Archivos modificados:**
+
 - `lib/config.ts`
 - `pages/api/verify-payment.ts`
 - `components/UpgradeModal.tsx`
@@ -25,6 +27,7 @@ Hemos implementado TODAS las características críticas del plan de negocio para
 ### 2. Sistema de Viralidad Forzada 🔥
 
 **Implementado:**
+
 - Modal **obligatorio** después de pagar o usar promo code
 - Tweet pre-escrito con:
   - Score y tier del usuario
@@ -35,9 +38,11 @@ Hemos implementado TODAS las características críticas del plan de negocio para
 - Opción de "skip" pero incentivos fuertes para compartir
 
 **Archivos nuevos:**
+
 - `components/ShareModal.tsx`
 
 **Archivos modificados:**
+
 - `components/DegenCard.tsx` - Flujo integrado
 
 **Objetivo:** CAC → $0 mediante viralidad orgánica
@@ -47,6 +52,7 @@ Hemos implementado TODAS las características críticas del plan de negocio para
 ### 3. Weekly Challenges (3 SOL de premio) 🏆
 
 **Implementado:**
+
 - **5 tipos de challenges** rotando semanalmente:
   1. ❤️ Most Loved Card (más likes)
   2. 💰 Profit King (mayor profit)
@@ -55,6 +61,7 @@ Hemos implementado TODAS las características críticas del plan de negocio para
   5. 🚀 Best Single Trade (mejor trade individual)
 
 **Features:**
+
 - Banner premium en home page
 - Actualización cada 5 minutos
 - Muestra líder actual en tiempo real
@@ -62,12 +69,14 @@ Hemos implementado TODAS las características críticas del plan de negocio para
 - Solo usuarios premium compiten
 
 **Archivos nuevos:**
+
 - `components/WeeklyChallengeBanner.tsx`
 - `pages/api/current-challenge.ts`
 - `scripts/create-weekly-challenge.ts`
 - Modelo `WeeklyChallenge` en Prisma schema
 
 **Archivos modificados:**
+
 - `pages/index.tsx` - Banner agregado
 
 **Objetivo:** Engagement semanal y compartir repetido
@@ -77,12 +86,14 @@ Hemos implementado TODAS las características críticas del plan de negocio para
 ### 4. Trial de 30 Días PRO ⏰
 
 **Implementado:**
+
 - Al pagar Premium (0.2 SOL): **30 días de tier PRO**
 - Después de 30 días: downgrade automático a **PREMIUM**
 - PREMIUM = acceso permanente con 6h delay
 - PRO = acceso near real-time (1h delay)
 
 **Flujo:**
+
 ```
 Pago 0.2 SOL →
   ✅ Tier PRO (30 días) →
@@ -93,6 +104,7 @@ Pago 0.2 SOL →
 ```
 
 **Archivos modificados:**
+
 - `pages/api/verify-payment.ts`
 - `pages/api/apply-promo-code.ts`
 - Modelo `Subscription` utilizado
@@ -106,6 +118,7 @@ Pago 0.2 SOL →
 **Implementado:**
 
 #### FREE (Gratis):
+
 - **72h delay** en los trades
 - Solo 5 trades visibles
 - Nombres ofuscados
@@ -113,6 +126,7 @@ Pago 0.2 SOL →
 - Token mints ofuscados
 
 #### PREMIUM ($20 one-time, después del trial):
+
 - **6h delay** en los trades
 - 10 trades visibles
 - Nombres completos
@@ -120,17 +134,20 @@ Pago 0.2 SOL →
 - Token mints parcialmente ofuscados
 
 #### PRO ($10/mes o trial de 30 días):
+
 - **1h delay** (near real-time)
 - 20 trades visibles
 - Toda la información completa
 - Token mints completos
 
 **Features adicionales:**
+
 - Downgrade automático cuando expira trial
 - Verificación de tier en cada request
 - Mensajes de upgrade dinámicos
 
 **Archivos modificados:**
+
 - `pages/api/hot-feed.ts` - Lógica completa de tiers
 
 **Objetivo:** Crear FOMO y convertir FREE → PREMIUM → PRO
@@ -140,6 +157,7 @@ Pago 0.2 SOL →
 ### 6. Sistema de Referidos (Tracking) 👥
 
 **Implementado:**
+
 - Modelo de base de datos `Referral`
 - Trackea quién refiere a quién
 - Marca cuando el referido paga
@@ -150,15 +168,18 @@ Pago 0.2 SOL →
   - Potencial earnings (para futuro)
 
 **Endpoints:**
+
 - `POST /api/referrals/track` - Registrar referido
 - `GET /api/referrals/my-referrals` - Ver mis stats
 
 **Preparado para futuro:**
+
 - Campo `rewardPaid` y `rewardAmount`
 - Fácil activar pagos automáticos cuando haya capital
 - Sistema de tiers: 1 referido, 3 referidos, 10 referidos
 
 **Archivos nuevos:**
+
 - `pages/api/referrals/track.ts`
 - `pages/api/referrals/my-referrals.ts`
 - Modelo `Referral` en Prisma schema
@@ -171,36 +192,36 @@ Pago 0.2 SOL →
 
 ### Escenario Conservador (3 meses):
 
-| Métrica | Valor |
-|---------|-------|
-| Usuarios Premium | 200 |
-| Ingreso Premium | $8,000 USD |
-| Tasa conversión FREE→PREMIUM | 3% |
-| Suscripciones PRO activas | 20 |
-| MRR (PRO) | $200/mes |
-| **Ingreso Total (3 meses)** | **$8,600 USD** |
+| Métrica                      | Valor          |
+| ---------------------------- | -------------- |
+| Usuarios Premium             | 200            |
+| Ingreso Premium              | $8,000 USD     |
+| Tasa conversión FREE→PREMIUM | 3%             |
+| Suscripciones PRO activas    | 20             |
+| MRR (PRO)                    | $200/mes       |
+| **Ingreso Total (3 meses)**  | **$8,600 USD** |
 
 ### Escenario Optimista (6 meses):
 
-| Métrica | Valor |
-|---------|-------|
-| Usuarios Premium | 1,000 |
-| Ingreso Premium | $40,000 USD |
-| Suscripciones PRO activas | 150 |
-| MRR (PRO) | $1,500/mes |
-| Patrocinios | $3,000/mes |
+| Métrica                     | Valor           |
+| --------------------------- | --------------- |
+| Usuarios Premium            | 1,000           |
+| Ingreso Premium             | $40,000 USD     |
+| Suscripciones PRO activas   | 150             |
+| MRR (PRO)                   | $1,500/mes      |
+| Patrocinios                 | $3,000/mes      |
 | **Ingreso Total (6 meses)** | **$58,000 USD** |
 
 ### Escenario Agresivo (12 meses):
 
 Siguiendo el plan original con viralidad exitosa:
 
-| Fuente | Ingreso Mensual | ARR |
-|--------|----------------|-----|
-| Premium (0.2 SOL) | $60,000 | $720,000 |
-| PRO Subs ($10/mes) | $45,000 | $540,000 |
-| Patrocinios | $60,000 | $720,000 |
-| **TOTAL** | **$165,000/mes** | **$1.98M ARR** |
+| Fuente             | Ingreso Mensual  | ARR            |
+| ------------------ | ---------------- | -------------- |
+| Premium (0.2 SOL)  | $60,000          | $720,000       |
+| PRO Subs ($10/mes) | $45,000          | $540,000       |
+| Patrocinios        | $60,000          | $720,000       |
+| **TOTAL**          | **$165,000/mes** | **$1.98M ARR** |
 
 ---
 
@@ -209,16 +230,19 @@ Siguiendo el plan original con viralidad exitosa:
 ### Inmediato (Esta semana):
 
 1. **Aplicar migraciones de base de datos:**
+
    ```bash
    npx prisma migrate dev --name business-plan-features
    ```
 
 2. **Crear el primer challenge:**
+
    ```bash
    npx ts-node scripts/create-weekly-challenge.ts
    ```
 
 3. **Crear código promo inicial:**
+
    ```bash
    npx ts-node scripts/create-promo-code.ts
    ```
@@ -302,6 +326,7 @@ npm run build
 ## 📈 Métricas a Trackear
 
 ### KPIs Semanales:
+
 - Nuevos usuarios registrados
 - Tasa de conversión FREE → PREMIUM
 - Tasa de share después de pagar
@@ -309,6 +334,7 @@ npm run build
 - Retention después del trial
 
 ### KPIs Mensuales:
+
 - MRR (Monthly Recurring Revenue)
 - Churn rate de suscripciones PRO
 - CAC (Customer Acquisition Cost)

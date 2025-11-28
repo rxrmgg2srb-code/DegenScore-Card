@@ -3,11 +3,7 @@ import { createCanvas, loadImage, GlobalFonts } from '@napi-rs/canvas';
 import { isValidSolanaAddress } from '../../lib/services/helius';
 import { prisma } from '../../lib/prisma';
 import { cacheGet, cacheSet, CacheKeys } from '../../lib/cache/redis';
-import {
-  uploadImage,
-  generateCardImageKey,
-  isStorageEnabled,
-} from '../../lib/storage/r2';
+import { uploadImage, generateCardImageKey, isStorageEnabled } from '../../lib/storage/r2';
 import { logger } from '@/lib/logger';
 import path from 'path';
 
@@ -27,28 +23,62 @@ try {
 
 // Función auxiliar para formatear SOL
 function formatSOL(amount: number, decimals: number = 2): string {
-  if (amount >= 1e9) return `${(amount / 1e9).toFixed(decimals)}B`;
-  if (amount >= 1e6) return `${(amount / 1e6).toFixed(decimals)}M`;
-  if (amount >= 1e3) return `${(amount / 1e3).toFixed(decimals)}K`;
+  if (amount >= 1e9) {
+    return `${(amount / 1e9).toFixed(decimals)}B`;
+  }
+  if (amount >= 1e6) {
+    return `${(amount / 1e6).toFixed(decimals)}M`;
+  }
+  if (amount >= 1e3) {
+    return `${(amount / 1e3).toFixed(decimals)}K`;
+  }
   return `${amount.toFixed(decimals)}`;
 }
 
 // 🔥 FRASES FOMO ÉPICAS
 function getFOMOPhrase(score: number): string {
-  if (score >= 95) return "🔥 GOD MODE - They Bow to You";
-  if (score >= 90) return "👑 APEX PREDATOR - Pure Domination";
-  if (score >= 85) return "💎 GENERATIONAL WEALTH - GG EZ";
-  if (score >= 80) return "⚡ MAIN CHARACTER - Eating Good";
-  if (score >= 75) return "🚀 MOON MISSION - Keep Stacking";
-  if (score >= 70) return "🔥 KILLING IT - Above Average Chad";
-  if (score >= 65) return "💪 SOLID - You'll Make It Anon";
-  if (score >= 60) return "📈 MID CURVE - Touch Grass King";
-  if (score >= 55) return "🎯 SLIGHTLY MID - Do Better";
-  if (score >= 50) return "😬 NGMI VIBES - Yikes";
-  if (score >= 40) return "📉 EXIT LIQUIDITY - That's You";
-  if (score >= 30) return "💀 ABSOLUTELY COOKED - RIP";
-  if (score >= 20) return "🤡 CIRCUS CLOWN - Everyone's Laughing";
-  if (score >= 10) return "⚰️ DELETE APP - Uninstall Now";
+  if (score >= 95) {
+    return '🔥 GOD MODE - They Bow to You';
+  }
+  if (score >= 90) {
+    return '👑 APEX PREDATOR - Pure Domination';
+  }
+  if (score >= 85) {
+    return '💎 GENERATIONAL WEALTH - GG EZ';
+  }
+  if (score >= 80) {
+    return '⚡ MAIN CHARACTER - Eating Good';
+  }
+  if (score >= 75) {
+    return '🚀 MOON MISSION - Keep Stacking';
+  }
+  if (score >= 70) {
+    return '🔥 KILLING IT - Above Average Chad';
+  }
+  if (score >= 65) {
+    return "💪 SOLID - You'll Make It Anon";
+  }
+  if (score >= 60) {
+    return '📈 MID CURVE - Touch Grass King';
+  }
+  if (score >= 55) {
+    return '🎯 SLIGHTLY MID - Do Better';
+  }
+  if (score >= 50) {
+    return '😬 NGMI VIBES - Yikes';
+  }
+  if (score >= 40) {
+    return "📉 EXIT LIQUIDITY - That's You";
+  }
+  if (score >= 30) {
+    return '💀 ABSOLUTELY COOKED - RIP';
+  }
+  if (score >= 20) {
+    return "🤡 CIRCUS CLOWN - Everyone's Laughing";
+  }
+  if (score >= 10) {
+    return '⚰️ DELETE APP - Uninstall Now';
+  }
   return "🪦 QUIT FOREVER - It's Over Bro";
 }
 
@@ -108,10 +138,7 @@ function getTierConfig(score: number) {
   };
 }
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -135,14 +162,14 @@ export default async function handler(
 
     if (!card) {
       return res.status(404).json({
-        error: 'Card not found. Please generate metrics first via /api/save-card'
+        error: 'Card not found. Please generate metrics first via /api/save-card',
       });
     }
 
-    logger.info('✅ Found card in database', { 
+    logger.info('✅ Found card in database', {
       walletAddress,
       degenScore: card.degenScore,
-      isPaid: card.isPaid ? 'PREMIUM' : 'BASIC'
+      isPaid: card.isPaid ? 'PREMIUM' : 'BASIC',
     });
 
     // 🚀 OPTIMIZACIÓN: Verificar cache de imagen
@@ -156,7 +183,7 @@ export default async function handler(
     if (cachedImageUrl && !forceRegenerate) {
       logger.info('⚡ Serving card from cache/R2', {
         cacheType: cachedImageUrl.startsWith('http') ? 'R2 URL' : 'Base64 buffer',
-        urlPreview: cachedImageUrl.substring(0, 100)
+        urlPreview: cachedImageUrl.substring(0, 100),
       });
       // Si tenemos URL de R2, redirigir
       if (cachedImageUrl.startsWith('http')) {
@@ -221,22 +248,18 @@ export default async function handler(
     res.setHeader('Cache-Control', 'public, max-age=86400'); // 24 horas
     res.setHeader('X-Cache-Status', 'MISS');
     res.status(200).send(imageBuffer);
-
   } catch (error) {
     logger.error('❌ Error generating card', error instanceof Error ? error : undefined, {
       error: String(error),
     });
     res.status(500).json({
       error: 'Failed to generate card',
-      details: error instanceof Error ? error.message : 'Unknown error'
+      details: error instanceof Error ? error.message : 'Unknown error',
     });
   }
 }
 
-async function generateCardImage(
-  walletAddress: string,
-  metrics: any
-): Promise<Buffer> {
+async function generateCardImage(walletAddress: string, metrics: any): Promise<Buffer> {
   logger.info('🎨 generateCardImage called', { isPaid: metrics.isPaid });
 
   // Si está pagado, usar estilo premium del leaderboard
@@ -246,7 +269,9 @@ async function generateCardImage(
       const premiumBuffer = await generatePremiumCardImage(walletAddress, metrics);
       logger.info('✅ Premium card generated successfully');
       // Force garbage collection hint
-      if (global.gc) global.gc();
+      if (global.gc) {
+        global.gc();
+      }
       return premiumBuffer;
     } catch (error) {
       logger.error('❌ Error generating premium card', error instanceof Error ? error : undefined, {
@@ -261,15 +286,14 @@ async function generateCardImage(
   logger.info('📝 Generating BASIC card...');
   const buffer = await generateBasicCardImage(walletAddress, metrics);
   // Force garbage collection hint
-  if (global.gc) global.gc();
+  if (global.gc) {
+    global.gc();
+  }
   return buffer;
 }
 
 // 🔥 PREMIUM CARD ULTRA ENHANCED
-async function generatePremiumCardImage(
-  walletAddress: string,
-  metrics: any
-): Promise<Buffer> {
+async function generatePremiumCardImage(walletAddress: string, metrics: any): Promise<Buffer> {
   const width = 700;
   const height = 1100;
   const canvas = createCanvas(width, height);
@@ -278,7 +302,14 @@ async function generatePremiumCardImage(
   const tier = getTierConfig(metrics.degenScore);
 
   // FONDO OSCURO CON GRADIENTE RADIAL
-  const bgRadialGradient = ctx.createRadialGradient(width / 2, height / 2, 0, width / 2, height / 2, width);
+  const bgRadialGradient = ctx.createRadialGradient(
+    width / 2,
+    height / 2,
+    0,
+    width / 2,
+    height / 2,
+    width
+  );
   bgRadialGradient.addColorStop(0, '#1f2937');
   bgRadialGradient.addColorStop(0.5, '#111827');
   bgRadialGradient.addColorStop(1, '#0a0e1a');
@@ -326,9 +357,9 @@ async function generatePremiumCardImage(
         loadImage(imageUrl),
         new Promise<never>((_, reject) =>
           setTimeout(() => reject(new Error('Image load timeout')), 5000)
-        )
+        ),
       ]);
-      
+
       const imgSize = 140;
       const imgX = width / 2;
 
@@ -353,54 +384,53 @@ async function generatePremiumCardImage(
       ctx.stroke();
 
       currentY += imgSize / 2 + 25;
-      
     } catch (error) {
       logger.error('⚠️ Error loading profile image', error instanceof Error ? error : undefined, {
         error: String(error),
       });
       const imgSize = 140;
       const imgX = width / 2;
-      
+
       ctx.fillStyle = '#1f2937';
       ctx.beginPath();
       ctx.arc(imgX, currentY, imgSize / 2, 0, Math.PI * 2);
       ctx.fill();
-      
+
       ctx.strokeStyle = tier.borderColor;
       ctx.lineWidth = 6;
       ctx.beginPath();
       ctx.arc(imgX, currentY, imgSize / 2, 0, Math.PI * 2);
       ctx.stroke();
-      
+
       ctx.fillStyle = tier.borderColor;
       ctx.font = 'bold 80px "DejaVu Sans"';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText('👤', imgX, currentY);
-      
+
       currentY += imgSize / 2 + 25;
     }
   } else {
     const imgSize = 140;
     const imgX = width / 2;
-    
+
     ctx.fillStyle = '#1f2937';
     ctx.beginPath();
     ctx.arc(imgX, currentY, imgSize / 2, 0, Math.PI * 2);
     ctx.fill();
-    
+
     ctx.strokeStyle = tier.borderColor;
     ctx.lineWidth = 6;
     ctx.beginPath();
     ctx.arc(imgX, currentY, imgSize / 2, 0, Math.PI * 2);
     ctx.stroke();
-    
+
     ctx.fillStyle = tier.borderColor;
     ctx.font = 'bold 80px "DejaVu Sans"';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText('👤', imgX, currentY);
-    
+
     currentY += imgSize / 2 + 25;
   }
 
@@ -426,11 +456,15 @@ async function generatePremiumCardImage(
   if (metrics.twitter || metrics.telegram) {
     ctx.font = '14px "DejaVu Sans"';
     ctx.fillStyle = tier.borderColor;
-    
+
     const socials = [];
-    if (metrics.twitter) socials.push(`🐦 @${metrics.twitter}`);
-    if (metrics.telegram) socials.push(`✈️ @${metrics.telegram}`);
-    
+    if (metrics.twitter) {
+      socials.push(`🐦 @${metrics.twitter}`);
+    }
+    if (metrics.telegram) {
+      socials.push(`✈️ @${metrics.telegram}`);
+    }
+
     ctx.fillText(socials.join('  •  '), width / 2, currentY);
     currentY += 45;
   } else {
@@ -495,7 +529,12 @@ async function generatePremiumCardImage(
   ctx.lineTo(fomoX + fomoBoxWidth - fomoRadius, fomoY);
   ctx.quadraticCurveTo(fomoX + fomoBoxWidth, fomoY, fomoX + fomoBoxWidth, fomoY + fomoRadius);
   ctx.lineTo(fomoX + fomoBoxWidth, fomoY + fomoBoxHeight - fomoRadius);
-  ctx.quadraticCurveTo(fomoX + fomoBoxWidth, fomoY + fomoBoxHeight, fomoX + fomoBoxWidth - fomoRadius, fomoY + fomoBoxHeight);
+  ctx.quadraticCurveTo(
+    fomoX + fomoBoxWidth,
+    fomoY + fomoBoxHeight,
+    fomoX + fomoBoxWidth - fomoRadius,
+    fomoY + fomoBoxHeight
+  );
   ctx.lineTo(fomoX + fomoRadius, fomoY + fomoBoxHeight);
   ctx.quadraticCurveTo(fomoX, fomoY + fomoBoxHeight, fomoX, fomoY + fomoBoxHeight - fomoRadius);
   ctx.lineTo(fomoX, fomoY + fomoRadius);
@@ -538,7 +577,12 @@ async function generatePremiumCardImage(
   ctx.lineTo(badgeX + badgeWidth - radius, badgeY);
   ctx.quadraticCurveTo(badgeX + badgeWidth, badgeY, badgeX + badgeWidth, badgeY + radius);
   ctx.lineTo(badgeX + badgeWidth, badgeY + badgeHeight - radius);
-  ctx.quadraticCurveTo(badgeX + badgeWidth, badgeY + badgeHeight, badgeX + badgeWidth - radius, badgeY + badgeHeight);
+  ctx.quadraticCurveTo(
+    badgeX + badgeWidth,
+    badgeY + badgeHeight,
+    badgeX + badgeWidth - radius,
+    badgeY + badgeHeight
+  );
   ctx.lineTo(badgeX + radius, badgeY + badgeHeight);
   ctx.quadraticCurveTo(badgeX, badgeY + badgeHeight, badgeX, badgeY + badgeHeight - radius);
   ctx.lineTo(badgeX, badgeY + radius);
@@ -573,21 +617,85 @@ async function generatePremiumCardImage(
   const leftX = 120;
   const rightX = width - 120;
 
-  drawPremiumMetric(ctx, 'TRADES', metrics.totalTrades.toString(), leftX, currentY, true, tier.borderColor);
-  drawPremiumMetric(ctx, 'WIN RATE', `${metrics.winRate.toFixed(1)}%`, rightX, currentY, false, tier.borderColor);
+  drawPremiumMetric(
+    ctx,
+    'TRADES',
+    metrics.totalTrades.toString(),
+    leftX,
+    currentY,
+    true,
+    tier.borderColor
+  );
+  drawPremiumMetric(
+    ctx,
+    'WIN RATE',
+    `${metrics.winRate.toFixed(1)}%`,
+    rightX,
+    currentY,
+    false,
+    tier.borderColor
+  );
   currentY += rowHeight;
 
-  drawPremiumMetric(ctx, 'VOLUME', `${formatSOL(metrics.totalVolume, 1)} SOL`, leftX, currentY, true, tier.borderColor);
+  drawPremiumMetric(
+    ctx,
+    'VOLUME',
+    `${formatSOL(metrics.totalVolume, 1)} SOL`,
+    leftX,
+    currentY,
+    true,
+    tier.borderColor
+  );
   const pnlColor = metrics.profitLoss >= 0 ? '#10b981' : '#ef4444';
-  drawPremiumMetric(ctx, 'P&L', `${formatSOL(metrics.profitLoss, 2)} SOL`, rightX, currentY, false, pnlColor);
+  drawPremiumMetric(
+    ctx,
+    'P&L',
+    `${formatSOL(metrics.profitLoss, 2)} SOL`,
+    rightX,
+    currentY,
+    false,
+    pnlColor
+  );
   currentY += rowHeight;
 
-  drawPremiumMetric(ctx, 'BEST TRADE', `${formatSOL(metrics.bestTrade, 2)} SOL`, leftX, currentY, true, tier.borderColor);
-  drawPremiumMetric(ctx, 'WORST TRADE', `${formatSOL(metrics.worstTrade, 2)} SOL`, rightX, currentY, false, tier.borderColor);
+  drawPremiumMetric(
+    ctx,
+    'BEST TRADE',
+    `${formatSOL(metrics.bestTrade, 2)} SOL`,
+    leftX,
+    currentY,
+    true,
+    tier.borderColor
+  );
+  drawPremiumMetric(
+    ctx,
+    'WORST TRADE',
+    `${formatSOL(metrics.worstTrade, 2)} SOL`,
+    rightX,
+    currentY,
+    false,
+    tier.borderColor
+  );
   currentY += rowHeight;
 
-  drawPremiumMetric(ctx, 'AVG TRADE', `${formatSOL(metrics.avgTradeSize, 2)} SOL`, leftX, currentY, true, tier.borderColor);
-  drawPremiumMetric(ctx, 'ACTIVE DAYS', metrics.tradingDays.toString(), rightX, currentY, false, tier.borderColor);
+  drawPremiumMetric(
+    ctx,
+    'AVG TRADE',
+    `${formatSOL(metrics.avgTradeSize, 2)} SOL`,
+    leftX,
+    currentY,
+    true,
+    tier.borderColor
+  );
+  drawPremiumMetric(
+    ctx,
+    'ACTIVE DAYS',
+    metrics.tradingDays.toString(),
+    rightX,
+    currentY,
+    false,
+    tier.borderColor
+  );
   currentY += 60;
 
   // FOOTER
@@ -629,10 +737,7 @@ function drawPremiumMetric(
 }
 
 // ✅ ORIGINAL: BASIC CARD (SIN PAGAR)
-async function generateBasicCardImage(
-  walletAddress: string,
-  metrics: any
-): Promise<Buffer> {
+async function generateBasicCardImage(walletAddress: string, metrics: any): Promise<Buffer> {
   // Validar y proveer valores por defecto
   const safeMetrics = {
     degenScore: Number(metrics?.degenScore) || 0,
@@ -646,9 +751,9 @@ async function generateBasicCardImage(
     tradingDays: Number(metrics?.tradingDays) || 0,
   };
 
-  logger.info('📝 Generating BASIC card', { 
+  logger.info('📝 Generating BASIC card', {
     walletAddress,
-    metrics: safeMetrics 
+    metrics: safeMetrics,
   });
 
   const width = 600;
@@ -745,14 +850,43 @@ async function generateBasicCardImage(
 
   drawMetric(ctx, 'VOLUME', `${formatSOL(safeMetrics.totalVolume, 1)} SOL`, leftX, currentY, true);
   const pnlColor = safeMetrics.profitLoss >= 0 ? '#00ff88' : '#ff4444';
-  drawMetric(ctx, 'P&L', `${formatSOL(safeMetrics.profitLoss, 2)} SOL`, rightX, currentY, false, pnlColor);
+  drawMetric(
+    ctx,
+    'P&L',
+    `${formatSOL(safeMetrics.profitLoss, 2)} SOL`,
+    rightX,
+    currentY,
+    false,
+    pnlColor
+  );
   currentY += rowHeight;
 
-  drawMetric(ctx, 'BEST TRADE', `${formatSOL(safeMetrics.bestTrade, 2)} SOL`, leftX, currentY, true);
-  drawMetric(ctx, 'WORST TRADE', `${formatSOL(safeMetrics.worstTrade, 2)} SOL`, rightX, currentY, false);
+  drawMetric(
+    ctx,
+    'BEST TRADE',
+    `${formatSOL(safeMetrics.bestTrade, 2)} SOL`,
+    leftX,
+    currentY,
+    true
+  );
+  drawMetric(
+    ctx,
+    'WORST TRADE',
+    `${formatSOL(safeMetrics.worstTrade, 2)} SOL`,
+    rightX,
+    currentY,
+    false
+  );
   currentY += rowHeight;
 
-  drawMetric(ctx, 'AVG TRADE', `${formatSOL(safeMetrics.avgTradeSize, 2)} SOL`, leftX, currentY, true);
+  drawMetric(
+    ctx,
+    'AVG TRADE',
+    `${formatSOL(safeMetrics.avgTradeSize, 2)} SOL`,
+    leftX,
+    currentY,
+    true
+  );
   drawMetric(ctx, 'ACTIVE DAYS', safeMetrics.tradingDays.toString(), rightX, currentY, false);
   currentY += 60;
   logger.info('✅ All metrics drawn');
@@ -812,20 +946,42 @@ function drawMetric(
 }
 
 function getScoreColor(score: number): string {
-  if (score >= 90) return '#FFD700';
-  if (score >= 80) return '#00ff88';
-  if (score >= 60) return '#00d4ff';
-  if (score >= 40) return '#ffaa00';
-  if (score >= 20) return '#ff6600';
+  if (score >= 90) {
+    return '#FFD700';
+  }
+  if (score >= 80) {
+    return '#00ff88';
+  }
+  if (score >= 60) {
+    return '#00d4ff';
+  }
+  if (score >= 40) {
+    return '#ffaa00';
+  }
+  if (score >= 20) {
+    return '#ff6600';
+  }
   return '#ff4444';
 }
 
 function getRating(score: number): string {
-  if (score >= 90) return '🔥 LEGENDARY DEGEN 🔥';
-  if (score >= 75) return '⭐ MASTER DEGEN ⭐';
-  if (score >= 60) return '💎 DIAMOND HANDS 💎';
-  if (score >= 45) return '📈 DEGEN IN TRAINING 📈';
-  if (score >= 30) return '🎲 CASUAL GAMBLER 🎲';
-  if (score >= 15) return '🐟 SMALL FRY 🐟';
+  if (score >= 90) {
+    return '🔥 LEGENDARY DEGEN 🔥';
+  }
+  if (score >= 75) {
+    return '⭐ MASTER DEGEN ⭐';
+  }
+  if (score >= 60) {
+    return '💎 DIAMOND HANDS 💎';
+  }
+  if (score >= 45) {
+    return '📈 DEGEN IN TRAINING 📈';
+  }
+  if (score >= 30) {
+    return '🎲 CASUAL GAMBLER 🎲';
+  }
+  if (score >= 15) {
+    return '🐟 SMALL FRY 🐟';
+  }
   return '😅 NGMI 😅';
 }

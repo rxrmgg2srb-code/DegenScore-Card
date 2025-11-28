@@ -10,9 +10,10 @@ const prisma = new PrismaClient();
 // Challenge único: Most Loved Card
 const challengeTemplate = {
   title: '❤️ Most Loved Card',
-  description: 'Get the most likes on your card this week! Challenge activates when we reach 100 cards.',
+  description:
+    'Get the most likes on your card this week! Challenge activates when we reach 100 cards.',
   metric: 'likes',
-  minCardsRequired: 100
+  minCardsRequired: 100,
 };
 
 async function main() {
@@ -31,7 +32,9 @@ async function main() {
     console.log(`📊 Total cards generated: ${totalCards}`);
 
     if (totalCards < challengeTemplate.minCardsRequired) {
-      console.log(`⏳ Waiting for ${challengeTemplate.minCardsRequired} cards to activate challenge`);
+      console.log(
+        `⏳ Waiting for ${challengeTemplate.minCardsRequired} cards to activate challenge`
+      );
       console.log(`   Current: ${totalCards} cards`);
       console.log(`   Needed: ${challengeTemplate.minCardsRequired - totalCards} more cards`);
       return;
@@ -39,7 +42,7 @@ async function main() {
 
     // Check if challenge already exists
     const existing = await prisma.weeklyChallenge.findUnique({
-      where: { week: weekNumber }
+      where: { week: weekNumber },
     });
 
     if (existing) {
@@ -70,8 +73,8 @@ async function main() {
         minCardsRequired: challengeTemplate.minCardsRequired,
         startDate,
         endDate,
-        isActive: true
-      }
+        isActive: true,
+      },
     });
 
     console.log('✅ Weekly challenge created successfully:');
@@ -81,8 +84,7 @@ async function main() {
     console.log(`   Start: ${challenge.startDate.toISOString()}`);
     console.log(`   End: ${challenge.endDate.toISOString()}`);
     console.log('');
-    console.log('🎉 Premium users can now compete for this week\'s challenge!');
-
+    console.log("🎉 Premium users can now compete for this week's challenge!");
   } catch (error) {
     console.error('❌ Error creating challenge:', error);
     throw error;

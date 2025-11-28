@@ -90,12 +90,177 @@ export const sanitizeDisplayName = (name: string) => {
 };
 export const sanitizeUrl = sanitizeURL;
 export const sanitizeSocialHandle = (handle: string) => {
-  if (!handle) return '';
+  if (!handle) {
+    return '';
+  }
   let sanitized = handle.replace(/^@/, '');
   sanitized = sanitized.replace(/[^a-zA-Z0-9_-]/g, '');
   return sanitized.length > 30 ? sanitized.slice(0, 30) : sanitized;
 };
 export const sanitizePromoCode = (code: string) => {
-  if (!code) return '';
+  if (!code) {
+    return '';
+  }
   return code.toUpperCase().replace(/[^A-Z0-9]/g, '');
 };
+
+// ============================================================================
+// LOG SANITIZATION (Sensitive Data Redaction)
+// ============================================================================
+
+/**
+ * ✅ SECURITY: Redact wallet address (show only first 4 and last 4 characters)
+ */
+export function redactWallet(wallet: string): string {
+  if (!wallet || typeof wallet !== 'string') {
+    return '[invalid]';
+  }
+
+  if (wallet.length < 12) {
+    return '[redacted]';
+  }
+
+  return `${wallet.slice(0, 4)}...${wallet.slice(-4)}`;
+}
+
+/**
+ * ✅ SECURITY: Redact transaction signature (show only first 8 characters)
+ */
+export function redactSignature(signature: string): string {
+  if (!signature || typeof signature !== 'string') {
+    return '[invalid]';
+  }
+
+  if (signature.length < 16) {
+    return '[redacted]';
+  }
+
+  return `${signature.slice(0, 8)}...`;
+}
+
+/**
+ * ✅ SECURITY: Redact email address (show only domain)
+ */
+export function redactEmail(email: string): string {
+  if (!email || typeof email !== 'string' || !email.includes('@')) {
+    return '[redacted]';
+  }
+
+  const [, domain] = email.split('@');
+  return `***@${domain}`;
+}
+
+/**
+ * ✅ SECURITY: Redact JWT token (show only first 8 characters)
+ */
+export function redactToken(token: string): string {
+  if (!token || typeof token !== 'string') {
+    return '[invalid]';
+  }
+
+  if (token.length < 16) {
+    return '[redacted]';
+  }
+
+  return `${token.slice(0, 8)}...`;
+}
+
+/**
+ * ✅ SECURITY: Redact nonce (show only first 8 characters)
+ */
+export function redactNonce(nonce: string): string {
+  if (!nonce || typeof nonce !== 'string') {
+    return '[invalid]';
+  }
+
+  if (nonce.length < 10) {
+    return '[redacted]';
+  }
+
+  return `${nonce.slice(0, 8)}...`;
+}
+
+/**
+ * ✅ SECURITY: Sanitize amount (round to 4 decimals, add SOL suffix)
+ */
+export function sanitizeAmount(amount: number): string {
+  if (typeof amount !== 'number' || isNaN(amount)) {
+    return '[invalid]';
+  }
+
+  return `${amount.toFixed(4)} SOL`;
+}
+
+/**
+ * ✅ SECURITY: Sanitize object for logging (redacts common sensitive fields)
+ */
+export function sanitizeForLog(obj: Record<string, any>): Record<string, any> {
+  const sensitiveKeys = [
+    'walletAddress',
+    'publicKey',
+    'signature',
+    'paymentSignature',
+    'token',
+    'sessionToken',
+    'jwt',
+    'nonce',
+    'email',
+    'privateKey',
+    'secret',
+    'password',
+    'apiKey',
+  ];
+
+  const sanitized: Record<string, any> = {};
+
+  for (const [key, value] of Object.entries(obj)) {
+    const lowerKey = key.toLowerCase();
+
+    // Check if key contains sensitive information
+    const isSensitive = sensitiveKeys.some((sensitive) =>
+      lowerKey.includes(sensitive.toLowerCase())
+    );
+
+    if (isSensitive) {
+      if (typeof value === 'string') {
+        if (lowerKey.includes('wallet') || lowerKey.includes('publickey')) {
+          sanitized[key] = redactWallet(value);
+        } else if (lowerKey.includes('signature')) {
+          sanitized[key] = redactSignature(value);
+        } else if (lowerKey.includes('email')) {
+          sanitized[key] = redactEmail(value);
+        } else if (lowerKey.includes('token') || lowerKey.includes('jwt')) {
+          sanitized[key] = redactToken(value);
+        } else if (lowerKey.includes('nonce')) {
+          sanitized[key] = redactNonce(value);
+        } else {
+          sanitized[key] = '[redacted]';
+        }
+      } else {
+        sanitized[key] = '[redacted]';
+      }
+    } else if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+      // Recursively sanitize nested objects
+      sanitized[key] = sanitizeForLog(value);
+    } else {
+      sanitized[key] = value;
+    }
+  }
+
+  return sanitized;
+}
+
+/**
+ * ✅ SECURITY: Sanitize error message (generic message for production)
+ */
+export function sanitizeError(
+  error: Error | unknown,
+  isDevelopment: boolean = process.env.NODE_ENV === 'development'
+): string {
+  if (isDevelopment) {
+    return error instanceof Error ? error.message : String(error);
+  }
+
+  // Return generic message in production
+  return 'An error occurred';
+}

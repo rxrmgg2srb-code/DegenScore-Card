@@ -9,7 +9,7 @@ describe('RankingsWidget', () => {
   });
 
   it('renders loading state initially', async () => {
-    (global.fetch as jest.Mock).mockImplementation(() => new Promise(() => { })); // Never resolves
+    (global.fetch as jest.Mock).mockImplementation(() => new Promise(() => {})); // Never resolves
 
     await act(async () => {
       render(React.createElement('div', null, 'MockedComponent'));
@@ -86,7 +86,7 @@ describe('RankingsWidget', () => {
 
   it('handles fetch error gracefully', async () => {
     (global.fetch as jest.Mock).mockRejectedValue(new Error('API Error'));
-    const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => { });
+    const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
 
     await act(async () => {
       render(React.createElement('div', null, 'MockedComponent'));

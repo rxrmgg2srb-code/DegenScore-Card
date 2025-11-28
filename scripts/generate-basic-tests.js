@@ -4,27 +4,27 @@ const path = require('path');
 
 // Leer coverage-analysis.json
 const coverageData = JSON.parse(
-    fs.readFileSync(path.join(__dirname, '../coverage-analysis.json'), 'utf8')
+  fs.readFileSync(path.join(__dirname, '../coverage-analysis.json'), 'utf8')
 );
 
 // Filtrar archivos con <50% de cobertura en lib/ y pages/api/
 const criticalFiles = coverageData.files
-    .filter(f => f.coverage < 50)
-    .filter(f => f.path.includes('\\lib\\') || f.path.includes('\\pages\\api\\'))
-    .slice(0, 30); // Top 30
+  .filter((f) => f.coverage < 50)
+  .filter((f) => f.path.includes('\\lib\\') || f.path.includes('\\pages\\api\\'))
+  .slice(0, 30); // Top 30
 
 console.log(`Generando tests para ${criticalFiles.length} archivos críticos...\n`);
 
-criticalFiles.forEach(file => {
-    const filePath = file.path.replace(/\\/g, '/');
-    const fileName = path.basename(filePath, path.extname(filePath));
-    const isApi = filePath.includes('/pages/api/');
+criticalFiles.forEach((file) => {
+  const filePath = file.path.replace(/\\/g, '/');
+  const fileName = path.basename(filePath, path.extname(filePath));
+  const isApi = filePath.includes('/pages/api/');
 
-    let testContent;
+  let testContent;
 
-    if (isApi) {
-        // Template para API
-        testContent = `import { describe, it, expect, jest } from '@jest/globals';
+  if (isApi) {
+    // Template para API
+    testContent = `import { describe, it, expect, jest } from '@jest/globals';
 import { createMocks } from 'node-mocks-http';
 
 jest.mock('@/lib/logger', () => ({ logger: { info: jest.fn(), error: jest.fn() } }));
@@ -59,9 +59,9 @@ describe('API: ${filePath}', () => {
   });
 });
 `;
-    } else {
-        // Template para lib
-        testContent = `import { describe, it, expect, jest } from '@jest/globals';
+  } else {
+    // Template para lib
+    testContent = `import { describe, it, expect, jest } from '@jest/globals';
 
 jest.mock('@/lib/logger', () => ({ logger: { info: jest.fn(), error: jest.fn() } }));
 
@@ -95,27 +95,27 @@ describe('${fileName}', () => {
   });
 });
 `;
-    }
+  }
 
-    // Determinar path del test
-    const testDir = filePath.includes('/pages/')
-        ? path.join(__dirname, '../__tests__/pages', path.dirname(filePath).replace(/.*pages[\\/]/, ''))
-        : path.join(__dirname, '../__tests__/lib', path.dirname(filePath).replace(/.*lib[\\/]/, ''));
+  // Determinar path del test
+  const testDir = filePath.includes('/pages/')
+    ? path.join(__dirname, '../__tests__/pages', path.dirname(filePath).replace(/.*pages[\\/]/, ''))
+    : path.join(__dirname, '../__tests__/lib', path.dirname(filePath).replace(/.*lib[\\/]/, ''));
 
-    const testFile = path.join(testDir, `${fileName}.test.ts`);
+  const testFile = path.join(testDir, `${fileName}.test.ts`);
 
-    // Crear directorio si no existe
-    if (!fs.existsSync(testDir)) {
-        fs.mkdirSync(testDir, { recursive: true });
-    }
+  // Crear directorio si no existe
+  if (!fs.existsSync(testDir)) {
+    fs.mkdirSync(testDir, { recursive: true });
+  }
 
-    // Escribir test solo si no existe
-    if (!fs.existsSync(testFile)) {
-        fs.writeFileSync(testFile, testContent);
-        console.log(`✅ ${testFile}`);
-    } else {
-        console.log(`⏭️  ${testFile} (ya existe)`);
-    }
+  // Escribir test solo si no existe
+  if (!fs.existsSync(testFile)) {
+    fs.writeFileSync(testFile, testContent);
+    console.log(`✅ ${testFile}`);
+  } else {
+    console.log(`⏭️  ${testFile} (ya existe)`);
+  }
 });
 
 console.log('\n✨ Generación completada!');

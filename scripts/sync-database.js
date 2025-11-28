@@ -16,7 +16,6 @@ try {
   console.log('\nNext steps:');
   console.log('1. Create promo code: npx ts-node scripts/create-promo-code.ts');
   console.log('2. Create weekly challenge: npx ts-node scripts/create-weekly-challenge.ts');
-
 } catch (error) {
   console.error('\n❌ Database sync failed:', error.message);
   process.exit(1);

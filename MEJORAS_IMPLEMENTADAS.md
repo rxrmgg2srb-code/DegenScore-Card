@@ -13,6 +13,7 @@ Se han implementado **todas las mejoras gratuitas** solicitadas para optimizar p
 **Beneficio:** Visibilidad completa de errores en producción
 
 **Implementación:**
+
 - ✅ Configuración cliente (`sentry.client.config.ts`)
 - ✅ Configuración servidor (`sentry.server.config.ts`)
 - ✅ Configuración edge (`sentry.edge.config.ts`)
@@ -22,12 +23,14 @@ Se han implementado **todas las mejoras gratuitas** solicitadas para optimizar p
 - ✅ Filtros de errores de extensiones de browser
 
 **Impacto:**
+
 - 📊 Tracking de 5,000 errores/mes gratis
 - 🎥 50 sesiones de replay/mes
 - ⚡ Detección instantánea de bugs en producción
 - 📈 Métricas de performance
 
 **Variables de entorno necesarias:**
+
 ```bash
 NEXT_PUBLIC_SENTRY_DSN=https://...
 SENTRY_ORG=tu-org
@@ -41,6 +44,7 @@ SENTRY_PROJECT=degenscore-card
 **Beneficio:** 90% reducción en llamadas a DB y APIs
 
 **Implementación:**
+
 - ✅ Cliente Redis (`lib/cache/redis.ts`)
 - ✅ Funciones helper (`cacheGet`, `cacheSet`, `cacheGetOrSet`)
 - ✅ Cache keys organizados (`CacheKeys`)
@@ -48,17 +52,20 @@ SENTRY_PROJECT=degenscore-card
 - ✅ Fail gracefully si Redis no está configurado
 
 **Endpoints optimizados:**
+
 - `/api/generate-card` - Cache de imágenes (7 días)
 - `/api/leaderboard` - Cache de rankings (5 minutos)
 - Wallet analysis - Cache de análisis (1-24 horas)
 - Token metadata - Cache de Helius (24 horas)
 
 **Impacto:**
+
 - 🚀 **10x más rápido** en requests cacheadas
 - 💰 **90% reducción** en costos de Helius API
 - 📊 10,000 comandos/día gratis (~1000 cards/día)
 
 **Variables de entorno necesarias:**
+
 ```bash
 UPSTASH_REDIS_REST_URL=https://...
 UPSTASH_REDIS_REST_TOKEN=tu-token
@@ -71,6 +78,7 @@ UPSTASH_REDIS_REST_TOKEN=tu-token
 **Beneficio:** Imágenes servidas desde CDN global ultra-rápido
 
 **Implementación:**
+
 - ✅ Cliente S3 compatible (`lib/storage/r2.ts`)
 - ✅ Upload automático de cards a R2
 - ✅ Redirect a URLs públicas de R2
@@ -78,6 +86,7 @@ UPSTASH_REDIS_REST_TOKEN=tu-token
 - ✅ Cache headers optimizados (1 año)
 
 **Flujo optimizado:**
+
 1. Usuario genera card
 2. Se sube a R2 automáticamente
 3. Se cachea URL en Redis (7 días)
@@ -85,12 +94,14 @@ UPSTASH_REDIS_REST_TOKEN=tu-token
 5. Browser cachea 1 año
 
 **Impacto:**
+
 - 🌍 **Latencia global <50ms** (vs 200-500ms desde servidor)
 - 💾 **10GB + 10M requests/mes** gratis
 - 🔥 Descarga servidor de Next.js
 - 📦 ~20,000 cards sin costo
 
 **Variables de entorno necesarias:**
+
 ```bash
 R2_ACCOUNT_ID=tu-account-id
 R2_ACCESS_KEY_ID=tu-access-key
@@ -106,12 +117,14 @@ R2_PUBLIC_URL=https://pub-xxx.r2.dev
 **Beneficio:** Actualizaciones en vivo sin polling
 
 **Implementación:**
+
 - ✅ Cliente servidor (`lib/realtime/pusher.ts`)
 - ✅ Helper functions (`triggerEvent`, `triggerBatch`)
 - ✅ Componente React de ejemplo (`RealtimeLeaderboard.tsx`)
 - ✅ Canales organizados (leaderboard, hot-feed, activity)
 
 **Features habilitadas:**
+
 - 📊 Leaderboard updates en tiempo real
 - ❤️ Live likes counter
 - 🎯 Challenge updates instantáneos
@@ -120,11 +133,13 @@ R2_PUBLIC_URL=https://pub-xxx.r2.dev
 - 👑 Alerta de nuevo #1 en leaderboard
 
 **Impacto:**
+
 - ⚡ **Experiencia real-time** sin refrescar página
 - 🎯 **FOMO máximo** viendo actividad en vivo
 - 📡 200k mensajes/día gratis (~170 usuarios concurrentes)
 
 **Variables de entorno necesarias:**
+
 ```bash
 PUSHER_APP_ID=123456
 PUSHER_KEY=abc123
@@ -141,6 +156,7 @@ NEXT_PUBLIC_PUSHER_CLUSTER=us2
 **Beneficio:** Shares virales en redes sociales
 
 **Implementación:**
+
 - ✅ Componente SEOHead (`components/SEOHead.tsx`)
 - ✅ Open Graph tags completos
 - ✅ Twitter Cards
@@ -150,12 +166,14 @@ NEXT_PUBLIC_PUSHER_CLUSTER=us2
 - ✅ Favicons y manifest
 
 **Impacto:**
+
 - 🐦 **Cards profesionales en Twitter/X**
 - 💬 **Previews atractivos en Discord**
 - 📱 **Links lindos en Telegram**
 - 🔍 **Mejor ranking en Google**
 
 **Uso en páginas:**
+
 ```tsx
 import SEOHead from '../components/SEOHead';
 
@@ -164,7 +182,7 @@ import SEOHead from '../components/SEOHead';
   description="Check out my Degen Score!"
   image={cardImageUrl}
   type="profile"
-/>
+/>;
 ```
 
 ---
@@ -174,6 +192,7 @@ import SEOHead from '../components/SEOHead';
 **Beneficio:** Indexación perfecta en Google
 
 **Implementación:**
+
 - ✅ Robots.txt estático (`public/robots.txt`)
 - ✅ Sitemap.xml dinámico (`/api/sitemap.xml.ts`)
 - ✅ Incluye todas las páginas públicas
@@ -181,16 +200,19 @@ import SEOHead from '../components/SEOHead';
 - ✅ Cache de 1 hora
 
 **URLs incluidas:**
+
 - Homepage, Leaderboard, Documentation
 - Todas las cards públicas (hasta 1000 más recientes)
 - Prioridades y frecuencias optimizadas
 
 **Impacto:**
+
 - 🔍 **Indexación completa en Google**
 - 📈 **Mejor SEO** para páginas de cards
 - 🚀 **Tráfico orgánico** de búsquedas
 
 **Acceso:**
+
 - https://tuapp.com/robots.txt
 - https://tuapp.com/api/sitemap.xml (o /sitemap.xml con rewrite)
 
@@ -201,23 +223,24 @@ import SEOHead from '../components/SEOHead';
 **Beneficio:** Mejor percepción de velocidad
 
 **Implementación:**
+
 - ✅ Componente flexible (`components/SkeletonLoader.tsx`)
 - ✅ Variantes: card, leaderboard, text, avatar, badge
 - ✅ ProgressSkeleton para análisis de wallet
 - ✅ Animaciones suaves con Framer Motion
 
 **Uso:**
+
 ```tsx
 import SkeletonLoader from './SkeletonLoader';
 
-{loading ? (
-  <SkeletonLoader variant="card" count={3} />
-) : (
-  <Cards data={data} />
-)}
+{
+  loading ? <SkeletonLoader variant="card" count={3} /> : <Cards data={data} />;
+}
 ```
 
 **Impacto:**
+
 - ⚡ **Percepción de app 2x más rápida**
 - 😊 **Mejor UX** durante cargas
 - 🎯 **Retención mejorada**
@@ -229,6 +252,7 @@ import SkeletonLoader from './SkeletonLoader';
 **Beneficio:** Setup rápido y sin fricción
 
 **Implementación:**
+
 - ✅ Guía completa paso a paso (`FREE_SERVICES_SETUP.md`)
 - ✅ Screenshots y links directos
 - ✅ Troubleshooting incluido
@@ -236,6 +260,7 @@ import SkeletonLoader from './SkeletonLoader';
 - ✅ Variables de entorno listas para copiar
 
 **Incluye:**
+
 - Setup de Sentry
 - Setup de Upstash Redis
 - Setup de Cloudflare R2
@@ -251,6 +276,7 @@ import SkeletonLoader from './SkeletonLoader';
 **Beneficio:** Código listo para usar
 
 **Implementación:**
+
 - ✅ `RealtimeLeaderboard.tsx` completo
 - ✅ Manejo de conexión/desconexión
 - ✅ Fallback a polling si Pusher no configurado
@@ -259,6 +285,7 @@ import SkeletonLoader from './SkeletonLoader';
 - ✅ Indicador de estado (Live/Offline)
 
 **Features:**
+
 - ✅ Auto-subscribe al canal
 - ✅ Update optimista
 - ✅ Smooth animations
@@ -270,21 +297,21 @@ import SkeletonLoader from './SkeletonLoader';
 
 ### Performance
 
-| Métrica | Antes | Después | Mejora |
-|---------|-------|---------|--------|
-| **Card generation** | 2-3s | <200ms (cached) | **90% más rápido** |
-| **Leaderboard load** | 500-800ms | <50ms (cached) | **95% más rápido** |
-| **Image serving** | 200-500ms | <50ms (R2 CDN) | **90% más rápido** |
-| **Helius API calls** | 100% | <10% (cached) | **90% reducción** |
+| Métrica              | Antes     | Después         | Mejora             |
+| -------------------- | --------- | --------------- | ------------------ |
+| **Card generation**  | 2-3s      | <200ms (cached) | **90% más rápido** |
+| **Leaderboard load** | 500-800ms | <50ms (cached)  | **95% más rápido** |
+| **Image serving**    | 200-500ms | <50ms (R2 CDN)  | **90% más rápido** |
+| **Helius API calls** | 100%      | <10% (cached)   | **90% reducción**  |
 
 ### Costos
 
-| Servicio | Costo Antes | Costo Ahora | Ahorro |
-|----------|-------------|-------------|---------|
-| Helius API | Variable | -90% calls | 💰💰💰 |
-| Servidor CPU | Alto (image gen) | Bajo (cached) | 💰💰 |
-| Bandwidth | Alto | Bajo (R2 CDN) | 💰 |
-| **Total mes** | Variable | **$0** | ✅ |
+| Servicio      | Costo Antes      | Costo Ahora   | Ahorro |
+| ------------- | ---------------- | ------------- | ------ |
+| Helius API    | Variable         | -90% calls    | 💰💰💰 |
+| Servidor CPU  | Alto (image gen) | Bajo (cached) | 💰💰   |
+| Bandwidth     | Alto             | Bajo (R2 CDN) | 💰     |
+| **Total mes** | Variable         | **$0**        | ✅     |
 
 ### SEO & Viralidad
 
@@ -307,6 +334,7 @@ import SkeletonLoader from './SkeletonLoader';
 ### 1. Configurar Servicios (30-60 min)
 
 Sigue la guía `FREE_SERVICES_SETUP.md`:
+
 1. Crear cuenta en Sentry
 2. Crear database en Upstash
 3. Crear bucket en Cloudflare R2
@@ -338,15 +366,17 @@ git push origin main
 ```tsx
 // SEO en cualquier página
 import SEOHead from '../components/SEOHead';
-<SEOHead title="Mi Página" description="..." />
+<SEOHead title="Mi Página" description="..." />;
 
 // Skeleton loaders
 import SkeletonLoader from '../components/SkeletonLoader';
-{loading && <SkeletonLoader variant="card" count={3} />}
+{
+  loading && <SkeletonLoader variant="card" count={3} />;
+}
 
 // Real-time leaderboard
 import RealtimeLeaderboard from '../components/RealtimeLeaderboard';
-<RealtimeLeaderboard />
+<RealtimeLeaderboard />;
 ```
 
 ---
@@ -396,7 +426,7 @@ DegenScore-Card/
 ### Después de 1 semana:
 
 - [ ] Cache hit ratio >80% en Redis
-- [ ] >90% de imágenes servidas desde R2
+- [ ] > 90% de imágenes servidas desde R2
 - [ ] 0 errores críticos en Sentry
 - [ ] 100% uptime en UptimeRobot
 - [ ] Usuarios reportando "app super rápida"
@@ -436,6 +466,7 @@ await triggerBatch([
 ### R2 Custom Domain
 
 Mejor que usar `pub-xxx.r2.dev`:
+
 1. Cloudflare → R2 → Custom Domain
 2. Agregar `images.tudominio.com`
 3. Actualizar `R2_PUBLIC_URL`
@@ -446,18 +477,22 @@ Mejor que usar `pub-xxx.r2.dev`:
 ## 🆘 Troubleshooting
 
 ### "Redis connection failed"
+
 - Verifica `UPSTASH_REDIS_REST_URL` y `TOKEN`
 - Test: `curl -H "Authorization: Bearer TOKEN" URL/ping`
 
 ### "R2 upload failed"
+
 - Verifica permisos del API token (Object Read & Write)
 - Verifica `R2_ACCOUNT_ID` correcto
 
 ### "Pusher not connecting"
+
 - Verifica `NEXT_PUBLIC_PUSHER_KEY` (debe ser pública)
 - Check browser console para errores de CORS
 
 ### "Sentry not tracking"
+
 - Verifica `NEXT_PUBLIC_SENTRY_DSN` (debe ser pública)
 - Redeploy después de agregar variables
 

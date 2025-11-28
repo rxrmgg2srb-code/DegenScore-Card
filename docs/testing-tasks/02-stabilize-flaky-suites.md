@@ -56,6 +56,7 @@ Identify and fix flaky tests across the test suite, with special attention to Re
 Create reusable test utilities in `__tests__/helpers/`:
 
 1. **`react-testing.helpers.ts`**
+
    ```typescript
    export const waitForLoadingToFinish = async () => {
      await waitFor(() => {
@@ -66,12 +67,13 @@ Create reusable test utilities in `__tests__/helpers/`:
    export const actAndWait = async (callback: () => void) => {
      await act(async () => {
        callback();
-       await new Promise(resolve => setTimeout(resolve, 0));
+       await new Promise((resolve) => setTimeout(resolve, 0));
      });
    };
    ```
 
 2. **`timer.helpers.ts`**
+
    ```typescript
    export const setupFakeTimers = () => {
      jest.useFakeTimers();
@@ -86,6 +88,7 @@ Create reusable test utilities in `__tests__/helpers/`:
    ```
 
 3. **`pusher.mock.ts`**
+
    ```typescript
    export const createMockPusher = () => {
      const channels = new Map();
@@ -94,7 +97,7 @@ Create reusable test utilities in `__tests__/helpers/`:
          // Mock channel with deterministic behavior
        }),
        unsubscribe: jest.fn(),
-       disconnect: jest.fn()
+       disconnect: jest.fn(),
      };
    };
    ```
@@ -102,9 +105,12 @@ Create reusable test utilities in `__tests__/helpers/`:
 4. **`async-state.helpers.ts`**
    ```typescript
    export const waitForStateUpdate = async (getValue: () => any, expected: any) => {
-     await waitFor(() => {
-       expect(getValue()).toBe(expected);
-     }, { timeout: 3000 });
+     await waitFor(
+       () => {
+         expect(getValue()).toBe(expected);
+       },
+       { timeout: 3000 }
+     );
    };
    ```
 
@@ -127,6 +133,7 @@ Create reusable test utilities in `__tests__/helpers/`:
 ### NPM Script
 
 Add to `package.json`:
+
 ```json
 {
   "scripts": {
@@ -139,6 +146,7 @@ Add to `package.json`:
 ### Best Practices Documentation
 
 Create `docs/development/testing-best-practices.md`:
+
 - When to use fake timers
 - How to properly mock async operations
 - Patterns for testing realtime features

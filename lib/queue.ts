@@ -131,7 +131,7 @@ export async function getJobStatus(jobId: string) {
   }
 
   const state = await job.getState();
-  const progress = job.progress as number || 0;
+  const progress = (job.progress as number) || 0;
 
   return {
     status: state,

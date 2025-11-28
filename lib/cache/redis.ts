@@ -18,8 +18,10 @@ if (isRedisEnabled) {
   });
 } else {
   if (typeof window === 'undefined') {
-    logger.warn('[Upstash Redis] The \'url\' property is missing or undefined in your Redis config.');
-    logger.warn('[Upstash Redis] The \'token\' property is missing or undefined in your Redis config.');
+    logger.warn("[Upstash Redis] The 'url' property is missing or undefined in your Redis config.");
+    logger.warn(
+      "[Upstash Redis] The 'token' property is missing or undefined in your Redis config."
+    );
   }
 }
 
@@ -33,7 +35,9 @@ export interface CacheOptions {
  */
 export async function cacheGet<T>(key: string): Promise<T | null> {
   if (!isRedisEnabled || !redis) {
-    logger.warn('[Upstash Redis] Redis client was initialized without url or token. Failed to execute command.');
+    logger.warn(
+      '[Upstash Redis] Redis client was initialized without url or token. Failed to execute command.'
+    );
     return null;
   }
 
@@ -155,10 +159,7 @@ export async function cacheGetOrSet<T>(
 /**
  * Incrementar contador (útil para rate limiting adicional)
  */
-export async function cacheIncr(
-  key: string,
-  ttl?: number
-): Promise<number | null> {
+export async function cacheIncr(key: string, ttl?: number): Promise<number | null> {
   if (!isRedisEnabled || !redis) {
     return null;
   }

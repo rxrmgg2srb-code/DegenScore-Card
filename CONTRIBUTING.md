@@ -73,34 +73,41 @@ Unsure where to begin? Look for issues labeled:
 1. **Fork the repository** on GitHub
 
 2. **Clone your fork locally**:
+
    ```bash
    git clone https://github.com/YOUR_USERNAME/DegenScore-Card.git
    cd DegenScore-Card
    ```
 
 3. **Add upstream remote**:
+
    ```bash
    git remote add upstream https://github.com/rxrmgg2srb-code/DegenScore-Card.git
    ```
 
 4. **Install dependencies**:
+
    ```bash
    npm install
    ```
 
 5. **Copy environment variables**:
+
    ```bash
    cp .env.example .env.local
    ```
+
    Then fill in the required values (see [SETUP_INSTRUCTIONS.md](SETUP_INSTRUCTIONS.md))
 
 6. **Set up the database**:
+
    ```bash
    npx prisma migrate dev
    npx prisma db seed  # (if seed script exists)
    ```
 
 7. **Run the development server**:
+
    ```bash
    npm run dev
    ```
@@ -136,6 +143,7 @@ Use descriptive branch names:
 ### Step-by-Step Process
 
 1. **Create a feature branch**:
+
    ```bash
    git checkout -b feature/your-feature-name
    ```
@@ -145,6 +153,7 @@ Use descriptive branch names:
 3. **Write/update tests** (see [Testing Requirements](#testing-requirements))
 
 4. **Run the test suite**:
+
    ```bash
    npm run test
    npm run lint
@@ -152,12 +161,14 @@ Use descriptive branch names:
    ```
 
 5. **Commit your changes** (see [Commit Message Guidelines](#commit-message-guidelines)):
+
    ```bash
    git add .
    git commit -m "feat: add leaderboard component"
    ```
 
 6. **Push to your fork**:
+
    ```bash
    git push origin feature/your-feature-name
    ```
@@ -204,6 +215,7 @@ We use **TypeScript in strict mode**. All code must:
 - ✅ No `@ts-ignore` or `@ts-nocheck` (fix the type issue instead)
 
 **Example**:
+
 ```typescript
 // ✅ Good
 interface UserProfile {
@@ -230,6 +242,7 @@ function calculateScore(wallet: any) {
 - ✅ Use TypeScript for props
 
 **Example**:
+
 ```tsx
 // ✅ Good
 interface ScoreCardProps {
@@ -290,6 +303,7 @@ npm run format      # Format with Prettier
 - **Explain "why", not "what"** - the code shows what it does
 
 **Example**:
+
 ```typescript
 // ✅ Good
 /**
@@ -389,6 +403,7 @@ All new code must include tests:
 - **Coverage**: Maintain >80% coverage for new code
 
 **Example**:
+
 ```typescript
 // __tests__/lib/metricsEngine.test.ts
 import { calculateScore } from '@/lib/metricsEngine';

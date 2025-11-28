@@ -40,8 +40,10 @@ export function validateOrigin(req: NextApiRequest, res: NextApiResponse): boole
     return false;
   }
 
-  const isAllowed = allowedOrigins.some(allowed => {
-    if (!allowed) return false;
+  const isAllowed = allowedOrigins.some((allowed) => {
+    if (!allowed) {
+      return false;
+    }
     return origin.startsWith(allowed);
   });
 

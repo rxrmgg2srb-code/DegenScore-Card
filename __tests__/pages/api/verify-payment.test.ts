@@ -112,7 +112,7 @@ describe('Payment Verification API', () => {
       const receivedSOL = 0.03;
 
       if (receivedSOL < REQUIRED_SOL) {
-        mockRes.status!(400).json({ 
+        mockRes.status!(400).json({
           error: 'Insufficient payment',
           required: REQUIRED_SOL,
           received: receivedSOL,
@@ -120,9 +120,11 @@ describe('Payment Verification API', () => {
       }
 
       expect(statusMock).toHaveBeenCalledWith(400);
-      expect(jsonMock).toHaveBeenCalledWith(expect.objectContaining({
-        error: 'Insufficient payment',
-      }));
+      expect(jsonMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          error: 'Insufficient payment',
+        })
+      );
     });
 
     it('should accept exact payment amount', () => {
@@ -150,18 +152,20 @@ describe('Payment Verification API', () => {
         'OtherWallet111111111111111111111111111111111',
       ];
 
-      const senderIndex = accountKeys.findIndex(key => key === walletAddress);
+      const senderIndex = accountKeys.findIndex((key) => key === walletAddress);
 
       if (senderIndex === -1) {
-        mockRes.status!(400).json({ 
+        mockRes.status!(400).json({
           error: 'Wallet address not found in transaction. Possible fraud attempt.',
         });
       }
 
       expect(statusMock).toHaveBeenCalledWith(400);
-      expect(jsonMock).toHaveBeenCalledWith(expect.objectContaining({
-        error: expect.stringContaining('fraud'),
-      }));
+      expect(jsonMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          error: expect.stringContaining('fraud'),
+        })
+      );
     });
 
     it('should verify sender lost SOL (sent payment)', () => {
@@ -170,7 +174,7 @@ describe('Payment Verification API', () => {
       const balanceChange = (postBalance - preBalance) / 1000000000;
 
       if (balanceChange >= 0) {
-        mockRes.status!(400).json({ 
+        mockRes.status!(400).json({
           error: 'Invalid payment. Sender did not send any SOL in this transaction.',
         });
       }
@@ -184,7 +188,7 @@ describe('Payment Verification API', () => {
       const balanceChange = (postBalance - preBalance) / 1000000000;
 
       if (balanceChange >= 0) {
-        mockRes.status!(400).json({ 
+        mockRes.status!(400).json({
           error: 'Invalid payment. Sender did not send any SOL in this transaction.',
         });
       }
@@ -198,7 +202,7 @@ describe('Payment Verification API', () => {
       const balanceChange = (postBalance - preBalance) / 1000000000;
 
       if (balanceChange >= 0) {
-        mockRes.status!(400).json({ 
+        mockRes.status!(400).json({
           error: 'Invalid payment. Sender did not send any SOL in this transaction.',
         });
       }
@@ -213,7 +217,7 @@ describe('Payment Verification API', () => {
       const actualRecipient = 'WrongWallet11111111111111111111111111111111';
 
       if (actualRecipient !== TREASURY_WALLET) {
-        mockRes.status!(400).json({ 
+        mockRes.status!(400).json({
           error: 'Payment sent to wrong address',
         });
       }
@@ -244,7 +248,7 @@ describe('Payment Verification API', () => {
       const transactionError = 'Transaction failed';
 
       if (transactionError) {
-        mockRes.status!(400).json({ 
+        mockRes.status!(400).json({
           error: 'Transaction failed on blockchain',
         });
       }
@@ -256,7 +260,7 @@ describe('Payment Verification API', () => {
       const transaction = null;
 
       if (!transaction) {
-        mockRes.status!(404).json({ 
+        mockRes.status!(404).json({
           error: 'Transaction not found',
         });
       }
@@ -274,14 +278,14 @@ describe('Payment Verification API', () => {
 
   describe('Double Spend Prevention', () => {
     it('should detect if signature already used', () => {
-      const existingCard = { 
+      const existingCard = {
         walletAddress: 'wallet123',
         txSignature: 'sig123',
         isPaid: true,
       };
 
       if (existingCard && existingCard.txSignature === 'sig123') {
-        mockRes.status!(400).json({ 
+        mockRes.status!(400).json({
           error: 'Transaction signature already used',
         });
       }
@@ -290,7 +294,7 @@ describe('Payment Verification API', () => {
     });
 
     it('should allow first use of signature', () => {
-      const existingCard = { 
+      const existingCard = {
         walletAddress: 'wallet123',
         txSignature: null,
         isPaid: false,
@@ -305,7 +309,7 @@ describe('Payment Verification API', () => {
       const signatureOwner = 'wallet222';
 
       if (requestWallet !== signatureOwner) {
-        mockRes.status!(400).json({ 
+        mockRes.status!(400).json({
           error: 'Signature belongs to different wallet',
         });
       }
@@ -321,7 +325,7 @@ describe('Payment Verification API', () => {
       try {
         throw rpcError;
       } catch (error) {
-        mockRes.status!(500).json({ 
+        mockRes.status!(500).json({
           error: 'Failed to verify payment',
           details: error instanceof Error ? error.message : 'Unknown error',
         });
@@ -338,7 +342,7 @@ describe('Payment Verification API', () => {
           throw new Error('Invalid transaction format');
         }
       } catch (error) {
-        mockRes.status!(500).json({ 
+        mockRes.status!(500).json({
           error: 'Invalid transaction data',
         });
       }
@@ -352,7 +356,7 @@ describe('Payment Verification API', () => {
       try {
         throw dbError;
       } catch (error) {
-        mockRes.status!(500).json({ 
+        mockRes.status!(500).json({
           error: 'Database error',
           details: error instanceof Error ? error.message : 'Unknown error',
         });
@@ -412,22 +416,26 @@ describe('Payment Verification API', () => {
       });
 
       expect(statusMock).toHaveBeenCalledWith(200);
-      expect(jsonMock).toHaveBeenCalledWith(expect.objectContaining({
-        success: true,
-      }));
+      expect(jsonMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          success: true,
+        })
+      );
     });
 
     it('should include timestamp in success response', () => {
       const paidAt = new Date();
-      
+
       mockRes.status!(200).json({
         success: true,
         paidAt,
       });
 
-      expect(jsonMock).toHaveBeenCalledWith(expect.objectContaining({
-        paidAt,
-      }));
+      expect(jsonMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          paidAt,
+        })
+      );
     });
   });
 

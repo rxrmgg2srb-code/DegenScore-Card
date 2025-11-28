@@ -8,10 +8,7 @@ import { logger } from '../../lib/logger';
  * Generate dynamic Open Graph images for social sharing
  * GET /api/og-image?wallet=xxx
  */
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -91,7 +88,10 @@ export default async function handler(
     const stats = [
       { label: 'Total Trades', value: card.totalTrades.toLocaleString() },
       { label: 'Win Rate', value: `${card.winRate.toFixed(1)}%` },
-      { label: 'P&L', value: `${card.profitLoss >= 0 ? '+' : ''}${card.profitLoss.toFixed(2)} SOL` },
+      {
+        label: 'P&L',
+        value: `${card.profitLoss >= 0 ? '+' : ''}${card.profitLoss.toFixed(2)} SOL`,
+      },
       { label: 'Volume', value: `${card.totalVolume.toFixed(0)} SOL` },
     ];
 
@@ -140,15 +140,13 @@ export default async function handler(
     res.setHeader('Content-Type', 'image/png');
     res.setHeader('Cache-Control', 'public, max-age=3600'); // Cache for 1 hour
     res.status(200).send(buffer);
-
   } catch (error: any) {
     logger.error('Error generating OG image:', error instanceof Error ? error : undefined, {
       error: String(error),
     });
 
-    const errorMessage = process.env.NODE_ENV === 'development'
-      ? error.message
-      : 'Failed to generate OG image';
+    const errorMessage =
+      process.env.NODE_ENV === 'development' ? error.message : 'Failed to generate OG image';
 
     res.status(500).json({ error: errorMessage });
   }

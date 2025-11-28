@@ -52,12 +52,14 @@ export function cardToExportable(card: any): ExportableCard {
 
 export function convertToCSV(data: ExportableCard): string {
   const headers = Object.keys(data).join(',');
-  const values = Object.values(data).map(val => {
-    if (typeof val === 'string' && val.includes(',')) {
-      return `"${val}"`;
-    }
-    return val;
-  }).join(',');
+  const values = Object.values(data)
+    .map((val) => {
+      if (typeof val === 'string' && val.includes(',')) {
+        return `"${val}"`;
+      }
+      return val;
+    })
+    .join(',');
 
   return `${headers}\n${values}`;
 }

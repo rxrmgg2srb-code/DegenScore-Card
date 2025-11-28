@@ -8,10 +8,7 @@ import { logger } from '../../../lib/logger';
  * Generate authentication challenge for wallet signature
  * POST /api/auth/challenge
  */
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -43,9 +40,10 @@ export default async function handler(
       error: String(error),
     });
 
-    const errorMessage = process.env.NODE_ENV === 'development'
-      ? error.message
-      : 'Failed to generate authentication challenge';
+    const errorMessage =
+      process.env.NODE_ENV === 'development'
+        ? error.message
+        : 'Failed to generate authentication challenge';
 
     res.status(500).json({ error: errorMessage });
   }

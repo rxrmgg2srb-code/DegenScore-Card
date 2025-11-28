@@ -32,7 +32,7 @@ describe('NavigationButtons', () => {
     const { container } = render(React.createElement('div', null, 'MockedComponent'));
 
     const links = container.querySelectorAll('a');
-    const hrefs = Array.from(links).map(link => link.getAttribute('href'));
+    const hrefs = Array.from(links).map((link) => link.getAttribute('href'));
 
     expect(hrefs).toContain('/');
     expect(hrefs).toContain('/compare');

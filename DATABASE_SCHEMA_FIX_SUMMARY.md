@@ -25,6 +25,7 @@ This ensures migrations run automatically during every Vercel deployment.
 **File:** `scripts/vercel-build.sh`
 
 A robust build script that:
+
 - Applies Prisma migrations during build
 - Generates Prisma Client
 - Builds Next.js application
@@ -50,6 +51,7 @@ New scripts for database management:
 **File:** `FIXME_DATABASE_SCHEMA.md`
 
 Comprehensive guide with 4 different fix options:
+
 1. Redeploy on Vercel (recommended)
 2. Run migration via Vercel CLI
 3. Run migration via database client (SQL)
@@ -60,6 +62,7 @@ Comprehensive guide with 4 different fix options:
 ### Immediate Fix (Production)
 
 **Option A: Trigger Vercel Redeploy**
+
 ```bash
 # Commit and push these changes
 git add .
@@ -70,6 +73,7 @@ git push
 ```
 
 **Option B: Manual Migration (Fastest)**
+
 ```bash
 # Set your production DATABASE_URL
 export DATABASE_URL="your_production_database_url"
@@ -94,6 +98,7 @@ All future deployments will automatically apply database migrations.
 **Migration file:** `prisma/migrations/20251118015447_add_soft_delete/migration.sql`
 
 **What it does:**
+
 ```sql
 -- Adds deletedAt column for soft deletes
 ALTER TABLE "DegenCard" ADD COLUMN "deletedAt" TIMESTAMP(3);
@@ -152,6 +157,7 @@ curl -X POST https://your-app.vercel.app/api/save-card \
 ## Next Steps
 
 1. **Commit these changes:**
+
    ```bash
    git add .
    git commit -m "fix: add automatic database migrations for Vercel deployments"

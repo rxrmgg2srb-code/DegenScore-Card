@@ -30,9 +30,10 @@ function getClientIdentifier(req: NextApiRequest, customIdentifier?: string): st
 
   // Try to get IP from various headers
   const forwarded = req.headers['x-forwarded-for'];
-  const ip = typeof forwarded === 'string'
-    ? forwarded.split(',')[0] || 'unknown'
-    : req.socket.remoteAddress || 'unknown';
+  const ip =
+    typeof forwarded === 'string'
+      ? forwarded.split(',')[0] || 'unknown'
+      : req.socket.remoteAddress || 'unknown';
 
   return ip;
 }

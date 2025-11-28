@@ -37,6 +37,7 @@
 ## 🔧 Configuración de Variables de Entorno
 
 ### Variables Existentes
+
 ```bash
 # Database
 DATABASE_URL="postgresql://..."
@@ -125,6 +126,7 @@ npx prisma migrate deploy  # En producción
 En Render Dashboard:
 
 #### Cron Job: Record Scores (cada 6 horas)
+
 - **Nombre**: `record-scores`
 - **Schedule**: `0 */6 * * *` (cada 6 horas)
 - **URL**: `https://tu-app.com/api/cron/record-scores`
@@ -154,6 +156,7 @@ Alternativa: usar `/api/generate-card` síncrono (funciona pero más lento).
 Si quieres habilitar notificaciones por Telegram:
 
 1. Crear bot con @BotFather en Telegram:
+
    ```
    /newbot
    ```
@@ -163,6 +166,7 @@ Si quieres habilitar notificaciones por Telegram:
 3. Crear canal/grupo y agregar el bot
 
 4. Obtener Chat ID:
+
    ```bash
    curl https://api.telegram.org/bot<TOKEN>/getUpdates
    ```
@@ -182,6 +186,7 @@ Para notificaciones de comunidad:
 ## 🔄 Flujo de Trabajo de las Nuevas Features
 
 ### Export de Datos
+
 ```
 Usuario visita: /profile/[walletAddress]
 → Click "Export JSON" o "Export CSV"
@@ -190,6 +195,7 @@ Usuario visita: /profile/[walletAddress]
 ```
 
 ### Historial de Scores
+
 ```
 Cron Job (cada 6 horas)
 → POST /api/cron/record-scores
@@ -199,6 +205,7 @@ Cron Job (cada 6 horas)
 ```
 
 ### Sistema de Follows
+
 ```
 Usuario conecta wallet
 → Visita /profile/[otra-wallet]
@@ -209,6 +216,7 @@ Usuario conecta wallet
 ```
 
 ### Notificaciones
+
 ```
 Usuario va a /settings
 → Configura Discord webhook / Telegram / Email
@@ -218,6 +226,7 @@ Usuario va a /settings
 ```
 
 ### Job Queue (BullMQ)
+
 ```
 Usuario genera card
 → POST /api/generate-card-async
@@ -234,9 +243,11 @@ Usuario genera card
 ### Verificar que todo funciona:
 
 1. **Base de Datos**:
+
    ```bash
    npx prisma studio
    ```
+
    Verifica que existen las tablas:
    - `ScoreHistory`
    - `UserFollows`
@@ -246,6 +257,7 @@ Usuario genera card
    Revisar logs en Render Dashboard después de cada ejecución.
 
 3. **Worker**:
+
    ```bash
    # Ver logs del worker
    heroku logs --tail --dyno=worker
@@ -254,6 +266,7 @@ Usuario genera card
 
 4. **Queue Status**:
    Crear endpoint de admin para ver métricas:
+
    ```typescript
    // En /api/admin/queue-stats.ts
    import { getQueueMetrics } from '../../lib/queue';
@@ -267,6 +280,7 @@ Usuario genera card
 ## 🧪 Testing Local
 
 ### 1. Configurar .env.local
+
 ```bash
 cp .env.example .env.local
 # Agregar todas las variables necesarias
@@ -275,11 +289,13 @@ cp .env.example .env.local
 ### 2. Iniciar servicios
 
 Terminal 1 (Next.js):
+
 ```bash
 npm run dev
 ```
 
 Terminal 2 (Worker):
+
 ```bash
 npx ts-node workers/card-generation.ts
 ```
@@ -317,22 +333,27 @@ npx ts-node workers/card-generation.ts
 ## 🚨 Troubleshooting
 
 ### "Redis connection error"
+
 - Verificar `UPSTASH_REDIS_REST_URL` y `UPSTASH_REDIS_REST_TOKEN`
 - Upstash Redis debe tener TLS habilitado
 
 ### "Job not found"
+
 - El worker no está corriendo
 - Iniciar: `npx ts-node workers/card-generation.ts`
 
 ### "Failed to send notification"
+
 - Verificar webhooks/tokens de Discord/Telegram
 - Revisar logs para ver el error específico
 
 ### "Prisma migration error"
+
 - Ejecutar: `npx prisma db push --force-reset` (⚠️ borra datos!)
 - O: `npx prisma migrate reset`
 
 ### "Cron job unauthorized"
+
 - Verificar que `CRON_API_KEY` coincide en .env y en Render cron config
 
 ---
@@ -340,12 +361,14 @@ npx ts-node workers/card-generation.ts
 ## 📈 Métricas de Rendimiento
 
 ### Antes de las mejoras:
+
 - Generación de card: 3-8s (síncrono)
 - Sin historial de scores
 - Sin sistema de follows
 - Sin notificaciones automatizadas
 
 ### Después de las mejoras:
+
 - Generación de card: 10-20s (asíncrono, no bloquea UI)
 - Historial de scores: ✅ (snapshots cada 6h)
 - Sistema de follows: ✅ (con notificaciones)

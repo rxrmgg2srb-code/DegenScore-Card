@@ -3,6 +3,7 @@
 ## ⚠️ Issue with Connection Pooling
 
 The PgBouncer pooler (port 6543) is timing out from Vercel. This is a common issue when:
+
 - Network latency between Vercel and Supabase is high
 - PgBouncer session mode doesn't play well with Prisma migrations
 - Connection pool gets saturated
@@ -24,6 +25,7 @@ Direct connection (port 5432) is **more reliable for Vercel deployments**.
 5. Copy the connection string
 
 It should look like:
+
 ```
 postgresql://postgres:[YOUR-PASSWORD]@db.thpsbnuxfrlectmqhajx.supabase.co:5432/postgres
 ```
@@ -37,10 +39,12 @@ postgresql://postgres:6yiJePuc5ncMqi8z@db.thpsbnuxfrlectmqhajx.supabase.co:5432/
 ```
 
 **Required parameters:**
+
 - `?sslmode=require` - SSL encryption (required by Supabase)
 - `&connect_timeout=10` - 10 second connection timeout
 
 **Note:**
+
 - Port is `5432` (not 6543)
 - **NO** `pgbouncer=true` parameter
 - **NO** `connection_limit=1` parameter
@@ -56,13 +60,13 @@ postgresql://postgres:6yiJePuc5ncMqi8z@db.thpsbnuxfrlectmqhajx.supabase.co:5432/
 
 ## 📊 Comparison: Pooler vs Direct
 
-| Feature | Connection Pooling (6543) | Direct Connection (5432) |
-|---------|--------------------------|--------------------------|
-| **Reliability** | ⚠️ Can timeout on Vercel | ✅ Very reliable |
-| **Connection Limit** | Higher (via pooler) | Lower (direct to DB) |
-| **Best For** | High traffic serverless | Medium traffic, migrations |
-| **Prisma Migrations** | ⚠️ Can be problematic | ✅ Works perfectly |
-| **Latency** | ⚠️ Extra hop through pooler | ✅ Direct to database |
+| Feature               | Connection Pooling (6543)   | Direct Connection (5432)   |
+| --------------------- | --------------------------- | -------------------------- |
+| **Reliability**       | ⚠️ Can timeout on Vercel    | ✅ Very reliable           |
+| **Connection Limit**  | Higher (via pooler)         | Lower (direct to DB)       |
+| **Best For**          | High traffic serverless     | Medium traffic, migrations |
+| **Prisma Migrations** | ⚠️ Can be problematic       | ✅ Works perfectly         |
+| **Latency**           | ⚠️ Extra hop through pooler | ✅ Direct to database      |
 
 ---
 
@@ -101,12 +105,14 @@ Database schema is up to date!
 ## 🔄 When to Use Each Connection Type
 
 ### Use Direct Connection (5432) when:
+
 - ✅ Running migrations (like in Vercel build)
 - ✅ Low to medium traffic
 - ✅ Reliability is critical
 - ✅ Experiencing timeouts with pooler
 
 ### Use Connection Pooling (6543) when:
+
 - ✅ Very high traffic production apps
 - ✅ Need to maximize concurrent connections
 - ✅ **Not** running migrations
@@ -119,6 +125,7 @@ Database schema is up to date!
 For production, you can use **both**:
 
 **Vercel Environment Variables:**
+
 ```bash
 # For migrations (use in build script)
 DATABASE_URL="postgresql://postgres:PASS@db.xxx.supabase.co:5432/postgres?sslmode=require"
@@ -128,18 +135,20 @@ DATABASE_POOL_URL="postgresql://postgres.xxx:PASS@aws-1-eu-west-1.pooler.supabas
 ```
 
 **In your app code:**
+
 ```javascript
 // Use pooler for runtime queries
 const prisma = new PrismaClient({
   datasources: {
     db: {
-      url: process.env.DATABASE_POOL_URL || process.env.DATABASE_URL
-    }
-  }
-})
+      url: process.env.DATABASE_POOL_URL || process.env.DATABASE_URL,
+    },
+  },
+});
 ```
 
 **In Prisma schema:**
+
 ```prisma
 datasource db {
   provider = "postgresql"
@@ -163,6 +172,7 @@ But for now, **just use the direct connection for everything** - it's simpler an
    - Supabase **requires** SSL, make sure `?sslmode=require` is included
 
 3. **Test locally first**
+
    ```bash
    # Update .env.local with direct connection
    npx prisma db push

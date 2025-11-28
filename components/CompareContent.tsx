@@ -55,15 +55,25 @@ export default function CompareContent() {
   };
 
   const formatNumber = (num: number, decimals: number = 2) => {
-    if (num >= 1e9) return `${(num / 1e9).toFixed(decimals)}B`;
-    if (num >= 1e6) return `${(num / 1e6).toFixed(decimals)}M`;
-    if (num >= 1e3) return `${(num / 1e3).toFixed(decimals)}K`;
+    if (num >= 1e9) {
+      return `${(num / 1e9).toFixed(decimals)}B`;
+    }
+    if (num >= 1e6) {
+      return `${(num / 1e6).toFixed(decimals)}M`;
+    }
+    if (num >= 1e3) {
+      return `${(num / 1e3).toFixed(decimals)}K`;
+    }
     return num.toFixed(decimals);
   };
 
   const getWinnerIcon = (winner: string) => {
-    if (winner === 'wallet1') return '🥇';
-    if (winner === 'wallet2') return '🥈';
+    if (winner === 'wallet1') {
+      return '🥇';
+    }
+    if (winner === 'wallet2') {
+      return '🥈';
+    }
     return '🤝';
   };
 
@@ -77,12 +87,8 @@ export default function CompareContent() {
 
         {/* Header */}
         <div className="text-center mb-12">
-          <h1 className="text-5xl font-bold gradient-text-gold mb-4">
-            ⚔️ Card Comparison
-          </h1>
-          <p className="text-gray-400 text-lg mb-6">
-            Compare two trading cards side by side
-          </p>
+          <h1 className="text-5xl font-bold gradient-text-gold mb-4">⚔️ Card Comparison</h1>
+          <p className="text-gray-400 text-lg mb-6">Compare two trading cards side by side</p>
 
           {/* Navigation Buttons */}
           <NavigationButtons />
@@ -92,9 +98,7 @@ export default function CompareContent() {
         <div className="bg-gray-800 rounded-lg p-8 mb-8 shadow-xl">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <div>
-              <label className="block text-gray-300 font-medium mb-2">
-                Wallet Address 1
-              </label>
+              <label className="block text-gray-300 font-medium mb-2">Wallet Address 1</label>
               <input
                 type="text"
                 value={wallet1}
@@ -104,9 +108,7 @@ export default function CompareContent() {
               />
             </div>
             <div>
-              <label className="block text-gray-300 font-medium mb-2">
-                Wallet Address 2
-              </label>
+              <label className="block text-gray-300 font-medium mb-2">Wallet Address 2</label>
               <input
                 type="text"
                 value={wallet2}
@@ -263,7 +265,9 @@ function ComparisonRow({ label, value1, value2, winner, formatter }: ComparisonR
   return (
     <div className="grid grid-cols-3 border-t border-gray-700 hover:bg-gray-750 transition">
       <div className="p-4 text-center border-r border-gray-700">
-        <p className={`text-xl font-bold ${winner === 'wallet1' ? 'text-green-400' : 'text-gray-400'}`}>
+        <p
+          className={`text-xl font-bold ${winner === 'wallet1' ? 'text-green-400' : 'text-gray-400'}`}
+        >
           {format(value1)} {winner === 'wallet1' && '🏆'}
         </p>
       </div>
@@ -271,7 +275,9 @@ function ComparisonRow({ label, value1, value2, winner, formatter }: ComparisonR
         <p className="text-gray-300 font-medium">{label}</p>
       </div>
       <div className="p-4 text-center">
-        <p className={`text-xl font-bold ${winner === 'wallet2' ? 'text-blue-400' : 'text-gray-400'}`}>
+        <p
+          className={`text-xl font-bold ${winner === 'wallet2' ? 'text-blue-400' : 'text-gray-400'}`}
+        >
           {format(value2)} {winner === 'wallet2' && '🏆'}
         </p>
       </div>

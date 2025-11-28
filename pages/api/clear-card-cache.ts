@@ -9,10 +9,7 @@ import { prisma } from '../../lib/prisma';
  * GET: Clears cache for ALL wallets in database
  * POST: Clears cache for specific wallet (requires walletAddress in body)
  */
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
     // GET: Clear ALL card caches
     if (req.method === 'GET') {
@@ -20,7 +17,7 @@ export default async function handler(
 
       // Get all wallets from database
       const allCards = await prisma.degenCard.findMany({
-        select: { walletAddress: true }
+        select: { walletAddress: true },
       });
 
       // Clear cache for each wallet
@@ -37,7 +34,7 @@ export default async function handler(
         success: true,
         message: `Cache cleared for ${clearedCount} wallets. All cards will be regenerated on next request.`,
         clearedCount,
-        method: 'GET'
+        method: 'GET',
       });
     }
 
@@ -63,13 +60,12 @@ export default async function handler(
         success: true,
         message: 'Card cache cleared successfully. The card will be regenerated on next request.',
         walletAddress,
-        method: 'POST'
+        method: 'POST',
       });
     }
 
     // Other methods not allowed
     return res.status(405).json({ error: 'Method not allowed. Use GET or POST' });
-
   } catch (error) {
     logger.error('Error clearing cache:', error instanceof Error ? error : undefined, {
       error: String(error),
@@ -77,7 +73,7 @@ export default async function handler(
 
     return res.status(500).json({
       error: 'Failed to clear cache',
-      details: error instanceof Error ? error.message : 'Unknown error'
+      details: error instanceof Error ? error.message : 'Unknown error',
     });
   }
 }

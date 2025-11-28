@@ -14,12 +14,15 @@ const HotFeedWidget = dynamic(() => import('../components/HotFeedWidget'), {
   ssr: false,
 });
 
-const GlobalStats = dynamic(() => import('../components/GlobalStats').then(mod => ({ default: mod.GlobalStats })), {
-  loading: () => <div className="h-32 bg-gray-800/30 animate-pulse rounded-lg" />,
-});
+const GlobalStats = dynamic(
+  () => import('../components/GlobalStats').then((mod) => ({ default: mod.GlobalStats })),
+  {
+    loading: () => <div className="h-32 bg-gray-800/30 animate-pulse rounded-lg" />,
+  }
+);
 
 const LiveActivityFeed = dynamic(
-  () => import('../components/LiveActivityFeed').then(mod => ({ default: mod.LiveActivityFeed })),
+  () => import('../components/LiveActivityFeed').then((mod) => ({ default: mod.LiveActivityFeed })),
   {
     ssr: false,
   }
@@ -55,7 +58,9 @@ export default function HomeImproved() {
         <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-6">
           {/* Logo/Title */}
           <div className="text-center sm:text-left">
-            <h1 className="text-4xl sm:text-5xl font-bold gradient-text-gold animate-float">DegenScore</h1>
+            <h1 className="text-4xl sm:text-5xl font-bold gradient-text-gold animate-float">
+              DegenScore
+            </h1>
             <p className="text-gray-400 text-sm mt-1">Track your trading mastery</p>
           </div>
 

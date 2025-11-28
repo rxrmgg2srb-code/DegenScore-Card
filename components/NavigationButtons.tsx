@@ -2,8 +2,8 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 
 /**
- * Componente de navegación reutilizable para todas las páginas
- * Muestra todos los botones principales de la aplicación
+ * Reusable navigation component for all pages
+ * Shows all main application buttons
  */
 export function NavigationButtons() {
   const router = useRouter();
@@ -16,9 +16,7 @@ export function NavigationButtons() {
       <Link href="/">
         <button
           className={`px-4 py-2 rounded-lg font-medium transition ${
-            isActive('/')
-              ? 'bg-purple-600 text-white'
-              : 'bg-gray-700 hover:bg-gray-600 text-white'
+            isActive('/') ? 'bg-purple-600 text-white' : 'bg-gray-700 hover:bg-gray-600 text-white'
           }`}
         >
           🏠 Home
@@ -89,6 +87,5 @@ export function NavigationButtons() {
     </div>
   );
 }
-
 
 export default NavigationButtons;

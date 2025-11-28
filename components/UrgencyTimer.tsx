@@ -21,7 +21,7 @@ export default function UrgencyTimer({
   title = '⚡ Flash Sale Ending Soon!',
   subtitle = 'Lock in early bird pricing',
   onExpire,
-  type = 'flash-sale'
+  type = 'flash-sale',
 }: UrgencyTimerProps) {
   const [timeLeft, setTimeLeft] = useState(calculateTimeLeft());
   const [isExpired, setIsExpired] = useState(false);
@@ -51,14 +51,18 @@ export default function UrgencyTimer({
       if (newTimeLeft.total <= 0) {
         setIsExpired(true);
         clearInterval(timer);
-        if (onExpire) onExpire();
+        if (onExpire) {
+          onExpire();
+        }
       }
     }, 1000);
 
     return () => clearInterval(timer);
   }, [endTime]);
 
-  if (isExpired) return null;
+  if (isExpired) {
+    return null;
+  }
 
   const isCritical = timeLeft.total < 3600000; // Less than 1 hour
   const isUrgent = timeLeft.total < 7200000; // Less than 2 hours
@@ -76,13 +80,13 @@ export default function UrgencyTimer({
       bgGradient: 'from-blue-900/30 to-cyan-900/30',
       borderColor: 'border-blue-500/50',
     },
-    'bonus': {
+    bonus: {
       emoji: '🎁',
       colors: 'from-purple-500 to-pink-500',
       bgGradient: 'from-purple-900/30 to-pink-900/30',
       borderColor: 'border-purple-500/50',
     },
-    'event': {
+    event: {
       emoji: '🎯',
       colors: 'from-green-500 to-emerald-500',
       bgGradient: 'from-green-900/30 to-emerald-900/30',

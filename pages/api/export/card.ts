@@ -1,14 +1,16 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { prisma } from '../../../lib/prisma';
 import { isValidSolanaAddress } from '../../../lib/validation';
-import { cardToExportable, convertToCSV, convertToJSON, generateFileName } from '../../../lib/exportHelpers';
+import {
+  cardToExportable,
+  convertToCSV,
+  convertToJSON,
+  generateFileName,
+} from '../../../lib/exportHelpers';
 import { rateLimit } from '../../../lib/rateLimit';
 import { logger } from '../../../lib/logger';
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -47,9 +49,9 @@ export default async function handler(
             name: true,
             rarity: true,
             icon: true,
-          }
-        }
-      }
+          },
+        },
+      },
     });
 
     if (!card) {
@@ -78,15 +80,13 @@ export default async function handler(
     }
 
     return res.status(400).json({ error: 'Unsupported format' });
-
   } catch (error: any) {
     logger.error('Error exporting card data:', error instanceof Error ? error : undefined, {
       error: String(error),
     });
 
-    const errorMessage = process.env.NODE_ENV === 'development'
-      ? error.message
-      : 'Failed to export card data';
+    const errorMessage =
+      process.env.NODE_ENV === 'development' ? error.message : 'Failed to export card data';
 
     res.status(500).json({ error: errorMessage });
   }

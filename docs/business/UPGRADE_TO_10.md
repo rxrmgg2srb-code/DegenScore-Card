@@ -12,16 +12,16 @@ This document details all improvements made to elevate DegenScore from **8.5/10 
 
 ## 📊 Summary of Improvements
 
-| Category | Before | After | Impact |
-|----------|--------|-------|--------|
-| **Test Coverage** | 0% (thresholds at 0%) | 70%+ required | HIGH |
-| **Logging System** | console.log everywhere | Professional logger | HIGH |
-| **CI/CD** | Basic checks | Comprehensive pipeline | MEDIUM |
-| **File Upload Security** | No validation | Full validation + magic bytes | HIGH |
-| **Documentation** | Missing files | Complete with CoC | MEDIUM |
-| **Docker** | Not available | Full dev environment | MEDIUM |
-| **Rate Limiting** | In-memory (not scalable) | Redis distributed | HIGH |
-| **E2E Testing** | Not available | Playwright configured | MEDIUM |
+| Category                 | Before                   | After                         | Impact |
+| ------------------------ | ------------------------ | ----------------------------- | ------ |
+| **Test Coverage**        | 0% (thresholds at 0%)    | 70%+ required                 | HIGH   |
+| **Logging System**       | console.log everywhere   | Professional logger           | HIGH   |
+| **CI/CD**                | Basic checks             | Comprehensive pipeline        | MEDIUM |
+| **File Upload Security** | No validation            | Full validation + magic bytes | HIGH   |
+| **Documentation**        | Missing files            | Complete with CoC             | MEDIUM |
+| **Docker**               | Not available            | Full dev environment          | MEDIUM |
+| **Rate Limiting**        | In-memory (not scalable) | Redis distributed             | HIGH   |
+| **E2E Testing**          | Not available            | Playwright configured         | MEDIUM |
 
 **Total Files Created**: 15
 **Total Files Modified**: 5
@@ -36,6 +36,7 @@ This document details all improvements made to elevate DegenScore from **8.5/10 
 **Problem**: Test coverage thresholds were set to 0%, allowing untested code to pass CI.
 
 **Solution**:
+
 - Updated `jest.config.js` with 70% thresholds across all metrics
 - Created additional test files:
   - `__tests__/pages/api/analyze.test.ts` - API endpoint validation tests
@@ -48,13 +49,16 @@ This document details all improvements made to elevate DegenScore from **8.5/10 
   - Rate limiting algorithms
 
 **Files Modified**:
+
 - ✏️ `jest.config.js`
 
 **Files Created**:
+
 - ✨ `__tests__/pages/api/analyze.test.ts`
 - ✨ `__tests__/lib/rateLimit.test.ts`
 
 **Impact**:
+
 - Prevents regressions
 - Ensures code quality
 - CI will fail if coverage drops below 70%
@@ -66,6 +70,7 @@ This document details all improvements made to elevate DegenScore from **8.5/10 
 **Problem**: Production code using `console.log` (50+ instances), exposing internal logic and making debugging difficult.
 
 **Solution**:
+
 - Created enterprise-grade logging system (`lib/logger.ts`)
 - Features:
   - Environment-aware (dev vs production)
@@ -77,9 +82,11 @@ This document details all improvements made to elevate DegenScore from **8.5/10 
   - Child loggers with inherited context
 
 **Files Created**:
+
 - ✨ `lib/logger.ts` (180 lines)
 
 **Usage Example**:
+
 ```typescript
 import { logger } from '@/lib/logger';
 
@@ -96,6 +103,7 @@ await logger.time('fetchTransactions', async () => {
 ```
 
 **Impact**:
+
 - Production-ready logging
 - Better debugging and monitoring
 - Automatic error tracking
@@ -108,6 +116,7 @@ await logger.time('fetchTransactions', async () => {
 **Problem**: Tests ran with `continue-on-error: true`, allowing failing tests to pass.
 
 **Solution**:
+
 - Enhanced GitHub Actions workflow
 - Added features:
   - Coverage threshold enforcement (fails on < 70%)
@@ -116,9 +125,11 @@ await logger.time('fetchTransactions', async () => {
   - Removed `continue-on-error` flags
 
 **Files Modified**:
+
 - ✏️ `.github/workflows/ci.yml`
 
 **New CI Steps**:
+
 1. Run tests with coverage
 2. Check coverage thresholds (hard fail if below 70%)
 3. Upload coverage to Codecov
@@ -126,6 +137,7 @@ await logger.time('fetchTransactions', async () => {
 5. Fail build if any step fails
 
 **Impact**:
+
 - Enforces quality standards
 - Prevents untested code from merging
 - Visibility into code coverage trends
@@ -137,6 +149,7 @@ await logger.time('fetchTransactions', async () => {
 **Problem**: File uploads had no validation (CVE-DEGEN-007 from security audit).
 
 **Solution**:
+
 - Created comprehensive validation system (`lib/fileUploadValidation.ts`)
 - Security features:
   - MIME type validation (whitelist only)
@@ -148,9 +161,11 @@ await logger.time('fetchTransactions', async () => {
   - Malicious file detection
 
 **Files Created**:
+
 - ✨ `lib/fileUploadValidation.ts` (350+ lines)
 
 **Validation Checks**:
+
 ```typescript
 ✅ File size (max 5MB)
 ✅ Extension (.jpg, .jpeg, .png, .webp, .gif)
@@ -161,6 +176,7 @@ await logger.time('fetchTransactions', async () => {
 ```
 
 **Impact**:
+
 - Prevents malicious uploads
 - Protects against XSS/RCE attacks
 - Ensures only valid images
@@ -173,14 +189,17 @@ await logger.time('fetchTransactions', async () => {
 **Problem**: Missing CONTRIBUTING.md and CODE_OF_CONDUCT.md (community documentation).
 
 **Solution**:
+
 - Created comprehensive contributor guide
 - Added standard Code of Conduct (Contributor Covenant v2.1)
 
 **Files Created**:
+
 - ✨ `CONTRIBUTING.md` (500+ lines)
 - ✨ `CODE_OF_CONDUCT.md` (150+ lines)
 
 **CONTRIBUTING.md Includes**:
+
 - Development setup guide
 - Branching strategy
 - Code standards and style guide
@@ -192,6 +211,7 @@ await logger.time('fetchTransactions', async () => {
 - Architecture guidelines
 
 **Impact**:
+
 - Easier onboarding for contributors
 - Consistent code quality
 - Clear community standards
@@ -204,17 +224,20 @@ await logger.time('fetchTransactions', async () => {
 **Problem**: No containerized development environment, inconsistent setups across developers.
 
 **Solution**:
+
 - Created production-ready Dockerfile (multi-stage build)
 - Created docker-compose.yml with full stack
 - Optimized .dockerignore
 
 **Files Created**:
+
 - ✨ `Dockerfile` (production, multi-stage)
 - ✨ `Dockerfile.dev` (development)
 - ✨ `docker-compose.yml` (full stack)
 - ✨ `.dockerignore`
 
 **Docker Compose Services**:
+
 ```yaml
 ✅ postgres - PostgreSQL database
 ✅ redis - Redis cache
@@ -223,6 +246,7 @@ await logger.time('fetchTransactions', async () => {
 ```
 
 **Commands Added**:
+
 ```bash
 npm run docker:dev      # Start dev environment
 npm run docker:build    # Build production image
@@ -230,6 +254,7 @@ npm run docker:down     # Stop all services
 ```
 
 **Impact**:
+
 - Consistent dev environment
 - One-command setup
 - Easy local testing
@@ -242,6 +267,7 @@ npm run docker:down     # Stop all services
 **Problem**: In-memory rate limiting doesn't work across multiple instances, resets on restart (CVE-DEGEN-008).
 
 **Solution**:
+
 - Created Redis-backed rate limiting system
 - Features:
   - Distributed across all instances
@@ -249,9 +275,10 @@ npm run docker:down     # Stop all services
   - Per-endpoint configuration
   - Premium user exemptions
   - Automatic key expiration
-  - Rate limit headers (X-RateLimit-*)
+  - Rate limit headers (X-RateLimit-\*)
 
 **Files Created**:
+
 - ✨ `lib/rateLimitRedis.ts` (350+ lines)
 
 **Rate Limits**:
@@ -263,6 +290,7 @@ npm run docker:down     # Stop all services
 | /api/generate-card | 5/min | 50/min |
 
 **Usage Example**:
+
 ```typescript
 import { rateLimitMiddleware } from '@/lib/rateLimitRedis';
 
@@ -275,6 +303,7 @@ export default async function handler(req, res) {
 ```
 
 **Impact**:
+
 - Scalable across instances
 - Prevents abuse
 - Premium user benefits
@@ -287,16 +316,19 @@ export default async function handler(req, res) {
 **Problem**: No E2E tests, only unit tests.
 
 **Solution**:
+
 - Configured Playwright for multi-browser testing
 - Created initial E2E test suites
 - CI integration ready
 
 **Files Created**:
+
 - ✨ `playwright.config.ts`
 - ✨ `e2e/home.spec.ts`
 - ✨ `e2e/leaderboard.spec.ts`
 
 **Test Coverage**:
+
 ```typescript
 ✅ Homepage rendering
 ✅ Wallet connection flow
@@ -307,6 +339,7 @@ export default async function handler(req, res) {
 ```
 
 **Browsers Tested**:
+
 - Chromium (Desktop)
 - Firefox (Desktop)
 - WebKit (Desktop)
@@ -314,6 +347,7 @@ export default async function handler(req, res) {
 - Mobile Safari (iPhone 12)
 
 **Commands Added**:
+
 ```bash
 npm run test:e2e        # Run E2E tests
 npm run test:e2e:ui     # Run with UI
@@ -322,6 +356,7 @@ npm run test:all        # Run all tests
 ```
 
 **Impact**:
+
 - End-to-end validation
 - Multi-browser support
 - Prevents UI regressions
@@ -371,18 +406,18 @@ All issues from SECURITY_AUDIT.md addressed:
 
 ## 📈 Before vs After Metrics
 
-| Metric | Before | After | Improvement |
-|--------|--------|-------|-------------|
-| Test Coverage | 0% threshold | 70% required | +70% |
-| Test Files | 4 | 7 | +75% |
-| Security Score | 9.5/10 | 10/10 | +0.5 |
-| Docker Support | ❌ | ✅ | New |
-| E2E Tests | ❌ | ✅ | New |
-| Logging System | Basic | Enterprise | ✅ |
-| Rate Limiting | In-memory | Redis distributed | ✅ |
-| File Validation | ❌ | ✅ Full | New |
-| Contributing Docs | Missing | Complete | ✅ |
-| CI/CD Pipeline | Basic | Comprehensive | ✅ |
+| Metric            | Before       | After             | Improvement |
+| ----------------- | ------------ | ----------------- | ----------- |
+| Test Coverage     | 0% threshold | 70% required      | +70%        |
+| Test Files        | 4            | 7                 | +75%        |
+| Security Score    | 9.5/10       | 10/10             | +0.5        |
+| Docker Support    | ❌           | ✅                | New         |
+| E2E Tests         | ❌           | ✅                | New         |
+| Logging System    | Basic        | Enterprise        | ✅          |
+| Rate Limiting     | In-memory    | Redis distributed | ✅          |
+| File Validation   | ❌           | ✅ Full           | New         |
+| Contributing Docs | Missing      | Complete          | ✅          |
+| CI/CD Pipeline    | Basic        | Comprehensive     | ✅          |
 
 ---
 
@@ -391,16 +426,19 @@ All issues from SECURITY_AUDIT.md addressed:
 ### Immediate (Post-Merge)
 
 1. Install new dependencies:
+
    ```bash
    npm install @playwright/test prettier
    ```
 
 2. Run Playwright installation:
+
    ```bash
    npx playwright install
    ```
 
 3. Set up Redis (if not using Upstash):
+
    ```bash
    # In docker-compose
    npm run docker:dev
@@ -519,6 +557,7 @@ DegenScore has been upgraded from **8.5/10 to 10/10** through:
 - ✅ **E2E testing with Playwright** (multi-browser support)
 
 The project is now **production-ready** with enterprise-grade:
+
 - Security
 - Testing
 - Monitoring
@@ -526,6 +565,7 @@ The project is now **production-ready** with enterprise-grade:
 - Developer experience
 
 **This codebase is ready for:**
+
 - 🚀 Mainnet launch
 - 💰 External funding rounds
 - 🔐 External security audits

@@ -51,10 +51,7 @@ async function sendToDiscord(embeds: DiscordEmbed[]): Promise<boolean> {
   }
 }
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -69,7 +66,9 @@ export default async function handler(
   }
 
   if (!apiKey || apiKey !== webhookSecret) {
-    logger.warn('Unauthorized webhook attempt from:', { ip: req.headers['x-forwarded-for'] || req.socket.remoteAddress });
+    logger.warn('Unauthorized webhook attempt from:', {
+      ip: req.headers['x-forwarded-for'] || req.socket.remoteAddress,
+    });
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
@@ -81,7 +80,13 @@ export default async function handler(
     }
 
     // Validate event type
-    const validEvents = ['new_premium', 'new_record', 'weekly_challenge_winner', 'milestone', 'hot_trade'];
+    const validEvents = [
+      'new_premium',
+      'new_record',
+      'weekly_challenge_winner',
+      'milestone',
+      'hot_trade',
+    ];
     if (!validEvents.includes(event)) {
       return res.status(400).json({ error: 'Invalid event type' });
     }
@@ -90,98 +95,108 @@ export default async function handler(
 
     switch (event) {
       case 'new_premium':
-        embeds = [{
-          title: '🎉 New Premium Member!',
-          description: `${data.wallet.slice(0, 8)}... just upgraded to PREMIUM tier!`,
-          color: 0x9945FF, // Purple
-          fields: [
-            {
-              name: 'DegenScore',
-              value: String(data.degenScore || 'N/A'),
-              inline: true,
+        embeds = [
+          {
+            title: '🎉 New Premium Member!',
+            description: `${data.wallet.slice(0, 8)}... just upgraded to PREMIUM tier!`,
+            color: 0x9945ff, // Purple
+            fields: [
+              {
+                name: 'DegenScore',
+                value: String(data.degenScore || 'N/A'),
+                inline: true,
+              },
+              {
+                name: 'Total Volume',
+                value: data.totalVolume ? `$${data.totalVolume.toLocaleString()}` : 'N/A',
+                inline: true,
+              },
+            ],
+            timestamp: new Date().toISOString(),
+            footer: {
+              text: 'DegenScore Cards',
             },
-            {
-              name: 'Total Volume',
-              value: data.totalVolume ? `$${data.totalVolume.toLocaleString()}` : 'N/A',
-              inline: true,
-            },
-          ],
-          timestamp: new Date().toISOString(),
-          footer: {
-            text: 'DegenScore Cards',
           },
-        }];
+        ];
         break;
 
       case 'new_record':
-        embeds = [{
-          title: '🏆 New Record Set!',
-          description: data.description || 'A new milestone has been reached!',
-          color: 0xFFD700, // Gold
-          fields: data.fields || [],
-          timestamp: new Date().toISOString(),
-        }];
+        embeds = [
+          {
+            title: '🏆 New Record Set!',
+            description: data.description || 'A new milestone has been reached!',
+            color: 0xffd700, // Gold
+            fields: data.fields || [],
+            timestamp: new Date().toISOString(),
+          },
+        ];
         break;
 
       case 'weekly_challenge_winner':
-        embeds = [{
-          title: '👑 Weekly Challenge Winner!',
-          description: `Congratulations to ${data.winner}!`,
-          color: 0xFF4500, // Orange-red
-          fields: [
-            {
-              name: 'Challenge',
-              value: data.challengeName,
-              inline: false,
-            },
-            {
-              name: 'Prize',
-              value: `${data.prize} SOL`,
-              inline: true,
-            },
-            {
-              name: 'Score',
-              value: String(data.score),
-              inline: true,
-            },
-          ],
-          timestamp: new Date().toISOString(),
-        }];
+        embeds = [
+          {
+            title: '👑 Weekly Challenge Winner!',
+            description: `Congratulations to ${data.winner}!`,
+            color: 0xff4500, // Orange-red
+            fields: [
+              {
+                name: 'Challenge',
+                value: data.challengeName,
+                inline: false,
+              },
+              {
+                name: 'Prize',
+                value: `${data.prize} SOL`,
+                inline: true,
+              },
+              {
+                name: 'Score',
+                value: String(data.score),
+                inline: true,
+              },
+            ],
+            timestamp: new Date().toISOString(),
+          },
+        ];
         break;
 
       case 'milestone':
-        embeds = [{
-          title: '🎊 Platform Milestone!',
-          description: data.message,
-          color: 0x00FF00, // Green
-          timestamp: new Date().toISOString(),
-        }];
+        embeds = [
+          {
+            title: '🎊 Platform Milestone!',
+            description: data.message,
+            color: 0x00ff00, // Green
+            timestamp: new Date().toISOString(),
+          },
+        ];
         break;
 
       case 'hot_trade':
-        embeds = [{
-          title: '🔥 Hot Trade Alert!',
-          description: `Top trader ${data.wallet.slice(0, 8)}... just made a move!`,
-          color: 0xFF6B6B,
-          fields: [
-            {
-              name: 'Token',
-              value: data.tokenSymbol || 'Unknown',
-              inline: true,
-            },
-            {
-              name: 'Type',
-              value: data.type === 'buy' ? '🟢 BUY' : '🔴 SELL',
-              inline: true,
-            },
-            {
-              name: 'Amount',
-              value: `${data.solAmount} SOL`,
-              inline: true,
-            },
-          ],
-          timestamp: new Date().toISOString(),
-        }];
+        embeds = [
+          {
+            title: '🔥 Hot Trade Alert!',
+            description: `Top trader ${data.wallet.slice(0, 8)}... just made a move!`,
+            color: 0xff6b6b,
+            fields: [
+              {
+                name: 'Token',
+                value: data.tokenSymbol || 'Unknown',
+                inline: true,
+              },
+              {
+                name: 'Type',
+                value: data.type === 'buy' ? '🟢 BUY' : '🔴 SELL',
+                inline: true,
+              },
+              {
+                name: 'Amount',
+                value: `${data.solAmount} SOL`,
+                inline: true,
+              },
+            ],
+            timestamp: new Date().toISOString(),
+          },
+        ];
         break;
     }
 
@@ -197,9 +212,7 @@ export default async function handler(
       error: String(error),
     });
     res.status(500).json({
-      error: process.env.NODE_ENV === 'development'
-        ? error.message
-        : 'Internal server error',
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error',
     });
   }
 }

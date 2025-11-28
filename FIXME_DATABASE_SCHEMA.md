@@ -127,11 +127,13 @@ Make sure `DATABASE_URL` is set in your deployment environment:
 ## Understanding the Migration
 
 The migration file is located at:
+
 ```
 prisma/migrations/20251118015447_add_soft_delete/migration.sql
 ```
 
 It adds:
+
 - `deletedAt` column (nullable timestamp) to `DegenCard` table
 - Indexes for efficient querying with soft deletes
 - Composite indexes for leaderboard queries filtering deleted cards

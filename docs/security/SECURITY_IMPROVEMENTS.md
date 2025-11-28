@@ -5,6 +5,7 @@
 ### 🚨 SEGURIDAD CRÍTICA (Completadas)
 
 #### 1. Protección de Claves API ✅
+
 - **Antes**: Claves expuestas en `.env` (en git)
 - **Ahora**:
   - `.env` convertido a template con placeholders
@@ -12,6 +13,7 @@
   - **ACCIÓN REQUERIDA**: Renombra `.env.local.example` a `.env.local` para desarrollo local
 
 #### 2. JWT Authentication ✅
+
 - **Antes**: Tokens base64 sin firma (fácilmente falsificables)
 - **Ahora**: JWT firmados con HS256
 - **Ubicación**: `lib/walletAuth.ts`
@@ -22,6 +24,7 @@
   Añádelo a tu `.env.local`
 
 #### 3. Sanitización XSS ✅
+
 - **Antes**: Sin sanitización de inputs del usuario
 - **Ahora**: DOMPurify integrado en todos los endpoints
 - **Archivos modificados**:
@@ -31,6 +34,7 @@
   - `pages/api/update-profile.ts`
 
 #### 4. Admin Authentication ✅
+
 - **Antes**: Token simple "temp-admin-secret-123"
 - **Ahora**:
   - Requiere JWT válido + wallet en lista de admins
@@ -44,6 +48,7 @@
   ```
 
 #### 5. Rate Limiting Persistente ✅
+
 - **Antes**: Rate limiting en memoria (se resetea al reiniciar)
 - **Ahora**: Almacenado en base de datos (PostgreSQL)
 - **Archivos**:
@@ -55,66 +60,85 @@
 ## 🚀 MEJORAS DE VIRALIDAD & FOMO
 
 ### 1. Sistema de Referral Rewards ✅
+
 **Recompensas automáticas por referidos:**
+
 - 3 referidos → Badge "Influencer" + 1 mes PRO gratis
 - 10 referidos → Badge "Whale Hunter" + 0.1 SOL
 - 25 referidos → Badge "Viral King" + 3 meses PRO + 0.3 SOL
 - 50 referidos → Badge "Legend" + VIP de por vida + 1 SOL
 
 **Endpoints creados:**
+
 - `GET /api/referrals/check-rewards` - Ver recompensas disponibles
 - `POST /api/referrals/claim-rewards` - Reclamar recompensas
 
 ### 2. Daily Streaks & XP System ✅
+
 **Gamificación de engagement:**
+
 - Check-in diario: +50 XP base
 - Bonus por racha: +10 XP por día consecutivo
 - Milestones: Badges en 3, 7, 14, 30, 60, 90, 180 días
 - Pérdida de racha si no checkeas por 1+ días
 
 **Endpoints:**
+
 - `POST /api/daily-checkin` - Realizar check-in diario
 
 **Componente:**
+
 - `components/DailyCheckIn.tsx` - Widget de check-in
 
 ### 3. Live Activity Feed ✅
+
 **Feed en tiempo real de actividad:**
+
 - Muestra últimas 10 actividades (10 mins)
 - Tipos: upgrades, moonshots, leaderboard, referrals, shares, check-ins
 - Polling cada 10 segundos
 - Componente flotante bottom-right
 
 **Endpoints:**
+
 - `GET /api/recent-activity` - Obtener actividad reciente
 
 **Componente:**
+
 - `components/LiveActivityFeed.tsx` (nuevo, si no existe)
 
 ### 4. Scarcity Banner (FOMO) ✅
+
 **Escasez artificial para impulsar conversiones:**
+
 - Límite: 500 slots premium
 - Precio dinámico: 0.15 → 0.2 → 0.25 → 0.3 SOL
 - Banner rojo cuando quedan <100 slots
 - Barra de progreso animada
 
 **Endpoints:**
+
 - `GET /api/spots-remaining` - Info de escasez y pricing
 
 **Componente:**
+
 - `components/ScarcityBanner.tsx` - Banner sticky top
 
 ### 5. Discord Webhook Integration ✅
+
 **Notificaciones automáticas a Discord:**
+
 - Nuevos premium users
 - Records del leaderboard
 - Ganadores de weekly challenges
 - Hot trades de wallets top
 
 **Endpoint:**
+
 - `POST /api/discord/webhook` - Enviar notificación
 
 **Eventos soportados:**
+
 - `new_premium`
 - `new_record`
 - `weekly_challenge_winner`
@@ -122,6 +146,7 @@
 - `hot_trade`
 
 **ACCIÓN REQUERIDA:**
+
 1. Crea un webhook en tu servidor Discord
 2. Añade a `.env.local`:
    ```
@@ -133,6 +158,7 @@
 ## 📊 ACTUALIZACIONES DE BASE DE DATOS
 
 ### Nuevos modelos en Prisma:
+
 ```prisma
 model RateLimitLog {
   id          String   @id @default(cuid())
@@ -151,6 +177,7 @@ model ActivityLog {
 ```
 
 ### Campos añadidos a DegenCard:
+
 ```prisma
 lastCheckIn     DateTime?
 streakDays      Int       @default(0)
@@ -159,6 +186,7 @@ longestStreak   Int       @default(0)
 ```
 
 **ACCIÓN REQUERIDA:**
+
 ```bash
 # Sincronizar esquema con la base de datos
 npx prisma db push
@@ -171,6 +199,7 @@ npx prisma migrate dev --name add_new_features
 ## 📦 NUEVAS DEPENDENCIAS
 
 Instaladas automáticamente:
+
 - `jsonwebtoken` - JWT auth
 - `@types/jsonwebtoken` - TypeScript types
 - `isomorphic-dompurify` - XSS sanitization
@@ -180,12 +209,15 @@ Instaladas automáticamente:
 ## 🔧 PASOS DE CONFIGURACIÓN
 
 ### 1. Variables de Entorno
+
 Crea `.env.local` desde `.env.local.example`:
+
 ```bash
 cp .env.local.example .env.local
 ```
 
 Edita `.env.local` y configura:
+
 ```bash
 # Genera JWT secret seguro
 JWT_SECRET="$(openssl rand -base64 32)"
@@ -202,6 +234,7 @@ TELEGRAM_CHANNEL_ID=""
 ```
 
 ### 2. Base de Datos
+
 ```bash
 # Sincronizar nuevos modelos
 npx prisma db push
@@ -211,6 +244,7 @@ npx prisma generate
 ```
 
 ### 3. Testing Local
+
 ```bash
 # Instalar dependencias (ya hecho)
 npm install
@@ -222,6 +256,7 @@ npm run dev
 ### 4. Probar Features Nuevas
 
 **Daily Check-In:**
+
 ```bash
 curl -X POST http://localhost:3000/api/daily-checkin \
   -H "Content-Type: application/json" \
@@ -229,16 +264,19 @@ curl -X POST http://localhost:3000/api/daily-checkin \
 ```
 
 **Referral Rewards:**
+
 ```bash
 curl http://localhost:3000/api/referrals/check-rewards?walletAddress=tu-wallet
 ```
 
 **Scarcity Info:**
+
 ```bash
 curl http://localhost:3000/api/spots-remaining
 ```
 
 **Live Activity:**
+
 ```bash
 curl http://localhost:3000/api/recent-activity
 ```
@@ -259,13 +297,10 @@ export default function Home() {
   return (
     <>
       <ScarcityBanner /> {/* Sticky top banner */}
-
       <main>
         {/* Tu contenido existente */}
-
         <DailyCheckIn /> {/* Widget de check-in */}
       </main>
-
       <LiveActivityFeed /> {/* Bottom-right floating */}
     </>
   );
@@ -277,14 +312,17 @@ export default function Home() {
 ## 📈 MÉTRICAS ESPERADAS (POST-IMPLEMENTACIÓN)
 
 ### Conversión:
+
 - **Antes**: ~10-15% FREE → PREMIUM
 - **Después**: ~20-30% (gracias a FOMO + scarcity)
 
 ### Engagement:
+
 - Daily active users: +40-60% (streaks)
 - Session duration: +25-35% (gamification)
 
 ### Viralidad:
+
 - Referrals por usuario: 0.5 → 2-4
 - Viral coefficient: 0.8 → 1.8-2.5 (crecimiento exponencial!)
 
@@ -326,6 +364,7 @@ export default function Home() {
 ## 📞 SOPORTE
 
 Si encuentras problemas:
+
 1. Revisa logs del servidor: `npm run dev`
 2. Verifica Prisma Client está actualizado: `npx prisma generate`
 3. Checkea que todas las variables de entorno están configuradas

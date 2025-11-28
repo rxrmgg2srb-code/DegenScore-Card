@@ -13,16 +13,19 @@
 ## 🎯 OPCIÓN RECOMENDADA: VERCEL DASHBOARD
 
 ### Paso 1: Ir a Vercel
+
 ```
 https://vercel.com/new
 ```
 
 ### Paso 2: Import Git Repository
+
 - Busca: `rxrmgg2srb-code/DegenScore-Card`
 - Branch: `claude/code-review-improvements-011f5oEmwb1eSQEeGeTxw57o`
 - Click "Import"
 
 ### Paso 3: Configuración del Proyecto
+
 ```
 Framework Preset: Next.js (detectado automáticamente)
 Root Directory: ./
@@ -78,6 +81,7 @@ NEXT_PUBLIC_SENTRY_DSN=https://xxx@sentry.io/xxx
 ```
 
 ### Paso 5: Deploy
+
 - Click "Deploy"
 - Espera 3-5 minutos
 - ¡Listo!
@@ -89,12 +93,14 @@ NEXT_PUBLIC_SENTRY_DSN=https://xxx@sentry.io/xxx
 ### 1️⃣ BASE DE DATOS POSTGRESQL (OBLIGATORIO)
 
 **Opción A - Neon.tech** (Recomendado):
+
 1. https://neon.tech
 2. Sign up → Create Project
 3. Copia el "Connection String"
 4. Pega en `DATABASE_URL`
 
 **Opción B - Supabase**:
+
 1. https://supabase.com
 2. New Project
 3. Settings → Database → Connection String
@@ -108,6 +114,7 @@ NEXT_PUBLIC_SENTRY_DSN=https://xxx@sentry.io/xxx
 4. Usar en variables de entorno
 
 **Plan gratis incluye:**
+
 - ✅ 100,000 requests/día
 - ✅ Rate limiting
 - ✅ WebSocket support
@@ -119,12 +126,14 @@ NEXT_PUBLIC_SENTRY_DSN=https://xxx@sentry.io/xxx
 3. Copy REST URL and Token
 
 **Plan gratis incluye:**
+
 - ✅ 10,000 commands/día
 - ✅ 256 MB storage
 
 ### 4️⃣ WALLET SOLANA (OBLIGATORIO)
 
 Necesitas una wallet de Solana para recibir pagos:
+
 - Phantom
 - Solflare
 - Cualquier wallet compatible
@@ -151,23 +160,28 @@ Si ya tienes todo configurado:
 Después de que el deploy termine:
 
 ### 1. Verificar Health Endpoint
+
 ```bash
 curl https://tu-proyecto.vercel.app/api/health
 # Debe retornar: {"status":"ok","timestamp":"..."}
 ```
 
 ### 2. Probar Funcionalidad Básica
+
 - [ ] Home page carga
 - [ ] Conectar wallet funciona
 - [ ] Generar card de prueba
 - [ ] Ver leaderboard
 
 ### 3. Configurar Dominio (Opcional)
+
 En Vercel Dashboard:
+
 - Settings → Domains
 - Agregar tu dominio custom
 
 ### 4. Monitoring
+
 - [ ] Verificar logs en Vercel Dashboard
 - [ ] Configurar Sentry (opcional)
 - [ ] Setup analytics (opcional)
@@ -177,6 +191,7 @@ En Vercel Dashboard:
 ## 🆘 TROUBLESHOOTING
 
 ### Error: Database connection failed
+
 ```
 ✅ Verifica que DATABASE_URL sea correcto
 ✅ Permite conexiones desde 0.0.0.0/0 en tu DB
@@ -184,6 +199,7 @@ En Vercel Dashboard:
 ```
 
 ### Error: Build failed
+
 ```
 ✅ Verifica que Node.js version sea 20.x
 ✅ Verifica que todas las env vars estén configuradas
@@ -191,6 +207,7 @@ En Vercel Dashboard:
 ```
 
 ### Error: API routes returning 500
+
 ```
 ✅ Verifica HELIUS_API_KEY sea válida
 ✅ Verifica DATABASE_URL esté correcto
@@ -222,6 +239,7 @@ Cuando el deploy termine, tendrás:
 ✅ Monitoring incluido
 
 **URL ejemplo:**
+
 ```
 https://tu-proyecto.vercel.app
 o

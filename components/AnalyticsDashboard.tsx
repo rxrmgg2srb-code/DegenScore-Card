@@ -46,7 +46,10 @@ interface TradingMetrics {
   sharpeRatio: number;
 }
 
-export default function AnalyticsDashboard({ walletAddress: _walletAddress, analysisData }: AnalyticsProps) {
+export default function AnalyticsDashboard({
+  walletAddress: _walletAddress,
+  analysisData,
+}: AnalyticsProps) {
   const [activeTab, setActiveTab] = useState<'overview' | 'performance' | 'insights'>('overview');
   const [metrics, setMetrics] = useState<TradingMetrics | null>(null);
 
@@ -99,7 +102,7 @@ export default function AnalyticsDashboard({ walletAddress: _walletAddress, anal
     datasets: [
       {
         data: [
-          Math.floor((analysisData?.totalTrades || 0) * (analysisData?.winRate || 0) / 100),
+          Math.floor(((analysisData?.totalTrades || 0) * (analysisData?.winRate || 0)) / 100),
           Math.floor((analysisData?.totalTrades || 0) * (1 - (analysisData?.winRate || 0) / 100)),
           Math.floor((analysisData?.totalTrades || 0) * 0.05),
         ],
@@ -108,11 +111,7 @@ export default function AnalyticsDashboard({ walletAddress: _walletAddress, anal
           'rgba(239, 68, 68, 0.8)',
           'rgba(156, 163, 175, 0.8)',
         ],
-        borderColor: [
-          'rgb(34, 211, 153)',
-          'rgb(239, 68, 68)',
-          'rgb(156, 163, 175)',
-        ],
+        borderColor: ['rgb(34, 211, 153)', 'rgb(239, 68, 68)', 'rgb(156, 163, 175)'],
         borderWidth: 2,
       },
     ],
@@ -227,11 +226,7 @@ export default function AnalyticsDashboard({ walletAddress: _walletAddress, anal
                   trend={metrics.winRate >= 50 ? 'up' : 'down'}
                   icon="🎯"
                 />
-                <MetricCard
-                  title="Total Trades"
-                  value={metrics.totalTrades}
-                  icon="📊"
-                />
+                <MetricCard title="Total Trades" value={metrics.totalTrades} icon="📊" />
                 <MetricCard
                   title="Sharpe Ratio"
                   value={metrics.sharpeRatio}
@@ -344,7 +339,15 @@ interface MetricCardProps {
   icon?: string;
 }
 
-function MetricCard({ title, value, prefix = '', suffix = '', decimals = 0, trend, icon }: MetricCardProps) {
+function MetricCard({
+  title,
+  value,
+  prefix = '',
+  suffix = '',
+  decimals = 0,
+  trend,
+  icon,
+}: MetricCardProps) {
   return (
     <div className="bg-gray-800/50 backdrop-blur-lg rounded-xl p-4 border border-gray-700">
       <div className="flex items-center justify-between mb-2">

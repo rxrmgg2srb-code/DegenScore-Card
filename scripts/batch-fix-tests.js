@@ -46,65 +46,70 @@ const mockSuperTokenResult = `{
 }`;
 
 const fixes = [
-    {
-        pattern: /__tests__\/components\/TokenSecurityScanner\/Shared\/ScoreBar\.test\.tsx$/,
-        fix: (content) => {
-            if (content.includes('render(<ScoreBar />)')) {
-                return content.replace(
-                    /render\(<ScoreBar \/>\)/g,
-                    `render(<ScoreBar ${mockScoreBarProps} />)`
-                );
-            }
-            return content;
-        }
+  {
+    pattern: /__tests__\/components\/TokenSecurityScanner\/Shared\/ScoreBar\.test\.tsx$/,
+    fix: (content) => {
+      if (content.includes('render(<ScoreBar />)')) {
+        return content.replace(
+          /render\(<ScoreBar \/>\)/g,
+          `render(<ScoreBar ${mockScoreBarProps} />)`
+        );
+      }
+      return content;
     },
-    {
-        pattern: /__tests__\/components\/TokenSecurityScanner\/ReportCards\/TradingPatternsCard\.test\.tsx$/,
-        fix: (content) => {
-            if (content.includes('render(<TradingPatternsCard />)')) {
-                return content.replace(
-                    /render\(<TradingPatternsCard \/>\)/g,
-                    `render(<TradingPatternsCard ${mockTradingPatternsProps} />)`
-                );
-            }
-            return content;
-        }
+  },
+  {
+    pattern:
+      /__tests__\/components\/TokenSecurityScanner\/ReportCards\/TradingPatternsCard\.test\.tsx$/,
+    fix: (content) => {
+      if (content.includes('render(<TradingPatternsCard />)')) {
+        return content.replace(
+          /render\(<TradingPatternsCard \/>\)/g,
+          `render(<TradingPatternsCard ${mockTradingPatternsProps} />)`
+        );
+      }
+      return content;
     },
-    {
-        pattern: /__tests__\/components\/DegenCard\/CardGenerationProgress\.test\.tsx$/,
-        fix: (content) => {
-            if (content.includes('render(<CardGenerationProgress />)')) {
-                return content.replace(
-                    /render\(<CardGenerationProgress \/>\)/g,
-                    `render(<CardGenerationProgress ${mockCardGenerationProgressProps} />)`
-                );
-            }
-            return content;
-        }
-    }
+  },
+  {
+    pattern: /__tests__\/components\/DegenCard\/CardGenerationProgress\.test\.tsx$/,
+    fix: (content) => {
+      if (content.includes('render(<CardGenerationProgress />)')) {
+        return content.replace(
+          /render\(<CardGenerationProgress \/>\)/g,
+          `render(<CardGenerationProgress ${mockCardGenerationProgressProps} />)`
+        );
+      }
+      return content;
+    },
+  },
 ];
 
 let fixedCount = 0;
 
-glob.sync('c:/Users/dscanales/Documents/DegenScore-Card/DegenScore-Card-1/__tests__/**/*.test.{ts,tsx}').forEach(file => {
+glob
+  .sync(
+    'c:/Users/dscanales/Documents/DegenScore-Card/DegenScore-Card-1/__tests__/**/*.test.{ts,tsx}'
+  )
+  .forEach((file) => {
     let content = fs.readFileSync(file, 'utf8');
     let modified = false;
 
     fixes.forEach(({ pattern, fix }) => {
-        if (pattern.test(file)) {
-            const newContent = fix(content);
-            if (newContent !== content) {
-                content = newContent;
-                modified = true;
-            }
+      if (pattern.test(file)) {
+        const newContent = fix(content);
+        if (newContent !== content) {
+          content = newContent;
+          modified = true;
         }
+      }
     });
 
     if (modified) {
-        fs.writeFileSync(file, content, 'utf8');
-        fixedCount++;
-        console.log('Fixed:', path.relative(process.cwd(), file));
+      fs.writeFileSync(file, content, 'utf8');
+      fixedCount++;
+      console.log('Fixed:', path.relative(process.cwd(), file));
     }
-});
+  });
 
 console.log(`\nTotal files fixed: ${fixedCount}`);

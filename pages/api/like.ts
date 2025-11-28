@@ -5,10 +5,7 @@ import { rateLimit } from '../../lib/rateLimitRedis';
 import { logger } from '../../lib/logger';
 import { verifySessionToken } from '../../lib/walletAuth';
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -50,7 +47,7 @@ export default async function handler(
     // Check if card exists
     const currentCard = await prisma.degenCard.findUnique({
       where: { id: cardId },
-      select: { id: true, likes: true }
+      select: { id: true, likes: true },
     });
 
     if (!currentCard) {
@@ -67,9 +64,9 @@ export default async function handler(
       where: { id: cardId },
       data: {
         likes: {
-          increment: increment ? 1 : -1
-        }
-      }
+          increment: increment ? 1 : -1,
+        },
+      },
     });
 
     logger.debug('Likes updated for card:', { cardId, newCount: updatedCard.likes });
@@ -80,9 +77,8 @@ export default async function handler(
       error: String(error),
     });
 
-    const errorMessage = process.env.NODE_ENV === 'development'
-      ? error.message
-      : 'Failed to update likes';
+    const errorMessage =
+      process.env.NODE_ENV === 'development' ? error.message : 'Failed to update likes';
 
     res.status(500).json({ error: errorMessage });
   }

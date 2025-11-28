@@ -9,25 +9,36 @@ test.describe('Multilingual Support', () => {
   test('should display language selector', async ({ page }) => {
     await page.goto('/');
 
-    const languageSelector = page.locator('button, select').filter({ hasText: /english|español|language|lang/i }).first();
+    const languageSelector = page
+      .locator('button, select')
+      .filter({ hasText: /english|español|language|lang/i })
+      .first();
 
-    if (await languageSelector.count() > 0) {
-      await expect(languageSelector).toBeVisible({ timeout: 2000 }).catch(() => null);
+    if ((await languageSelector.count()) > 0) {
+      await expect(languageSelector)
+        .toBeVisible({ timeout: 2000 })
+        .catch(() => null);
     }
   });
 
   test('should switch to Spanish', async ({ page }) => {
     await page.goto('/');
 
-    const languageButton = page.locator('button, select').filter({ hasText: /language|lang|es|español/i }).first();
+    const languageButton = page
+      .locator('button, select')
+      .filter({ hasText: /language|lang|es|español/i })
+      .first();
 
-    if (await languageButton.count() > 0) {
+    if ((await languageButton.count()) > 0) {
       await languageButton.click().catch(() => null);
 
       // Look for Spanish option
-      const spanishOption = page.locator('button, a, option').filter({ hasText: /español|es/i }).first();
+      const spanishOption = page
+        .locator('button, a, option')
+        .filter({ hasText: /español|es/i })
+        .first();
 
-      if (await spanishOption.count() > 0) {
+      if ((await spanishOption.count()) > 0) {
         await spanishOption.click().catch(() => null);
 
         // Page content should update to Spanish
@@ -40,14 +51,20 @@ test.describe('Multilingual Support', () => {
   test('should switch to French', async ({ page }) => {
     await page.goto('/');
 
-    const languageButton = page.locator('button, select').filter({ hasText: /language|lang|fr|français/i }).first();
+    const languageButton = page
+      .locator('button, select')
+      .filter({ hasText: /language|lang|fr|français/i })
+      .first();
 
-    if (await languageButton.count() > 0) {
+    if ((await languageButton.count()) > 0) {
       await languageButton.click().catch(() => null);
 
-      const frenchOption = page.locator('button, a, option').filter({ hasText: /français|fr|french/i }).first();
+      const frenchOption = page
+        .locator('button, a, option')
+        .filter({ hasText: /français|fr|french/i })
+        .first();
 
-      if (await frenchOption.count() > 0) {
+      if ((await frenchOption.count()) > 0) {
         await frenchOption.click().catch(() => null);
         await page.waitForTimeout(500);
       }
@@ -58,13 +75,16 @@ test.describe('Multilingual Support', () => {
     await page.goto('/');
 
     // Switch language
-    const languageButton = page.locator('button, select').filter({ hasText: /language|lang/i }).first();
+    const languageButton = page
+      .locator('button, select')
+      .filter({ hasText: /language|lang/i })
+      .first();
 
-    if (await languageButton.count() > 0) {
+    if ((await languageButton.count()) > 0) {
       await languageButton.click().catch(() => null);
 
       const option = page.locator('button, a, option').first();
-      if (await option.count() > 0) {
+      if ((await option.count()) > 0) {
         await option.click().catch(() => null);
       }
     }
@@ -84,8 +104,10 @@ test.describe('Multilingual Support', () => {
 
     for (const element of elements) {
       const el = page.locator(`text=/${element}/i`).first();
-      if (await el.count() > 0) {
-        await expect(el).toBeVisible({ timeout: 1000 }).catch(() => null);
+      if ((await el.count()) > 0) {
+        await expect(el)
+          .toBeVisible({ timeout: 1000 })
+          .catch(() => null);
         break;
       }
     }
@@ -94,15 +116,21 @@ test.describe('Multilingual Support', () => {
   test('should handle RTL languages', async ({ page }) => {
     await page.goto('/');
 
-    const languageButton = page.locator('button, select').filter({ hasText: /language|lang|ar|hebrew/i }).first();
+    const languageButton = page
+      .locator('button, select')
+      .filter({ hasText: /language|lang|ar|hebrew/i })
+      .first();
 
-    if (await languageButton.count() > 0) {
+    if ((await languageButton.count()) > 0) {
       await languageButton.click().catch(() => null);
 
       // Look for Arabic or Hebrew option
-      const rtlOption = page.locator('button, a, option').filter({ hasText: /عربي|العربية|עברית|hebrew/i }).first();
+      const rtlOption = page
+        .locator('button, a, option')
+        .filter({ hasText: /عربي|العربية|עברית|hebrew/i })
+        .first();
 
-      if (await rtlOption.count() > 0) {
+      if ((await rtlOption.count()) > 0) {
         await rtlOption.click().catch(() => null);
         await page.waitForTimeout(500);
 
@@ -119,8 +147,10 @@ test.describe('Multilingual Support', () => {
     // Images should be visible regardless of language
     const images = page.locator('img').first();
 
-    if (await images.count() > 0) {
-      await expect(images).toBeVisible({ timeout: 2000 }).catch(() => null);
+    if ((await images.count()) > 0) {
+      await expect(images)
+        .toBeVisible({ timeout: 2000 })
+        .catch(() => null);
     }
   });
 });
@@ -129,16 +159,20 @@ test.describe('Localized Content', () => {
   test('should display localized error messages', async ({ page }) => {
     await page.goto('/');
 
-    const walletInput = page.locator('input[placeholder*="wallet" i], input[placeholder*="address" i]').first();
+    const walletInput = page
+      .locator('input[placeholder*="wallet" i], input[placeholder*="address" i]')
+      .first();
 
-    if (await walletInput.count() > 0) {
+    if ((await walletInput.count()) > 0) {
       // Enter invalid data
       await walletInput.fill('invalid');
 
       // Should show localized error
       const errorMsg = page.locator('text=/invalid|error|required/i').first();
-      if (await errorMsg.count() > 0) {
-        await expect(errorMsg).toBeVisible({ timeout: 1000 }).catch(() => null);
+      if ((await errorMsg.count()) > 0) {
+        await expect(errorMsg)
+          .toBeVisible({ timeout: 1000 })
+          .catch(() => null);
       }
     }
   });
@@ -147,15 +181,22 @@ test.describe('Localized Content', () => {
     await page.goto('/');
 
     // Trigger action that shows notification
-    const button = page.locator('button').filter({ hasText: /analyze|generate/i }).first();
+    const button = page
+      .locator('button')
+      .filter({ hasText: /analyze|generate/i })
+      .first();
 
-    if (await button.count() > 0) {
+    if ((await button.count()) > 0) {
       await button.click().catch(() => null);
 
       // Check for notification
-      const notification = page.locator('[role="alert"], [class*="notification"], [class*="toast"]').first();
-      if (await notification.count() > 0) {
-        await expect(notification).toBeVisible({ timeout: 1000 }).catch(() => null);
+      const notification = page
+        .locator('[role="alert"], [class*="notification"], [class*="toast"]')
+        .first();
+      if ((await notification.count()) > 0) {
+        await expect(notification)
+          .toBeVisible({ timeout: 1000 })
+          .catch(() => null);
       }
     }
   });
@@ -166,8 +207,10 @@ test.describe('Localized Content', () => {
     // Look for date/time display
     const dateDisplay = page.locator('text=/\\d{1,2}[\\/-]\\d{1,2}[\\/-]\\d{4}/').first();
 
-    if (await dateDisplay.count() > 0) {
-      await expect(dateDisplay).toBeVisible({ timeout: 2000 }).catch(() => null);
+    if ((await dateDisplay.count()) > 0) {
+      await expect(dateDisplay)
+        .toBeVisible({ timeout: 2000 })
+        .catch(() => null);
     }
   });
 
@@ -177,8 +220,10 @@ test.describe('Localized Content', () => {
     // Look for currency display
     const currencyDisplay = page.locator('text=/\\$|€|£|¥/').first();
 
-    if (await currencyDisplay.count() > 0) {
-      await expect(currencyDisplay).toBeVisible({ timeout: 2000 }).catch(() => null);
+    if ((await currencyDisplay.count()) > 0) {
+      await expect(currencyDisplay)
+        .toBeVisible({ timeout: 2000 })
+        .catch(() => null);
     }
   });
 
@@ -188,7 +233,7 @@ test.describe('Localized Content', () => {
     // Look for help or info icons
     const helpIcon = page.locator('[aria-label*="help" i], [title], [class*="tooltip"]').first();
 
-    if (await helpIcon.count() > 0) {
+    if ((await helpIcon.count()) > 0) {
       // Hover to show tooltip
       await helpIcon.hover().catch(() => null);
 
@@ -202,9 +247,12 @@ test.describe('Mobile Breakpoints', () => {
     await page.setViewportSize({ width: 320, height: 568 });
     await page.goto('/');
 
-    const connectButton = page.locator('button').filter({ hasText: /connect|wallet/i }).first();
+    const connectButton = page
+      .locator('button')
+      .filter({ hasText: /connect|wallet/i })
+      .first();
 
-    if (await connectButton.count() > 0) {
+    if ((await connectButton.count()) > 0) {
       await expect(connectButton).toBeVisible();
     }
   });
@@ -215,7 +263,7 @@ test.describe('Mobile Breakpoints', () => {
 
     const content = page.locator('main, [role="main"]').first();
 
-    if (await content.count() > 0) {
+    if ((await content.count()) > 0) {
       await expect(content).toBeVisible();
     }
   });
@@ -226,7 +274,7 @@ test.describe('Mobile Breakpoints', () => {
 
     const content = page.locator('main, [role="main"]').first();
 
-    if (await content.count() > 0) {
+    if ((await content.count()) > 0) {
       await expect(content).toBeVisible();
     }
   });
@@ -237,7 +285,7 @@ test.describe('Mobile Breakpoints', () => {
 
     const content = page.locator('main, [role="main"]').first();
 
-    if (await content.count() > 0) {
+    if ((await content.count()) > 0) {
       await expect(content).toBeVisible();
     }
   });
@@ -248,7 +296,7 @@ test.describe('Mobile Breakpoints', () => {
 
     const content = page.locator('main, [role="main"]').first();
 
-    if (await content.count() > 0) {
+    if ((await content.count()) > 0) {
       await expect(content).toBeVisible();
     }
   });
@@ -259,7 +307,7 @@ test.describe('Mobile Breakpoints', () => {
 
     const content = page.locator('main, [role="main"]').first();
 
-    if (await content.count() > 0) {
+    if ((await content.count()) > 0) {
       await expect(content).toBeVisible();
     }
   });
@@ -270,7 +318,7 @@ test.describe('Mobile Breakpoints', () => {
 
     const content = page.locator('main, [role="main"]').first();
 
-    if (await content.count() > 0) {
+    if ((await content.count()) > 0) {
       await expect(content).toBeVisible();
     }
   });
@@ -280,9 +328,12 @@ test.describe('Mobile Breakpoints', () => {
     await page.goto('/');
 
     // Look for mobile menu
-    const mobileMenu = page.locator('button').filter({ hasText: /menu|hamburger|nav/i }).first();
+    const mobileMenu = page
+      .locator('button')
+      .filter({ hasText: /menu|hamburger|nav/i })
+      .first();
 
-    if (await mobileMenu.count() > 0) {
+    if ((await mobileMenu.count()) > 0) {
       await mobileMenu.click().catch(() => null);
 
       // Menu should open
@@ -339,13 +390,16 @@ test.describe('Multilingual Mobile', () => {
     await page.setViewportSize({ width: 375, height: 667 });
     await page.goto('/');
 
-    const languageButton = page.locator('button, select').filter({ hasText: /language|lang/i }).first();
+    const languageButton = page
+      .locator('button, select')
+      .filter({ hasText: /language|lang/i })
+      .first();
 
-    if (await languageButton.count() > 0) {
+    if ((await languageButton.count()) > 0) {
       await languageButton.click().catch(() => null);
 
       const option = page.locator('button, a, option').first();
-      if (await option.count() > 0) {
+      if ((await option.count()) > 0) {
         await option.click().catch(() => null);
       }
     }

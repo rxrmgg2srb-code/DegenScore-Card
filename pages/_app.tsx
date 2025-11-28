@@ -45,13 +45,14 @@ export default function App({ Component, pageProps }: AppProps) {
         'Unexpected error',
         'User rejected',
         'wallet is not available',
-        'WalletNotReadyError'
+        'WalletNotReadyError',
       ];
 
-      const shouldIgnore = ignorableErrors.some(msg =>
-        error?.message?.includes(msg) ||
-        error?.toString()?.includes(msg) ||
-        error?.name?.includes(msg)
+      const shouldIgnore = ignorableErrors.some(
+        (msg) =>
+          error?.message?.includes(msg) ||
+          error?.toString()?.includes(msg) ||
+          error?.name?.includes(msg)
       );
 
       if (shouldIgnore) {
@@ -71,11 +72,7 @@ export default function App({ Component, pageProps }: AppProps) {
       <Analytics />
       <I18nextProvider i18n={i18n}>
         <ConnectionProvider endpoint={endpoint}>
-          <WalletProvider
-            wallets={wallets}
-            autoConnect={true}
-            onError={onError}
-          >
+          <WalletProvider wallets={wallets} autoConnect={true} onError={onError}>
             <WalletModalProvider>
               <WalletTracker />
               <Component {...pageProps} />

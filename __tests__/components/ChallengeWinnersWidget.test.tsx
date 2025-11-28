@@ -4,7 +4,7 @@ import ChallengeWinnersWidget from '@/components/ChallengeWinnersWidget';
 
 describe('ChallengeWinnersWidget', () => {
   beforeEach(() => {
-    jest.spyOn(console, 'error').mockImplementation(() => { });
+    jest.spyOn(console, 'error').mockImplementation(() => {});
   });
 
   afterEach(() => {

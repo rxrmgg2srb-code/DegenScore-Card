@@ -1,6 +1,7 @@
 # 🏆 Sistema de Logros y Temporadas - DegenScore
 
 ## Resumen Ejecutivo
+
 Sistema de badges con puntuación y temporadas competitivas con premios en SOL. Los badges se agrupan en categorías con rareza que determina los puntos otorgados.
 
 ---
@@ -18,16 +19,19 @@ Sistema de badges con puntuación y temporadas competitivas con premios en SOL. 
 Cada temporada tiene **3 categorías de premios**:
 
 #### 1. ❤️ Más Likes
+
 - **Premio:** 1 SOL por cada 100 participantes
 - **Cómo ganar:** Consigue más likes en tu card
 - **Estrategia:** Comparte tu card en Twitter, Telegram, Discord
 
 #### 2. 👥 Más Referidos Premium
+
 - **Premio:** 1 SOL por cada 100 participantes
 - **Cómo ganar:** Refiere usuarios que creen cards premium (pagan 0.2 SOL)
 - **Estrategia:** Comparte tu link de referido, trae amigos al juego
 
 #### 3. ⭐ Más Logros (Badge Points)
+
 - **Premio:** 1 SOL por cada 100 participantes (dividido en 2: 1 SOL para categorías de trading + 1 SOL para categoría de logros)
 - **Cómo ganar:** Acumula la mayor cantidad de puntos de badges
 - **Estrategia:** Tradea activo, mantén buenos ratios, desbloquea todos los badges posibles
@@ -35,6 +39,7 @@ Cada temporada tiene **3 categorías de premios**:
 ### Ejemplo de Distribución de Premios
 
 **Season con 500 participantes:**
+
 - Total recaudado: 500 × 0.2 SOL = **100 SOL**
 - Prize pool (20 SOL):
   - Categoría Likes: 5 SOL → Ganador con más likes
@@ -48,19 +53,20 @@ Cada temporada tiene **3 categorías de premios**:
 
 ### Rareza y Puntos
 
-| Rareza | Puntos | Color | Dificultad |
-|--------|--------|-------|------------|
-| COMMON | 1 pt | Gris | Fácil de conseguir |
-| RARE | 3 pts | Azul | Requiere algo de esfuerzo |
-| EPIC | 5 pts | Morado | Difícil |
-| LEGENDARY | 10 pts | Dorado | Muy difícil |
-| MYTHIC | 25 pts | Rosa | Extremadamente raro |
+| Rareza    | Puntos | Color  | Dificultad                |
+| --------- | ------ | ------ | ------------------------- |
+| COMMON    | 1 pt   | Gris   | Fácil de conseguir        |
+| RARE      | 3 pts  | Azul   | Requiere algo de esfuerzo |
+| EPIC      | 5 pts  | Morado | Difícil                   |
+| LEGENDARY | 10 pts | Dorado | Muy difícil               |
+| MYTHIC    | 25 pts | Rosa   | Extremadamente raro       |
 
 ### Cómo se Calculan los Puntos Totales
 
 Tu **puntuación total de logros** es la suma de puntos de todos tus badges desbloqueados.
 
 **Ejemplo:**
+
 - Badge "🐣 Mini Degen" (COMMON) = 1 pt
 - Badge "🦈 Shark" (RARE) = 3 pts
 - Badge "💎 Solid Trader" (EPIC) = 5 pts
@@ -74,6 +80,7 @@ Tu **puntuación total de logros** es la suma de puntos de todos tus badges desb
 Usa datos que **ya existen** en tu DB:
 
 ### A. Volumen (15 badges) ✅
+
 ```typescript
 // Datos existentes: card.totalVolume
 const volumeBadges = [
@@ -95,13 +102,12 @@ const volumeBadges = [
 
 // Implementación:
 function checkVolumeBadges(card: DegenCard): string[] {
-  return volumeBadges
-    .filter(b => card.totalVolume >= b.threshold)
-    .map(b => b.key);
+  return volumeBadges.filter((b) => card.totalVolume >= b.threshold).map((b) => b.key);
 }
 ```
 
 ### B. PNL (15 badges) ✅
+
 ```typescript
 // Datos existentes: card.profitLoss
 const pnlBadges = [
@@ -127,6 +133,7 @@ const pnlBadges = [
 ```
 
 ### C. Win Rate (10 badges) ✅
+
 ```typescript
 // Datos existentes: card.winRate
 const winRateBadges = [
@@ -152,6 +159,7 @@ Requiere analizar `HotTrade` timestamps y patterns:
 ### D. Actividad/Comportamiento (20 badges) 🟡
 
 **Datos necesarios:**
+
 ```sql
 -- Contar trades por día
 SELECT DATE(timestamp), COUNT(*)
@@ -170,6 +178,7 @@ GROUP BY HOUR(timestamp);
 ```
 
 **Implementación:**
+
 ```typescript
 // lib/badgeChecker.ts
 export async function checkBehavioralBadges(walletAddress: string) {
@@ -204,7 +213,9 @@ export async function checkBehavioralBadges(walletAddress: string) {
   }
 
   // 🌙 Night Owl — tradea después de las 00h
-  const nightTrades = trades.filter(t => t.timestamp.getHours() >= 0 && t.timestamp.getHours() < 6);
+  const nightTrades = trades.filter(
+    (t) => t.timestamp.getHours() >= 0 && t.timestamp.getHours() < 6
+  );
   if (nightTrades.length >= 5) {
     badges.push('night_owl');
   }
@@ -216,6 +227,7 @@ export async function checkBehavioralBadges(walletAddress: string) {
 ### F. Leaderboard/Social (15 badges) 🟡
 
 **Schema update necesario:**
+
 ```prisma
 model DegenCard {
   // ... existing fields
@@ -241,18 +253,20 @@ model CardView {
 ### E. Tokens/Memecoins (15 badges) 🔴
 
 **Desafíos:**
+
 - 🧬 Genesis Hunter → Necesitas block number de la compra
 - 🥇 Top 1% Holder → Necesitas on-chain holder data
 - ⛏️ Early Miner → Necesitas total holder count en el momento
 
 **Solución:**
+
 ```typescript
 // Opción 1: Usar Helius Enhanced Transactions API
 const response = await fetch('https://api.helius.xyz/v0/addresses/{wallet}/transactions', {
   method: 'POST',
   body: JSON.stringify({
     type: 'SWAP',
-  })
+  }),
 });
 
 // Opción 2: Simplificar badges
@@ -279,6 +293,7 @@ const premiumBadges = [
 ## 🎨 ARQUITECTURA TÉCNICA
 
 ### 1. Schema Update
+
 ```prisma
 // prisma/schema.prisma
 
@@ -314,6 +329,7 @@ model BadgeUnlock {
 ```
 
 ### 2. Badge Checker Service
+
 ```typescript
 // lib/badges/badgeChecker.ts
 
@@ -335,13 +351,13 @@ export async function checkAllBadges(walletAddress: string): Promise<string[]> {
 
   // FASE 2: Behavioral (si implementado)
   if (ENABLE_BEHAVIORAL_BADGES) {
-    unlockedBadges.push(...await checkBehavioralBadges(walletAddress));
-    unlockedBadges.push(...await checkSocialBadges(card));
+    unlockedBadges.push(...(await checkBehavioralBadges(walletAddress)));
+    unlockedBadges.push(...(await checkSocialBadges(card)));
   }
 
   // FASE 3: Advanced (si implementado)
   if (ENABLE_TOKEN_BADGES) {
-    unlockedBadges.push(...await checkTokenBadges(walletAddress));
+    unlockedBadges.push(...(await checkTokenBadges(walletAddress)));
   }
 
   return unlockedBadges;
@@ -349,6 +365,7 @@ export async function checkAllBadges(walletAddress: string): Promise<string[]> {
 ```
 
 ### 3. API Endpoint
+
 ```typescript
 // pages/api/badges/check.ts
 
@@ -394,13 +411,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
 ## 📈 IMPACTO ESPERADO
 
-| Métrica | Antes | Después (estimado) |
-|---------|-------|-------------------|
-| Tiempo en sitio | 30s | 2-3 min |
-| Retorno de usuarios | 10% | 40-60% |
-| Conversión a premium | 2% | 5-8% |
-| Shares en Twitter | 50/día | 300-500/día |
-| Costo de implementación | - | 4-6 días dev |
+| Métrica                 | Antes  | Después (estimado) |
+| ----------------------- | ------ | ------------------ |
+| Tiempo en sitio         | 30s    | 2-3 min            |
+| Retorno de usuarios     | 10%    | 40-60%             |
+| Conversión a premium    | 2%     | 5-8%               |
+| Shares en Twitter       | 50/día | 300-500/día        |
+| Costo de implementación | -      | 4-6 días dev       |
 
 ---
 
@@ -423,6 +440,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
    - "🎉 Nuevo badge desbloqueado: 🐋 Whale"
 
 2. **Badge Progress Bar:**
+
    ```
    🐳 Baby Whale (75 SOL) ████████░░ 80% (60/75 SOL)
    Next: 💎 Solid Trader (100 SOL)
@@ -436,6 +454,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
    - Mythic (arcoíris): <0.1% ("⭐ Perfect Trader")
 
 4. **Leaderboard de Badges:**
+
    ```
    🏆 Top Badge Collectors:
    1. wallet123... - 87 badges

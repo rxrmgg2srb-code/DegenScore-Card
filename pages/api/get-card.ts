@@ -7,10 +7,7 @@ import { logger } from '../../lib/logger';
  * API endpoint to get card data by wallet address
  * Used for profile pages and card viewing
  */
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -63,15 +60,13 @@ export default async function handler(
       createdAt: card.createdAt.toISOString(),
       updatedAt: card.updatedAt.toISOString(),
     });
-
   } catch (error: any) {
     logger.error('Error fetching card data:', error instanceof Error ? error : undefined, {
       error: String(error),
     });
 
-    const errorMessage = process.env.NODE_ENV === 'development'
-      ? error.message
-      : 'Failed to fetch card data';
+    const errorMessage =
+      process.env.NODE_ENV === 'development' ? error.message : 'Failed to fetch card data';
 
     res.status(500).json({ error: errorMessage });
   }

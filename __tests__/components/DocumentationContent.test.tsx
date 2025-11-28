@@ -13,11 +13,13 @@ jest.mock('next/head', () => {
 });
 
 jest.mock('@/components/LanguageSelector', () => ({
-  LanguageSelector: () => React.createElement('div', data-testid="language-selector", 'Language Selector'),
+  LanguageSelector: () =>
+    React.createElement('div', { 'data-testid': 'language-selector' }, 'Language Selector'),
 }));
 
 jest.mock('@/components/NavigationButtons', () => ({
-  NavigationButtons: () => React.createElement('div', data-testid="navigation-buttons", 'Navigation Buttons'),
+  NavigationButtons: () =>
+    React.createElement('div', { 'data-testid': 'navigation-buttons' }, 'Navigation Buttons'),
 }));
 
 // Mock framer-motion to avoid animation issues in tests
@@ -69,7 +71,7 @@ describe('DocumentationContent', () => {
 
     // Since we can't easily check scroll position in JSDOM without more complex mocks,
     // we assume if it didn't crash, it's fine.
-    // We could check if the active class is applied if we knew the class name logic, 
+    // We could check if the active class is applied if we knew the class name logic,
     // but for now "renders without crashing" on interaction is good.
   });
 });

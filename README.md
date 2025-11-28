@@ -1,6 +1,7 @@
 <div align="center">
 
 # 🎴 DegenScore
+
 ### **The Credit Score for Crypto Degenerates**
 
 **Your reputation is your wealth. Prove it on-chain.**
@@ -46,6 +47,7 @@ Think **LinkedIn + FICO Score + Pokémon Cards** for crypto traders.
 ## ✨ Features
 
 ### 🎯 Professional Analytics
+
 - **Real Profit/Loss Calculation** (FIFO position tracking)
 - **Win Rate** (based on closed positions, not guesses)
 - **Moonshot Detection** (100x+ gains)
@@ -56,6 +58,7 @@ Think **LinkedIn + FICO Score + Pokémon Cards** for crypto traders.
 - **Trading Streaks** (win/loss streaks)
 
 ### 🎮 Gamification
+
 - **DegenScore (0-100)** - Your ultimate reputation metric
 - **Dynamic NFTs** - Updates as you trade better
 - **Badges & Achievements** - Unlock via milestones
@@ -64,6 +67,7 @@ Think **LinkedIn + FICO Score + Pokémon Cards** for crypto traders.
 - **Leaderboards** - Global rankings by score/volume/win rate
 
 ### 💰 Tokenomics
+
 - **$DEGEN Token** - Native utility token (1B supply)
 - **Earn by Trading** - Daily quests, referrals, achievements
 - **Stake for Perks** - 2x-5x reward multipliers
@@ -71,6 +75,7 @@ Think **LinkedIn + FICO Score + Pokémon Cards** for crypto traders.
 - **Multi-Level Referrals** - Earn from 3 levels deep
 
 ### 🔒 Enterprise Security
+
 - **9.5/10 Security Score** ([Audit Report](./SECURITY_AUDIT.md))
 - **Ed25519 Signatures** - Cryptographic wallet verification
 - **Payment Verification** - On-chain validation (double-spend proof)
@@ -83,6 +88,7 @@ Think **LinkedIn + FICO Score + Pokémon Cards** for crypto traders.
 ## 🚀 Quick Start
 
 ### Prerequisites
+
 - Node.js 18+ ([Download](https://nodejs.org/))
 - Solana Wallet (Phantom, Backpack, Solflare)
 - Helius API Key ([Free tier](https://helius.dev))
@@ -136,6 +142,7 @@ anchor deploy --provider.cluster mainnet-beta
 ## 🏗️ Tech Stack
 
 ### Frontend
+
 - **Framework**: Next.js 14 (React 18, TypeScript)
 - **Styling**: Tailwind CSS 3 + Framer Motion
 - **Charts**: Chart.js + Recharts
@@ -144,6 +151,7 @@ anchor deploy --provider.cluster mainnet-beta
 - **i18n**: 3 languages (EN, ES, ZH)
 
 ### Backend
+
 - **API**: Serverless (Next.js API Routes)
 - **Database**: PostgreSQL (Supabase) + Prisma ORM
 - **Cache**: Upstash Redis (sub-ms latency)
@@ -152,6 +160,7 @@ anchor deploy --provider.cluster mainnet-beta
 - **Monitoring**: Sentry
 
 ### Blockchain
+
 - **Network**: Solana mainnet-beta
 - **RPC**: Helius (enterprise-grade)
 - **Programs**: 3 Anchor smart contracts
@@ -160,6 +169,7 @@ anchor deploy --provider.cluster mainnet-beta
   - `staking` - Tiered staking (20%-150% APY)
 
 ### DevOps
+
 - **Hosting**: Vercel / Render.com
 - **CI/CD**: GitHub Actions
 - **Database**: Supabase (hosted PostgreSQL)
@@ -171,17 +181,17 @@ anchor deploy --provider.cluster mainnet-beta
 
 The **DegenScore (0-100)** is calculated using 9 weighted factors:
 
-| Factor | Weight | Description |
-|--------|--------|-------------|
-| **Profit/Loss** | 30% | Actual SOL made/lost (+10 SOL = max score) |
-| **Win Rate** | 20% | % of profitable trades (50%+ = good) |
-| **Volume** | 10% | Total SOL traded (100+ SOL = max score) |
-| **Moonshots** | +10% | 100x+ gains (each = +5 points, max 2) |
-| **Rugs** | -15% | Tokens that went to zero (-1 point each) |
-| **Diamond Hands** | +10% | Profitable holds >30 days (+2 points each) |
-| **Quick Flips** | -10% | Paperhanded <1 hour (-0.5 points each) |
-| **Volatility** | -10% | Risk score (high volatility = penalty) |
-| **Activity** | 10% | Consistency bonus (100+ trades = max) |
+| Factor            | Weight | Description                                |
+| ----------------- | ------ | ------------------------------------------ |
+| **Profit/Loss**   | 30%    | Actual SOL made/lost (+10 SOL = max score) |
+| **Win Rate**      | 20%    | % of profitable trades (50%+ = good)       |
+| **Volume**        | 10%    | Total SOL traded (100+ SOL = max score)    |
+| **Moonshots**     | +10%   | 100x+ gains (each = +5 points, max 2)      |
+| **Rugs**          | -15%   | Tokens that went to zero (-1 point each)   |
+| **Diamond Hands** | +10%   | Profitable holds >30 days (+2 points each) |
+| **Quick Flips**   | -10%   | Paperhanded <1 hour (-0.5 points each)     |
+| **Volatility**    | -10%   | Risk score (high volatility = penalty)     |
+| **Activity**      | 10%    | Consistency bonus (100+ trades = max)      |
 
 **Formula**: Weighted sum, normalized to 0-100, rounded.
 
@@ -203,6 +213,7 @@ See [`lib/metricsEngine.ts`](./lib/metricsEngine.ts) for full implementation.
 ## 🎯 Roadmap
 
 ### ✅ Q1 2025: Launch
+
 - [x] Smart contracts deployed (Token, NFT, Staking)
 - [x] Security audit (Internal - 9.5/10)
 - [ ] External audit (OtterSec - $40k)
@@ -210,18 +221,21 @@ See [`lib/metricsEngine.ts`](./lib/metricsEngine.ts) for full implementation.
 - [ ] Public launch (50k users target)
 
 ### 🔄 Q2 2025: Growth
+
 - [ ] Mobile app (iOS + Android)
 - [ ] CEX listing (Gate.io)
 - [ ] Partnerships (Jupiter, Phantom, Magic Eden)
 - [ ] 500k users target
 
 ### 🚀 Q3 2025: Expansion
+
 - [ ] Cross-chain (Ethereum, Base, Arbitrum)
 - [ ] AI predictions (ML moonshot detector)
 - [ ] Binance listing
 - [ ] 2M users target
 
 ### 🏆 Q4 2025: Domination
+
 - [ ] White-label offering (DAOs)
 - [ ] Enterprise partnerships
 - [ ] Series A fundraise ($20M @ $200M valuation)
@@ -231,14 +245,14 @@ See [`lib/metricsEngine.ts`](./lib/metricsEngine.ts) for full implementation.
 
 ## 💼 Business Model
 
-| Revenue Stream | Price | Target | Annual Revenue |
-|---------------|-------|--------|----------------|
-| Premium Memberships | 1 SOL | 120k/year | $16.8M |
-| Marketplace Fees | 5% | $6M volume | $300k |
-| Sponsored Badges | $5k/brand | 240/year | $1.2M |
-| White-Label | $50k | 20 clients | $1M |
-| API Subscriptions | 50k $DEGEN | 12k devs | Token burn |
-| **TOTAL** | | | **$19.3M** |
+| Revenue Stream      | Price      | Target     | Annual Revenue |
+| ------------------- | ---------- | ---------- | -------------- |
+| Premium Memberships | 1 SOL      | 120k/year  | $16.8M         |
+| Marketplace Fees    | 5%         | $6M volume | $300k          |
+| Sponsored Badges    | $5k/brand  | 240/year   | $1.2M          |
+| White-Label         | $50k       | 20 clients | $1M            |
+| API Subscriptions   | 50k $DEGEN | 12k devs   | Token burn     |
+| **TOTAL**           |            |            | **$19.3M**     |
 
 **LTV/CAC**: 28x (viral referrals = near-zero acquisition cost)
 **Payback Period**: 1 day
@@ -258,6 +272,7 @@ We welcome contributions! See [CONTRIBUTING.md](./CONTRIBUTING.md) for guideline
 5. Open a Pull Request
 
 ### Code Style
+
 - TypeScript strict mode enabled
 - ESLint + Prettier for formatting
 - Conventional Commits format

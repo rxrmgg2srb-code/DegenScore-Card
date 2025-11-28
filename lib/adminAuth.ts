@@ -30,7 +30,7 @@ export function verifyAdminAuth(req: NextApiRequest): AdminAuthResult {
   }
 
   // Check if wallet is in admin list
-  const adminWallets = process.env.ADMIN_WALLETS?.split(',').map(w => w.trim()) || [];
+  const adminWallets = process.env.ADMIN_WALLETS?.split(',').map((w) => w.trim()) || [];
   if (adminWallets.length === 0) {
     return { authorized: false, error: 'No admin wallets configured' };
   }
@@ -50,6 +50,6 @@ export function verifyAdminAuth(req: NextApiRequest): AdminAuthResult {
  * Check if a wallet address is an admin
  */
 export function isAdminWallet(walletAddress: string): boolean {
-  const adminWallets = process.env.ADMIN_WALLETS?.split(',').map(w => w.trim()) || [];
+  const adminWallets = process.env.ADMIN_WALLETS?.split(',').map((w) => w.trim()) || [];
   return adminWallets.includes(walletAddress);
 }

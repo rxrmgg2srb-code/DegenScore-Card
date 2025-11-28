@@ -6,10 +6,7 @@ import { logger } from '../../../lib/logger';
  * API endpoint to get streak leaderboard
  * Public endpoint - no auth required
  */
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -31,13 +28,11 @@ export default async function handler(
       count: leaderboard.length,
       leaderboard,
     });
-
   } catch (error: any) {
     logger.error('Error fetching streak leaderboard:', error);
 
-    const errorMessage = process.env.NODE_ENV === 'development'
-      ? error.message
-      : 'Failed to fetch leaderboard';
+    const errorMessage =
+      process.env.NODE_ENV === 'development' ? error.message : 'Failed to fetch leaderboard';
 
     res.status(500).json({ error: errorMessage });
   }

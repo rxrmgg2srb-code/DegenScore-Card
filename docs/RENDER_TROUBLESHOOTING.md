@@ -9,6 +9,7 @@ Este error ocurre cuando Render no puede conectarse al servidor Next.js. **Ya es
 ### 1. Script de Migración Automática
 
 Creamos `scripts/migrate-and-start.js` que:
+
 - ✅ Aplica migraciones de Prisma automáticamente
 - ✅ Genera el cliente de Prisma
 - ✅ Inicia Next.js en el puerto correcto (0.0.0.0)
@@ -17,17 +18,20 @@ Creamos `scripts/migrate-and-start.js` que:
 ### 2. Nueva Migración de Base de Datos
 
 Agregada: `prisma/migrations/20251117054708_add_token_analysis_model/`
+
 - ✅ Crea la tabla `TokenAnalysis` para el Token Security Scanner
 - ✅ Todos los índices optimizados
 
 ### 3. Configuración Actualizada
 
 **package.json**:
+
 ```json
 "start": "node scripts/migrate-and-start.js"
 ```
 
 **render.yaml**:
+
 ```yaml
 startCommand: node scripts/migrate-and-start.js
 ```
@@ -37,6 +41,7 @@ startCommand: node scripts/migrate-and-start.js
 ## 🚀 Pasos para Deployar en Render
 
 ### 1. Push de Cambios
+
 ```bash
 git add -A
 git commit -m "fix: add auto-migration and improve Render compatibility"
@@ -46,6 +51,7 @@ git push
 ### 2. Verificar Variables de Entorno en Render
 
 Asegúrate de tener configuradas:
+
 - ✅ `DATABASE_URL` - URL de PostgreSQL
 - ✅ `NODE_ENV=production`
 - ✅ `HELIUS_API_KEY`
@@ -58,6 +64,7 @@ Asegúrate de tener configuradas:
 ### 3. Trigger Manual Deploy (si auto-deploy está off)
 
 En Render Dashboard:
+
 1. Ve a tu servicio
 2. Click en "Manual Deploy"
 3. Selecciona la branch `main`
@@ -97,11 +104,13 @@ En Render Dashboard, ve a "Logs" y deberías ver:
 Si aún tienes problemas:
 
 ### 1. Verificar Health Check
+
 ```bash
 curl https://tu-app.onrender.com/api/health
 ```
 
 Deberías recibir:
+
 ```json
 {
   "status": "ok",
@@ -120,6 +129,7 @@ Deberías recibir:
 ### 2. Verificar Logs de Build
 
 En Render logs, busca:
+
 - ✅ `npm install` completo
 - ✅ `npx prisma generate` exitoso
 - ✅ `npm run build` exitoso
@@ -130,11 +140,13 @@ En Render logs, busca:
 El error más común es **DATABASE_URL incorrecto**.
 
 Formato correcto:
+
 ```
 postgresql://user:password@host:5432/database?pgbouncer=true&connection_limit=1
 ```
 
 **IMPORTANTE**:
+
 - Usa `?pgbouncer=true&connection_limit=1` para el plan FREE
 - Render PostgreSQL FREE tiene limitaciones de conexiones
 
@@ -143,6 +155,7 @@ postgresql://user:password@host:5432/database?pgbouncer=true&connection_limit=1
 Render asigna automáticamente `PORT=10000`.
 
 El script lo detecta automáticamente:
+
 ```javascript
 const PORT = process.env.PORT || 3000;
 ```
@@ -162,16 +175,21 @@ npx prisma db push --accept-data-loss  # SOLO si es necesario
 ## 🆘 Errores Comunes
 
 ### Error: "Port already in use"
+
 **Solución**: Render maneja esto automáticamente. Si persiste, reinicia el servicio.
 
 ### Error: "Prisma Client not found"
+
 **Solución**: El script `migrate-and-start.js` lo genera automáticamente.
 
 ### Error: "Database connection failed"
+
 **Solución**: Verifica `DATABASE_URL` en Environment Variables.
 
 ### Error: "Health check failed"
+
 **Solución**:
+
 1. Verifica que `/api/health.ts` existe
 2. Verifica variables de entorno críticas
 3. El health check responde 200 incluso si algunas variables faltan
@@ -192,6 +210,7 @@ Si después de todos estos pasos sigue sin funcionar:
 ## ✨ Características del Nuevo Script
 
 ### Logging Mejorado
+
 ```
 ✅ - Operación exitosa
 ⚠️  - Advertencia (continúa)
@@ -202,11 +221,13 @@ Si después de todos estos pasos sigue sin funcionar:
 ```
 
 ### Recuperación de Errores
+
 - Si las migraciones fallan, **continúa** (útil para desarrollo)
 - Si Prisma Client falla, **detiene** (requerido)
 - Si Next.js falla, **detiene** (requerido)
 
 ### Graceful Shutdown
+
 - Maneja señales SIGTERM, SIGINT, SIGQUIT
 - Cierra Next.js correctamente
 - No deja procesos huérfanos
@@ -235,6 +256,7 @@ Si después de todos estos pasos sigue sin funcionar:
 ## 📊 Monitoreo
 
 Después del deploy:
+
 - Configura uptime monitoring (Render incluye básico)
 - Revisa logs regularmente
 - Monitorea uso de base de datos

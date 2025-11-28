@@ -19,17 +19,14 @@ import { cacheDel, CacheKeys } from '../../lib/cache/redis';
  * - Detailed logging for audit trail
  * - Protection against race conditions
  */
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   // ═══════════════════════════════════════════════════════════
   // 1. METHOD VALIDATION
   // ═══════════════════════════════════════════════════════════
   if (req.method !== 'POST') {
     return res.status(405).json({
       error: 'Method not allowed',
-      details: 'Only POST requests are accepted'
+      details: 'Only POST requests are accepted',
     });
   }
 
@@ -38,7 +35,7 @@ export default async function handler(
   // ═══════════════════════════════════════════════════════════
   if (!(await rateLimit(req, res))) {
     logger.warn('⚠️ Rate limit exceeded for promo code application', {
-      ip: req.headers['x-forwarded-for'] || req.socket.remoteAddress
+      ip: req.headers['x-forwarded-for'] || req.socket.remoteAddress,
     });
     return;
   }
@@ -51,10 +48,13 @@ export default async function handler(
 
     // Validate required fields
     if (!walletAddress || !promoCode) {
-      logger.warn('⚠️ Missing required fields', { walletAddress: !!walletAddress, promoCode: !!promoCode });
+      logger.warn('⚠️ Missing required fields', {
+        walletAddress: !!walletAddress,
+        promoCode: !!promoCode,
+      });
       return res.status(400).json({
         error: 'Missing required fields',
-        details: 'Both walletAddress and promoCode are required'
+        details: 'Both walletAddress and promoCode are required',
       });
     }
 
@@ -63,7 +63,7 @@ export default async function handler(
       logger.warn('⚠️ Invalid wallet address format', { walletAddress });
       return res.status(400).json({
         error: 'Invalid wallet address',
-        details: 'Please provide a valid Solana wallet address'
+        details: 'Please provide a valid Solana wallet address',
       });
     }
 
@@ -71,7 +71,7 @@ export default async function handler(
     if (typeof promoCode !== 'string' || promoCode.trim().length === 0) {
       return res.status(400).json({
         error: 'Invalid promo code format',
-        details: 'Promo code must be a non-empty string'
+        details: 'Promo code must be a non-empty string',
       });
     }
 
@@ -81,14 +81,14 @@ export default async function handler(
     if (sanitizedCode.length > 50) {
       return res.status(400).json({
         error: 'Invalid promo code',
-        details: 'Promo code is too long'
+        details: 'Promo code is too long',
       });
     }
 
     logger.info('🎟️ Processing promo code application', {
       walletAddress,
       promoCode: sanitizedCode,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
 
     // ═══════════════════════════════════════════════════════════
@@ -109,11 +109,11 @@ export default async function handler(
         _count: {
           select: {
             redemptions: {
-              where: { walletAddress }
-            }
-          }
-        }
-      }
+              where: { walletAddress },
+            },
+          },
+        },
+      },
     });
 
     // CRITICAL: Promo code doesn't exist
@@ -121,12 +121,12 @@ export default async function handler(
       logger.warn('⚠️ Promo code not found', {
         code: sanitizedCode,
         walletAddress,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
       return res.status(404).json({
         error: 'Invalid promo code',
         details: 'This promo code does not exist. Please check the code and try again.',
-        code: 'PROMO_NOT_FOUND'
+        code: 'PROMO_NOT_FOUND',
       });
     }
 
@@ -136,7 +136,7 @@ export default async function handler(
       return res.status(400).json({
         error: 'Promo code inactive',
         details: 'This promo code is no longer active.',
-        code: 'PROMO_INACTIVE'
+        code: 'PROMO_INACTIVE',
       });
     }
 
@@ -145,12 +145,12 @@ export default async function handler(
       logger.warn('⚠️ Expired promo code', {
         code: sanitizedCode,
         expiresAt: promoExists.expiresAt,
-        walletAddress
+        walletAddress,
       });
       return res.status(400).json({
         error: 'Promo code expired',
         details: `This promo code expired on ${promoExists.expiresAt.toLocaleDateString()}.`,
-        code: 'PROMO_EXPIRED'
+        code: 'PROMO_EXPIRED',
       });
     }
 
@@ -160,12 +160,12 @@ export default async function handler(
         code: sanitizedCode,
         maxUses: promoExists.maxUses,
         usedCount: promoExists.usedCount,
-        walletAddress
+        walletAddress,
       });
       return res.status(400).json({
         error: 'Promo code fully redeemed',
         details: 'This promo code has reached its maximum number of uses.',
-        code: 'PROMO_LIMIT_REACHED'
+        code: 'PROMO_LIMIT_REACHED',
       });
     }
 
@@ -174,12 +174,12 @@ export default async function handler(
       logger.warn('⚠️ Promo code already used by this wallet', {
         code: sanitizedCode,
         walletAddress,
-        previousRedemptions: promoExists._count.redemptions
+        previousRedemptions: promoExists._count.redemptions,
       });
       return res.status(400).json({
         error: 'Already redeemed',
         details: 'You have already used this promo code.',
-        code: 'PROMO_ALREADY_USED'
+        code: 'PROMO_ALREADY_USED',
       });
     }
 
@@ -189,8 +189,8 @@ export default async function handler(
       select: {
         id: true,
         isPaid: true,
-        degenScore: true
-      }
+        degenScore: true,
+      },
     });
 
     if (!cardExists) {
@@ -198,7 +198,7 @@ export default async function handler(
       return res.status(404).json({
         error: 'Card not found',
         details: 'Please generate your DegenScore card first before applying a promo code.',
-        code: 'CARD_NOT_FOUND'
+        code: 'CARD_NOT_FOUND',
       });
     }
 
@@ -207,110 +207,113 @@ export default async function handler(
       return res.status(400).json({
         error: 'Already premium',
         details: 'This card is already premium. No promo code needed!',
-        code: 'ALREADY_PREMIUM'
+        code: 'ALREADY_PREMIUM',
       });
     }
 
     logger.info('✅ All pre-validations passed, starting transaction', {
       walletAddress,
       promoCode: sanitizedCode,
-      cardScore: cardExists.degenScore
+      cardScore: cardExists.degenScore,
     });
 
     // ═══════════════════════════════════════════════════════════
     // 5. ATOMIC TRANSACTION (All or nothing)
     // ═══════════════════════════════════════════════════════════
-    const result = await prisma.$transaction(async (tx) => {
-      // Double-check in transaction to prevent race conditions
-      const promo = await tx.promoCode.findUnique({
-        where: { code: sanitizedCode },
-        include: {
-          redemptions: {
-            where: { walletAddress }
-          }
+    const result = await prisma.$transaction(
+      async (tx) => {
+        // Double-check in transaction to prevent race conditions
+        const promo = await tx.promoCode.findUnique({
+          where: { code: sanitizedCode },
+          include: {
+            redemptions: {
+              where: { walletAddress },
+            },
+          },
+        });
+
+        // This should never happen due to pre-validation, but double-check
+        if (!promo) {
+          throw new Error('RACE_CONDITION: Promo code was deleted during processing');
         }
-      });
 
-      // This should never happen due to pre-validation, but double-check
-      if (!promo) {
-        throw new Error('RACE_CONDITION: Promo code was deleted during processing');
-      }
-
-      if (promo.redemptions.length > 0) {
-        throw new Error('RACE_CONDITION: Promo code was already redeemed during processing');
-      }
-
-      // Create redemption record
-      const redemption = await tx.promoRedemption.create({
-        data: {
-          promoCodeId: promo.id,
-          walletAddress
+        if (promo.redemptions.length > 0) {
+          throw new Error('RACE_CONDITION: Promo code was already redeemed during processing');
         }
-      });
 
-      logger.info('✅ Redemption record created', {
-        redemptionId: redemption.id,
-        walletAddress,
-        promoCode: sanitizedCode
-      });
+        // Create redemption record
+        const redemption = await tx.promoRedemption.create({
+          data: {
+            promoCodeId: promo.id,
+            walletAddress,
+          },
+        });
 
-      // Increment usage counter
-      await tx.promoCode.update({
-        where: { id: promo.id },
-        data: {
-          usedCount: { increment: 1 }
-        }
-      });
-
-      // Upgrade card to premium
-      const updatedCard = await tx.degenCard.update({
-        where: { walletAddress },
-        data: {
-          isPaid: true,
-          isMinted: true,
-          mintedAt: new Date()
-        }
-      });
-
-      logger.info('✅ Card upgraded to premium', {
-        cardId: updatedCard.id,
-        walletAddress,
-        degenScore: updatedCard.degenScore
-      });
-
-      // Create or update PRO subscription (30-day trial)
-      const trialEndDate = new Date();
-      trialEndDate.setDate(trialEndDate.getDate() + 30);
-
-      const subscription = await tx.subscription.upsert({
-        where: { walletAddress },
-        create: {
+        logger.info('✅ Redemption record created', {
+          redemptionId: redemption.id,
           walletAddress,
-          tier: 'PRO',
-          expiresAt: trialEndDate
-        },
-        update: {
-          tier: 'PRO',
-          expiresAt: trialEndDate
-        }
-      });
+          promoCode: sanitizedCode,
+        });
 
-      logger.info('✅ PRO subscription activated', {
-        walletAddress,
-        tier: subscription.tier,
-        expiresAt: subscription.expiresAt ? subscription.expiresAt.toISOString() : null
-      });
+        // Increment usage counter
+        await tx.promoCode.update({
+          where: { id: promo.id },
+          data: {
+            usedCount: { increment: 1 },
+          },
+        });
 
-      return {
-        card: updatedCard,
-        promo,
-        subscription
-      };
-    }, {
-      maxWait: 5000,  // Maximum time to wait for a connection
-      timeout: 15000, // Maximum time for the transaction
-      isolationLevel: 'Serializable' // Highest isolation level to prevent race conditions
-    });
+        // Upgrade card to premium
+        const updatedCard = await tx.degenCard.update({
+          where: { walletAddress },
+          data: {
+            isPaid: true,
+            isMinted: true,
+            mintedAt: new Date(),
+          },
+        });
+
+        logger.info('✅ Card upgraded to premium', {
+          cardId: updatedCard.id,
+          walletAddress,
+          degenScore: updatedCard.degenScore,
+        });
+
+        // Create or update PRO subscription (30-day trial)
+        const trialEndDate = new Date();
+        trialEndDate.setDate(trialEndDate.getDate() + 30);
+
+        const subscription = await tx.subscription.upsert({
+          where: { walletAddress },
+          create: {
+            walletAddress,
+            tier: 'PRO',
+            expiresAt: trialEndDate,
+          },
+          update: {
+            tier: 'PRO',
+            expiresAt: trialEndDate,
+          },
+        });
+
+        logger.info('✅ PRO subscription activated', {
+          walletAddress,
+          tier: subscription.tier,
+          expiresAt: subscription.expiresAt ? subscription.expiresAt.toISOString() : null,
+        });
+
+        return {
+          card: updatedCard,
+          promo,
+          subscription,
+        };
+      },
+      {
+        maxWait: 5000, // Maximum time to wait for a connection
+        timeout: 15000, // Maximum time for the transaction
+        isolationLevel: 'Serializable', // Highest isolation level to prevent race conditions
+      }
+    );
 
     // ═══════════════════════════════════════════════════════════
     // Log activity for analytics (OUTSIDE transaction - non-critical)
@@ -324,15 +327,15 @@ export default async function handler(
             promoCode: sanitizedCode,
             promoDescription: result.promo.description,
             subscriptionTier: 'PRO',
-            trialDays: 30
-          }
-        }
+            trialDays: 30,
+          },
+        },
       });
       logger.info('✅ Activity logged successfully');
     } catch (activityError) {
       // If ActivityLog table doesn't exist or fails, just log the error but don't fail the request
       logger.warn('⚠️ Failed to log activity (non-critical)', {
-        error: activityError instanceof Error ? activityError.message : String(activityError)
+        error: activityError instanceof Error ? activityError.message : String(activityError),
       });
     }
 
@@ -362,7 +365,7 @@ export default async function handler(
       walletAddress,
       promoCode: sanitizedCode,
       newTier: result.subscription.tier,
-      expiresAt: result.subscription.expiresAt ? result.subscription.expiresAt.toISOString() : null
+      expiresAt: result.subscription.expiresAt ? result.subscription.expiresAt.toISOString() : null,
     });
 
     return res.status(200).json({
@@ -373,18 +376,19 @@ export default async function handler(
           id: result.card.id,
           walletAddress: result.card.walletAddress,
           isPaid: result.card.isPaid,
-          degenScore: result.card.degenScore
+          degenScore: result.card.degenScore,
         },
         subscription: {
           tier: result.subscription.tier,
           expiresAt: result.subscription.expiresAt,
           daysRemaining: result.subscription.expiresAt
-            ? Math.ceil((result.subscription.expiresAt.getTime() - Date.now()) / (1000 * 60 * 60 * 24))
-            : null
-        }
-      }
+            ? Math.ceil(
+                (result.subscription.expiresAt.getTime() - Date.now()) / (1000 * 60 * 60 * 24)
+              )
+            : null,
+        },
+      },
     });
-
   } catch (error) {
     // ═══════════════════════════════════════════════════════════
     // 8. ERROR HANDLING
@@ -392,7 +396,7 @@ export default async function handler(
     logger.error('❌ Error applying promo code', error instanceof Error ? error : undefined, {
       error: String(error),
       stack: error instanceof Error ? error.stack : undefined,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
 
     // Handle specific error cases
@@ -402,7 +406,7 @@ export default async function handler(
         return res.status(409).json({
           error: 'Conflict',
           details: 'The promo code status changed during processing. Please try again.',
-          code: 'RACE_CONDITION'
+          code: 'RACE_CONDITION',
         });
       }
 
@@ -411,7 +415,7 @@ export default async function handler(
         return res.status(503).json({
           error: 'Service temporarily unavailable',
           details: 'Database connection error. Please try again in a moment.',
-          code: 'DB_CONNECTION_ERROR'
+          code: 'DB_CONNECTION_ERROR',
         });
       }
 
@@ -420,24 +424,25 @@ export default async function handler(
         return res.status(504).json({
           error: 'Request timeout',
           details: 'The operation took too long. Please try again.',
-          code: 'TRANSACTION_TIMEOUT'
+          code: 'TRANSACTION_TIMEOUT',
         });
       }
 
       // Return the error message (already validated above)
       return res.status(400).json({
         error: error.message,
-        code: 'VALIDATION_ERROR'
+        code: 'VALIDATION_ERROR',
       });
     }
 
     // Unknown error
     return res.status(500).json({
       error: 'Internal server error',
-      details: process.env.NODE_ENV === 'development'
-        ? String(error)
-        : 'An unexpected error occurred. Please try again or contact support.',
-      code: 'UNKNOWN_ERROR'
+      details:
+        process.env.NODE_ENV === 'development'
+          ? String(error)
+          : 'An unexpected error occurred. Please try again or contact support.',
+      code: 'UNKNOWN_ERROR',
     });
   }
 }

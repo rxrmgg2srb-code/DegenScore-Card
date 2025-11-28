@@ -31,6 +31,7 @@ Esta guía te ayudará a configurar todos los servicios gratuitos que potencian 
 
 3. **Copia el DSN**
    - Después de crear el proyecto, verás un DSN que se ve así:
+
    ```
    https://abc123@o456789.ingest.sentry.io/987654
    ```
@@ -38,11 +39,13 @@ Esta guía te ayudará a configurar todos los servicios gratuitos que potencian 
 4. **Configura Variables de Entorno en Render**
    - Ve a tu servicio en Render → Environment
    - Agrega estas variables:
+
    ```bash
    NEXT_PUBLIC_SENTRY_DSN=https://tu-key@o123456.ingest.sentry.io/123456
    SENTRY_ORG=tu-organizacion
    SENTRY_PROJECT=degenscore-card
    ```
+
    - **Nota:** `SENTRY_AUTH_TOKEN` es opcional, solo para subir source maps
 
 5. **¡Listo!** El código ya está configurado.
@@ -58,6 +61,7 @@ Esta guía te ayudará a configurar todos los servicios gratuitos que potencian 
 ### 📊 Si Excedes el Límite:
 
 **Alternativa:** [GlitchTip](https://glitchtip.com/) (self-hosted gratis)
+
 - Deploy en Render/Railway gratis
 - Exactamente igual que Sentry
 - Sin límites
@@ -89,6 +93,7 @@ Esta guía te ayudará a configurar todos los servicios gratuitos que potencian 
    - **REST Token**: Un string largo
 
 4. **Configura en Render**
+
    ```bash
    UPSTASH_REDIS_REST_URL=https://your-endpoint.upstash.io
    UPSTASH_REDIS_REST_TOKEN=tu-token-largo-aqui
@@ -111,6 +116,7 @@ Esta guía te ayudará a configurar todos los servicios gratuitos que potencian 
 **Opción 1:** Upgrade a Upstash Pro ($10/mes para 100k comandos/día)
 
 **Opción 2:** [Redis Cloud](https://redis.com/try-free/)
+
 - Free tier: 30MB storage
 - Suficiente para ~10k keys
 - Instalar librería: `npm install redis`
@@ -164,6 +170,7 @@ Esta guía te ayudará a configurar todos los servicios gratuitos que potencian 
    - Copia el "Account ID"
 
 7. **Configura en Render**
+
    ```bash
    R2_ACCOUNT_ID=tu-account-id
    R2_ACCESS_KEY_ID=tu-access-key
@@ -185,6 +192,7 @@ Esta guía te ayudará a configurar todos los servicios gratuitos que potencian 
 **Opción 1:** Muy poco probable exceder (10GB es MUCHO)
 
 **Opción 2:** [Vercel Blob](https://vercel.com/docs/storage/vercel-blob)
+
 - Free tier: 100GB de bandwidth/mes (no storage limit en Hobby)
 - Más fácil de configurar si usas Vercel
 - Instalar: `npm install @vercel/blob`
@@ -218,6 +226,7 @@ Esta guía te ayudará a configurar todos los servicios gratuitos que potencian 
      - **cluster**
 
 4. **Configura en Render**
+
    ```bash
    PUSHER_APP_ID=123456
    PUSHER_KEY=abc123def456
@@ -244,6 +253,7 @@ Esta guía te ayudará a configurar todos los servicios gratuitos que potencian 
 **Opción 1:** Upgrade a Pusher Sandbox ($5/mes para 500k msgs/día)
 
 **Opción 2:** [Ably](https://ably.com/signup)
+
 - Free tier: **6M mensajes/mes** (vs 6M/mes de Pusher gratis)
 - 200 conexiones concurrentes
 - Más generoso que Pusher
@@ -251,6 +261,7 @@ Esta guía te ayudará a configurar todos los servicios gratuitos que potencian 
 - Cambiar código en `lib/realtime/pusher.ts`
 
 **Opción 3:** [Socket.io](https://socket.io/) (self-hosted)
+
 - 100% gratis
 - Más complejo de configurar
 - Necesitas WebSocket server
@@ -282,6 +293,7 @@ Esta guía te ayudará a configurar todos los servicios gratuitos que potencian 
    - Recibirás notificaciones si la app se cae
 
 4. **Monitores Recomendados:**
+
    ```
    1. Homepage: https://tu-app.onrender.com
    2. API Health: https://tu-app.onrender.com/api/health
@@ -305,6 +317,7 @@ Esta guía te ayudará a configurar todos los servicios gratuitos que potencian 
 ### 💡 Si Excedes 50 Monitores:
 
 Muy poco probable. Si pasa:
+
 - [Freshping](https://www.freshworks.com/website-monitoring/) (50 monitores gratis)
 - [StatusCake](https://www.statuscake.com/) (10 monitores gratis)
 
@@ -344,13 +357,13 @@ NEXT_PUBLIC_PUSHER_CLUSTER=us2
 
 ## 📊 Resumen de Límites Gratuitos
 
-| Servicio | Límite Gratis | Uso Estimado | ¿Suficiente? |
-|----------|---------------|--------------|--------------|
-| **Sentry** | 5k errores/mes | ~50-200 errores/mes | ✅ Sí |
-| **Upstash Redis** | 10k cmds/día | ~1k cards/día | ✅ Sí |
-| **Cloudflare R2** | 10GB + 10M req/mes | 20k cards | ✅ Sí |
-| **Pusher** | 200k msgs/día | 170 usuarios concurrentes | ✅ Sí |
-| **UptimeRobot** | 50 monitores | 4-5 monitores | ✅ Sí |
+| Servicio          | Límite Gratis      | Uso Estimado              | ¿Suficiente? |
+| ----------------- | ------------------ | ------------------------- | ------------ |
+| **Sentry**        | 5k errores/mes     | ~50-200 errores/mes       | ✅ Sí        |
+| **Upstash Redis** | 10k cmds/día       | ~1k cards/día             | ✅ Sí        |
+| **Cloudflare R2** | 10GB + 10M req/mes | 20k cards                 | ✅ Sí        |
+| **Pusher**        | 200k msgs/día      | 170 usuarios concurrentes | ✅ Sí        |
+| **UptimeRobot**   | 50 monitores       | 4-5 monitores             | ✅ Sí        |
 
 **Total costo mensual: $0** 🎉
 
@@ -359,20 +372,24 @@ NEXT_PUBLIC_PUSHER_CLUSTER=us2
 ## 🚀 Alternativas Gratuitas
 
 ### Si Sentry excede límite:
+
 - **GlitchTip** (self-hosted en Render/Railway gratis)
 - **Bugsnag** (free tier: 7.5k events/month)
 
 ### Si Upstash Redis excede límite:
+
 - **Redis Cloud** (30MB gratis)
 - **Memcachier** (25MB gratis)
 - **Railway Redis** (512MB gratis con $5 crédito mensual)
 
 ### Si R2 excede límite:
+
 - **Vercel Blob** (100GB bandwidth/mes en Hobby)
 - **Backblaze B2** (10GB gratis)
 - **ImageKit** (20GB bandwidth + optimización gratis)
 
 ### Si Pusher excede límite:
+
 - **Ably** (6M mensajes/mes gratis)
 - **PubNub** (1M mensajes/mes gratis)
 - **Socket.io** (self-hosted, 100% gratis)
@@ -382,6 +399,7 @@ NEXT_PUBLIC_PUSHER_CLUSTER=us2
 ## 🛠️ Debugging
 
 ### Redis no conecta:
+
 ```bash
 # Test en terminal
 curl -H "Authorization: Bearer YOUR_TOKEN" https://your-endpoint.upstash.io/ping
@@ -389,12 +407,14 @@ curl -H "Authorization: Bearer YOUR_TOKEN" https://your-endpoint.upstash.io/ping
 ```
 
 ### R2 upload falla:
+
 ```bash
 # Verificar permisos del token
 # Asegúrate que tiene Object Read & Write
 ```
 
 ### Pusher no conecta:
+
 ```bash
 # Verificar en browser console:
 # Debe ver: "Pusher : State changed : initialized -> connecting"

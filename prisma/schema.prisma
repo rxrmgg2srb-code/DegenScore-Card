@@ -98,21 +98,6 @@ model Badge {
   @@index([cardId])
 }
 
-model Referral {
-  id            String   @id @default(cuid())
-  referrerId    String   // walletAddress of the user who generated the code
-  refereeId     String   // walletAddress of the user who used the code
-  code          String   @unique // copy of referrer's referralCode
-  usedAt        DateTime @default(now())
-  discount      Decimal  @default(0.02) // amount deducted from referee
-  reward        Decimal  @default(0.02) // amount credited to referrer
-  claimed       Boolean  @default(false) // whether reward has been paid out
-
-  @@index([referrerId])
-  @@index([refereeId])
-  @@index([code])
-}
-
 model Payment {
   id            String   @id @default(cuid())
   walletAddress String

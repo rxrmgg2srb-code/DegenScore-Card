@@ -68,10 +68,10 @@ TREASURY_WALLET=<wallet_address>
 
 ## 📈 IMPACTO POR CATEGORÍA
 
-| Categoría | Antes | Después | 
-|-----------|-------|---------|
-| Seguridad | 7.5/10 | 9.5/10 ⬆️ |
-| Web3 | 7.0/10 | 9.0/10 ⬆️ |
+| Categoría   | Antes  | Después   |
+| ----------- | ------ | --------- |
+| Seguridad   | 7.5/10 | 9.5/10 ⬆️ |
+| Web3        | 7.0/10 | 9.0/10 ⬆️ |
 | Performance | 8.0/10 | 9.0/10 ⬆️ |
 
 ---
@@ -79,7 +79,7 @@ TREASURY_WALLET=<wallet_address>
 ## 🔒 ARCHIVOS MODIFICADOS
 
 1. `lib/middleware/verifyJwt.ts` - JWT security
-2. `lib/walletAuth.ts` - Replay attack protection  
+2. `lib/walletAuth.ts` - Replay attack protection
 3. `lib/rateLimit.ts` - Distributed rate limiting
 4. `pages/api/verify-payment.ts` - Log sanitization
 

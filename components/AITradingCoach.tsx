@@ -39,7 +39,9 @@ export default function AITradingCoach() {
   }, [sessionToken]);
 
   const generateToken = async () => {
-    if (!publicKey) return;
+    if (!publicKey) {
+      return;
+    }
 
     try {
       const token = generateSessionToken(publicKey.toString());
@@ -50,7 +52,9 @@ export default function AITradingCoach() {
   };
 
   const fetchAnalysis = async () => {
-    if (!sessionToken) return;
+    if (!sessionToken) {
+      return;
+    }
 
     setLoading(true);
 
@@ -144,9 +148,7 @@ export default function AITradingCoach() {
         <div className="text-center">
           <div className="text-6xl mb-4">🧠</div>
           <h3 className="text-2xl font-bold text-white mb-2">AI Trading Coach</h3>
-          <p className="text-gray-400 mb-6">
-            Get personalized insights powered by GPT-4
-          </p>
+          <p className="text-gray-400 mb-6">Get personalized insights powered by GPT-4</p>
           <button
             onClick={requestAnalysis}
             disabled={analyzing}
@@ -257,10 +259,7 @@ export default function AITradingCoach() {
         </h4>
         <div className="space-y-2">
           {analysis.recommendations.map((rec, idx) => (
-            <div
-              key={idx}
-              className="bg-yellow-900/20 border border-yellow-500/30 rounded-lg p-3"
-            >
+            <div key={idx} className="bg-yellow-900/20 border border-yellow-500/30 rounded-lg p-3">
               <p className="text-yellow-100">{rec}</p>
             </div>
           ))}

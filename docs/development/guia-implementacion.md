@@ -3,6 +3,7 @@
 ## 📋 Resumen de Mejoras
 
 ### ❌ Problemas del Sistema Anterior:
+
 1. Solo analizaba las últimas 100 transacciones
 2. P&L aproximado sin precios reales
 3. No detectaba rugs
@@ -11,6 +12,7 @@
 6. No analizaba patrones de trading
 
 ### ✅ Soluciones Implementadas:
+
 1. Analiza TODAS las transacciones históricas (hasta 5000)
 2. P&L real por posición individual
 3. Detección automática de rugs y salvadas
@@ -88,7 +90,7 @@ lib/
 
 model DegenCard {
   # ... campos existentes ...
-  
+
   # AGREGAR ESTOS:
   rugsSurvived      Int      @default(0)
   rugsCaught        Int      @default(0)
@@ -150,7 +152,7 @@ const card = await prisma.degenCard.upsert({
   where: { walletAddress },
   update: {
     // ... campos básicos existentes ...
-    
+
     // AGREGAR:
     rugsSurvived: metrics.rugsSurvived,
     rugsCaught: metrics.rugsCaught,
@@ -168,7 +170,7 @@ const card = await prisma.degenCard.upsert({
   },
   create: {
     // ... mismo que update ...
-  }
+  },
 });
 ```
 
@@ -226,29 +228,29 @@ const testWallets = {
   {/* Métricas existentes */}
   <StatCard label="Degen Score" value={card.degenScore} />
   <StatCard label="Total Trades" value={card.totalTrades} />
-  
+
   {/* NUEVAS métricas */}
-  <StatCard 
-    label="Rugs Survived" 
-    value={card.rugsSurvived} 
+  <StatCard
+    label="Rugs Survived"
+    value={card.rugsSurvived}
     icon="🛡️"
-    positive 
+    positive
   />
-  <StatCard 
-    label="Rugs Caught" 
-    value={card.rugsCaught} 
+  <StatCard
+    label="Rugs Caught"
+    value={card.rugsCaught}
     icon="💸"
-    negative 
+    negative
   />
-  <StatCard 
-    label="Moonshots" 
-    value={card.moonshots} 
+  <StatCard
+    label="Moonshots"
+    value={card.moonshots}
     icon="🚀"
-    positive 
+    positive
   />
-  <StatCard 
-    label="Win Streak" 
-    value={card.longestWinStreak} 
+  <StatCard
+    label="Win Streak"
+    value={card.longestWinStreak}
     icon="🔥"
   />
 </div>
@@ -300,6 +302,7 @@ const testWallets = {
 ## 🎯 Checklist de Implementación
 
 ### Fase 1: Backend (Crítico)
+
 - [ ] Copiar `metrics-advanced.ts` a `/lib`
 - [ ] Copiar `badges-advanced.ts` a `/lib`
 - [ ] Actualizar `helius.ts` con paginación
@@ -309,6 +312,7 @@ const testWallets = {
 - [ ] Testing con wallets de prueba
 
 ### Fase 2: UI (Recomendado)
+
 - [ ] Actualizar página de perfil con nuevas métricas
 - [ ] Agregar sección de "Rug Analysis"
 - [ ] Agregar sección de "Trading Style"
@@ -316,6 +320,7 @@ const testWallets = {
 - [ ] Actualizar leaderboard con nuevas columnas
 
 ### Fase 3: Optimización (Opcional)
+
 - [ ] Implementar cache de métricas (solo recalcular cada 24h)
 - [ ] Agregar progress indicator durante análisis
 - [ ] Crear tabla MetricsHistory para tracking temporal
@@ -353,7 +358,7 @@ if (analyzing) {
 import Bull from 'bull';
 
 const analysisQueue = new Bull('card-analysis', {
-  redis: process.env.REDIS_URL
+  redis: process.env.REDIS_URL,
 });
 
 analysisQueue.process(async (job) => {
@@ -368,18 +373,16 @@ analysisQueue.process(async (job) => {
 // En save-card.ts, agregar lógica de cache:
 
 const existingCard = await prisma.degenCard.findUnique({
-  where: { walletAddress }
+  where: { walletAddress },
 });
 
-const shouldRecalculate = 
-  !existingCard || 
-  (Date.now() - existingCard.updatedAt.getTime()) > 86400000; // 24 horas
+const shouldRecalculate = !existingCard || Date.now() - existingCard.updatedAt.getTime() > 86400000; // 24 horas
 
 if (!shouldRecalculate) {
-  return res.json({ 
-    success: true, 
+  return res.json({
+    success: true,
     card: existingCard,
-    cached: true 
+    cached: true,
   });
 }
 
@@ -392,6 +395,7 @@ const metrics = await calculateAdvancedMetrics(walletAddress);
 ## 🐛 Troubleshooting
 
 ### Error: "HELIUS_API_KEY is not configured"
+
 ```bash
 # Verificar .env
 cat .env | grep HELIUS
@@ -401,6 +405,7 @@ echo "HELIUS_API_KEY=tu_api_key_aqui" >> .env
 ```
 
 ### Error: "Column does not exist"
+
 ```bash
 # Significa que la migración no se aplicó correctamente
 npx prisma migrate reset  # ⚠️ Borra datos
@@ -409,6 +414,7 @@ npx prisma migrate deploy  # Aplica migraciones pendientes
 ```
 
 ### Error: "Module not found: metrics-advanced"
+
 ```bash
 # Verificar que el archivo está en la ubicación correcta
 ls lib/metrics-advanced.ts
@@ -418,9 +424,10 @@ cp /path/to/downloaded/metrics-advanced.ts lib/
 ```
 
 ### Análisis muy lento (>30 segundos)
+
 ```typescript
 // Reducir el límite de transacciones en metrics-advanced.ts:
-const maxFetches = 20;  // Cambia de 50 a 20
+const maxFetches = 20; // Cambia de 50 a 20
 // Esto analiza hasta 2000 TXs en lugar de 5000
 ```
 
@@ -431,6 +438,7 @@ const maxFetches = 20;  // Cambia de 50 a 20
 Después de implementar todo, deberías ver:
 
 ### En la Card:
+
 ```
 ┌─────────────────────────────┐
 │   DEGEN CARD                │
@@ -448,14 +456,16 @@ Después de implementar todo, deberías ver:
 ```
 
 ### En el Perfil:
+
 - Sección de "Rug Analysis" con detalles
 - Sección de "Trading Style" con métricas
 - Lista de moonshots destacados
 - Recomendaciones personalizadas
 
 ### En la Base de Datos:
+
 ```sql
-SELECT 
+SELECT
   walletAddress,
   degenScore,
   rugsSurvived,
@@ -513,15 +523,15 @@ GET /api/compare?wallet1=XXX&wallet2=YYY
 
 ```typescript
 // Notificar cuando se desbloquean nuevos badges
-const newBadges = unlockedBadges.filter(badge => 
-  !existingCard.badges.some(b => b.name === badge.name)
+const newBadges = unlockedBadges.filter(
+  (badge) => !existingCard.badges.some((b) => b.name === badge.name)
 );
 
 if (newBadges.length > 0) {
   // Enviar notificación
   await sendNotification(walletAddress, {
     type: 'NEW_BADGE',
-    badges: newBadges
+    badges: newBadges,
   });
 }
 ```

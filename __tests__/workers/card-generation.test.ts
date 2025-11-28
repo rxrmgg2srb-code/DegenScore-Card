@@ -240,9 +240,7 @@ describe('BullMQ Card Generation Worker', () => {
     });
 
     it('should support premium badge rendering', () => {
-      const premiumBadges = [
-        { name: 'Premium', rarity: 'LEGENDARY', icon: '👑' },
-      ];
+      const premiumBadges = [{ name: 'Premium', rarity: 'LEGENDARY', icon: '👑' }];
 
       expect(premiumBadges[0].rarity).toBe('LEGENDARY');
     });
@@ -436,11 +434,7 @@ describe('BullMQ Queue Integration', () => {
     });
 
     it('should track enqueued job count', () => {
-      const enqueuedJobs = [
-        { id: 'job-1' },
-        { id: 'job-2' },
-        { id: 'job-3' },
-      ];
+      const enqueuedJobs = [{ id: 'job-1' }, { id: 'job-2' }, { id: 'job-3' }];
 
       expect(enqueuedJobs.length).toBe(3);
     });
@@ -553,21 +547,14 @@ describe('Realtime Event Publishing', () => {
     });
 
     it('should queue events during outages', () => {
-      const eventQueue = [
-        { type: 'NEW_CARD' },
-        { type: 'BADGE_EARNED' },
-      ];
+      const eventQueue = [{ type: 'NEW_CARD' }, { type: 'BADGE_EARNED' }];
 
       expect(Array.isArray(eventQueue)).toBe(true);
       expect(eventQueue.length).toBeGreaterThan(0);
     });
 
     it('should batch multiple events', () => {
-      const batchedEvents = [
-        { type: 'EVENT_1' },
-        { type: 'EVENT_2' },
-        { type: 'EVENT_3' },
-      ];
+      const batchedEvents = [{ type: 'EVENT_1' }, { type: 'EVENT_2' }, { type: 'EVENT_3' }];
 
       expect(batchedEvents.length).toBe(3);
     });

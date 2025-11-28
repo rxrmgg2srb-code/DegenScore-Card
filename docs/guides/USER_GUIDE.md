@@ -19,20 +19,24 @@ http://localhost:3000/documentation
 ## 📖 Índice de Contenidos
 
 ### 1. [Introducción](#introducción)
+
 - ¿Qué es DegenScore Card?
 - Características principales
 
 ### 2. [Primeros Pasos](#primeros-pasos)
+
 - Conectar tu wallet
 - Generar tu primera card
 - Entender tu dashboard
 
 ### 3. [Generar Tu Card](#generar-tu-card)
+
 - Proceso de análisis
 - Métricas calculadas
 - Descarga y compartir
 
 ### 4. [Entender Métricas](#métricas)
+
 - **DegenScore (0-100)**: Tu puntuación overall
 - **Win Rate**: Porcentaje de trades ganadores
 - **Total P&L**: Ganancia/pérdida neta
@@ -43,29 +47,35 @@ http://localhost:3000/documentation
 - Y 25+ métricas más...
 
 ### 5. [Sistema de Badges](#badges)
+
 - 50+ badges disponibles
 - Categorías: Trading, Engagement, Referidos
 - Raridades: Common, Rare, Epic, Legendary, Mythic
 
 ### 6. [Upgrade a Premium](#upgrade)
+
 - **FREE**: Card básica, alpha feed 72h delay
 - **PREMIUM** (0.2 SOL): Perfil custom, 6h delay, +30 días PRO
 - **PRO** ($10/mes): 1h delay, dashboard avanzado
 
 ### 7. [Daily Check-In](#daily-checkin)
+
 - Gana +50 XP diario
 - Bonus por racha consecutiva
 - Badges en milestones (3, 7, 14, 30, 60, 90, 180 días)
 - ⚠️ Pierdes racha si no checkeas 24h
 
 ### 8. [Sistema de Referidos](#referidos)
+
 Invita amigos, gana rewards:
+
 - **3 referidos** → Badge "Influencer" + 1 mes PRO
 - **10 referidos** → Badge "Whale Hunter" + 0.1 SOL
 - **25 referidos** → Badge "Viral King" + 3 meses PRO + 0.3 SOL
 - **50 referidos** → Badge "Legend" + VIP lifetime + 1 SOL
 
 ### 9. [Weekly Challenges](#challenges)
+
 - Compite semanalmente
 - Premio: 1 SOL al ganador
 - Criterio: Más Likes en tu card
@@ -73,18 +83,22 @@ Invita amigos, gana rewards:
 - Solo PREMIUM/PRO pueden participar
 
 ### 10. [Alpha Feed](#alpha-feed)
+
 - Ve trades de top wallets
 - Delays por tier: 72h (FREE), 6h (PREMIUM), 1h (PRO)
 - Filtra por token, wallet, tipo (buy/sell)
 
 ### 11. [Leaderboard](#leaderboard)
+
 Rankings globales:
+
 - Por DegenScore
 - Por Volumen Total
 - Por Win Rate
 - Por Likes
 
 ### 12. [FAQ](#faq)
+
 Respuestas a preguntas frecuentes
 
 ---
@@ -92,6 +106,7 @@ Respuestas a preguntas frecuentes
 ## 🚀 Quick Start (5 minutos)
 
 ### Paso 1: Conecta tu Wallet
+
 ```
 1. Ve a la página principal
 2. Haz clic en "Select Wallet"
@@ -100,6 +115,7 @@ Respuestas a preguntas frecuentes
 ```
 
 ### Paso 2: Genera tu Card
+
 ```
 1. Una vez conectado, el análisis comienza automáticamente
 2. Espera 10-30 segundos mientras analizamos tu historial
@@ -107,6 +123,7 @@ Respuestas a preguntas frecuentes
 ```
 
 ### Paso 3: Explora Features
+
 ```
 - Revisa tus badges desbloqueados
 - Checkea tu posición en el leaderboard
@@ -115,6 +132,7 @@ Respuestas a preguntas frecuentes
 ```
 
 ### Paso 4 (Opcional): Upgrade a PREMIUM
+
 ```
 1. Haz clic en "Upgrade to Premium"
 2. Envía 0.2 SOL a la wallet mostrada
@@ -126,22 +144,22 @@ Respuestas a preguntas frecuentes
 
 ## 💎 Tiers Comparison
 
-| Feature | FREE | PREMIUM | PRO |
-|---------|------|---------|-----|
-| **Precio** | Gratis | 0.2 SOL | $10/mes |
-| Card Básica | ✓ | ✓ | ✓ |
-| 30+ Métricas | ✓ | ✓ | ✓ |
-| Badges | ✓ | ✓ | ✓ |
-| Ver Leaderboard | ✓ | ✓ | ✓ |
-| Perfil Custom | — | ✓ | ✓ |
-| Card Descargable HD | — | ✓ | ✓ |
-| Daily Check-In | — | ✓ | ✓ |
-| Sistema Referidos | — | ✓ | ✓ |
-| Weekly Challenges | — | ✓ | ✓ |
-| **Alpha Feed Delay** | **72h** | **6h** | **1h** |
-| **Trades Visibles** | **5** | **10** | **20** |
-| Dashboard Avanzado | — | — | ✓ |
-| Priority Support | — | — | ✓ |
+| Feature              | FREE    | PREMIUM | PRO     |
+| -------------------- | ------- | ------- | ------- |
+| **Precio**           | Gratis  | 0.2 SOL | $10/mes |
+| Card Básica          | ✓       | ✓       | ✓       |
+| 30+ Métricas         | ✓       | ✓       | ✓       |
+| Badges               | ✓       | ✓       | ✓       |
+| Ver Leaderboard      | ✓       | ✓       | ✓       |
+| Perfil Custom        | —       | ✓       | ✓       |
+| Card Descargable HD  | —       | ✓       | ✓       |
+| Daily Check-In       | —       | ✓       | ✓       |
+| Sistema Referidos    | —       | ✓       | ✓       |
+| Weekly Challenges    | —       | ✓       | ✓       |
+| **Alpha Feed Delay** | **72h** | **6h**  | **1h**  |
+| **Trades Visibles**  | **5**   | **10**  | **20**  |
+| Dashboard Avanzado   | —       | —       | ✓       |
+| Priority Support     | —       | —       | ✓       |
 
 ---
 
@@ -150,26 +168,32 @@ Respuestas a preguntas frecuentes
 Tu DegenScore se calcula con estos factores:
 
 ### 1. Win Rate (30%)
+
 - Objetivo: >50% de trades ganadores
 - Tip: Toma profits graduales, no seas greedy
 
 ### 2. Profit/Loss (25%)
+
 - Objetivo: P&L positivo consistente
 - Tip: Usa stop-loss para limitar pérdidas
 
 ### 3. Volumen (15%)
+
 - Objetivo: Tradea regularmente
 - Tip: Calidad > Cantidad, pero necesitas volumen
 
 ### 4. Experiencia (15%)
+
 - Objetivo: Más días de trading
 - Tip: La paciencia se recompensa
 
 ### 5. Gestión de Riesgo (10%)
+
 - Objetivo: Evita rugs, diversifica
 - Tip: DYOR antes de comprar
 
 ### 6. Consistencia (5%)
+
 - Objetivo: Trades regulares sin gaps largos
 - Tip: Mantente activo semanalmente
 
@@ -178,6 +202,7 @@ Tu DegenScore se calcula con estos factores:
 ## 🏆 Lista Completa de Badges
 
 ### Trading Badges
+
 - ✨ **First Trade**: Ejecuta tu primer trade
 - 🌙 **Moon Hunter**: Consigue un moonshot (10x+)
 - 🛡️ **Rug Survivor**: Sobrevive a 5+ rugs
@@ -190,6 +215,7 @@ Tu DegenScore se calcula con estos factores:
 - 🏆 **Top Trader**: DegenScore 80+
 
 ### Engagement Badges
+
 - 🔥 **Consistent Degen**: 3 días de check-in
 - ⚔️ **Weekly Warrior**: 7 días de racha
 - 🛡️ **Fortnight Fighter**: 14 días de racha
@@ -199,12 +225,14 @@ Tu DegenScore se calcula con estos factores:
 - ⭐ **Immortal**: 180 días de racha
 
 ### Referral Badges
+
 - 🎯 **Influencer**: 3 referidos pagos
 - 🐋 **Whale Hunter**: 10 referidos
 - 👑 **Viral King**: 25 referidos
 - ⭐ **Legend**: 50 referidos
 
 ### Community Badges
+
 - 📱 **Social Butterfly**: Comparte en 3 plataformas
 - ❤️ **Community Favorite**: 100+ likes en tu card
 - 🎊 **Challenge Winner**: Gana un weekly challenge
@@ -215,6 +243,7 @@ Tu DegenScore se calcula con estos factores:
 ## 📊 Cómo Funcionan los Weekly Challenges
 
 ### Mecánica
+
 1. El challenge se activa cuando haya **100 cards generadas**
 2. Solo usuarios PREMIUM/PRO pueden participar
 3. Cada semana compites por más likes
@@ -226,12 +255,14 @@ Tu DegenScore se calcula con estos factores:
 **Criterio único:** Más Likes en tu DegenScore Card
 
 **Cómo funciona:**
+
 - El challenge se activa automáticamente cuando la plataforma alcanza **100 cards generadas**
 - Cada semana (Lunes a Domingo) se cuenta el número de likes nuevos
 - Solo usuarios **PREMIUM** o **PRO** pueden competir
 - El ganador se anuncia cada domingo
 
 **Cómo ganar:**
+
 1. ✅ Genera tu DegenScore Card
 2. ✅ Upgrade a PREMIUM o PRO
 3. ✅ Comparte tu card en redes sociales
@@ -239,6 +270,7 @@ Tu DegenScore se calcula con estos factores:
 5. ✅ El que tenga más likes al final de la semana gana **1 SOL**
 
 **Consejos para conseguir likes:**
+
 - 📱 Comparte en Twitter con hashtags virales
 - 💬 Postea en Discord/Telegram communities
 - 🎯 Mientras mejor tu DegenScore, más likes conseguirás
@@ -261,12 +293,14 @@ Día 180 → +1050 XP + Badge "Immortal"
 ```
 
 ### Fórmula de XP
+
 ```
 XP Ganado = 50 (base) + (días_consecutivos × 10)
 Bonus Máximo = 500 XP
 ```
 
 ### ⚠️ Reglas Importantes
+
 - Debes checkear cada 24 horas
 - Si pasas >24h sin checkear, pierdes la racha
 - Tu "longest streak" se guarda para siempre
@@ -277,11 +311,13 @@ Bonus Máximo = 500 XP
 ## 🎁 Sistema de Referidos - Paso a Paso
 
 ### 1. Obtén tu Link
+
 ```
 https://degenscore.xyz?ref=TU_WALLET_ADDRESS
 ```
 
 ### 2. Comparte tu Link
+
 - Twitter
 - Discord
 - Telegram
@@ -289,11 +325,13 @@ https://degenscore.xyz?ref=TU_WALLET_ADDRESS
 - Tu blog/YouTube
 
 ### 3. Trackea Referidos
+
 ```
 GET /api/referrals/check-rewards?walletAddress=TU_WALLET
 ```
 
 ### 4. Reclama Rewards
+
 ```
 POST /api/referrals/claim-rewards
 {
@@ -303,12 +341,12 @@ POST /api/referrals/claim-rewards
 
 ### Rewards por Tier
 
-| Referidos | Badge | Reward SOL | Reward Tiempo |
-|-----------|-------|------------|---------------|
-| 3 | Influencer | 0 SOL | +1 mes PRO |
-| 10 | Whale Hunter | 0.1 SOL | — |
-| 25 | Viral King | 0.3 SOL | +3 meses PRO |
-| 50 | Legend | 1 SOL | VIP Lifetime |
+| Referidos | Badge        | Reward SOL | Reward Tiempo |
+| --------- | ------------ | ---------- | ------------- |
+| 3         | Influencer   | 0 SOL      | +1 mes PRO    |
+| 10        | Whale Hunter | 0.1 SOL    | —             |
+| 25        | Viral King   | 0.3 SOL    | +3 meses PRO  |
+| 50        | Legend       | 1 SOL      | VIP Lifetime  |
 
 ---
 
@@ -321,6 +359,7 @@ El Alpha Feed muestra trades en **tiempo real** de las **top wallets** de Solana
 ### ¿Cómo se seleccionan las "hot wallets"?
 
 Criterios:
+
 - DegenScore >75
 - Volumen >$100k
 - Win rate >60%
@@ -472,11 +511,13 @@ R: En las siguientes 48 horas tras el anuncio.
 ### DEGENLAUNCH2024
 
 **Beneficios:**
+
 - ✓ Acceso PREMIUM gratis
 - ✓ 30 días de PRO incluidos
 - ✓ Solo primeros 100 usuarios
 
 **Cómo usar:**
+
 1. Conecta tu wallet
 2. Genera tu card
 3. En el modal de upgrade, ingresa: `DEGENLAUNCH2024`
@@ -487,18 +528,21 @@ R: En las siguientes 48 horas tras el anuncio.
 ## 🚀 Roadmap Futuro
 
 ### Q1 2025
+
 - [ ] NFT Badges (mintea tus badges)
 - [ ] Copy Trading automático (Jupiter integration)
 - [ ] Telegram Bot con alerts
 - [ ] Mobile app (iOS/Android)
 
 ### Q2 2025
+
 - [ ] DAO Governance
 - [ ] $DEGEN Token lanzamiento
 - [ ] Staking rewards
 - [ ] Torneos con premios en SOL
 
 ### Q3 2025
+
 - [ ] Multichain expansion (Ethereum, Base)
 - [ ] API pública para developers
 - [ ] White-label solution para proyectos
@@ -508,6 +552,7 @@ R: En las siguientes 48 horas tras el anuncio.
 ## 📝 Changelog
 
 ### v0.2.0 - Actualización de Seguridad y Viralidad
+
 - ✅ JWT authentication
 - ✅ XSS sanitization
 - ✅ Referral rewards system
@@ -517,6 +562,7 @@ R: En las siguientes 48 horas tras el anuncio.
 - ✅ Discord webhooks
 
 ### v0.1.0 - Lanzamiento Inicial
+
 - ✅ Card generation
 - ✅ 30+ metrics
 - ✅ Badge system
@@ -546,4 +592,4 @@ DegenScore Card es la forma definitiva de:
 
 ---
 
-*¿Tienes dudas? Visita la [Documentación Completa](/documentation) o únete a nuestro Discord.*
+_¿Tienes dudas? Visita la [Documentación Completa](/documentation) o únete a nuestro Discord._

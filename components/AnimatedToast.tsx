@@ -17,12 +17,7 @@ interface ToastProps {
   onClose?: () => void;
 }
 
-export function AnimatedToast({
-  message,
-  type = 'info',
-  duration = 3000,
-  onClose
-}: ToastProps) {
+export function AnimatedToast({ message, type = 'info', duration = 3000, onClose }: ToastProps) {
   const [isVisible, setIsVisible] = useState(true);
 
   useEffect(() => {
@@ -112,7 +107,12 @@ export function AnimatedToast({
               className="absolute top-3 right-3 text-white/50 hover:text-white/80 transition"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
               </svg>
             </motion.button>
           </div>
@@ -145,14 +145,14 @@ export function ToastContainer() {
   const [toasts, setToasts] = useState<Toast[]>([]);
 
   const removeToast = (id: string) => {
-    setToasts(prev => prev.filter(t => t.id !== id));
+    setToasts((prev) => prev.filter((t) => t.id !== id));
   };
 
   // Expose addToast function globally
   useEffect(() => {
     (window as any).addToast = (message: string, type: ToastType = 'info') => {
       const id = Math.random().toString(36).substr(2, 9);
-      setToasts(prev => [...prev, { id, message, type }]);
+      setToasts((prev) => [...prev, { id, message, type }]);
     };
 
     return () => {
@@ -163,7 +163,7 @@ export function ToastContainer() {
   return (
     <div className="fixed top-4 right-4 z-50 space-y-2 max-w-md">
       <AnimatePresence>
-        {toasts.map(toast => (
+        {toasts.map((toast) => (
           <AnimatedToast
             key={toast.id}
             message={toast.message}

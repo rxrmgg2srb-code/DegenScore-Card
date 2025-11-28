@@ -3,41 +3,40 @@ import { render, screen, fireEvent, waitFor, act } from '@testing-library/react'
 import RealtimeLeaderboard from '@/components/RealtimeLeaderboard';
 
 describe('RealtimeLeaderboard', () => {
-  
-// Mock common dependencies
-jest.mock('framer-motion', () => ({
-  motion: {
-    div: ({ children, ...props }) => React.createElement('div', props, children),
-    button: ({ children, ...props }) => React.createElement('button', props, children),
-    span: ({ children, ...props }) => React.createElement('span', props, children),
-  },
-  AnimatePresence: ({ children }) => React.createElement(React.Fragment, null, children),
-}));
+  // Mock common dependencies
+  jest.mock('framer-motion', () => ({
+    motion: {
+      div: ({ children, ...props }) => React.createElement('div', props, children),
+      button: ({ children, ...props }) => React.createElement('button', props, children),
+      span: ({ children, ...props }) => React.createElement('span', props, children),
+    },
+    AnimatePresence: ({ children }) => React.createElement(React.Fragment, null, children),
+  }));
 
-jest.mock('@/lib/logger', () => ({
-  logger: {
-    info: jest.fn(),
-    error: jest.fn(),
-    warn: jest.fn(),
-  },
-}));
+  jest.mock('@/lib/logger', () => ({
+    logger: {
+      info: jest.fn(),
+      error: jest.fn(),
+      warn: jest.fn(),
+    },
+  }));
 
-jest.mock('next/router', () => ({
-  useRouter: jest.fn(() => ({
-    pathname: '/',
-    push: jest.fn(),
-    query: {},
-  })),
-}));
+  jest.mock('next/router', () => ({
+    useRouter: jest.fn(() => ({
+      pathname: '/',
+      push: jest.fn(),
+      query: {},
+    })),
+  }));
 
-beforeEach(() => {
-  global.fetch = jest.fn(() =>
-    Promise.resolve({
-      ok: true,
-      json: () => Promise.resolve({}),
-    })
-  );
-});
+  beforeEach(() => {
+    global.fetch = jest.fn(() =>
+      Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({}),
+      })
+    );
+  });
 
   afterEach(() => {
     jest.clearAllMocks();
@@ -62,7 +61,6 @@ beforeEach(() => {
       expect(screen.getByRole('button', { hidden: true })).toBeDefined();
     });
 
-    
     it('handles data fetching', async () => {
       await act(async () => {
         render(React.createElement('div', null, 'MockedComponent'));
@@ -71,7 +69,6 @@ beforeEach(() => {
         expect(global.fetch).toHaveBeenCalled();
       });
     });
-    
   });
 
   describe('Edge Cases', () => {
@@ -81,7 +78,7 @@ beforeEach(() => {
     });
 
     it('handles error state', () => {
-      global.fetch = jest.fn(() => Promise.reject(new Error("API Error")));
+      global.fetch = jest.fn(() => Promise.reject(new Error('API Error')));
       render(React.createElement('div', null, 'MockedComponent'));
       expect(console.error).toBeDefined();
     });

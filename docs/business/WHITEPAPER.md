@@ -1,4 +1,5 @@
 # DegenScore: The Credit Score for Crypto Degenerates
+
 ## Whitepaper v2.0
 
 **"Your reputation is your wealth. Prove it on-chain."**
@@ -49,6 +50,7 @@ In traditional finance, credit scores enable trustless lending. In crypto, **the
 ### 1.2 Broken Analytics Tools
 
 Current solutions (Solscan, Birdeye, DexScreener) are:
+
 - **Passive**: No incentive to use them regularly
 - **Non-Social**: No community or competition
 - **Non-Monetizable**: No way for users to earn from their skill
@@ -98,17 +100,22 @@ We provide:
 ### 3.1 For Users (Traders)
 
 #### Step 1: Connect Wallet
+
 User connects their Solana wallet (Phantom, Backpack, Solflare).
 
 #### Step 2: AI Analysis
+
 Our engine analyzes **100,000+ transactions** in ~30 seconds:
+
 - Every swap, every token, every profit/loss
 - Detects moonshots (100x+ gains)
 - Detects rugs (tokens that went to zero)
 - Calculates real win rate, volatility, hold time
 
 #### Step 3: DegenScore Generated (0-100)
+
 Algorithm weighs 9 factors:
+
 - **Profit/Loss** (30 points): Actual SOL made/lost
 - **Win Rate** (20 points): % of profitable trades
 - **Volume** (10 points): Total SOL traded
@@ -120,13 +127,16 @@ Algorithm weighs 9 factors:
 - **Activity** (10 points): Consistency bonus
 
 #### Step 4: NFT Minted
+
 User pays 1 SOL → NFT minted on-chain with:
+
 - Unique visual design
 - Dynamic metadata (score updates)
 - 5% royalties to treasury
 - Tradeable on Magic Eden, Tensor
 
 #### Step 5: Enter the Ecosystem
+
 - **Compete** in weekly challenges (prizes: $DEGEN)
 - **Refer** friends (earn 20% of their $DEGEN)
 - **Stake** $DEGEN for VIP perks (5x rewards)
@@ -148,12 +158,14 @@ DegenScore NFTs are **composable primitives**:
 ## 4. Technology Stack
 
 ### 4.1 Frontend
+
 - **Framework**: Next.js 14 (React 18, SSR)
 - **Styling**: Tailwind CSS + Framer Motion
 - **Real-time**: Pusher (WebSocket updates)
 - **i18n**: 3 languages (English, Spanish, Chinese)
 
 ### 4.2 Backend
+
 - **API**: Serverless (Next.js API Routes on Vercel/Render)
 - **Database**: PostgreSQL (Supabase) + Prisma ORM
 - **Cache**: Upstash Redis (sub-ms latency)
@@ -161,6 +173,7 @@ DegenScore NFTs are **composable primitives**:
 - **Storage**: Cloudflare R2 (image CDN)
 
 ### 4.3 Blockchain
+
 - **Network**: Solana mainnet-beta
 - **RPC**: Helius (enterprise-grade, 99.9% uptime)
 - **Programs**: 3 Anchor smart contracts
@@ -169,12 +182,14 @@ DegenScore NFTs are **composable primitives**:
   3. **Staking**: Tiered rewards (2x-5x multipliers)
 
 ### 4.4 Analytics Engine
+
 - **Algorithm**: Proprietary position-tracking engine
 - **Data**: Helius parsed transactions (enriched)
 - **Speed**: 100k transactions analyzed in 30 seconds
 - **Accuracy**: 99.5%+ (validated against manual checks)
 
 ### 4.5 Security
+
 - **Wallet Auth**: Ed25519 signature verification
 - **Payment**: On-chain verification (double-spend proof)
 - **Rate Limiting**: Multi-tier, persistent
@@ -195,19 +210,20 @@ DegenScore NFTs are **composable primitives**:
 
 ### 5.2 Token Distribution
 
-| Allocation | Tokens | % | Vesting |
-|-----------|---------|---|---------|
-| Community Rewards | 300M | 30% | 4 years (linear) |
-| Liquidity Pool | 250M | 25% | Immediate |
-| Team | 250M | 25% | 4 years (1yr cliff) |
-| Marketing & Partnerships | 150M | 15% | 2 years (linear) |
-| Advisors | 50M | 5% | 2 years (6mo cliff) |
+| Allocation               | Tokens | %   | Vesting             |
+| ------------------------ | ------ | --- | ------------------- |
+| Community Rewards        | 300M   | 30% | 4 years (linear)    |
+| Liquidity Pool           | 250M   | 25% | Immediate           |
+| Team                     | 250M   | 25% | 4 years (1yr cliff) |
+| Marketing & Partnerships | 150M   | 15% | 2 years (linear)    |
+| Advisors                 | 50M    | 5%  | 2 years (6mo cliff) |
 
 **No presale. No VCs. Fair launch.**
 
 ### 5.3 Token Utility
 
 #### Earn $DEGEN by:
+
 - ✅ Daily check-ins (50 $DEGEN/day)
 - ✅ Analyzing wallets (100 $DEGEN per analysis)
 - ✅ Sharing on Twitter (200 $DEGEN)
@@ -216,6 +232,7 @@ DegenScore NFTs are **composable primitives**:
 - ✅ Achieving milestones (badges worth 5,000-100,000 $DEGEN)
 
 #### Spend $DEGEN on:
+
 - 🛍️ Premium themes (1,000 $DEGEN)
 - 🛍️ Animated cards (5,000 $DEGEN)
 - 🛍️ Custom badges (10,000 $DEGEN)
@@ -224,6 +241,7 @@ DegenScore NFTs are **composable primitives**:
 - 🛍️ IDO whitelist (500,000 $DEGEN)
 
 #### Stake $DEGEN for:
+
 - 💎 2x rewards (stake 10,000 $DEGEN)
 - 💎 5x rewards + profit-sharing (stake 100,000 $DEGEN)
 - 💎 APY: 20%-150% based on lock duration
@@ -232,6 +250,7 @@ DegenScore NFTs are **composable primitives**:
 ### 5.4 Deflationary Mechanisms
 
 **Token Burns**:
+
 - 5% of every transfer → Burned
 - 10% of marketplace purchases → Burned
 - Weekly buyback & burn (50% of profits)
@@ -247,6 +266,7 @@ DegenScore NFTs are **composable primitives**:
 - **Level 3**: 5% of earnings
 
 **Milestones**:
+
 - 5 referrals → Badge + 5,000 $DEGEN
 - 25 referrals → Badge + 50,000 $DEGEN + NFT
 - 100 referrals → Badge + 500,000 $DEGEN + Lifetime VIP
@@ -260,15 +280,15 @@ DegenScore NFTs are **composable primitives**:
 
 ### 6.1 Revenue Streams
 
-| Stream | Pricing | Projected Users | Monthly Revenue |
-|--------|---------|-----------------|-----------------|
-| Premium Memberships | 1 SOL one-time | 10,000/month | $1,400,000 |
-| Marketplace Fees | 5% of sales | $500k volume | $25,000 |
-| API Subscriptions | 50k $DEGEN/mo | 1,000 devs | Token burning |
-| Sponsored Badges | $5,000/brand | 20 brands | $100,000 |
-| Ads (Free Tier) | $10 CPM | 1M impressions | $10,000 |
-| White-Label Licensing | $50,000 one-time | 5 clients/year | $250,000/year |
-| **TOTAL** | | | **$1,785,000/mo** |
+| Stream                | Pricing          | Projected Users | Monthly Revenue   |
+| --------------------- | ---------------- | --------------- | ----------------- |
+| Premium Memberships   | 1 SOL one-time   | 10,000/month    | $1,400,000        |
+| Marketplace Fees      | 5% of sales      | $500k volume    | $25,000           |
+| API Subscriptions     | 50k $DEGEN/mo    | 1,000 devs      | Token burning     |
+| Sponsored Badges      | $5,000/brand     | 20 brands       | $100,000          |
+| Ads (Free Tier)       | $10 CPM          | 1M impressions  | $10,000           |
+| White-Label Licensing | $50,000 one-time | 5 clients/year  | $250,000/year     |
+| **TOTAL**             |                  |                 | **$1,785,000/mo** |
 
 **Year 1 Projection**: $21,420,000 (with 100k active users)
 
@@ -297,6 +317,7 @@ DegenScore NFTs are **composable primitives**:
 **Goal**: 10,000 waitlist signups
 
 **Tactics**:
+
 - Twitter campaign ("Prove you're a degen")
 - Partner with 10 Solana NFT projects for cross-promotion
 - 5 micro-influencers (10k-100k followers) @ $500 each
@@ -310,6 +331,7 @@ DegenScore NFTs are **composable primitives**:
 **Goal**: 50,000 users in 30 days
 
 **Tactics**:
+
 - Coordinated launch with 5 influencers (Twitter Spaces)
 - Press release (CoinDesk, The Block, Decrypt)
 - $10k giveaway (top 100 DegenScores)
@@ -323,6 +345,7 @@ DegenScore NFTs are **composable primitives**:
 **Goal**: 500,000 users
 
 **Tactics**:
+
 - **Referral explosion**: 3-level rewards
 - **Weekly competitions**: $10k prize pool
 - **CEX listing**: Gate.io, Bybit
@@ -336,6 +359,7 @@ DegenScore NFTs are **composable primitives**:
 **Goal**: 2,000,000 users
 
 **Tactics**:
+
 - **Binance listing**
 - **Mobile app** (iOS + Android)
 - **Cross-chain** expansion (Ethereum, Base, Arbitrum)
@@ -350,16 +374,16 @@ DegenScore NFTs are **composable primitives**:
 
 ### 8.1 Why We Win
 
-| Feature | DegenScore | Solscan | Birdeye | DexScreener |
-|---------|-----------|---------|---------|-------------|
-| Gamified Scoring | ✅ | ❌ | ❌ | ❌ |
-| Social Features | ✅ | ❌ | Limited | ❌ |
-| Visual NFT Cards | ✅ | ❌ | ❌ | ❌ |
-| Badges & Achievements | ✅ | ❌ | ❌ | ❌ |
-| Viral Referrals | ✅ | ❌ | ❌ | ❌ |
-| Native Token | ✅ | ❌ | ✅ ($BIRD) | ❌ |
-| Trading Competitions | ✅ | ❌ | ❌ | ❌ |
-| DeFi Composability | ✅ | ❌ | ❌ | ❌ |
+| Feature               | DegenScore | Solscan | Birdeye    | DexScreener |
+| --------------------- | ---------- | ------- | ---------- | ----------- |
+| Gamified Scoring      | ✅         | ❌      | ❌         | ❌          |
+| Social Features       | ✅         | ❌      | Limited    | ❌          |
+| Visual NFT Cards      | ✅         | ❌      | ❌         | ❌          |
+| Badges & Achievements | ✅         | ❌      | ❌         | ❌          |
+| Viral Referrals       | ✅         | ❌      | ❌         | ❌          |
+| Native Token          | ✅         | ❌      | ✅ ($BIRD) | ❌          |
+| Trading Competitions  | ✅         | ❌      | ❌         | ❌          |
+| DeFi Composability    | ✅         | ❌      | ❌         | ❌          |
 
 **Unique Value Prop**: We're the only protocol that turns trading stats into an addictive social game with real economic value.
 
@@ -384,6 +408,7 @@ DegenScore NFTs are **composable primitives**:
 ## 9. Roadmap
 
 ### Q1 2025: Launch 🚀
+
 - ✅ Smart contracts deployed (Token, NFT, Staking)
 - ✅ Security audit (OtterSec)
 - ✅ Beta launch (1,000 users)
@@ -391,6 +416,7 @@ DegenScore NFTs are **composable primitives**:
 - ✅ Public launch (50k users in Month 1)
 
 ### Q2 2025: Growth 📈
+
 - Partner with Jupiter (embedded analytics)
 - Partner with Phantom Wallet (in-wallet badge)
 - CEX listing (Gate.io)
@@ -398,6 +424,7 @@ DegenScore NFTs are **composable primitives**:
 - 500k users
 
 ### Q3 2025: Expansion 🌍
+
 - Cross-chain: Ethereum L2s (Base, Arbitrum)
 - White-label offering (DAOs can clone for their community)
 - AI predictions (ML model for moonshot detection)
@@ -405,6 +432,7 @@ DegenScore NFTs are **composable primitives**:
 - 2M users
 
 ### Q4 2025: Domination 👑
+
 - Enterprise partnerships (Coinbase, FTX 2.0)
 - API for institutional clients
 - DegenScore V2 (multichain aggregator)
@@ -468,9 +496,10 @@ DegenScore NFTs are **composable primitives**:
 
 **DegenScore is not just another analytics tool.**
 
-We're building the **reputation layer for Web3 trading**—a composable, gamified, and economically-aligned protocol that makes being a good trader *profitable and fun*.
+We're building the **reputation layer for Web3 trading**—a composable, gamified, and economically-aligned protocol that makes being a good trader _profitable and fun_.
 
 Our vision:
+
 - **Year 1**: 2M users, $20M revenue, become the #1 Solana analytics platform
 - **Year 3**: 50M users, $500M revenue, go cross-chain, become the FICO score of crypto
 - **Year 5**: Exit via acquisition (Coinbase, Binance) or IPO at $5B+ valuation
@@ -488,6 +517,7 @@ See `lib/metricsEngine.ts` for full implementation.
 ### B. Smart Contract Addresses
 
 **Devnet**:
+
 - $DEGEN Token: `DegenScore11111111111111111111111111111111`
 - DegenScore NFT: `DegenNFT11111111111111111111111111111111111`
 - Staking Program: `DegenStake1111111111111111111111111111111`
