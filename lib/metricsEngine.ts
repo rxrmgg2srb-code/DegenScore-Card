@@ -262,10 +262,26 @@ function extractTrades(transactions: ParsedTransaction[], walletAddress: string)
 
   for (const tx of transactions) {
     // =========================================================================
-    // NUEVA ESTRATEGIA: Detectar trades por ESTRUCTURA, no por tipo
-    // Un trade es: intercambio bidireccional de SOL ↔ Token
-    // Una transfer es: movimiento unidireccional de tokens o SOL
+    // FILTRADO TEMPRANO: Descartar transacciones que claramente NO son trades
+    // Esto mejora el rendimiento al no procesar ~9000 transacciones innecesarias
     // =========================================================================
+
+    // Skip común: TRANSFER, NFT_SALE, NFT_MINT, STAKE, etc.
+    // Solo procesar: SWAP, UNKNOWN (pueden ser trades), o tipos con description de trade
+    const likelyNotTrade =
+      tx.type === 'TRANSFER' ||
+      tx.type === 'NFT_SALE' ||
+      tx.type === 'NFT_MINT' ||
+      tx.type === 'NFT_LISTING' ||
+      tx.type === 'STAKE' ||
+      tx.type === 'UNSTAKE' ||
+      tx.type === 'COMPRESSED_NFT_MINT' ||
+      tx.type === 'COMPRESSED_NFT_TRANSFER';
+
+    if (likelyNotTrade) {
+      skippedNoTokenTransfers++;
+      continue;
+    }
 
     // IMPORTANTE: Algunos trades solo tienen accountData, no tokenTransfers
     // Intentar extraer tokenTransfers de accountData si no están presentes
@@ -349,9 +365,9 @@ function extractTrades(transactions: ParsedTransaction[], walletAddress: string)
       }
     }
 
-    // 4. Debe haber cambio significativo de SOL (no dust)
-    // Reducido drásticamente para capturar micro-trades
-    if (Math.abs(solNet) < 0.000001) {
+    // 4. FILTRO CLAVE: Descartar transfers pequeñas como las de tu screenshot
+    // Estas son claramente rewards/airdrops, no trades (< 0.0001 SOL = ~$0.02)
+    if (Math.abs(solNet) < 0.0001) {
       skippedDust++;
       continue;
     }
