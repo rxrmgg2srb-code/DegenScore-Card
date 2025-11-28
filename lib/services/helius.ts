@@ -24,6 +24,18 @@ export interface ParsedTransaction {
     mint: string;
     tokenAmount: number;
   }>;
+  accountData?: Array<{
+    account: string;
+    nativeBalanceChange: number;
+    tokenBalanceChanges?: Array<{
+      mint: string;
+      rawTokenAmount: {
+        tokenAmount: string;
+        decimals: number;
+      };
+      userAccount: string;
+    }>;
+  }>;
   description?: string;
   fee: number;
   feePayer: string;
@@ -129,6 +141,7 @@ export async function getWalletTransactions(
             source: tx.source,
             nativeTransfers: tx.nativeTransfers,
             tokenTransfers: tx.tokenTransfers,
+            accountData: tx.accountData, // Include accountData for better trade detection
             description: tx.description,
             fee: tx.fee,
             feePayer: tx.feePayer,

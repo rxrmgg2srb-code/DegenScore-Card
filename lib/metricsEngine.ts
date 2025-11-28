@@ -380,19 +380,50 @@ function extractTrades(transactions: ParsedTransaction[], walletAddress: string)
     }
 
     // Get token transfers involving this wallet (excluir SOL wrapped)
-    const relevantTokenTransfers = tx.tokenTransfers.filter(
+    let relevantTokenTransfers = tx.tokenTransfers.filter(
       (t) =>
         t.mint !== SOL_MINT &&
         (t.fromUserAccount === walletAddress || t.toUserAccount === walletAddress)
     );
 
+    // 🔧 FALLBACK: Si no encontramos tokens en transfers directos pero es un DEX conocido,
+    // intentar extraer de accountData (para PUMP_AMM, PUMP_FUN que usan PDAs)
+    if (relevantTokenTransfers.length === 0 && isDexSource && tx.accountData) {
+      const walletAccountData = tx.accountData.find(ad => ad.account === walletAddress);
+      if (walletAccountData?.tokenBalanceChanges && walletAccountData.tokenBalanceChanges.length > 0) {
+        // Convertir tokenBalanceChanges a formato de tokenTransfer para procesamiento uniforme
+        relevantTokenTransfers = walletAccountData.tokenBalanceChanges
+          .filter(tbc => tbc.mint !== SOL_MINT)
+          .map(tbc => {
+            const tokenAmount = parseFloat(tbc.rawTokenAmount.tokenAmount) / Math.pow(10, tbc.rawTokenAmount.decimals);
+            const isPositive = tokenAmount > 0;
+            return {
+              fromUserAccount: isPositive ? 'UNKNOWN' : walletAddress,
+              toUserAccount: isPositive ? walletAddress : 'UNKNOWN',
+              mint: tbc.mint,
+              tokenAmount: Math.abs(tokenAmount),
+            };
+          });
+
+        if (relevantTokenTransfers.length > 0) {
+          extractedFromAccountData++;
+          logger.debug('[Debug] Extracted from accountData:', {
+            source: tx.source,
+            tokensFound: relevantTokenTransfers.length,
+            mints: relevantTokenTransfers.map(t => t.mint.substring(0, 8)),
+          });
+        }
+      }
+    }
+
     if (relevantTokenTransfers.length === 0) {
       skippedNoToken++;
       // Log cuando encontramos un DEX trade pero sin tokens relevantes para debug
       if (isDexSource) {
-        logger.debug('[Debug] DEX trade sin tokens relevantes:', {
+        logger.debug('[Debug] DEX trade sin tokens relevantes (ni en transfers ni accountData):', {
           source: tx.source,
           totalTokenTransfers: tx.tokenTransfers?.length || 0,
+          hasAccountData: !!tx.accountData,
           mints: tx.tokenTransfers?.slice(0, 5).map(t => t.mint.substring(0, 8)) || [],
         });
       }
