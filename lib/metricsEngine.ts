@@ -262,26 +262,10 @@ function extractTrades(transactions: ParsedTransaction[], walletAddress: string)
 
   for (const tx of transactions) {
     // =========================================================================
-    // FILTRADO TEMPRANO: Descartar transacciones que claramente NO son trades
-    // Esto mejora el rendimiento al no procesar ~9000 transacciones innecesarias
+    // ESTRATEGIA: NO filtrar por tipo, usar solo filtros ESTRUCTURALES
+    // Algunos DEXs generan transacciones que Helius marca como "TRANSFER"
+    // pero que en realidad son swaps. Confiar en la estructura: SOL ↔ Token
     // =========================================================================
-
-    // Skip común: TRANSFER, NFT_SALE, NFT_MINT, STAKE, etc.
-    // Solo procesar: SWAP, UNKNOWN (pueden ser trades), o tipos con description de trade
-    const likelyNotTrade =
-      tx.type === 'TRANSFER' ||
-      tx.type === 'NFT_SALE' ||
-      tx.type === 'NFT_MINT' ||
-      tx.type === 'NFT_LISTING' ||
-      tx.type === 'STAKE' ||
-      tx.type === 'UNSTAKE' ||
-      tx.type === 'COMPRESSED_NFT_MINT' ||
-      tx.type === 'COMPRESSED_NFT_TRANSFER';
-
-    if (likelyNotTrade) {
-      skippedNoTokenTransfers++;
-      continue;
-    }
 
     // IMPORTANTE: Algunos trades solo tienen accountData, no tokenTransfers
     // Intentar extraer tokenTransfers de accountData si no están presentes
