@@ -407,13 +407,22 @@ function extractTrades(transactions: ParsedTransaction[], walletAddress: string)
 
         if (relevantTokenTransfers.length > 0) {
           extractedFromAccountData++;
-          logger.debug('[Debug] Extracted from accountData:', {
+          logger.info('[accountData] Extracted from accountData:', {
             source: tx.source,
             tokensFound: relevantTokenTransfers.length,
             mints: relevantTokenTransfers.map(t => t.mint.substring(0, 8)),
           });
         }
       }
+    } else if (relevantTokenTransfers.length === 0 && isDexSource) {
+      // Log why fallback didn't work - IMPORTANTE para debugging
+      logger.info('[accountData] DEX trade sin tokens - checking fallback:', {
+        source: tx.source,
+        hasAccountData: !!tx.accountData,
+        accountDataLength: tx.accountData?.length || 0,
+        accountDataAccounts: tx.accountData?.map(ad => ad.account.substring(0, 10)) || [],
+        signature: tx.signature.substring(0, 20),
+      });
     }
 
     if (relevantTokenTransfers.length === 0) {
