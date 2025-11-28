@@ -386,6 +386,40 @@ function extractTrades(transactions: ParsedTransaction[], walletAddress: string)
         (t.fromUserAccount === walletAddress || t.toUserAccount === walletAddress)
     );
 
+    // 🔧 PLAN B: Para DEX conocidos, si no encontramos transfers directos del wallet,
+    // buscar CUALQUIER token transfer y determinar dirección por SOL net change
+    if (relevantTokenTransfers.length === 0 && isDexSource && tx.tokenTransfers && tx.tokenTransfers.length > 0) {
+      // Encontrar el token principal del swap (el que NO es SOL)
+      const tokenTransfersNonSOL = tx.tokenTransfers.filter(t => t.mint !== SOL_MINT);
+
+      if (tokenTransfersNonSOL.length > 0) {
+        // Usar el primer token transfer como el token del trade
+        const primaryToken = tokenTransfersNonSOL[0];
+
+        // Determinar dirección por SOL: negativo = compró tokens, positivo = vendió tokens
+        const isBuyBasedOnSOL = solNet < 0;
+        const tokenAmount = primaryToken?.tokenAmount || 0;
+
+        if (tokenAmount > 0 && primaryToken) {
+          relevantTokenTransfers = [{
+            fromUserAccount: isBuyBasedOnSOL ? 'DEX_POOL' : walletAddress,
+            toUserAccount: isBuyBasedOnSOL ? walletAddress : 'DEX_POOL',
+            mint: primaryToken.mint,
+            tokenAmount: tokenAmount,
+          }];
+
+          extractedFromAccountData++; // Reusamos este contador para "extraction alternativa"
+          logger.info('[DEX_INFERENCE] Extracted trade from SOL net + token transfer:', {
+            source: tx.source,
+            solNet: solNet.toFixed(6),
+            isBuy: isBuyBasedOnSOL,
+            mint: primaryToken.mint.substring(0, 12),
+            tokenAmount: tokenAmount.toFixed(2),
+          });
+        }
+      }
+    }
+
     // 🔧 FALLBACK: Si no encontramos tokens en transfers directos pero es un DEX conocido,
     // intentar extraer de accountData (para PUMP_AMM, PUMP_FUN que usan PDAs)
     if (relevantTokenTransfers.length === 0 && isDexSource && tx.accountData) {
