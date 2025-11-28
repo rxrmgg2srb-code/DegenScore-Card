@@ -400,15 +400,31 @@ function extractTrades(transactions: ParsedTransaction[], walletAddress: string)
       continue;
     }
 
-    // 5. Filtrar token transfers que involucran esta wallet (excluir SOL wrapped)
-    const relevantTokenTransfers = tokenTransfers.filter(
-      (t) =>
+    // 5. Filtrar token transfers que involucran esta wallet
+    // IMPORTANTE: NO filtrar SOL_MINT en DEXs porque Pump.fun usa WSOL
+    // Solo filtrar SOL_MINT en transacciones no-DEX
+    const relevantTokenTransfers = tokenTransfers.filter((t) => {
+      // Si es un DEX conocido, permitir WSOL (tiene el mismo mint que SOL)
+      if (isDEXTrade) {
+        return t.fromUserAccount === walletAddress || t.toUserAccount === walletAddress;
+      }
+      // Si NO es DEX, filtrar SOL_MINT (transfers normales de SOL)
+      return (
         t.mint !== SOL_MINT &&
         (t.fromUserAccount === walletAddress || t.toUserAccount === walletAddress)
-    );
+      );
+    });
 
     if (relevantTokenTransfers.length === 0) {
       skippedNoToken++;
+      // Debug: Log si es un DEX conocido para entender el problema
+      if (isDEXTrade && skippedNoToken <= 3) {
+        logger.info(`[Debug] DEX trade sin tokens relevantes:`, {
+          source: tx.source,
+          totalTokenTransfers: tokenTransfers.length,
+          mints: tokenTransfers.map(t => t.mint.substring(0, 8)),
+        });
+      }
       continue;
     }
 
