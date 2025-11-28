@@ -812,3 +812,42 @@ model SuperTokenAnalysis {
   @@index([viewCount(sort: Desc)])
   @@index([superScore(sort: Desc), globalRiskLevel])
 }
+
+// ═══════════════════════════════════════════════════════════════
+// REFERRAL SYSTEM
+// ═══════════════════════════════════════════════════════════════
+
+model Referral {
+  id                String    @id @default(cuid())
+  referrerAddress   String    // Wallet que refirió
+  referredAddress   String    // Wallet referido
+  
+  // Rewards tracking
+  rewardAmount      Float     @default(0)  // Cantidad de recompensas acumuladas
+  rewardPaid        Boolean   @default(false)  // Si se pagó la recompensa
+  hasPaid           Boolean   @default(false)  // Si el referido pagó/generó valor
+  paidAt            DateTime? // Fecha cuando el referido pagó
+  
+  // Timestamps
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  
+  @@index([referrerAddress])
+  @@index([referredAddress])
+  @@index([referrerAddress, createdAt(sort: Desc)])
+}
+
+// ═══════════════════════════════════════════════════════════════
+// RATE LIMITING
+// ═══════════════════════════════════════════════════════════════
+
+model RateLimitLog {
+  id          String   @id @default(cuid())
+  identifier  String   // IP or wallet address
+  endpoint    String?  // API endpoint
+  timestamp   DateTime @default(now())
+  
+  @@index([identifier, timestamp])
+  @@index([identifier, endpoint, timestamp])
+  @@index([timestamp])
+}
