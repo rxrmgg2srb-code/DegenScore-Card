@@ -351,8 +351,18 @@ function extractTrades(transactions: ParsedTransaction[], walletAddress: string)
 
     // 4. FILTRO CLAVE: Descartar transfers pequeñas como las de tu screenshot
     // Estas son claramente rewards/airdrops, no trades (< 0.0001 SOL = ~$0.02)
-    if (Math.abs(solNet) < 0.0001) {
+    const solValue = Math.abs(solNet);
+    if (solValue < 0.0001) {
       skippedDust++;
+      // Debug: Log algunos para entender si estamos filtrando trades reales
+      if (skippedDust <= 3) {
+        logger.info(`[Debug] Skipping dust trade:`, {
+          solNet: solValue.toFixed(9),
+          type: tx.type,
+          description: tx.description?.substring(0, 50),
+          hasTokenTransfers: tokenTransfers.length,
+        });
+      }
       continue;
     }
 
@@ -433,6 +443,16 @@ function extractTrades(transactions: ParsedTransaction[], walletAddress: string)
     });
   }
 
+  // Analizar tipos de transacciones para debug
+  const typeCount = new Map<string, number>();
+  transactions.forEach(tx => {
+    typeCount.set(tx.type, (typeCount.get(tx.type) || 0) + 1);
+  });
+  const topTypes = Array.from(typeCount.entries())
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 10)
+    .reduce((obj, [k, v]) => ({ ...obj, [k]: v }), {});
+
   // Calcular porcentajes para mejor análisis
   const txWithBothTransfers = transactions.length - skippedNoTokenTransfers - skippedNoNativeTransfers;
   const dustPercentage = txWithBothTransfers > 0 ? ((skippedDust / txWithBothTransfers) * 100).toFixed(1) : '0';
@@ -445,6 +465,7 @@ function extractTrades(transactions: ParsedTransaction[], walletAddress: string)
     extractedFromAccountData: extractedFromAccountData,
     txWithTokenAndNative: txWithBothTransfers,
     dustPercentageOfValid: `${dustPercentage}%`,
+    topTransactionTypes: topTypes,
     skipped: {
       noTokenTransfers: skippedNoTokenTransfers,
       noNativeTransfers: skippedNoNativeTransfers,
