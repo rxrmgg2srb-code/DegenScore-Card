@@ -525,26 +525,43 @@ function extractTrades(transactions: ParsedTransaction[], walletAddress: string)
     // Calculate SOL amount (absolute value)
     const solAmount = Math.abs(solNet);
 
-    // Dust check - muy pequeño threshold para capturar más trades
-    // Solo rechazar si es realmente insignificante
-    if (solAmount < 0.000001) {
+    // Dust check - Para DEX conocidos, ser más permisivo porque el SOL net puede ser
+    // muy pequeño por fees/slippage, pero el trade SÍ ocurrió (tenemos tokenAmount > 0)
+    const dustThreshold = isDexSource ? 0.00000001 : 0.000001; // 10x más permisivo para DEX
+
+    if (solAmount < dustThreshold) {
       dustCount++;
       skippedDust++;
-      logger.debug('[Debug] Skipping dust (non-DEX):', {
+      logger.info('[DUST] Skipping dust trade:', {
         solNet: solNet.toFixed(9),
+        solAmount: solAmount.toFixed(9),
+        threshold: dustThreshold,
         type: tx.type,
         source: tx.source || 'UNKNOWN',
-        description: tx.description?.substring(0, 50),
+        isDexSource,
+        tokenMint: tokenTransfer.mint.substring(0, 12),
+        tokenAmount: tokenAmount.toFixed(2),
       });
       continue;
     }
 
     const pricePerToken = solAmount / tokenAmount;
 
-    // Sanity checks mejorados
-    // Permitir un rango muy amplio de precios
-    if (pricePerToken < 0.000000001 || pricePerToken > 1000000) {
+    // Sanity checks mejorados - Rango muy amplio, especialmente para DEX inferidos
+    // Para DEX, el precio puede ser extremadamente bajo si es un memecoin nuevo
+    const minPrice = isDexSource ? 0.00000000001 : 0.000000001; // 100x más permisivo para DEX
+    const maxPrice = 10000000; // Subido a 10M para permitir tokens muy caros
+
+    if (pricePerToken < minPrice || pricePerToken > maxPrice) {
       skippedSanity++;
+      logger.info('[SANITY] Price out of range:', {
+        source: tx.source || 'UNKNOWN',
+        pricePerToken: pricePerToken.toExponential(2),
+        minPrice: minPrice.toExponential(2),
+        maxPrice: maxPrice.toExponential(2),
+        solAmount: solAmount.toFixed(9),
+        tokenAmount: tokenAmount.toFixed(2),
+      });
       continue;
     }
 
