@@ -65,13 +65,15 @@ export function useDegenCard() {
         setMounted(true);
     }, []);
 
-    const generateCard = async () => {
-        if (!connected || !publicKey) {
+    const generateCard = async (spyAddress?: string) => {
+        // Spy Mode: If spyAddress is provided, use it. Otherwise, check for connected wallet.
+        const addressToUse = spyAddress || (connected && publicKey ? publicKey.toBase58() : null);
+
+        if (!addressToUse) {
             setError('Please connect your wallet first');
             return;
         }
 
-        const addressToUse = publicKey.toBase58();
         setWalletAddress(addressToUse);
         setLoading(true);
         setAnalyzing(true);

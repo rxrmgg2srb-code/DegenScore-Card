@@ -254,8 +254,9 @@ function extractTrades(
       }
     }
 
-    // Ignore tiny swaps (dust)
-    if (Math.abs(solNet) < 0.001) continue;
+    // Ignore tiny swaps (dust) - Reduced threshold to capture small pump.fun trades
+    // 0.0001 SOL = ~$0.02 USD at $200/SOL
+    if (Math.abs(solNet) < 0.0001) continue;
 
     // Get token transfers involving this wallet
     const tokenTransfers = tx.tokenTransfers.filter(t =>
@@ -281,9 +282,11 @@ function extractTrades(
 
     const pricePerToken = Math.abs(solNet) / tokenAmount;
 
-    // Sanity checks
-    if (pricePerToken > 1 || pricePerToken < 0.0000001) continue;
-    if (Math.abs(solNet) > 50) continue; // Ignore whale-sized swaps (likely arbitrage)
+    // Sanity checks - FIXED: Much more permissive to capture memecoins
+    // Allow prices from 0.00000000001 to 1,000,000 SOL per token
+    if (pricePerToken > 1000000 || pricePerToken < 0.00000000001) continue;
+    // Removed 10k SOL limit to allow whale trades
+    // if (Math.abs(solNet) > 10000) continue;
 
     trades.push({
       timestamp: tx.timestamp,

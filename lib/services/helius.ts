@@ -3,7 +3,12 @@ import { retry, CircuitBreaker } from '../retryLogic';
 import { logger } from '@/lib/logger';
 
 const HELIUS_API_KEY = process.env.HELIUS_API_KEY || '';
-const HELIUS_RPC_URL = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_API_KEY}`;
+// Prefer full RPC URL from env (more secure), fallback to constructing it
+const HELIUS_RPC_URL = process.env.HELIUS_RPC_URL ||
+  (HELIUS_API_KEY ? `https://mainnet.helius-rpc.com/?api-key=${HELIUS_API_KEY}` : 'https://api.mainnet-beta.solana.com');
+
+// Helper to safely log URLs (redacts API key)
+const safeUrl = (url: string) => url.replace(/api-key=[^&]*/, 'api-key=REDACTED');
 
 // Circuit breaker for Helius API (prevents cascading failures in high concurrency)
 const heliusCircuitBreaker = new CircuitBreaker(5, 60000);

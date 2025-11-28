@@ -14,10 +14,8 @@ module.exports = {
   },
   // Ignore Playwright e2e tests
   testMatch: [
-    '**/__tests__/lib/utils/token-scoring.test.ts',
-    '**/__tests__/pages/api/generate-card.test.ts',
-    '**/__tests__/hooks/useTokenAnalysis.test.ts',
-    '**/__tests__/lib/badges-with-points.test.ts',
+    '**/__tests__/**/*.[jt]s?(x)',
+    '**/?(*.)+(spec|test).[jt]s?(x)',
   ],
   collectCoverageFrom: [
     '<rootDir>/lib/utils/token-scoring.ts',

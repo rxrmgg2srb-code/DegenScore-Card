@@ -12,6 +12,7 @@ import i18n from '../lib/i18n';
 import Analytics from '../components/Analytics';
 
 import WalletTracker from '../components/WalletTracker';
+import MetaHead from '../components/MetaHead';
 
 export default function App({ Component, pageProps }: AppProps) {
   // Configure RPC endpoint
@@ -66,6 +67,7 @@ export default function App({ Component, pageProps }: AppProps) {
 
   return (
     <ErrorBoundary>
+      <MetaHead />
       <Analytics />
       <I18nextProvider i18n={i18n}>
         <ConnectionProvider endpoint={endpoint}>

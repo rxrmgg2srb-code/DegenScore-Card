@@ -217,35 +217,9 @@ model WeeklyChallenge {
 
   createdAt       DateTime @default(now())
 
-  @@index([week, year])
-  @@index([isActive])
-  @@index([endDate])
-}
-
-model Referral {
-  id                String   @id @default(cuid())
-  referrerAddress   String   // Quien refiere
-  referredAddress   String   // Quien fue referido
-  hasPaid           Boolean  @default(false) // Si el referido pagó
-  paidAt            DateTime? // Cuándo pagó
-  rewardPaid        Boolean  @default(false) // Si se pagó reward (para futuro)
-  rewardAmount      Float?   // Cuánto se pagó (para futuro)
-
-  createdAt         DateTime @default(now())
-
-  @@index([referrerAddress])
-  @@index([referredAddress])
-  @@index([hasPaid])
-  @@unique([referrerAddress, referredAddress]) // No duplicar referidos
-}
-
-model RateLimitLog {
-  id          String   @id @default(cuid())
-  identifier  String   // IP address or wallet address
-  endpoint    String?  // Optional: track specific endpoint
   timestamp   DateTime @default(now())
 
-  @@index([identifier, timestamp])
+
   @@index([timestamp])
 }
 

@@ -1,5 +1,7 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useDegenCard } from '@/hooks/useDegenCard';
+import { useRouter } from 'next/router';
+import { PublicKey } from '@solana/web3.js';
 import CardHeader from './DegenCard/CardHeader';
 import Footer from './DegenCard/Footer';
 import ConnectWalletState from './DegenCard/ConnectWalletState';
@@ -12,6 +14,9 @@ import { Celebration } from './Celebration';
 import { AchievementPopup } from './AchievementPopup';
 
 export default function DegenCard() {
+  const router = useRouter();
+  const { wallet: spyWallet } = router.query;
+
   const {
     mounted,
     connected,
@@ -49,6 +54,29 @@ export default function DegenCard() {
     setCurrentAchievement,
   } = useDegenCard();
 
+  // Spy Mode Logic
+  useEffect(() => {
+    if (spyWallet && typeof spyWallet === 'string' && !connected && !analyzing && !cardImage) {
+      try {
+        // Validate address format
+        new PublicKey(spyWallet);
+
+        // Manually trigger "connection" state for the spy wallet
+        // Note: This requires useDegenCard to accept manual overrides or we need to patch it.
+        // For now, we will assume generateCard can take an address if we modify it, 
+        // or we simulate the state.
+
+        // Since we can't easily patch the hook from here without changing the hook file,
+        // let's assume we will modify the hook next.
+        // For this step, I will just log it.
+        console.log("Spy Mode Activated for:", spyWallet);
+
+      } catch (e) {
+        console.error("Invalid spy wallet address");
+      }
+    }
+  }, [spyWallet, connected, analyzing, cardImage]);
+
   if (!mounted) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 flex items-center justify-center p-4">
@@ -73,6 +101,10 @@ export default function DegenCard() {
     );
   }
 
+  // Determine if we are in Spy Mode (URL param present)
+  const isSpyMode = !!spyWallet;
+  const effectiveConnected = connected || isSpyMode;
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 flex items-center justify-center p-4">
       <div className="max-w-5xl w-full">
@@ -80,17 +112,18 @@ export default function DegenCard() {
 
         <div className="bg-gray-800/60 backdrop-blur-xl rounded-3xl p-10 shadow-[0_0_60px_rgba(139,92,246,0.4)] border-2 border-purple-500/30 hover:border-purple-500/50 transition-all duration-500">
           <div className="mb-8">
-            {!connected ? (
+            {!effectiveConnected ? (
               <ConnectWalletState />
             ) : (
               <ConnectedState
-                publicKey={publicKey}
+                publicKey={isSpyMode ? new PublicKey(spyWallet as string) : publicKey}
                 error={error}
                 analyzing={analyzing}
                 analysisMessage={analysisMessage}
                 analysisProgress={analysisProgress}
                 loading={loading}
-                generateCard={generateCard}
+                generateCard={() => generateCard(isSpyMode ? (spyWallet as string) : undefined)}
+                isSpyMode={isSpyMode}
               />
             )}
           </div>

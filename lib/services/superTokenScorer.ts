@@ -25,7 +25,9 @@ import { retry, CircuitBreaker } from '../retryLogic';
 import { analyzeTokenSecurity, TokenSecurityReport } from './tokenSecurityAnalyzer';
 
 const HELIUS_API_KEY = process.env.HELIUS_API_KEY || '';
-const HELIUS_RPC_URL = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_API_KEY}`;
+// Prefer full RPC URL from env (more secure), fallback to constructing it
+const HELIUS_RPC_URL = process.env.HELIUS_RPC_URL ||
+  (HELIUS_API_KEY ? `https://mainnet.helius-rpc.com/?api-key=${HELIUS_API_KEY}` : 'https://api.mainnet-beta.solana.com');
 
 // Circuit breaker para evitar sobrecarga
 const superCircuitBreaker = new CircuitBreaker(5, 60000);
@@ -691,7 +693,7 @@ async function fetchJupiterLiquidity(tokenAddress: string): Promise<JupiterLiqui
 async function analyzeNewWallets(tokenAddress: string): Promise<NewWalletAnalysis> {
   return superCircuitBreaker.execute(() =>
     retry(async () => {
-      const url = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_API_KEY}`;
+      const url = HELIUS_RPC_URL;
 
       // 🔥 FIX: First, get the REAL total holder count from DAS API
       try {
@@ -1407,7 +1409,7 @@ async function analyzeSmartMoney(tokenAddress: string): Promise<SmartMoneyAnalys
     // 3. High transaction volume (experienced traders)
 
     const connection = new Connection(HELIUS_RPC_URL, 'confirmed');
-    const url = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_API_KEY}`;
+    const url = HELIUS_RPC_URL;
 
     // Get top holders
     const response = await fetch(url, {

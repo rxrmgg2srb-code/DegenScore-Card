@@ -18,7 +18,15 @@ import { logger } from '@/lib/logger';
 import { retry, CircuitBreaker } from '../retryLogic';
 
 const HELIUS_API_KEY = process.env.HELIUS_API_KEY || '';
-const HELIUS_RPC_URL = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_API_KEY}`;
+// Prefer full RPC URL from env (more secure), fallback to constructing it
+const HELIUS_RPC_URL = process.env.HELIUS_RPC_URL ||
+  (HELIUS_API_KEY ? `https://mainnet.helius-rpc.com/?api-key=${HELIUS_API_KEY}` : 'https://api.mainnet-beta.solana.com');
+
+const getHeliusApiKey = () => {
+  if (HELIUS_API_KEY) return HELIUS_API_KEY;
+  const match = HELIUS_RPC_URL.match(/api-key=([^&]*)/);
+  return match ? match[1] : '';
+};
 
 // Circuit breaker para evitar sobrecarga
 const securityCircuitBreaker = new CircuitBreaker(5, 60000);
@@ -296,7 +304,7 @@ async function analyzeHolderDistribution(tokenAddress: string): Promise<HolderDi
   return securityCircuitBreaker.execute(() =>
     retry(async () => {
       // Get token holders using Helius DAS API
-      const url = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_API_KEY}`;
+      const url = HELIUS_RPC_URL;
 
       const response = await fetch(url, {
         method: 'POST',
@@ -477,7 +485,7 @@ async function analyzeTradingPatterns(tokenAddress: string): Promise<TradingPatt
   return securityCircuitBreaker.execute(() =>
     retry(async () => {
       // Analyze first 100 transactions to detect patterns
-      const url = `https://api.helius.xyz/v0/addresses/${tokenAddress}/transactions?api-key=${HELIUS_API_KEY}&limit=100`;
+      const url = `https://api.helius.xyz/v0/addresses/${tokenAddress}/transactions?api-key=${getHeliusApiKey()}&limit=100`;
 
       const response = await fetch(url);
       if (!response.ok) {
@@ -559,7 +567,7 @@ async function analyzeTradingPatterns(tokenAddress: string): Promise<TradingPatt
 async function getTokenMetadata(tokenAddress: string): Promise<TokenMetadata> {
   return securityCircuitBreaker.execute(() =>
     retry(async () => {
-      const url = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_API_KEY}`;
+      const url = HELIUS_RPC_URL;
 
       const response = await fetch(url, {
         method: 'POST',
@@ -636,7 +644,7 @@ async function analyzeMarketMetrics(tokenAddress: string): Promise<MarketMetrics
     retry(async () => {
       // This would ideally fetch from CoinGecko/Jupiter/Birdeye
       // For now, we'll use transaction history to estimate age
-      const url = `https://api.helius.xyz/v0/addresses/${tokenAddress}/transactions?api-key=${HELIUS_API_KEY}&limit=1000`;
+      const url = `https://api.helius.xyz/v0/addresses/${tokenAddress}/transactions?api-key=${getHeliusApiKey()}&limit=1000`;
 
       const response = await fetch(url);
       if (!response.ok) {

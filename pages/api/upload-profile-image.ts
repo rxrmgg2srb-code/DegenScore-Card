@@ -2,7 +2,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { IncomingForm } from 'formidable';
 import fs from 'fs';
 import { isValidSolanaAddress, isValidImageType } from '../../lib/validation';
-import { rateLimit } from '../../lib/rateLimitRedis';
+import { rateLimit } from '../../lib/rateLimit';
 import { logger } from '../../lib/logger';
 import { UPLOAD_CONFIG } from '../../lib/config';
 
@@ -20,8 +20,9 @@ export default async function handler(
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  // Apply rate limiting
-  if (!(await rateLimit(req, res))) {
+  // Apply strict rate limiting for uploads
+  // 5 uploads per hour (3600000 ms)
+  if (!(await rateLimit(req, res, { windowMs: 3600000, maxRequests: 5 }))) {
     return;
   }
 
