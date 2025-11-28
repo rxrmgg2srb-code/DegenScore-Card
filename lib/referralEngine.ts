@@ -31,8 +31,8 @@ export interface ReferralLeaderboard {
 
 // Stub function - returns empty stats
 export async function trackReferral(
-  referrerCode: string,
-  newUserWallet: string
+  _referrerCode: string,
+  _newUserWallet: string
 ): Promise<{ success: boolean; message: string }> {
   logger.warn('[ReferralEngine] Disabled - Referral model not in schema');
   return {
@@ -42,7 +42,7 @@ export async function trackReferral(
 }
 
 // Stub function - returns empty stats
-export async function getReferralStats(walletAddress: string): Promise<ReferralStats> {
+export async function getReferralStats(_walletAddress: string): Promise<ReferralStats> {
   return {
     totalReferrals: 0,
     level1Referrals: 0,
@@ -56,13 +56,13 @@ export async function getReferralStats(walletAddress: string): Promise<ReferralS
 }
 
 // Stub function - returns empty array
-export async function getReferralLeaderboard(limit: number = 10): Promise<ReferralLeaderboard[]> {
+export async function getReferralLeaderboard(_limit: number = 10): Promise<ReferralLeaderboard[]> {
   return [];
 }
 
 // Stub function - returns failure
 export async function claimReferralRewards(
-  walletAddress: string
+  _walletAddress: string
 ): Promise<{ success: boolean; amount: number; message: string }> {
   return {
     success: false,
@@ -73,8 +73,8 @@ export async function claimReferralRewards(
 
 // Stub function - returns empty object
 export async function processReferralReward(
-  walletAddress: string,
-  amount: number
+  _walletAddress: string,
+  _amount: number
 ): Promise<void> {
   logger.warn('[ReferralEngine] Disabled - No-op');
 }
