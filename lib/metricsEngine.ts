@@ -373,49 +373,71 @@ function extractTrades(transactions: ParsedTransaction[], walletAddress: string)
       continue;
     }
 
-    // Determine if this is a buy or sell based on direction of token flow
-    // Buy = tokens come IN to wallet
-    // Sell = tokens go OUT of wallet
-    const tokensIn = relevantTokenTransfers.filter((t) => t.toUserAccount === walletAddress);
-    const tokensOut = relevantTokenTransfers.filter((t) => t.fromUserAccount === walletAddress);
+    // 🔥 NUEVA LÓGICA: Calcular balance neto de tokens por mint
+    // Esto maneja correctamente casos donde hay múltiples transfers del mismo token
+    const tokenNetBalances = new Map<string, number>();
 
-    const isBuy = tokensIn.length > 0 && tokensOut.length === 0;
-    const isSell = tokensOut.length > 0 && tokensIn.length === 0;
+    for (const transfer of relevantTokenTransfers) {
+      const currentBalance = tokenNetBalances.get(transfer.mint) || 0;
 
-    // Si no es claramente buy o sell, podría ser un trade complejo, skip por ahora
+      if (transfer.toUserAccount === walletAddress) {
+        // Tokens entrando
+        tokenNetBalances.set(transfer.mint, currentBalance + transfer.tokenAmount);
+      }
+
+      if (transfer.fromUserAccount === walletAddress) {
+        // Tokens saliendo
+        tokenNetBalances.set(transfer.mint, currentBalance - transfer.tokenAmount);
+      }
+    }
+
+    // Determinar el token principal (el que tiene mayor cambio absoluto)
+    let primaryMint = '';
+    let primaryTokenNet = 0;
+
+    for (const [mint, netBalance] of tokenNetBalances.entries()) {
+      if (Math.abs(netBalance) > Math.abs(primaryTokenNet)) {
+        primaryMint = mint;
+        primaryTokenNet = netBalance;
+      }
+    }
+
+    if (!primaryMint || primaryTokenNet === 0) {
+      skippedNoToken++;
+      continue;
+    }
+
+    // Determine if this is a buy or sell based on NET token flow and SOL flow
+    // Buy = SOL out (negative) and tokens in (positive)
+    // Sell = SOL in (positive) and tokens out (negative)
+    const isBuy = solNet < 0 && primaryTokenNet > 0;
+    const isSell = solNet > 0 && primaryTokenNet < 0;
+
+    // Si no es claramente buy o sell, podría ser un swap token-token o algo más complejo
     if (!isBuy && !isSell) {
-      // Podría ser un swap token-token o algo más complejo
       skippedTransferOnly++;
-      logger.debug('[Debug] Skipped transferOnly:', {
+      logger.debug('[Debug] Skipped complex trade:', {
         source: tx.source || 'UNKNOWN',
         type: tx.type,
-        isBuy,
-        isSell,
         solNet: solNet.toFixed(6),
-        tokensInCount: tokensIn.length,
-        tokensOutCount: tokensOut.length,
-        relevantTokensCount: relevantTokenTransfers.length,
+        primaryTokenNet: primaryTokenNet.toFixed(6),
+        primaryMint: primaryMint.substring(0, 20) + '...',
+        tokenMints: Array.from(tokenNetBalances.keys()).map(m => m.substring(0, 8)),
       });
       continue;
     }
 
-    // Get the primary token transfer
-    const tokenTransfer = isBuy ? tokensIn[0] : tokensOut[0];
-    if (!tokenTransfer) {
-      continue;
-    }
-
-    const tokenAmount = tokenTransfer.tokenAmount;
+    const tokenAmount = Math.abs(primaryTokenNet);
     if (tokenAmount === 0) {
       skippedZeroAmount++;
       continue;
     }
 
     // 🚫 Excluir stablecoins y wrapped tokens - Solo queremos trades especulativos
-    if (EXCLUDED_TOKENS.has(tokenTransfer.mint)) {
+    if (EXCLUDED_TOKENS.has(primaryMint)) {
       skippedStablecoin++;
       logger.debug('[Debug] Skipping stablecoin/wrapped token:', {
-        mint: tokenTransfer.mint.substring(0, 20) + '...',
+        mint: primaryMint.substring(0, 20) + '...',
         source: tx.source,
         solAmount: Math.abs(solNet).toFixed(4),
       });
@@ -457,7 +479,7 @@ function extractTrades(transactions: ParsedTransaction[], walletAddress: string)
     // ✅ TRADE VÁLIDO - Agregar a la lista
     trades.push({
       timestamp: tx.timestamp,
-      tokenMint: tokenTransfer.mint,
+      tokenMint: primaryMint,
       type: isBuy ? 'buy' : 'sell',
       solAmount,
       tokenAmount,
