@@ -778,212 +778,190 @@ async function fetchJupiterLiquidity(
 // ============================================================================
 
 async function analyzeNewWallets(tokenAddress: string): Promise<NewWalletAnalysis> {
-<<<<<<< HEAD
   return superCircuitBreaker.execute(() =>
     retry(async () => {
       const url = HELIUS_RPC_URL;
-=======
-  return superCircuitBreaker
-    .execute(() =>
-      retry(
-        async () => {
-          const url = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_API_KEY}`;
->>>>>>> 102fb5fa25d3bd81c38f17eb6c0d98ada0aeeeb3
 
-          // 🔥 FIX: First, get the REAL total holder count from DAS API
-          try {
-            const dasResponse = await fetch(url, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                jsonrpc: '2.0',
-                id: 'holder-count',
-                method: 'getTokenAccounts',
-                params: {
-                  mint: tokenAddress,
-                  limit: 1, // Solo necesitamos saber el total
-                  options: { showZeroBalance: false },
-                },
-              }),
-            });
+      // 🔥 FIX: First, get the REAL total holder count from DAS API
+      try {
+        const dasResponse = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            jsonrpc: '2.0',
+            id: 'holder-count',
+            method: 'getTokenAccounts',
+            params: {
+              mint: tokenAddress,
+              limit: 1, // Solo necesitamos saber el total
+              options: { showZeroBalance: false },
+            },
+          }),
+        });
 
-            const dasData = await dasResponse.json();
+        const dasData = await dasResponse.json();
 
-            // Get actual holder count from DexScreener or Birdeye (more reliable)
-            let realTotalHolders = dasData.result?.total || 0;
+        // Get actual holder count from DexScreener or Birdeye (more reliable)
+        let realTotalHolders = dasData.result?.total || 0;
 
-            // Try to get more accurate count from DexScreener
-            try {
-              const dexResponse = await fetch(
-                `https://api.dexscreener.com/latest/dex/tokens/${tokenAddress}`
-              );
-              if (dexResponse.ok) {
-                const dexData = await dexResponse.json();
-                const dexHolders = dexData.pairs?.[0]?.info?.holders || 0;
-                if (dexHolders > realTotalHolders) {
-                  realTotalHolders = dexHolders;
-                }
-              }
-            } catch (e) {
-              // Fallback to DAS count
+        // Try to get more accurate count from DexScreener
+        try {
+          const dexResponse = await fetch(
+            `https://api.dexscreener.com/latest/dex/tokens/${tokenAddress}`
+          );
+          if (dexResponse.ok) {
+            const dexData = await dexResponse.json();
+            const dexHolders = dexData.pairs?.[0]?.info?.holders || 0;
+            if (dexHolders > realTotalHolders) {
+              realTotalHolders = dexHolders;
             }
-
-            // If we still don't have total, try Birdeye
-            if (realTotalHolders === 0) {
-              try {
-                const birdeyeKey = process.env.BIRDEYE_API_KEY || '';
-                const birdeyeResponse = await fetch(
-                  `https://public-api.birdeye.so/defi/token_overview?address=${tokenAddress}`,
-                  { headers: birdeyeKey ? { 'X-API-KEY': birdeyeKey } : {} }
-                );
-                if (birdeyeResponse.ok) {
-                  const birdeyeData = await birdeyeResponse.json();
-                  realTotalHolders = birdeyeData.data?.holder || 0;
-                }
-              } catch (e) {
-                // Fallback
-              }
-            }
-
-            // Now fetch actual holder wallets to analyze (sample)
-            const response = await fetch(url, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                jsonrpc: '2.0',
-                id: 'new-wallet-analysis',
-                method: 'getTokenAccounts',
-                params: {
-                  mint: tokenAddress,
-                  limit: 1000, // Get as many as possible
-                  options: { showZeroBalance: false },
-                },
-              }),
-            });
-
-            if (!response.ok) {
-              throw new Error('Failed to fetch token holders');
-            }
-
-            const data = await response.json();
-            const holders = data.result?.token_accounts || [];
-
-            // 🔥 FIX: Analyze a SAMPLE of 200 wallets (better than 100)
-            const sampleSize = Math.min(200, holders.length);
-            const sampleHolders = holders.slice(0, sampleSize);
-
-            let walletsUnder10DaysInSample = 0;
-            let suspiciousNewWallets = 0;
-            let totalAge = 0;
-            let analyzedCount = 0;
-
-            // Analizar edad de cada wallet en la muestra
-            const connection = new Connection(HELIUS_RPC_URL, 'confirmed');
-
-            for (const holder of sampleHolders) {
-              try {
-                const pubkey = new PublicKey(holder.owner);
-                const signatures = await connection.getSignaturesForAddress(pubkey, {
-                  limit: 1000,
-                });
-
-                if (signatures.length > 0) {
-                  const oldestSig = signatures[signatures.length - 1];
-                  const walletAge = (Date.now() / 1000 - (oldestSig?.blockTime || 0)) / 86400; // días
-
-                  totalAge += walletAge;
-                  analyzedCount++;
-
-                  if (walletAge < 10) {
-                    walletsUnder10DaysInSample++;
-
-                    // Si es nueva Y tiene mucho balance, es sospechoso
-                    const balance = parseFloat(holder.amount);
-                    if (balance > 1000000) {
-                      // threshold arbitrario
-                      suspiciousNewWallets++;
-                    }
-                  }
-                }
-              } catch (error) {
-                // Skip wallet on error
-              }
-            }
-
-            // 🔥 FIX: Calculate percentage correctly based on REAL total holders
-            // The percentage is: (new wallets in sample / sample size) * 100
-            // This gives us an ESTIMATE of the percentage in the total population
-            const percentageNewWalletsInSample =
-              analyzedCount > 0 ? (walletsUnder10DaysInSample / analyzedCount) * 100 : 0;
-
-            // Estimate total new wallets across ALL holders
-            const estimatedTotalNewWallets = Math.round(
-              (percentageNewWalletsInSample / 100) * (realTotalHolders || holders.length)
-            );
-
-            const avgWalletAge = analyzedCount > 0 ? totalAge / analyzedCount : 0;
-
-            // 🔥 FIX: Use the REAL total holders count
-            const totalWallets = realTotalHolders || holders.length;
-
-            // Calcular risk level basado en el porcentaje real
-            let riskLevel: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL' = 'LOW';
-            let score = 50;
-
-            if (percentageNewWalletsInSample > 70 || suspiciousNewWallets > 10) {
-              riskLevel = 'CRITICAL';
-              score = 0;
-            } else if (percentageNewWalletsInSample > 50 || suspiciousNewWallets > 5) {
-              riskLevel = 'HIGH';
-              score = 15;
-            } else if (percentageNewWalletsInSample > 30) {
-              riskLevel = 'MEDIUM';
-              score = 30;
-            } else {
-              riskLevel = 'LOW';
-              score = 50;
-            }
-
-            logger.info('✅ New Wallet Analysis Complete', {
-              tokenAddress,
-              totalWallets,
-              sampleSize: analyzedCount,
-              walletsUnder10Days: estimatedTotalNewWallets,
-              percentageNewWallets: percentageNewWalletsInSample.toFixed(2),
-            });
-
-            return {
-              totalWallets, // REAL total from DexScreener/Birdeye
-              walletsUnder10Days: estimatedTotalNewWallets, // Estimated from sample
-              percentageNewWallets: percentageNewWalletsInSample,
-              avgWalletAge,
-              suspiciousNewWallets,
-              riskLevel,
-              score,
-            };
-          } catch (error) {
-            logger.error(
-              '❌ New Wallet Analysis Failed',
-              error instanceof Error ? error : undefined
-            );
-            throw error;
           }
-        },
-        {
-          maxRetries: 2,
-          retryableStatusCodes: [408, 429, 500, 502, 503, 504],
+        } catch (e) {
+          // Fallback to DAS count
         }
-      )
-    )
-    .catch(() => ({
-      totalWallets: 0,
-      walletsUnder10Days: 0,
-      percentageNewWallets: 0,
-      avgWalletAge: 0,
-      suspiciousNewWallets: 0,
-      riskLevel: 'MEDIUM' as const,
-      score: 25,
-    }));
+
+        // If we still don't have total, try Birdeye
+        if (realTotalHolders === 0) {
+          try {
+            const birdeyeKey = process.env.BIRDEYE_API_KEY || '';
+            const birdeyeResponse = await fetch(
+              `https://public-api.birdeye.so/defi/token_overview?address=${tokenAddress}`,
+              { headers: birdeyeKey ? { 'X-API-KEY': birdeyeKey } : {} }
+            );
+            if (birdeyeResponse.ok) {
+              const birdeyeData = await birdeyeResponse.json();
+              realTotalHolders = birdeyeData.data?.holder || 0;
+            }
+          } catch (e) {
+            // Fallback
+          }
+        }
+
+        // Now fetch actual holder wallets to analyze (sample)
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            jsonrpc: '2.0',
+            id: 'new-wallet-analysis',
+            method: 'getTokenAccounts',
+            params: {
+              mint: tokenAddress,
+              limit: 1000, // Get as many as possible
+              options: { showZeroBalance: false },
+            },
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch token holders');
+        }
+
+        const data = await response.json();
+        const holders = data.result?.token_accounts || [];
+
+        // 🔥 FIX: Analyze a SAMPLE of 200 wallets (better than 100)
+        const sampleSize = Math.min(200, holders.length);
+        const sampleHolders = holders.slice(0, sampleSize);
+
+        let walletsUnder10DaysInSample = 0;
+        let suspiciousNewWallets = 0;
+        let totalAge = 0;
+        let analyzedCount = 0;
+
+        // Analizar edad de cada wallet en la muestra
+        const connection = new Connection(HELIUS_RPC_URL, 'confirmed');
+
+        for (const holder of sampleHolders) {
+          try {
+            const pubkey = new PublicKey(holder.owner);
+            const signatures = await connection.getSignaturesForAddress(pubkey, {
+              limit: 1000,
+            });
+
+            if (signatures.length > 0) {
+              const oldestSig = signatures[signatures.length - 1];
+              const walletAge = (Date.now() / 1000 - (oldestSig?.blockTime || 0)) / 86400; // días
+
+              totalAge += walletAge;
+              analyzedCount++;
+
+              if (walletAge < 10) {
+                walletsUnder10DaysInSample++;
+
+                // Si es nueva Y tiene mucho balance, es sospechoso
+                const balance = parseFloat(holder.amount);
+                if (balance > 1000000) {
+                  // threshold arbitrario
+                  suspiciousNewWallets++;
+                }
+              }
+            }
+          } catch (error) {
+            // Skip wallet on error
+          }
+        }
+
+        // 🔥 FIX: Calculate percentage correctly based on REAL total holders
+        // The percentage is: (new wallets in sample / sample size) * 100
+        // This gives us an ESTIMATE of the percentage in the total population
+        const percentageNewWalletsInSample =
+          analyzedCount > 0 ? (walletsUnder10DaysInSample / analyzedCount) * 100 : 0;
+
+        // Estimate total new wallets across ALL holders
+        const estimatedTotalNewWallets = Math.round(
+          (percentageNewWalletsInSample / 100) * (realTotalHolders || holders.length)
+        );
+
+        const avgWalletAge = analyzedCount > 0 ? totalAge / analyzedCount : 0;
+
+        // 🔥 FIX: Use the REAL total holders count
+        const totalWallets = realTotalHolders || holders.length;
+
+        // Calcular risk level basado en el porcentaje real
+        let riskLevel: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL' = 'LOW';
+        let score = 50;
+
+        if (percentageNewWalletsInSample > 70 || suspiciousNewWallets > 10) {
+          riskLevel = 'CRITICAL';
+          score = 0;
+        } else if (percentageNewWalletsInSample > 50 || suspiciousNewWallets > 5) {
+          riskLevel = 'HIGH';
+          score = 15;
+        } else if (percentageNewWalletsInSample > 30) {
+          riskLevel = 'MEDIUM';
+          score = 30;
+        } else {
+          riskLevel = 'LOW';
+          score = 50;
+        }
+
+        logger.info('✅ New Wallet Analysis Complete', {
+          tokenAddress,
+          totalWallets,
+          sampleSize: analyzedCount,
+          walletsUnder10Days: estimatedTotalNewWallets,
+          percentageNewWallets: percentageNewWalletsInSample.toFixed(2),
+        });
+
+        return {
+          totalWallets, // REAL total from DexScreener/Birdeye
+          walletsUnder10Days: estimatedTotalNewWallets, // Estimated from sample
+          percentageNewWallets: percentageNewWalletsInSample,
+          avgWalletAge,
+          suspiciousNewWallets,
+          riskLevel,
+          score,
+        };
+      } catch (error) {
+        logger.error(
+          '❌ New Wallet Analysis Failed',
+          error instanceof Error ? error : undefined
+        );
+        throw error;
+      }
+    })
+  );
 }
 
 async function analyzeInsiders(tokenAddress: string): Promise<InsiderAnalysis> {
