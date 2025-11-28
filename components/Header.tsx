@@ -1,7 +1,11 @@
 import { useTranslation } from 'react-i18next';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
+import { useWallet } from '@solana/wallet-adapter-react';
 import { LanguageSelector } from './LanguageSelector';
 import Link from 'next/link';
+
+// 🔒 Admin wallet con acceso al modo espía
+const ADMIN_WALLET = 'B7nB9QX1KC4QXp5GMxR8xzh3yzoqp6NjxSwfNBXtgPc1';
 
 interface HeaderProps {
   connected?: boolean;
@@ -10,6 +14,17 @@ interface HeaderProps {
 
 export const Header: React.FC<HeaderProps> = ({ connected = false, username = '' }) => {
   const { t } = useTranslation();
+  const { publicKey } = useWallet();
+
+  // Verificar si la wallet conectada es la del admin
+  const isAdmin = publicKey?.toBase58() === ADMIN_WALLET;
+
+  // Debug: mostrar en consola para verificar
+  if (typeof window !== 'undefined' && publicKey) {
+    console.log('🔍 Header - Wallet conectada:', publicKey.toBase58());
+    console.log('🔒 Header - Es admin?', isAdmin);
+  }
+
   return (
     <header className="bg-black/50 backdrop-blur-lg sticky top-0 z-40 border-b border-purple-500/30">
       <div className="container mx-auto px-4 py-4">
@@ -41,6 +56,14 @@ export const Header: React.FC<HeaderProps> = ({ connected = false, username = ''
             >
               🚀 Super Scorer
             </Link>
+            {isAdmin && (
+              <Link
+                href="/spy-mode"
+                className="text-purple-400 hover:text-purple-300 transition-colors flex items-center gap-1 font-semibold animate-pulse"
+              >
+                🕵️ Spy Mode
+              </Link>
+            )}
             <Link
               href="/documentation"
               className="text-gray-300 hover:text-white transition-colors"
@@ -86,6 +109,14 @@ export const Header: React.FC<HeaderProps> = ({ connected = false, username = ''
           >
             🚀 Super
           </Link>
+          {isAdmin && (
+            <Link
+              href="/spy-mode"
+              className="text-sm text-purple-400 hover:text-purple-300 transition-colors whitespace-nowrap font-semibold"
+            >
+              🕵️ Spy
+            </Link>
+          )}
           <Link
             href="/documentation"
             className="text-sm text-gray-300 hover:text-white transition-colors whitespace-nowrap"

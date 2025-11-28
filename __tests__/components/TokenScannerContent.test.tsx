@@ -5,11 +5,12 @@ import { TokenScannerPage } from '@/components/TokenScannerContent';
 // Mock child components
 jest.mock('@/components/TokenSecurityScanner', () => ({
   __esModule: true,
-  default: () => React.createElement('div', data-testid="scanner", 'TokenSecurityScanner Mock'),
+  default: () =>
+    React.createElement('div', { 'data-testid': 'scanner' }, 'TokenSecurityScanner Mock'),
 }));
 
 jest.mock('@/components/Header', () => ({
-  Header: () => React.createElement('div', data-testid="header", 'Header Mock'),
+  Header: () => React.createElement('div', { 'data-testid': 'header' }, 'Header Mock'),
 }));
 
 // Mock Head
