@@ -251,6 +251,13 @@ async function fetchAllTransactions(
 
 function extractTrades(transactions: ParsedTransaction[], walletAddress: string): Trade[] {
   const trades: Trade[] = [];
+  let skippedNoType = 0;
+  let skippedNoTokenTransfers = 0;
+  let skippedNoNativeTransfers = 0;
+  let skippedDust = 0;
+  let skippedNoToken = 0;
+  let skippedZeroAmount = 0;
+  let skippedSanity = 0;
 
   for (const tx of transactions) {
     // Filter only SWAP transactions (más flexible)
@@ -261,13 +268,16 @@ function extractTrades(transactions: ParsedTransaction[], walletAddress: string)
       !tx.description?.toLowerCase().includes('buy') &&
       !tx.description?.toLowerCase().includes('sell')
     ) {
+      skippedNoType++;
       continue;
     }
 
     if (!tx.tokenTransfers || tx.tokenTransfers.length === 0) {
+      skippedNoTokenTransfers++;
       continue;
     }
     if (!tx.nativeTransfers || tx.nativeTransfers.length === 0) {
+      skippedNoNativeTransfers++;
       continue;
     }
 
@@ -284,6 +294,7 @@ function extractTrades(transactions: ParsedTransaction[], walletAddress: string)
 
     // Ignore tiny swaps (dust) - reducido de 0.001 a 0.0001 para capturar más trades
     if (Math.abs(solNet) < 0.0001) {
+      skippedDust++;
       continue;
     }
 
@@ -295,6 +306,7 @@ function extractTrades(transactions: ParsedTransaction[], walletAddress: string)
     );
 
     if (tokenTransfers.length === 0) {
+      skippedNoToken++;
       continue;
     }
 
@@ -313,6 +325,7 @@ function extractTrades(transactions: ParsedTransaction[], walletAddress: string)
       : tokenTransfers.find((t) => t.fromUserAccount === walletAddress)?.tokenAmount || 0;
 
     if (tokenAmount === 0) {
+      skippedZeroAmount++;
       continue;
     }
 
@@ -322,9 +335,11 @@ function extractTrades(transactions: ParsedTransaction[], walletAddress: string)
     // Removido límite superior de precio para tokens más caros
     // Reducido límite de volumen de 50 SOL a 100 SOL
     if (pricePerToken < 0.00000001) {
+      skippedSanity++;
       continue; // Solo filtrar precios extremadamente bajos
     }
     if (Math.abs(solNet) > 100) {
+      skippedSanity++;
       continue;
     } // Permitir trades más grandes (aumentado de 50 a 100 SOL)
 
@@ -337,6 +352,21 @@ function extractTrades(transactions: ParsedTransaction[], walletAddress: string)
       pricePerToken,
     });
   }
+
+  // Log statistics
+  logger.info('🔍 Trade extraction stats:', {
+    totalTransactions: transactions.length,
+    tradesExtracted: trades.length,
+    skipped: {
+      wrongType: skippedNoType,
+      noTokenTransfers: skippedNoTokenTransfers,
+      noNativeTransfers: skippedNoNativeTransfers,
+      dust: skippedDust,
+      noTokenForWallet: skippedNoToken,
+      zeroAmount: skippedZeroAmount,
+      failedSanityChecks: skippedSanity,
+    },
+  });
 
   return trades;
 }
