@@ -367,18 +367,34 @@ function extractTrades(transactions: ParsedTransaction[], walletAddress: string)
       }
     }
 
-    // 4. FILTRO CLAVE: Descartar transfers pequeñas como las de tu screenshot
-    // Estas son claramente rewards/airdrops, no trades (< 0.0001 SOL = ~$0.02)
+    // 4. FILTRO INTELIGENTE DE DUST basado en SOURCE
+    // Si es un DEX conocido = trade legítimo (sin importar el valor)
+    // Si es UNKNOWN/SYSTEM = aplicar threshold de dust
+    const knownDEXs = [
+      'PUMP_AMM',
+      'PUMP_FUN',
+      'JUPITER',
+      'RAYDIUM',
+      'ORCA',
+      'METEORA',
+      'LIFINITY',
+      'DFLOW',
+      'SOLANA_PROGRAM_LIBRARY', // Incluye Token Swap Program
+    ];
+
+    const isDEXTrade = knownDEXs.includes(tx.source);
     const solValue = Math.abs(solNet);
-    if (solValue < 0.0001) {
+
+    // Solo filtrar dust si NO es un DEX conocido
+    if (!isDEXTrade && solValue < 0.0001) {
       skippedDust++;
-      // Debug: Log algunos para entender si estamos filtrando trades reales
+      // Debug: Log algunos para entender qué estamos filtrando
       if (skippedDust <= 3) {
-        logger.info(`[Debug] Skipping dust trade:`, {
+        logger.info(`[Debug] Skipping dust (non-DEX):`, {
           solNet: solValue.toFixed(9),
           type: tx.type,
+          source: tx.source,
           description: tx.description?.substring(0, 50),
-          hasTokenTransfers: tokenTransfers.length,
         });
       }
       continue;
