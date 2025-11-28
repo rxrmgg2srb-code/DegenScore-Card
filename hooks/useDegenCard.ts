@@ -67,144 +67,16 @@ export function useDegenCard() {
     setMounted(true);
   }, []);
 
-<<<<<<< HEAD
-    const generateCard = async (spyAddress?: string) => {
-        // Spy Mode: If spyAddress is provided, use it. Otherwise, check for connected wallet.
-        const addressToUse = spyAddress || (connected && publicKey ? publicKey.toBase58() : null);
 
-        if (!addressToUse) {
-            setError('Please connect your wallet first');
-            return;
-        }
+  const generateCard = async (spyAddress?: string) => {
+    // Spy Mode: If spyAddress is provided, use it. Otherwise, check for connected wallet.
+    const addressToUse = spyAddress || (connected && publicKey ? publicKey.toBase58() : null);
 
-        setWalletAddress(addressToUse);
-        setLoading(true);
-        setAnalyzing(true);
-        setError(null);
-        setCardImage(null);
-        setAnalysisProgress(0);
-
-        try {
-            setAnalysisMessage('🔍 Analyzing wallet...');
-            setAnalysisProgress(10);
-
-            const analyzeResponse = await fetch('/api/analyze', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ walletAddress: addressToUse }),
-            });
-
-            if (!analyzeResponse.ok) {
-                const errorData = await analyzeResponse.json();
-                throw new Error(errorData.error || 'Failed to analyze wallet');
-            }
-
-            const data = await analyzeResponse.json();
-            logger.info('✅ Analysis complete:', data);
-            setAnalysisData(data);
-
-            setAnalysisMessage('📊 Analysis complete!');
-            setAnalysisProgress(50);
-
-            setAnalysisMessage('💾 Saving to database...');
-            setAnalysisProgress(60);
-
-            const saveResponse = await fetch('/api/save-card', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    walletAddress: addressToUse,
-                    analysisData: data
-                }),
-            });
-
-            if (!saveResponse.ok) {
-                const errorData = await saveResponse.json();
-                throw new Error(errorData.error || 'Failed to save card data');
-            }
-
-            const saveData = await saveResponse.json();
-            logger.info('✅ Card saved:', saveData);
-
-            setAnalysisMessage('✅ Saved!');
-            setAnalysisProgress(80);
-
-            setAnalysisMessage('🎨 Generating card image...');
-            setAnalysisProgress(90);
-
-            const imageResponse = await fetch('/api/generate-card', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ walletAddress: addressToUse }),
-            });
-
-            if (!imageResponse.ok) {
-                const errorData = await imageResponse.json();
-                throw new Error(errorData.error || 'Failed to generate card');
-            }
-
-            const blob = await imageResponse.blob();
-            const imageUrl = URL.createObjectURL(blob);
-            setCardImage(imageUrl);
-
-            setAnalysisMessage('🎉 Complete!');
-            setAnalysisProgress(100);
-
-            setTimeout(() => {
-                setAnalyzing(false);
-
-                // Trigger celebration based on score
-                const score = data.degenScore || 0;
-                setCelebrationScore(score);
-
-                if (score >= 90) {
-                    setCelebrationType('legendary');
-                    setCurrentAchievement(achievements.legendary);
-                } else if (score >= 80) {
-                    setCelebrationType('card-generated');
-                    setCurrentAchievement(achievements.highScore);
-                } else {
-                    setCelebrationType('card-generated');
-                }
-
-                setShowCelebration(true);
-
-                // Show first card achievement
-                setTimeout(() => {
-                    setCurrentAchievement(achievements.firstCard);
-                }, 2000);
-
-                // Show upgrade modal
-                setTimeout(() => {
-                    setShowUpgradeModal(true);
-                }, 1000);
-            }, 500);
-
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'An error occurred');
-            logger.error('Error generating card', err instanceof Error ? err : undefined, {
-                error: String(err),
-            });
-            setAnalyzing(false);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleUpgrade = () => {
-        setShowUpgradeModal(false);
-        setHasPaid(true);
-
-        // Trigger premium unlock celebration
-        setCelebrationType('premium-unlock');
-=======
-  const generateCard = async () => {
-    if (!connected || !publicKey) {
+    if (!addressToUse) {
       setError('Please connect your wallet first');
       return;
     }
 
-    const addressToUse = publicKey.toBase58();
     setWalletAddress(addressToUse);
     setLoading(true);
     setAnalyzing(true);
@@ -242,7 +114,7 @@ export function useDegenCard() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           walletAddress: addressToUse,
-          analysisData: data,
+          analysisData: data
         }),
       });
 
@@ -295,7 +167,6 @@ export function useDegenCard() {
           setCelebrationType('card-generated');
         }
 
->>>>>>> 102fb5fa25d3bd81c38f17eb6c0d98ada0aeeeb3
         setShowCelebration(true);
 
         // Show first card achievement
@@ -308,6 +179,7 @@ export function useDegenCard() {
           setShowUpgradeModal(true);
         }, 1000);
       }, 500);
+
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
       logger.error('Error generating card', err instanceof Error ? err : undefined, {
@@ -324,6 +196,8 @@ export function useDegenCard() {
     setHasPaid(true);
 
     // Trigger premium unlock celebration
+    setCelebrationType('premium-unlock');
+    setShowCelebration(true);
     setCelebrationType('premium-unlock');
     setShowCelebration(true);
     setCurrentAchievement(achievements.premiumUnlock);
