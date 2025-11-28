@@ -321,112 +321,97 @@ async function analyzeTokenAuthorities(tokenAddress: string): Promise<TokenAutho
 // ============================================================================
 
 async function analyzeHolderDistribution(tokenAddress: string): Promise<HolderDistribution> {
-<<<<<<< HEAD
   return securityCircuitBreaker.execute(() =>
     retry(async () => {
       // Get token holders using Helius DAS API
       const url = HELIUS_RPC_URL;
-=======
-  return securityCircuitBreaker
-    .execute(() =>
-      retry(
-        async () => {
-          // Get token holders using Helius DAS API
-          const url = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_API_KEY}`;
->>>>>>> 102fb5fa25d3bd81c38f17eb6c0d98ada0aeeeb3
 
-          const response = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              jsonrpc: '2.0',
-              id: 'holder-analysis',
-              method: 'getTokenAccounts',
-              params: {
-                mint: tokenAddress,
-                limit: 1000,
-                options: {
-                  showZeroBalance: false,
-                },
-              },
-            }),
-          });
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          jsonrpc: '2.0',
+          id: 'holder-analysis',
+          method: 'getTokenAccounts',
+          params: {
+            mint: tokenAddress,
+            limit: 1000,
+            options: {
+              showZeroBalance: false,
+            },
+          },
+        }),
+      });
 
-          if (!response.ok) {
-            throw new Error(`Failed to fetch holders: ${response.statusText}`);
-          }
+      if (!response.ok) {
+        throw new Error(`Failed to fetch holders: ${response.statusText}`);
+      }
 
-          const data = await response.json();
-          const holders = data.result?.token_accounts || [];
+      const data = await response.json();
+      const holders = data.result?.token_accounts || [];
 
-          const totalHolders = holders.length;
+      const totalHolders = holders.length;
 
-          // Calculate top holders percentage
-          const sortedHolders = holders
-            .map((h: any) => ({
-              owner: h.owner,
-              amount: parseFloat(h.amount),
-            }))
-            .sort((a: any, b: any) => b.amount - a.amount);
+      // Calculate top holders percentage
+      const sortedHolders = holders
+        .map((h: any) => ({
+          owner: h.owner,
+          amount: parseFloat(h.amount),
+        }))
+        .sort((a: any, b: any) => b.amount - a.amount);
 
-          const totalSupply = sortedHolders.reduce((sum: number, h: any) => sum + h.amount, 0);
-          const top10Amount = sortedHolders
-            .slice(0, 10)
-            .reduce((sum: number, h: any) => sum + h.amount, 0);
-          const top10HoldersPercent = (top10Amount / totalSupply) * 100;
+      const totalSupply = sortedHolders.reduce((sum: number, h: any) => sum + h.amount, 0);
+      const top10Amount = sortedHolders
+        .slice(0, 10)
+        .reduce((sum: number, h: any) => sum + h.amount, 0);
+      const top10HoldersPercent = (top10Amount / totalSupply) * 100;
 
-          // Creator is typically the first holder
-          const creatorPercent =
-            totalSupply > 0 ? (sortedHolders[0]?.amount / totalSupply) * 100 : 0;
+      // Creator is typically the first holder
+      const creatorPercent =
+        totalSupply > 0 ? (sortedHolders[0]?.amount / totalSupply) * 100 : 0;
 
-          // Calculate Gini coefficient (wealth inequality)
-          const giniCoefficient = calculateGini(sortedHolders.map((h: any) => h.amount));
+      // Calculate Gini coefficient (wealth inequality)
+      const giniCoefficient = calculateGini(sortedHolders.map((h: any) => h.amount));
 
-          // Detect bundle wallets (wallets that received tokens in the same transaction)
-          const bundleWallets = await detectBundleWallets(tokenAddress);
-          const bundleDetected = bundleWallets > 5;
+      // Detect bundle wallets (wallets that received tokens in the same transaction)
+      const bundleWallets = await detectBundleWallets(tokenAddress);
+      const bundleDetected = bundleWallets > 5;
 
-          // Calculate risk
-          let score = 20;
-          let concentrationRisk: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL' = 'LOW';
+      // Calculate risk
+      let score = 20;
+      let concentrationRisk: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL' = 'LOW';
 
-          if (top10HoldersPercent > 80 || creatorPercent > 50) {
-            concentrationRisk = 'CRITICAL';
-            score = 0;
-          } else if (top10HoldersPercent > 60 || creatorPercent > 30) {
-            concentrationRisk = 'HIGH';
-            score = 5;
-          } else if (top10HoldersPercent > 40 || creatorPercent > 20) {
-            concentrationRisk = 'MEDIUM';
-            score = 12;
-          } else {
-            concentrationRisk = 'LOW';
-            score = 20;
-          }
+      if (top10HoldersPercent > 80 || creatorPercent > 50) {
+        concentrationRisk = 'CRITICAL';
+        score = 0;
+      } else if (top10HoldersPercent > 60 || creatorPercent > 30) {
+        concentrationRisk = 'HIGH';
+        score = 5;
+      } else if (top10HoldersPercent > 40 || creatorPercent > 20) {
+        concentrationRisk = 'MEDIUM';
+        score = 12;
+      } else {
+        concentrationRisk = 'LOW';
+        score = 20;
+      }
 
-          // Penalty for bundle detection
-          if (bundleDetected) {
-            score = Math.max(0, score - 5);
-          }
+      // Penalty for bundle detection
+      if (bundleDetected) {
+        score = Math.max(0, score - 5);
+      }
 
-          return {
-            totalHolders,
-            top10HoldersPercent,
-            creatorPercent,
-            giniCoefficient,
-            concentrationRisk,
-            bundleDetected,
-            bundleWallets,
-            score,
-          };
-        },
-        {
-          maxRetries: 3,
-          retryableStatusCodes: [408, 429, 500, 502, 503, 504],
-        }
-      )
-    )
-    .catch(() => ({
+      return {
+        totalHolders,
+        top10HoldersPercent,
+        creatorPercent,
+        giniCoefficient,
+        concentrationRisk,
+        bundleDetected,
+        bundleWallets,
+        score,
+      };
+    })
+  ).catch(() => ({
       // Fallback on error
       totalHolders: 0,
       top10HoldersPercent: 100,
@@ -522,82 +507,67 @@ async function analyzeLiquidity(tokenAddress: string): Promise<LiquidityAnalysis
 // ============================================================================
 
 async function analyzeTradingPatterns(tokenAddress: string): Promise<TradingPatterns> {
-<<<<<<< HEAD
   return securityCircuitBreaker.execute(() =>
     retry(async () => {
       // Analyze first 100 transactions to detect patterns
       const url = `https://api.helius.xyz/v0/addresses/${tokenAddress}/transactions?api-key=${getHeliusApiKey()}&limit=100`;
-=======
-  return securityCircuitBreaker
-    .execute(() =>
-      retry(
-        async () => {
-          // Analyze first 100 transactions to detect patterns
-          const url = `https://api.helius.xyz/v0/addresses/${tokenAddress}/transactions?api-key=${HELIUS_API_KEY}&limit=100`;
->>>>>>> 102fb5fa25d3bd81c38f17eb6c0d98ada0aeeeb3
 
-          const response = await fetch(url);
-          if (!response.ok) {
-            throw new Error('Failed to fetch transactions');
-          }
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error('Failed to fetch transactions');
+      }
 
-          const transactions = await response.json();
+      const transactions = await response.json();
 
-          // Detect bundle bots (multiple buys in same block/slot)
-          const bundleBots = detectBundleBots(transactions);
+      // Detect bundle bots (multiple buys in same block/slot)
+      const bundleBots = detectBundleBots(transactions);
 
-          // Detect snipers (bought in first 10 transactions)
-          const snipers = Math.min(10, transactions.length);
+      // Detect snipers (bought in first 10 transactions)
+      const snipers = Math.min(10, transactions.length);
 
-          // Detect wash trading
-          const washTrading = detectWashTrading(transactions);
+      // Detect wash trading
+      const washTrading = detectWashTrading(transactions);
 
-          // Detect honeypot (nobody can sell)
-          const { canSell, honeypotDetected } = detectHoneypot(transactions);
+      // Detect honeypot (nobody can sell)
+      const { canSell, honeypotDetected } = detectHoneypot(transactions);
 
-          // Estimate taxes (would need more sophisticated analysis)
-          const avgBuyTax = 0;
-          const avgSellTax = 0;
+      // Estimate taxes (would need more sophisticated analysis)
+      const avgBuyTax = 0;
+      const avgSellTax = 0;
 
-          const suspiciousVolume = washTrading || bundleBots > 10;
+      const suspiciousVolume = washTrading || bundleBots > 10;
 
-          let score = 15;
-          let riskLevel: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL' = 'LOW';
+      let score = 15;
+      let riskLevel: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL' = 'LOW';
 
-          if (honeypotDetected) {
-            riskLevel = 'CRITICAL';
-            score = 0;
-          } else if (bundleBots > 20 || (washTrading && !canSell)) {
-            riskLevel = 'HIGH';
-            score = 3;
-          } else if (bundleBots > 10 || washTrading) {
-            riskLevel = 'MEDIUM';
-            score = 8;
-          } else {
-            riskLevel = 'LOW';
-            score = 15;
-          }
+      if (honeypotDetected) {
+        riskLevel = 'CRITICAL';
+        score = 0;
+      } else if (bundleBots > 20 || (washTrading && !canSell)) {
+        riskLevel = 'HIGH';
+        score = 3;
+      } else if (bundleBots > 10 || washTrading) {
+        riskLevel = 'MEDIUM';
+        score = 8;
+      } else {
+        riskLevel = 'LOW';
+        score = 15;
+      }
 
-          return {
-            bundleBots,
-            snipers,
-            washTrading,
-            suspiciousVolume,
-            honeypotDetected,
-            canSell,
-            avgBuyTax,
-            avgSellTax,
-            riskLevel,
-            score,
-          };
-        },
-        {
-          maxRetries: 3,
-          retryableStatusCodes: [408, 429, 500, 502, 503, 504],
-        }
-      )
-    )
-    .catch(() => ({
+      return {
+        bundleBots,
+        snipers,
+        washTrading,
+        suspiciousVolume,
+        honeypotDetected,
+        canSell,
+        avgBuyTax,
+        avgSellTax,
+        riskLevel,
+        score,
+      };
+    })
+  ).catch(() => ({
       // Fallback
       bundleBots: 0,
       snipers: 0,
@@ -617,82 +587,68 @@ async function analyzeTradingPatterns(tokenAddress: string): Promise<TradingPatt
 // ============================================================================
 
 async function getTokenMetadata(tokenAddress: string): Promise<TokenMetadata> {
-<<<<<<< HEAD
   return securityCircuitBreaker.execute(() =>
     retry(async () => {
       const url = HELIUS_RPC_URL;
-=======
-  return securityCircuitBreaker
-    .execute(() =>
-      retry(
-        async () => {
-          const url = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_API_KEY}`;
->>>>>>> 102fb5fa25d3bd81c38f17eb6c0d98ada0aeeeb3
 
-          const response = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              jsonrpc: '2.0',
-              id: 'metadata',
-              method: 'getAsset',
-              params: { id: tokenAddress },
-            }),
-          });
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          jsonrpc: '2.0',
+          id: 'metadata',
+          method: 'getAsset',
+          params: { id: tokenAddress },
+        }),
+      });
 
-          if (!response.ok) {
-            throw new Error('Failed to fetch metadata');
-          }
+      if (!response.ok) {
+        throw new Error('Failed to fetch metadata');
+      }
 
-          const data = await response.json();
-          const asset = data.result;
+      const data = await response.json();
+      const asset = data.result;
 
-          // Get token account info for supply
-          const connection = new Connection(HELIUS_RPC_URL, 'confirmed');
-          const mintPubkey = new PublicKey(tokenAddress);
-          const mintInfo = await connection.getParsedAccountInfo(mintPubkey);
-          const mintData = (mintInfo.value?.data as any)?.parsed?.info;
+      // Get token account info for supply
+      const connection = new Connection(HELIUS_RPC_URL, 'confirmed');
+      const mintPubkey = new PublicKey(tokenAddress);
+      const mintInfo = await connection.getParsedAccountInfo(mintPubkey);
+      const mintData = (mintInfo.value?.data as any)?.parsed?.info;
 
-          const symbol = asset?.content?.metadata?.symbol || 'UNKNOWN';
-          const name = asset?.content?.metadata?.name || 'Unknown Token';
-          const decimals = mintData?.decimals || 9;
-          const supply = parseInt(mintData?.supply || '0') / Math.pow(10, decimals);
+      const symbol = asset?.content?.metadata?.symbol || 'UNKNOWN';
+      const name = asset?.content?.metadata?.name || 'Unknown Token';
+      const decimals = mintData?.decimals || 9;
+      const supply = parseInt(mintData?.supply || '0') / Math.pow(10, decimals);
 
-          const hasWebsite = !!asset?.content?.links?.external_url;
-          const hasSocials = !!(asset?.content?.links?.twitter || asset?.content?.links?.telegram);
-          const verified = asset?.grouping?.some((g: any) => g.group_key === 'verified') || false;
+      const hasWebsite = !!asset?.content?.links?.external_url;
+      const hasSocials = !!(asset?.content?.links?.twitter || asset?.content?.links?.telegram);
+      const verified = asset?.grouping?.some((g: any) => g.group_key === 'verified') || false;
 
-          let score = 0;
-          if (verified) {
-            score += 5;
-          }
-          if (hasWebsite) {
-            score += 3;
-          }
-          if (hasSocials) {
-            score += 2;
-          }
+      let score = 0;
+      if (verified) {
+        score += 5;
+      }
+      if (hasWebsite) {
+        score += 3;
+      }
+      if (hasSocials) {
+        score += 2;
+      }
 
-          return {
-            symbol,
-            name,
-            decimals,
-            supply,
-            verified,
-            hasWebsite,
-            hasSocials,
-            imageUrl: asset?.content?.links?.image,
-            description: asset?.content?.metadata?.description,
-            score,
-          };
-        },
-        {
-          maxRetries: 3,
-          retryableStatusCodes: [408, 429, 500, 502, 503, 504],
-        }
-      )
-    )
-    .catch(() => ({
+      return {
+        symbol,
+        name,
+        decimals,
+        supply,
+        verified,
+        hasWebsite,
+        hasSocials,
+        imageUrl: asset?.content?.links?.image,
+        description: asset?.content?.metadata?.description,
+        score,
+      };
+    })
+  ).catch(() => ({
       symbol: 'UNKNOWN',
       name: 'Unknown Token',
       decimals: 9,
@@ -709,79 +665,63 @@ async function getTokenMetadata(tokenAddress: string): Promise<TokenMetadata> {
 // ============================================================================
 
 async function analyzeMarketMetrics(tokenAddress: string): Promise<MarketMetrics> {
-<<<<<<< HEAD
   return securityCircuitBreaker.execute(() =>
     retry(async () => {
       // This would ideally fetch from CoinGecko/Jupiter/Birdeye
       // For now, we'll use transaction history to estimate age
       const url = `https://api.helius.xyz/v0/addresses/${tokenAddress}/transactions?api-key=${getHeliusApiKey()}&limit=1000`;
-=======
-  return securityCircuitBreaker
-    .execute(() =>
-      retry(
-        async () => {
-          // This would ideally fetch from CoinGecko/Jupiter/Birdeye
-          // For now, we'll use transaction history to estimate age
-          const url = `https://api.helius.xyz/v0/addresses/${tokenAddress}/transactions?api-key=${HELIUS_API_KEY}&limit=1000`;
->>>>>>> 102fb5fa25d3bd81c38f17eb6c0d98ada0aeeeb3
 
-          const response = await fetch(url);
-          if (!response.ok) {
-            throw new Error('Failed to fetch market data');
-          }
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error('Failed to fetch market data');
+      }
 
-          const transactions = await response.json();
+      const transactions = await response.json();
 
-          // Calculate age from first transaction
-          const oldestTx = transactions[transactions.length - 1];
-          const ageInDays = oldestTx ? (Date.now() / 1000 - oldestTx.timestamp) / 86400 : 0;
+      // Calculate age from first transaction
+      const oldestTx = transactions[transactions.length - 1];
+      const ageInDays = oldestTx ? (Date.now() / 1000 - oldestTx.timestamp) / 86400 : 0;
 
-          // Estimate volume (this is very rough, would need proper DEX data)
-          const volume24h = 0; // Placeholder
-          const volumeChange24h = 0;
-          const priceChange24h = 0;
-          const priceChange7d = 0;
-          const marketCap = 0;
-          const allTimeHigh = 0;
+      // Estimate volume (this is very rough, would need proper DEX data)
+      const volume24h = 0; // Placeholder
+      const volumeChange24h = 0;
+      const priceChange24h = 0;
+      const priceChange7d = 0;
+      const marketCap = 0;
+      const allTimeHigh = 0;
 
-          // Detect pump and dump pattern
-          const isPumpAndDump = ageInDays < 1 && transactions.length > 500;
+      // Detect pump and dump pattern
+      const isPumpAndDump = ageInDays < 1 && transactions.length > 500;
 
-          let score = 10;
-          if (ageInDays > 30) {
-            score = 10;
-          } else if (ageInDays > 7) {
-            score = 7;
-          } else if (ageInDays > 1) {
-            score = 5;
-          } else {
-            score = 2;
-          }
+      let score = 10;
+      if (ageInDays > 30) {
+        score = 10;
+      } else if (ageInDays > 7) {
+        score = 7;
+      } else if (ageInDays > 1) {
+        score = 5;
+      } else {
+        score = 2;
+      }
 
-          if (isPumpAndDump) {
-            score = Math.max(0, score - 5);
-          }
+      if (isPumpAndDump) {
+        score = Math.max(0, score - 5);
+      }
 
-          return {
-            ageInDays,
-            volume24h,
-            volumeChange24h,
-            priceChange24h,
-            priceChange7d,
-            marketCap,
-            allTimeHigh,
-            athDate: oldestTx?.timestamp,
-            isPumpAndDump,
-            score,
-          };
-        },
-        {
-          maxRetries: 3,
-          retryableStatusCodes: [408, 429, 500, 502, 503, 504],
-        }
-      )
-    )
-    .catch(() => ({
+      return {
+        ageInDays,
+        volume24h,
+        volumeChange24h,
+        priceChange24h,
+        priceChange7d,
+        marketCap,
+        allTimeHigh,
+        athDate: oldestTx?.timestamp,
+        isPumpAndDump,
+        score,
+      };
+    })
+  ).catch(() => ({
       ageInDays: 0,
       volume24h: 0,
       volumeChange24h: 0,

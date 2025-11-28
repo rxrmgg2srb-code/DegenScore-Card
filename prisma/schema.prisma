@@ -812,3 +812,34 @@ model SuperTokenAnalysis {
   @@index([viewCount(sort: Desc)])
   @@index([superScore(sort: Desc), globalRiskLevel])
 }
+
+model Referral {
+  id              String    @id @default(cuid())
+  referrerAddress String    // Wallet del usuario que refiere
+  referredAddress String    // Wallet del usuario referido
+  referralCode    String    // Código usado
+  tier            Int       @default(1) // Tier del referral (1 = directo, 2 = segundo nivel)
+  hasPaid         Boolean   @default(false) // Si el referido ha pagado
+  paidAt          DateTime? // Cuándo pagó el referido
+  rewardAmount    Float     @default(0) // Monto de recompensa ganada
+  rewardPaid      Boolean   @default(false) // Si la recompensa fue pagada
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([referrerAddress])
+  @@index([referredAddress])
+  @@index([referralCode])
+  @@index([hasPaid])
+  @@index([createdAt(sort: Desc)])
+}
+
+model RateLimitLog {
+  id         String   @id @default(cuid())
+  identifier String   // IP o user ID
+  endpoint   String   // Ruta del endpoint
+  timestamp  DateTime @default(now())
+  hits       Int      @default(1)
+
+  @@index([identifier, endpoint])
+  @@index([timestamp(sort: Desc)])
+}
