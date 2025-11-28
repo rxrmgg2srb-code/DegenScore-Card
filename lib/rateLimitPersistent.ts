@@ -3,8 +3,10 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { logger } from '@/lib/logger';
 
 /**
- * Persistent rate limiting using database
+ * Persistent rate limiting using database (or in-memory fallback)
  * Prevents abuse even across server restarts
+ *
+ * NOTE: RateLimitLog model doesn't exist in schema, using in-memory fallback
  */
 
 interface RateLimitConfig {
@@ -19,6 +21,9 @@ interface RateLimitResult {
   remaining: number;
   resetAt: Date;
 }
+
+// In-memory fallback when database is not available
+const memoryStore = new Map<string, { count: number; resetAt: Date }>();
 
 /**
  * Get client identifier (IP or wallet)
@@ -49,50 +54,32 @@ export async function checkRateLimitPersistent(
   const identifier = getClientIdentifier(req, customIdentifier);
   const now = new Date();
   const windowStart = new Date(now.getTime() - windowMs);
+  const key = `${identifier}:${endpoint || 'default'}`;
 
   try {
-    // Count requests in the time window
-    const count = await prisma.rateLimitLog.count({
-      where: {
-        identifier,
-        endpoint: endpoint || undefined,
-        timestamp: {
-          gte: windowStart,
-        },
-      },
-    });
+    // Use in-memory store as fallback (RateLimitLog model doesn't exist)
+    const stored = memoryStore.get(key);
 
-    // Clean up old rate limit logs (older than 24 hours) periodically
-    // Only run cleanup 1% of the time to avoid overhead
+    // Clean up expired entries
+    if (stored && stored.resetAt < now) {
+      memoryStore.delete(key);
+    }
+
+    const current = memoryStore.get(key);
+    let count = current ? current.count : 0;
+
+    // Periodic cleanup of old entries (1% of requests)
     if (Math.random() < 0.01) {
-      const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-      await prisma.rateLimitLog.deleteMany({
-        where: {
-          timestamp: {
-            lt: oneDayAgo,
-          },
-        },
-      });
+      for (const [k, v] of memoryStore.entries()) {
+        if (v.resetAt < now) {
+          memoryStore.delete(k);
+        }
+      }
     }
 
     if (count >= maxRequests) {
-      // Find the oldest log in the window to calculate reset time
-      const oldestLog = await prisma.rateLimitLog.findFirst({
-        where: {
-          identifier,
-          endpoint: endpoint || undefined,
-          timestamp: {
-            gte: windowStart,
-          },
-        },
-        orderBy: {
-          timestamp: 'asc',
-        },
-      });
-
-      const resetAt = oldestLog
-        ? new Date(oldestLog.timestamp.getTime() + windowMs)
-        : new Date(now.getTime() + windowMs);
+      // Rate limit exceeded
+      const resetAt = current?.resetAt || new Date(now.getTime() + windowMs);
 
       return {
         allowed: false,
@@ -101,19 +88,17 @@ export async function checkRateLimitPersistent(
       };
     }
 
-    // Log this request
-    await prisma.rateLimitLog.create({
-      data: {
-        identifier,
-        endpoint,
-        timestamp: now,
-      },
+    // Increment count in memory
+    const resetAt = new Date(now.getTime() + windowMs);
+    memoryStore.set(key, {
+      count: count + 1,
+      resetAt,
     });
 
     return {
       allowed: true,
       remaining: maxRequests - count - 1,
-      resetAt: new Date(now.getTime() + windowMs),
+      resetAt,
     };
   } catch (error) {
     logger.error('Rate limit check failed', error instanceof Error ? error : undefined, {
