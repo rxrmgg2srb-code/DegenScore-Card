@@ -16,6 +16,7 @@ import { ParsedTransaction, getWalletTransactions } from './services/helius';
 import { logger } from '@/lib/logger';
 
 const SOL_MINT = 'So11111111111111111111111111111111111111112';
+const WSOL_MINT = 'So11111111111111111111111111111111111111112'; // Wrapped SOL tiene el mismo mint
 
 // ============================================================================
 // TYPE DEFINITIONS
@@ -258,6 +259,7 @@ function extractTrades(transactions: ParsedTransaction[], walletAddress: string)
   let skippedZeroAmount = 0;
   let skippedSanity = 0;
   let skippedTransferOnly = 0;
+  let extractedFromAccountData = 0;
 
   for (const tx of transactions) {
     // =========================================================================
@@ -266,21 +268,91 @@ function extractTrades(transactions: ParsedTransaction[], walletAddress: string)
     // Una transfer es: movimiento unidireccional de tokens o SOL
     // =========================================================================
 
+    // IMPORTANTE: Algunos trades solo tienen accountData, no tokenTransfers
+    // Intentar extraer tokenTransfers de accountData si no están presentes
+    let tokenTransfers = tx.tokenTransfers || [];
+    let nativeTransfers = tx.nativeTransfers || [];
+
+    // Si no hay tokenTransfers pero hay accountData, extraer de ahí
+    if (tokenTransfers.length === 0 && (tx as any).accountData) {
+      const accountData = (tx as any).accountData as Array<{
+        account: string;
+        nativeBalanceChange: number;
+        tokenBalanceChanges?: Array<{
+          mint: string;
+          rawTokenAmount: {
+            tokenAmount: string;
+            decimals: number;
+          };
+          userAccount: string;
+        }>;
+      }>;
+
+      // Extraer cambios de tokens para esta wallet
+      for (const acc of accountData) {
+        if (acc.account === walletAddress && acc.tokenBalanceChanges) {
+          for (const change of acc.tokenBalanceChanges) {
+            const amount = parseInt(change.rawTokenAmount.tokenAmount) / Math.pow(10, change.rawTokenAmount.decimals);
+
+            if (amount > 0) {
+              // Tokens entrando
+              tokenTransfers.push({
+                fromUserAccount: '', // No sabemos el origen
+                toUserAccount: walletAddress,
+                mint: change.mint,
+                tokenAmount: amount,
+              });
+            } else if (amount < 0) {
+              // Tokens saliendo
+              tokenTransfers.push({
+                fromUserAccount: walletAddress,
+                toUserAccount: '', // No sabemos el destino
+                mint: change.mint,
+                tokenAmount: Math.abs(amount),
+              });
+            }
+          }
+        }
+
+        // Extraer cambios nativos (SOL) si no hay nativeTransfers
+        if (nativeTransfers.length === 0 && acc.account === walletAddress && acc.nativeBalanceChange !== 0) {
+          const solChange = acc.nativeBalanceChange / 1e9;
+          if (solChange > 0) {
+            nativeTransfers.push({
+              fromUserAccount: '',
+              toUserAccount: walletAddress,
+              amount: Math.abs(acc.nativeBalanceChange),
+            });
+          } else if (solChange < 0) {
+            nativeTransfers.push({
+              fromUserAccount: walletAddress,
+              toUserAccount: '',
+              amount: Math.abs(acc.nativeBalanceChange),
+            });
+          }
+        }
+      }
+
+      if (tokenTransfers.length > 0) {
+        extractedFromAccountData++;
+      }
+    }
+
     // 1. Debe tener token transfers (no SOL)
-    if (!tx.tokenTransfers || tx.tokenTransfers.length === 0) {
+    if (tokenTransfers.length === 0) {
       skippedNoTokenTransfers++;
       continue;
     }
 
-    // 2. Debe tener native transfers (SOL)
-    if (!tx.nativeTransfers || tx.nativeTransfers.length === 0) {
+    // 2. Debe tener native transfers (SOL) o cambios de balance nativo
+    if (nativeTransfers.length === 0) {
       skippedNoNativeTransfers++;
       continue;
     }
 
     // 3. Calcular movimiento neto de SOL para esta wallet
     let solNet = 0;
-    for (const nt of tx.nativeTransfers) {
+    for (const nt of nativeTransfers) {
       if (nt.fromUserAccount === walletAddress) {
         solNet -= nt.amount / 1e9;
       }
@@ -377,6 +449,7 @@ function extractTrades(transactions: ParsedTransaction[], walletAddress: string)
     totalTransactions: transactions.length,
     tradesExtracted: trades.length,
     extractionRate: `${((trades.length / transactions.length) * 100).toFixed(1)}%`,
+    extractedFromAccountData: extractedFromAccountData,
     skipped: {
       noTokenTransfers: skippedNoTokenTransfers,
       noNativeTransfers: skippedNoNativeTransfers,
