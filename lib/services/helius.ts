@@ -12,6 +12,7 @@ export interface ParsedTransaction {
   signature: string;
   timestamp: number;
   type: string;
+  source: string;
   nativeTransfers?: Array<{
     fromUserAccount: string;
     toUserAccount: string;
@@ -151,6 +152,7 @@ export async function getWalletTransactions(
             signature: tx.signature,
             timestamp: tx.timestamp,
             type: tx.type,
+            source: tx.source,
             nativeTransfers: tx.nativeTransfers,
             tokenTransfers: tx.tokenTransfers,
             accountData: tx.accountData,

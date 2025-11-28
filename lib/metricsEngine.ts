@@ -262,10 +262,23 @@ function extractTrades(transactions: ParsedTransaction[], walletAddress: string)
 
   for (const tx of transactions) {
     // =========================================================================
-    // ESTRATEGIA: NO filtrar por tipo, usar solo filtros ESTRUCTURALES
-    // Algunos DEXs generan transacciones que Helius marca como "TRANSFER"
-    // pero que en realidad son swaps. Confiar en la estructura: SOL ↔ Token
+    // FILTRADO INTELIGENTE BASADO EN PROGRAMAS
+    // Regla del usuario: Si tiene programas ADEMÁS de System Program y
+    // Compute Budget, es un trade (Jupiter, Raydium, Orca, etc.)
     // =========================================================================
+
+    // Filtrar transacciones que claramente NO son trades
+    // Si source es SYSTEM_PROGRAM (solo transfers SOL nativos), skip
+    const isSystemProgramOnly = tx.source === 'SYSTEM_PROGRAM' || tx.source === 'UNKNOWN';
+
+    // Si es solo System Program pero tiene tokenTransfers, podría ser trade
+    const hasTokenActivity = tx.tokenTransfers && tx.tokenTransfers.length > 0;
+
+    // Skip solo si es System Program Y no tiene actividad de tokens
+    if (isSystemProgramOnly && !hasTokenActivity) {
+      skippedNoTokenTransfers++;
+      continue;
+    }
 
     // IMPORTANTE: Algunos trades solo tienen accountData, no tokenTransfers
     // Intentar extraer tokenTransfers de accountData si no están presentes
@@ -443,12 +456,18 @@ function extractTrades(transactions: ParsedTransaction[], walletAddress: string)
     });
   }
 
-  // Analizar tipos de transacciones para debug
+  // Analizar tipos y sources de transacciones para debug
   const typeCount = new Map<string, number>();
+  const sourceCount = new Map<string, number>();
   transactions.forEach(tx => {
     typeCount.set(tx.type, (typeCount.get(tx.type) || 0) + 1);
+    sourceCount.set(tx.source, (sourceCount.get(tx.source) || 0) + 1);
   });
   const topTypes = Array.from(typeCount.entries())
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 10)
+    .reduce((obj, [k, v]) => ({ ...obj, [k]: v }), {});
+  const topSources = Array.from(sourceCount.entries())
     .sort((a, b) => b[1] - a[1])
     .slice(0, 10)
     .reduce((obj, [k, v]) => ({ ...obj, [k]: v }), {});
@@ -466,6 +485,7 @@ function extractTrades(transactions: ParsedTransaction[], walletAddress: string)
     txWithTokenAndNative: txWithBothTransfers,
     dustPercentageOfValid: `${dustPercentage}%`,
     topTransactionTypes: topTypes,
+    topSources: topSources,
     skipped: {
       noTokenTransfers: skippedNoTokenTransfers,
       noNativeTransfers: skippedNoNativeTransfers,
