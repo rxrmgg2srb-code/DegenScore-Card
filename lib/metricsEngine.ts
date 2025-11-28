@@ -446,6 +446,19 @@ function extractTrades(transactions: ParsedTransaction[], walletAddress: string)
 
     if (!isValidTrade) {
       skippedTransferOnly++;
+      // Debug: Log los primeros casos para entender el patrón
+      if (skippedTransferOnly <= 5) {
+        logger.info(`[Debug] Skipped transferOnly:`, {
+          source: tx.source,
+          type: tx.type,
+          isBuy,
+          isSell,
+          solNet: solNet.toFixed(6),
+          tokensInCount: tokensIn.length,
+          tokensOutCount: tokensOut.length,
+          relevantTokensCount: relevantTokenTransfers.length,
+        });
+      }
       continue;
     }
 
