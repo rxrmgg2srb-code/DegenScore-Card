@@ -63,11 +63,11 @@ export async function getReferralLeaderboard(_limit: number = 10): Promise<Refer
 // Stub function - returns failure
 export async function claimReferralRewards(
   _walletAddress: string
-): Promise<{ success: boolean; amount: number; message: string }> {
+): Promise<{ success: boolean; amount: number; message?: string; error?: string }> {
   return {
     success: false,
     amount: 0,
-    message: 'Referral system currently disabled',
+    error: 'Referral system currently disabled',
   };
 }
 
