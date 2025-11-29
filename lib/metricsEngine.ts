@@ -230,6 +230,32 @@ async function fetchAllTransactions(
 
       await new Promise((resolve) => setTimeout(resolve, DELAY_MS));
     } catch (error: any) {
+      // Special case: Helius 404 with continuation signature (not a real error)
+      // When using filters, Helius returns 404 if no matching events in time window
+      // but provides a 'before' signature to continue searching
+      if (error?.status === 404 && error?.message) {
+        const beforeMatch = error.message.match(/before.*parameter set to ([a-zA-Z0-9]+)/);
+        if (beforeMatch && beforeMatch[1]) {
+          const continuationSignature = beforeMatch[1];
+          logger.info(
+            `  ⏭️ Batch ${fetchCount + 1}: No SWAP txs in this window, continuing from ${continuationSignature.substring(0, 20)}...`
+          );
+          before = continuationSignature;
+          consecutiveEmpty++;
+          consecutiveErrors = 0; // Don't count this as an error
+
+          if (consecutiveEmpty >= MAX_EMPTY) {
+            logger.info(`  ✅ No more SWAP transactions found`);
+            break;
+          }
+
+          fetchCount++;
+          await new Promise((resolve) => setTimeout(resolve, DELAY_MS));
+          continue;
+        }
+      }
+
+      // Real error - increment counter
       consecutiveErrors++;
 
       logger.error(
