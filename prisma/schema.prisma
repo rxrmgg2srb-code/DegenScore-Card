@@ -838,6 +838,7 @@ model Referral {
   rewardAmount    Float    @default(0) // Total rewards earned
   rewardPaid      Boolean  @default(false) // Whether reward was paid
   hasPaid         Boolean  @default(false) // Whether referred user has paid
+  paidAt          DateTime? // When the user paid
   level           Int      @default(1) // Referral level (1,2,3)
   createdAt       DateTime @default(now())
 
