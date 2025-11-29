@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { prisma } from '../../../lib/prisma';
+// import { prisma } from '../../../lib/prisma'; // Temporarily disabled - Referral model not in schema
 import { isValidSolanaAddress } from '../../../lib/validation';
 import { rateLimit } from '../../../lib/rateLimit';
 import { logger } from '../../../lib/logger';
