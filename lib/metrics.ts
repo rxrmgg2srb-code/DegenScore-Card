@@ -1,9 +1,6 @@
 /**
- * LEGACY COMPATIBILITY WRAPPER
- *
- * This file maintains backward compatibility while using the new DeFi-focused engine.
- * Now using Solscan DeFi activities for more accurate analysis!
+ * Metrics calculation - Using Helius for transaction data
  */
 
-export { calculateDefiMetrics as calculateAdvancedMetrics } from './defiMetricsEngine';
+export { calculateAdvancedMetrics } from './metricsEngine';
 export type { WalletMetrics, Position, Trade } from './metricsEngine';
