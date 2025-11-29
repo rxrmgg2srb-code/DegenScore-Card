@@ -321,111 +321,100 @@ async function analyzeTokenAuthorities(tokenAddress: string): Promise<TokenAutho
 // ============================================================================
 
 async function analyzeHolderDistribution(tokenAddress: string): Promise<HolderDistribution> {
-<<<<<<< HEAD
   return securityCircuitBreaker.execute(() =>
     retry(async () => {
       // Get token holders using Helius DAS API
       const url = HELIUS_RPC_URL;
-=======
-  return securityCircuitBreaker
-    .execute(() =>
-      retry(
-        async () => {
-          // Get token holders using Helius DAS API
-          const url = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_API_KEY}`;
->>>>>>> 102fb5fa25d3bd81c38f17eb6c0d98ada0aeeeb3
 
-          const response = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              jsonrpc: '2.0',
-              id: 'holder-analysis',
-              method: 'getTokenAccounts',
-              params: {
-                mint: tokenAddress,
-                limit: 1000,
-                options: {
-                  showZeroBalance: false,
-                },
-              },
-            }),
-          });
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          jsonrpc: '2.0',
+          id: 'holder-analysis',
+          method: 'getTokenAccounts',
+          params: {
+            mint: tokenAddress,
+            limit: 1000,
+            options: {
+              showZeroBalance: false,
+            },
+          },
+        }),
+      });
 
-          if (!response.ok) {
-            throw new Error(`Failed to fetch holders: ${response.statusText}`);
-          }
+      if (!response.ok) {
+        throw new Error(`Failed to fetch holders: ${response.statusText}`);
+      }
 
-          const data = await response.json();
-          const holders = data.result?.token_accounts || [];
+      const data = await response.json();
+      const holders = data.result?.token_accounts || [];
 
-          const totalHolders = holders.length;
+      const totalHolders = holders.length;
 
-          // Calculate top holders percentage
-          const sortedHolders = holders
-            .map((h: any) => ({
-              owner: h.owner,
-              amount: parseFloat(h.amount),
-            }))
-            .sort((a: any, b: any) => b.amount - a.amount);
+      // Calculate top holders percentage
+      const sortedHolders = holders
+        .map((h: any) => ({
+          owner: h.owner,
+          amount: parseFloat(h.amount),
+        }))
+        .sort((a: any, b: any) => b.amount - a.amount);
 
-          const totalSupply = sortedHolders.reduce((sum: number, h: any) => sum + h.amount, 0);
-          const top10Amount = sortedHolders
-            .slice(0, 10)
-            .reduce((sum: number, h: any) => sum + h.amount, 0);
-          const top10HoldersPercent = (top10Amount / totalSupply) * 100;
+      const totalSupply = sortedHolders.reduce((sum: number, h: any) => sum + h.amount, 0);
+      const top10Amount = sortedHolders
+        .slice(0, 10)
+        .reduce((sum: number, h: any) => sum + h.amount, 0);
+      const top10HoldersPercent = (top10Amount / totalSupply) * 100;
 
-          // Creator is typically the first holder
-          const creatorPercent =
-            totalSupply > 0 ? (sortedHolders[0]?.amount / totalSupply) * 100 : 0;
+      // Creator is typically the first holder
+      const creatorPercent =
+        totalSupply > 0 ? (sortedHolders[0]?.amount / totalSupply) * 100 : 0;
 
-          // Calculate Gini coefficient (wealth inequality)
-          const giniCoefficient = calculateGini(sortedHolders.map((h: any) => h.amount));
+      // Calculate Gini coefficient (wealth inequality)
+      const giniCoefficient = calculateGini(sortedHolders.map((h: any) => h.amount));
 
-          // Detect bundle wallets (wallets that received tokens in the same transaction)
-          const bundleWallets = await detectBundleWallets(tokenAddress);
-          const bundleDetected = bundleWallets > 5;
+      // Detect bundle wallets (wallets that received tokens in the same transaction)
+      const bundleWallets = await detectBundleWallets(tokenAddress);
+      const bundleDetected = bundleWallets > 5;
 
-          // Calculate risk
-          let score = 20;
-          let concentrationRisk: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL' = 'LOW';
+      // Calculate risk
+      let score = 20;
+      let concentrationRisk: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL' = 'LOW';
 
-          if (top10HoldersPercent > 80 || creatorPercent > 50) {
-            concentrationRisk = 'CRITICAL';
-            score = 0;
-          } else if (top10HoldersPercent > 60 || creatorPercent > 30) {
-            concentrationRisk = 'HIGH';
-            score = 5;
-          } else if (top10HoldersPercent > 40 || creatorPercent > 20) {
-            concentrationRisk = 'MEDIUM';
-            score = 12;
-          } else {
-            concentrationRisk = 'LOW';
-            score = 20;
-          }
+      if (top10HoldersPercent > 80 || creatorPercent > 50) {
+        concentrationRisk = 'CRITICAL';
+        score = 0;
+      } else if (top10HoldersPercent > 60 || creatorPercent > 30) {
+        concentrationRisk = 'HIGH';
+        score = 5;
+      } else if (top10HoldersPercent > 40 || creatorPercent > 20) {
+        concentrationRisk = 'MEDIUM';
+        score = 12;
+      } else {
+        concentrationRisk = 'LOW';
+        score = 20;
+      }
 
-          // Penalty for bundle detection
-          if (bundleDetected) {
-            score = Math.max(0, score - 5);
-          }
+      // Penalty for bundle detection
+      if (bundleDetected) {
+        score = Math.max(0, score - 5);
+      }
 
-          return {
-            totalHolders,
-            top10HoldersPercent,
-            creatorPercent,
-            giniCoefficient,
-            concentrationRisk,
-            bundleDetected,
-            bundleWallets,
-            score,
-          };
-        },
-        {
-          maxRetries: 3,
-          retryableStatusCodes: [408, 429, 500, 502, 503, 504],
-        }
-      )
-    )
+      return {
+        totalHolders,
+        top10HoldersPercent,
+        creatorPercent,
+        giniCoefficient,
+        concentrationRisk,
+        bundleDetected,
+        bundleWallets,
+        score,
+      };
+    }, {
+      maxRetries: 3,
+      retryableStatusCodes: [408, 429, 500, 502, 503, 504],
+    })
+  )
     .catch(() => ({
       // Fallback on error
       totalHolders: 0,
