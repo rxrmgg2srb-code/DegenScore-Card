@@ -778,95 +778,87 @@ async function fetchJupiterLiquidity(
 // ============================================================================
 
 async function analyzeNewWallets(tokenAddress: string): Promise<NewWalletAnalysis> {
-<<<<<<< HEAD
   return superCircuitBreaker.execute(() =>
     retry(async () => {
       const url = HELIUS_RPC_URL;
-=======
-  return superCircuitBreaker
-    .execute(() =>
-      retry(
-        async () => {
-          const url = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_API_KEY}`;
->>>>>>> 102fb5fa25d3bd81c38f17eb6c0d98ada0aeeeb3
 
-          // 🔥 FIX: First, get the REAL total holder count from DAS API
+      // 🔥 FIX: First, get the REAL total holder count from DAS API
+      try {
+        const dasResponse = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            jsonrpc: '2.0',
+            id: 'holder-count',
+            method: 'getTokenAccounts',
+            params: {
+              mint: tokenAddress,
+              limit: 1, // Solo necesitamos saber el total
+              options: { showZeroBalance: false },
+            },
+          }),
+        });
+
+        const dasData = await dasResponse.json();
+
+        // Get actual holder count from DexScreener or Birdeye (more reliable)
+        let realTotalHolders = dasData.result?.total || 0;
+
+        // Try to get more accurate count from DexScreener
+        try {
+          const dexResponse = await fetch(
+            `https://api.dexscreener.com/latest/dex/tokens/${tokenAddress}`
+          );
+          if (dexResponse.ok) {
+            const dexData = await dexResponse.json();
+            const dexHolders = dexData.pairs?.[0]?.info?.holders || 0;
+            if (dexHolders > realTotalHolders) {
+              realTotalHolders = dexHolders;
+            }
+          }
+        } catch (e) {
+          // Fallback to DAS count
+        }
+
+        // If we still don't have total, try Birdeye
+        if (realTotalHolders === 0) {
           try {
-            const dasResponse = await fetch(url, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                jsonrpc: '2.0',
-                id: 'holder-count',
-                method: 'getTokenAccounts',
-                params: {
-                  mint: tokenAddress,
-                  limit: 1, // Solo necesitamos saber el total
-                  options: { showZeroBalance: false },
-                },
-              }),
-            });
-
-            const dasData = await dasResponse.json();
-
-            // Get actual holder count from DexScreener or Birdeye (more reliable)
-            let realTotalHolders = dasData.result?.total || 0;
-
-            // Try to get more accurate count from DexScreener
-            try {
-              const dexResponse = await fetch(
-                `https://api.dexscreener.com/latest/dex/tokens/${tokenAddress}`
-              );
-              if (dexResponse.ok) {
-                const dexData = await dexResponse.json();
-                const dexHolders = dexData.pairs?.[0]?.info?.holders || 0;
-                if (dexHolders > realTotalHolders) {
-                  realTotalHolders = dexHolders;
-                }
-              }
-            } catch (e) {
-              // Fallback to DAS count
+            const birdeyeKey = process.env.BIRDEYE_API_KEY || '';
+            const birdeyeResponse = await fetch(
+              `https://public-api.birdeye.so/defi/token_overview?address=${tokenAddress}`,
+              { headers: birdeyeKey ? { 'X-API-KEY': birdeyeKey } : {} }
+            );
+            if (birdeyeResponse.ok) {
+              const birdeyeData = await birdeyeResponse.json();
+              realTotalHolders = birdeyeData.data?.holder || 0;
             }
+          } catch (e) {
+            // Fallback
+          }
+        }
 
-            // If we still don't have total, try Birdeye
-            if (realTotalHolders === 0) {
-              try {
-                const birdeyeKey = process.env.BIRDEYE_API_KEY || '';
-                const birdeyeResponse = await fetch(
-                  `https://public-api.birdeye.so/defi/token_overview?address=${tokenAddress}`,
-                  { headers: birdeyeKey ? { 'X-API-KEY': birdeyeKey } : {} }
-                );
-                if (birdeyeResponse.ok) {
-                  const birdeyeData = await birdeyeResponse.json();
-                  realTotalHolders = birdeyeData.data?.holder || 0;
-                }
-              } catch (e) {
-                // Fallback
-              }
-            }
+        // Now fetch actual holder wallets to analyze (sample)
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            jsonrpc: '2.0',
+            id: 'new-wallet-analysis',
+            method: 'getTokenAccounts',
+            params: {
+              mint: tokenAddress,
+              limit: 1000, // Get as many as possible
+              options: { showZeroBalance: false },
+            },
+          }),
+        });
 
-            // Now fetch actual holder wallets to analyze (sample)
-            const response = await fetch(url, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                jsonrpc: '2.0',
-                id: 'new-wallet-analysis',
-                method: 'getTokenAccounts',
-                params: {
-                  mint: tokenAddress,
-                  limit: 1000, // Get as many as possible
-                  options: { showZeroBalance: false },
-                },
-              }),
-            });
+        if (!response.ok) {
+          throw new Error('Failed to fetch token holders');
+        }
 
-            if (!response.ok) {
-              throw new Error('Failed to fetch token holders');
-            }
-
-            const data = await response.json();
-            const holders = data.result?.token_accounts || [];
+        const data = await response.json();
+        const holders = data.result?.token_accounts || [];
 
             // 🔥 FIX: Analyze a SAMPLE of 200 wallets (better than 100)
             const sampleSize = Math.min(200, holders.length);
