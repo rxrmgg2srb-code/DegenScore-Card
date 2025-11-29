@@ -172,6 +172,7 @@ async function fetchAllTransactions(
   const DELAY_MS = 200; // Reducido de 300ms a 200ms para mayor velocidad
   const MAX_EMPTY = 3;
   const MAX_CONSECUTIVE_ERRORS = 5;
+  const MIN_TRANSACTIONS_FOR_ANALYSIS = 100; // Early stop si ya tenemos suficientes txs
 
   // 🔥 FILTRO HELIUS: Filtrar por program IDs de DEXes conocidos + type SWAP
   // Combinamos ambos filtros para obtener SOLO swaps de estos programas específicos
@@ -207,6 +208,14 @@ async function fetchAllTransactions(
         logger.info(
           `  ✓ Batch ${fetchCount + 1}: ${batch.length} txs (Total: ${allTransactions.length})`
         );
+
+        // Early stop: si ya tenemos suficientes transacciones para un buen análisis
+        if (allTransactions.length >= MIN_TRANSACTIONS_FOR_ANALYSIS && fetchCount >= 5) {
+          logger.info(
+            `  ✅ Early stop: ${allTransactions.length} SWAP transactions collected (sufficient for analysis)`
+          );
+          break;
+        }
       } else {
         consecutiveEmpty++;
         consecutiveErrors = 0; // Reset error counter on successful empty response
