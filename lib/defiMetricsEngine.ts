@@ -252,7 +252,6 @@ function calculateMetrics(trades: Trade[], positions: Position[]): WalletMetrics
 
   // Calculate realized and unrealized PnL
   const closedPositions = positions.filter((p) => !p.isOpen && p.profitLoss !== undefined);
-  const openPositions = positions.filter((p) => p.isOpen);
 
   const realizedPnL = closedPositions.reduce((sum, p) => sum + (p.profitLoss || 0), 0);
   const unrealizedPnL = 0; // Would need current prices
