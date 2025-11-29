@@ -192,7 +192,7 @@ export async function bulkUpdateScores(updates: Array<{ wallet: string; score: n
  * Efficient referral stats calculation
  * TODO: Re-enable when Referral model is added to Prisma schema
  */
-export async function getReferralStatsOptimized(walletAddress: string) {
+export async function getReferralStatsOptimized(_walletAddress: string) {
   // Temporarily disabled - Referral model not in schema
   // TODO: Add Referral model to prisma/schema.prisma
   return {
