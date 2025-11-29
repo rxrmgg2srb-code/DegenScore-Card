@@ -595,81 +595,71 @@ async function analyzeTradingPatterns(tokenAddress: string): Promise<TradingPatt
 // ============================================================================
 
 async function getTokenMetadata(tokenAddress: string): Promise<TokenMetadata> {
-<<<<<<< HEAD
   return securityCircuitBreaker.execute(() =>
     retry(async () => {
       const url = HELIUS_RPC_URL;
-=======
-  return securityCircuitBreaker
-    .execute(() =>
-      retry(
-        async () => {
-          const url = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_API_KEY}`;
->>>>>>> 102fb5fa25d3bd81c38f17eb6c0d98ada0aeeeb3
 
-          const response = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              jsonrpc: '2.0',
-              id: 'metadata',
-              method: 'getAsset',
-              params: { id: tokenAddress },
-            }),
-          });
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          jsonrpc: '2.0',
+          id: 'metadata',
+          method: 'getAsset',
+          params: { id: tokenAddress },
+        }),
+      });
 
-          if (!response.ok) {
-            throw new Error('Failed to fetch metadata');
-          }
+      if (!response.ok) {
+        throw new Error('Failed to fetch metadata');
+      }
 
-          const data = await response.json();
-          const asset = data.result;
+      const data = await response.json();
+      const asset = data.result;
 
-          // Get token account info for supply
-          const connection = new Connection(HELIUS_RPC_URL, 'confirmed');
-          const mintPubkey = new PublicKey(tokenAddress);
-          const mintInfo = await connection.getParsedAccountInfo(mintPubkey);
-          const mintData = (mintInfo.value?.data as any)?.parsed?.info;
+      // Get token account info for supply
+      const connection = new Connection(HELIUS_RPC_URL, 'confirmed');
+      const mintPubkey = new PublicKey(tokenAddress);
+      const mintInfo = await connection.getParsedAccountInfo(mintPubkey);
+      const mintData = (mintInfo.value?.data as any)?.parsed?.info;
 
-          const symbol = asset?.content?.metadata?.symbol || 'UNKNOWN';
-          const name = asset?.content?.metadata?.name || 'Unknown Token';
-          const decimals = mintData?.decimals || 9;
-          const supply = parseInt(mintData?.supply || '0') / Math.pow(10, decimals);
+      const symbol = asset?.content?.metadata?.symbol || 'UNKNOWN';
+      const name = asset?.content?.metadata?.name || 'Unknown Token';
+      const decimals = mintData?.decimals || 9;
+      const supply = parseInt(mintData?.supply || '0') / Math.pow(10, decimals);
 
-          const hasWebsite = !!asset?.content?.links?.external_url;
-          const hasSocials = !!(asset?.content?.links?.twitter || asset?.content?.links?.telegram);
-          const verified = asset?.grouping?.some((g: any) => g.group_key === 'verified') || false;
+      const hasWebsite = !!asset?.content?.links?.external_url;
+      const hasSocials = !!(asset?.content?.links?.twitter || asset?.content?.links?.telegram);
+      const verified = asset?.grouping?.some((g: any) => g.group_key === 'verified') || false;
 
-          let score = 0;
-          if (verified) {
-            score += 5;
-          }
-          if (hasWebsite) {
-            score += 3;
-          }
-          if (hasSocials) {
-            score += 2;
-          }
+      let score = 0;
+      if (verified) {
+        score += 5;
+      }
+      if (hasWebsite) {
+        score += 3;
+      }
+      if (hasSocials) {
+        score += 2;
+      }
 
-          return {
-            symbol,
-            name,
-            decimals,
-            supply,
-            verified,
-            hasWebsite,
-            hasSocials,
-            imageUrl: asset?.content?.links?.image,
-            description: asset?.content?.metadata?.description,
-            score,
-          };
-        },
-        {
-          maxRetries: 3,
-          retryableStatusCodes: [408, 429, 500, 502, 503, 504],
-        }
-      )
-    )
+      return {
+        symbol,
+        name,
+        decimals,
+        supply,
+        verified,
+        hasWebsite,
+        hasSocials,
+        imageUrl: asset?.content?.links?.image,
+        description: asset?.content?.metadata?.description,
+        score,
+      };
+    }, {
+      maxRetries: 3,
+      retryableStatusCodes: [408, 429, 500, 502, 503, 504],
+    })
+  )
     .catch(() => ({
       symbol: 'UNKNOWN',
       name: 'Unknown Token',
@@ -687,78 +677,66 @@ async function getTokenMetadata(tokenAddress: string): Promise<TokenMetadata> {
 // ============================================================================
 
 async function analyzeMarketMetrics(tokenAddress: string): Promise<MarketMetrics> {
-<<<<<<< HEAD
   return securityCircuitBreaker.execute(() =>
     retry(async () => {
       // This would ideally fetch from CoinGecko/Jupiter/Birdeye
       // For now, we'll use transaction history to estimate age
       const url = `https://api.helius.xyz/v0/addresses/${tokenAddress}/transactions?api-key=${getHeliusApiKey()}&limit=1000`;
-=======
-  return securityCircuitBreaker
-    .execute(() =>
-      retry(
-        async () => {
-          // This would ideally fetch from CoinGecko/Jupiter/Birdeye
-          // For now, we'll use transaction history to estimate age
-          const url = `https://api.helius.xyz/v0/addresses/${tokenAddress}/transactions?api-key=${HELIUS_API_KEY}&limit=1000`;
->>>>>>> 102fb5fa25d3bd81c38f17eb6c0d98ada0aeeeb3
 
-          const response = await fetch(url);
-          if (!response.ok) {
-            throw new Error('Failed to fetch market data');
-          }
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error('Failed to fetch market data');
+      }
 
-          const transactions = await response.json();
+      const transactions = await response.json();
 
-          // Calculate age from first transaction
-          const oldestTx = transactions[transactions.length - 1];
-          const ageInDays = oldestTx ? (Date.now() / 1000 - oldestTx.timestamp) / 86400 : 0;
+      // Calculate age from first transaction
+      const oldestTx = transactions[transactions.length - 1];
+      const ageInDays = oldestTx ? (Date.now() / 1000 - oldestTx.timestamp) / 86400 : 0;
 
-          // Estimate volume (this is very rough, would need proper DEX data)
-          const volume24h = 0; // Placeholder
-          const volumeChange24h = 0;
-          const priceChange24h = 0;
-          const priceChange7d = 0;
-          const marketCap = 0;
-          const allTimeHigh = 0;
+      // Estimate volume (this is very rough, would need proper DEX data)
+      const volume24h = 0; // Placeholder
+      const volumeChange24h = 0;
+      const priceChange24h = 0;
+      const priceChange7d = 0;
+      const marketCap = 0;
+      const allTimeHigh = 0;
 
-          // Detect pump and dump pattern
-          const isPumpAndDump = ageInDays < 1 && transactions.length > 500;
+      // Detect pump and dump pattern
+      const isPumpAndDump = ageInDays < 1 && transactions.length > 500;
 
-          let score = 10;
-          if (ageInDays > 30) {
-            score = 10;
-          } else if (ageInDays > 7) {
-            score = 7;
-          } else if (ageInDays > 1) {
-            score = 5;
-          } else {
-            score = 2;
-          }
+      let score = 10;
+      if (ageInDays > 30) {
+        score = 10;
+      } else if (ageInDays > 7) {
+        score = 7;
+      } else if (ageInDays > 1) {
+        score = 5;
+      } else {
+        score = 2;
+      }
 
-          if (isPumpAndDump) {
-            score = Math.max(0, score - 5);
-          }
+      if (isPumpAndDump) {
+        score = Math.max(0, score - 5);
+      }
 
-          return {
-            ageInDays,
-            volume24h,
-            volumeChange24h,
-            priceChange24h,
-            priceChange7d,
-            marketCap,
-            allTimeHigh,
-            athDate: oldestTx?.timestamp,
-            isPumpAndDump,
-            score,
-          };
-        },
-        {
-          maxRetries: 3,
-          retryableStatusCodes: [408, 429, 500, 502, 503, 504],
-        }
-      )
-    )
+      return {
+        ageInDays,
+        volume24h,
+        volumeChange24h,
+        priceChange24h,
+        priceChange7d,
+        marketCap,
+        allTimeHigh,
+        athDate: oldestTx?.timestamp,
+        isPumpAndDump,
+        score,
+      };
+    }, {
+      maxRetries: 3,
+      retryableStatusCodes: [408, 429, 500, 502, 503, 504],
+    })
+  )
     .catch(() => ({
       ageInDays: 0,
       volume24h: 0,
