@@ -13,9 +13,11 @@
  */
 
 import { ParsedTransaction, getWalletTransactions } from './services/helius';
+import { getAllSwapActivities, SolscanDefiActivity } from './services/solscan';
 import { logger } from '@/lib/logger';
 
 const SOL_MINT = 'So11111111111111111111111111111111111111112';
+const WSOL_MINT = 'So11111111111111111111111111111111111111112'; // Wrapped SOL
 
 // ============================================================================
 // TYPE DEFINITIONS
@@ -92,37 +94,45 @@ export async function calculateAdvancedMetrics(
   onProgress?: (progress: number, message: string) => void
 ): Promise<WalletMetrics> {
   try {
-    logger.info('🔥 DegenScore Engine v2.0 - Professional Analysis Starting');
+    logger.info('🔥 DegenScore Engine v3.0 - Solscan DeFi Activities');
 
     if (onProgress) {
-      onProgress(5, '📡 Fetching transactions...');
+      onProgress(5, '📡 Fetching DeFi activities...');
     }
 
-    const allTransactions = await fetchAllTransactions(walletAddress, onProgress);
+    // Try Solscan first (cleaner, more accurate data)
+    let trades = await fetchTradesFromSolscan(walletAddress, onProgress);
 
-    if (!allTransactions || allTransactions.length === 0) {
-      logger.warn('❌ No transactions found for wallet:', { walletAddress });
-      logger.warn('⚠️ Returning default metrics (all zeros)');
-      return getDefaultMetrics();
-    }
-
-    logger.info(`📊 Total transactions fetched: ${allTransactions.length}`);
-
-    if (onProgress) {
-      onProgress(75, '💱 Analyzing trades...');
-    }
-
-    // Extract all trades
-    const trades = extractTrades(allTransactions, walletAddress);
-    logger.info(
-      `✅ Extracted ${trades.length} valid trades from ${allTransactions.length} transactions`
-    );
-
+    // Fallback to Helius if Solscan returns no data
     if (trades.length === 0) {
-      logger.warn('⚠️ No valid SWAP trades found in transactions');
-      logger.warn('⚠️ This wallet may not have any trading activity, only transfers');
-      logger.warn('⚠️ Returning default metrics (all zeros)');
-      return getDefaultMetrics();
+      logger.warn('⚠️ No trades from Solscan, falling back to Helius transaction parsing...');
+
+      const allTransactions = await fetchAllTransactions(walletAddress, onProgress);
+
+      if (!allTransactions || allTransactions.length === 0) {
+        logger.warn('❌ No transactions found for wallet:', { walletAddress });
+        logger.warn('⚠️ Returning default metrics (all zeros)');
+        return getDefaultMetrics();
+      }
+
+      logger.info(`📊 Total transactions fetched: ${allTransactions.length}`);
+
+      if (onProgress) {
+        onProgress(75, '💱 Analyzing trades...');
+      }
+
+      // Extract all trades from Helius transactions
+      trades = extractTrades(allTransactions, walletAddress);
+      logger.info(
+        `✅ Extracted ${trades.length} valid trades from ${allTransactions.length} transactions`
+      );
+
+      if (trades.length === 0) {
+        logger.warn('⚠️ No valid SWAP trades found in transactions');
+        logger.warn('⚠️ This wallet may not have any trading activity, only transfers');
+        logger.warn('⚠️ Returning default metrics (all zeros)');
+        return getDefaultMetrics();
+      }
     }
 
     if (onProgress) {
@@ -137,8 +147,8 @@ export async function calculateAdvancedMetrics(
       onProgress(95, '🎯 Calculating metrics...');
     }
 
-    // Calculate all metrics
-    const metrics = calculateMetrics(trades, positions, allTransactions);
+    // Calculate all metrics (note: for Solscan path, we use empty array for transactions)
+    const metrics = calculateMetrics(trades, positions, []);
 
     if (onProgress) {
       onProgress(100, '✅ Analysis complete!');
@@ -324,6 +334,125 @@ async function fetchAllTransactions(
 }
 
 // ============================================================================
+// SOLSCAN DEFI ACTIVITIES EXTRACTION
+// ============================================================================
+
+/**
+ * Fetch trades from Solscan DeFi Activities API
+ * This provides clean, structured swap data instead of parsing raw transactions
+ */
+async function fetchTradesFromSolscan(
+  walletAddress: string,
+  onProgress?: (progress: number, message: string) => void
+): Promise<Trade[]> {
+  try {
+    logger.info('🔥 Fetching DeFi activities from Solscan...');
+
+    if (onProgress) {
+      onProgress(10, '📡 Fetching DeFi activities...');
+    }
+
+    // Fetch all swap activities (up to 10 pages = 400 swaps)
+    const activities = await getAllSwapActivities(walletAddress, 10);
+
+    if (!activities || activities.length === 0) {
+      logger.warn('❌ No DeFi activities found from Solscan');
+      return [];
+    }
+
+    logger.info(`📊 Fetched ${activities.length} DeFi activities from Solscan`);
+
+    if (onProgress) {
+      onProgress(50, '💱 Parsing swap data...');
+    }
+
+    // Extract trades from activities
+    const trades = extractTradesFromSolscan(activities, walletAddress);
+
+    logger.info(`✅ Extracted ${trades.length} trades from Solscan DeFi activities`);
+
+    return trades;
+  } catch (error) {
+    logger.error('❌ Error fetching from Solscan:', error instanceof Error ? error : undefined, {
+      error: String(error),
+    });
+    return [];
+  }
+}
+
+/**
+ * Extract trades from Solscan DeFi Activities
+ */
+function extractTradesFromSolscan(
+  activities: SolscanDefiActivity[],
+  _walletAddress: string
+): Trade[] {
+  const trades: Trade[] = [];
+
+  for (const activity of activities) {
+    if (!activity.routers || activity.routers.length === 0) {
+      continue;
+    }
+
+    // Process each router in the swap
+    for (const router of activity.routers) {
+      const fromToken = router.from_token;
+      const toToken = router.to_token;
+      const fromAmount = router.from_amount;
+      const toAmount = router.to_amount;
+
+      // Determine if this is a buy or sell based on SOL/WSOL involvement
+      const fromIsSol = fromToken.address === SOL_MINT || fromToken.address === WSOL_MINT;
+      const toIsSol = toToken.address === SOL_MINT || toToken.address === WSOL_MINT;
+
+      let trade: Trade | null = null;
+
+      if (fromIsSol && !toIsSol) {
+        // SOL -> Token = BUY
+        trade = {
+          timestamp: activity.time,
+          tokenMint: toToken.address,
+          type: 'buy',
+          solAmount: fromAmount / Math.pow(10, fromToken.decimals),
+          tokenAmount: toAmount / Math.pow(10, toToken.decimals),
+          pricePerToken: 0, // Will calculate below
+        };
+      } else if (!fromIsSol && toIsSol) {
+        // Token -> SOL = SELL
+        trade = {
+          timestamp: activity.time,
+          tokenMint: fromToken.address,
+          type: 'sell',
+          solAmount: toAmount / Math.pow(10, toToken.decimals),
+          tokenAmount: fromAmount / Math.pow(10, fromToken.decimals),
+          pricePerToken: 0, // Will calculate below
+        };
+      }
+
+      // Calculate price per token
+      if (trade) {
+        trade.pricePerToken = trade.tokenAmount > 0
+          ? trade.solAmount / trade.tokenAmount
+          : 0;
+
+        // Skip dust trades (very small amounts)
+        if (trade.solAmount > 0.0001) {
+          trades.push(trade);
+        }
+      }
+    }
+  }
+
+  logger.info('🔍 Solscan trade extraction stats:', {
+    totalActivities: activities.length,
+    tradesExtracted: trades.length,
+    extractionRate: `${((trades.length / activities.length) * 100).toFixed(1)}%`,
+  });
+
+  return trades;
+}
+
+// ============================================================================
 // TRADE EXTRACTION
 // ============================================================================
 
@@ -344,57 +473,6 @@ function extractTrades(transactions: ParsedTransaction[], walletAddress: string)
   const txSources = new Map<string, number>();
   let txWithTokenAndNative = 0;
   let dustCount = 0;
-
-  // Lista de DEXes conocidos en Solana
-  const KNOWN_DEX_SOURCES = new Set([
-    'PUMP_AMM',
-    'PUMP_FUN',
-    'JUPITER',
-    'RAYDIUM',
-    'ORCA',
-    'SERUM',
-    'OPENBOOK',
-    'METEORA',
-    'DFLOW',
-    'LIFINITY',
-    'SABER',
-    'ALDRIN',
-    'MERCURIAL',
-    'MARINADE',
-    'PHOENIX',
-  ]);
-
-  // 🚫 FILTRO CRÍTICO: Tokens excluidos (stablecoins y wrapped tokens)
-  // Solo queremos contar trades de tokens especulativos (memecoins, shitcoins, etc.)
-  // NO contamos swaps SOL <-> USDC, SOL <-> WETH, etc.
-  const EXCLUDED_TOKENS = new Set([
-    // Stablecoins principales
-    'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v', // USDC
-    'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB', // USDT
-    'Ea5SjE2Y6yvCeW5dYTn7PYMuW5ikXkvbGdcmSnXeaLjS', // PAI (USD stablecoin)
-    'EPeUFDgHRxs9xxEPVaL6kfGQvCon7jmAWKVUHuux1Tpz', // BAI (another stablecoin)
-    'AGFEad2et2ZJif9jaGpdMixQqvW5i81aBdvKe7PHNfz3', // FakeUSDC (stablecoin)
-    'EchesyfXePKdLtoiZSL8pBe8Myagyy8ZRqsACNCFGnvp', // FIDA-USD stablecoin
-    '7kbnvuGBxxj8AG9qp8Scn56muWGaRaFqxg1FsRp3PaFT', // UXD Stablecoin
-    'PoRTjZMPXb9T7dyU7tpLEZRQj7e6ssfAE62j2oQuc6y', // PORT (stablecoin-backed)
-
-    // Wrapped tokens principales (NO especulativos)
-    'So11111111111111111111111111111111111111112',   // Wrapped SOL
-    '7vfCXTUXx5WJV5JADk17DUJ4ksgau7utNKj4b963voxs', // Wrapped ETH
-    '9n4nbM75f5Ui33ZbPYXn59EwSgE8CGsHtAeTH5YFeJ9E', // Wrapped BTC
-    '3NZ9JMVBmGAqocybic2c7LQCJScmgsAZ6vQqTDzcqmJh', // Wrapped BTC (another version)
-    '2FPyTwcZLUg1MDrwsyoP4D6s1tM7hAkHYRjkNb5w6Pxk', // Wrapped ETH (Sollet)
-
-    // Staked/Liquid staking tokens (NO especulativos)
-    'mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So',  // mSOL (Marinade staked SOL)
-    '7dHbWXmci3dT8UFYWYZweBLXgycu7Y3iL6trKn1Y7ARj', // stSOL (Lido staked SOL)
-    'He3iAEV5rYjv6Xf7PxKro19eVrC3QAcdic5CF2D2obPt', // scnSOL (Socean staked SOL)
-    'DdFPRnccQqLD4zCHrBqdY95D6hvw6PLWp9DEXj1fLCL9', // daoSOL (staked SOL)
-    'bSo13r4TkiE4KumL71LsHTPpL2euBYLFx6h9HP3piy1', // bSOL (BlazeStake staked SOL)
-    'J1toso1uCk3RLmjorhTtrVwY9HJ7X8V9yYac6Y7kGCPn', // jitoSOL (Jito staked SOL)
-  ]);
-
-  let skippedStablecoin = 0;
 
   for (const tx of transactions) {
     // Track stats
@@ -461,7 +539,7 @@ function extractTrades(transactions: ParsedTransaction[], walletAddress: string)
     }
 
     // Si no hay token principal, usar el primero de la lista
-    if (!primaryMint && allTokenTransfers.length > 0) {
+    if (!primaryMint && allTokenTransfers.length > 0 && allTokenTransfers[0]) {
       primaryMint = allTokenTransfers[0].mint;
       primaryTokenNet = allTokenTransfers[0].tokenAmount;
     }
@@ -473,7 +551,6 @@ function extractTrades(transactions: ParsedTransaction[], walletAddress: string)
 
     // Determinar buy/sell basado en flujo de tokens
     const isBuy = primaryTokenNet > 0;
-    const isSell = primaryTokenNet < 0;
 
     const tokenAmount = Math.abs(primaryTokenNet) || 1;
     const solAmount = Math.abs(solNet) || 0.000001;
@@ -529,7 +606,6 @@ function extractTrades(transactions: ParsedTransaction[], walletAddress: string)
       noNativeTransfers: skippedNoNativeTransfers,
       dust: skippedDust,
       noTokenForWallet: skippedNoToken,
-      stablecoinsOrWrapped: skippedStablecoin,
       zeroAmount: skippedZeroAmount,
       transferOnly: skippedTransferOnly,
       failedSanityChecks: skippedSanity,
