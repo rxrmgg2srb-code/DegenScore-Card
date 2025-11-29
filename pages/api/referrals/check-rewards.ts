@@ -61,78 +61,29 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     logger.debug('Checking referral rewards for:', { walletAddress });
 
-    // Count paid referrals
-    const referralStats = await prisma.referral.aggregate({
-      where: {
-        referrerAddress: walletAddress,
-        hasPaid: true,
-      },
-      _count: true,
-    });
-
-    const paidReferralsCount = referralStats._count;
-
-    // Get all referrals for details
-    const referrals = await prisma.referral.findMany({
-      where: {
-        referrerAddress: walletAddress,
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
-
-    // Determine which rewards are unlocked
-    const unlockedRewards = REFERRAL_REWARDS.filter(
-      (reward) => paidReferralsCount >= reward.minReferrals
-    );
-
-    // Check current user state
-    const card = await prisma.degenCard.findUnique({
-      where: { walletAddress },
-      include: {
-        badges: true,
-      },
-    });
-
-    const subscription = await prisma.subscription.findUnique({
-      where: { walletAddress },
-    });
-
-    // Determine which rewards need to be claimed
-    const claimableRewards = [];
-    for (const reward of unlockedRewards) {
-      // Check if badge already awarded
-      const hasBadge = card?.badges.some((b) => b.name === reward.badge);
-
-      if (!hasBadge) {
-        claimableRewards.push(reward);
-      }
-    }
-
-    // Calculate next milestone
-    const nextReward = REFERRAL_REWARDS.find((reward) => paidReferralsCount < reward.minReferrals);
+    // TEMPORARILY DISABLED - Referral model not in schema
+    logger.warn('Referral system disabled - Referral model missing from schema');
 
     const response = {
-      totalReferrals: referrals.length,
-      paidReferrals: paidReferralsCount,
-      pendingReferrals: referrals.filter((r) => !r.hasPaid).length,
-      unlockedRewards,
-      claimableRewards,
-      nextMilestone: nextReward
+      totalReferrals: 0,
+      paidReferrals: 0,
+      pendingReferrals: 0,
+      unlockedRewards: [],
+      claimableRewards: [],
+      nextMilestone: REFERRAL_REWARDS[0]
         ? {
-            badge: nextReward.badge,
-            requiredReferrals: nextReward.minReferrals,
-            remaining: nextReward.minReferrals - paidReferralsCount,
+            badge: REFERRAL_REWARDS[0].badge,
+            requiredReferrals: REFERRAL_REWARDS[0].minReferrals,
+            remaining: REFERRAL_REWARDS[0].minReferrals,
             reward: {
-              proMonths: nextReward.proMonths,
-              sol: nextReward.sol,
-              vipLifetime: nextReward.vipLifetime || false,
+              proMonths: REFERRAL_REWARDS[0].proMonths,
+              sol: REFERRAL_REWARDS[0].sol,
+              vipLifetime: REFERRAL_REWARDS[0].vipLifetime || false,
             },
           }
         : null,
-      currentTier: subscription?.tier || 'FREE',
-      hasClaimable: claimableRewards.length > 0,
+      currentTier: 'FREE',
+      hasClaimable: false,
     };
 
     res.status(200).json(response);

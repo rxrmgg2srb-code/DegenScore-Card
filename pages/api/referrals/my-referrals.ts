@@ -16,24 +16,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
     }
 
-    // Obtener todos los referidos
-    const referrals = await prisma.referral.findMany({
-      where: {
-        referrerAddress: walletAddress,
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
+    // TEMPORARILY DISABLED - Referral model not in schema
+    logger.warn('Referral system disabled - Referral model missing from schema');
 
-    // Contar stats
-    const totalReferrals = referrals.length;
-    const paidReferrals = referrals.filter((r) => r.hasPaid).length;
-    const pendingReferrals = totalReferrals - paidReferrals;
-
-    // Calcular potencial reward (para mostrar cuánto ganarían)
-    // Por ahora 0, pero en el futuro será automático
-    const potentialEarnings = 0; // paidReferrals * REWARD_PER_REFERRAL;
+    const totalReferrals = 0;
+    const paidReferrals = 0;
+    const pendingReferrals = 0;
+    const potentialEarnings = 0;
 
     res.status(200).json({
       success: true,
@@ -43,17 +32,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         pending: pendingReferrals,
         potentialEarnings, // SOL
       },
-      referrals: referrals.map((r) => ({
-        id: r.id,
-        referredAddress: r.referredAddress,
-        hasPaid: r.hasPaid,
-        paidAt: r.paidAt,
-        createdAt: r.createdAt,
-      })),
-      message:
-        paidReferrals >= 3
-          ? `🎉 You have ${paidReferrals} paid referrals! Rewards coming soon!`
-          : `${3 - paidReferrals} more paid referrals to unlock rewards`,
+      referrals: [],
+      message: '3 more paid referrals to unlock rewards',
     });
   } catch (error) {
     logger.error('Error fetching referrals:', error instanceof Error ? error : undefined, {
