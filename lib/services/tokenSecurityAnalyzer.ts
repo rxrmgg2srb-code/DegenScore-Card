@@ -511,81 +511,70 @@ async function analyzeLiquidity(tokenAddress: string): Promise<LiquidityAnalysis
 // ============================================================================
 
 async function analyzeTradingPatterns(tokenAddress: string): Promise<TradingPatterns> {
-<<<<<<< HEAD
   return securityCircuitBreaker.execute(() =>
     retry(async () => {
       // Analyze first 100 transactions to detect patterns
       const url = `https://api.helius.xyz/v0/addresses/${tokenAddress}/transactions?api-key=${getHeliusApiKey()}&limit=100`;
-=======
-  return securityCircuitBreaker
-    .execute(() =>
-      retry(
-        async () => {
-          // Analyze first 100 transactions to detect patterns
-          const url = `https://api.helius.xyz/v0/addresses/${tokenAddress}/transactions?api-key=${HELIUS_API_KEY}&limit=100`;
->>>>>>> 102fb5fa25d3bd81c38f17eb6c0d98ada0aeeeb3
 
-          const response = await fetch(url);
-          if (!response.ok) {
-            throw new Error('Failed to fetch transactions');
-          }
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error('Failed to fetch transactions');
+      }
 
-          const transactions = await response.json();
+      const transactions = await response.json();
 
-          // Detect bundle bots (multiple buys in same block/slot)
-          const bundleBots = detectBundleBots(transactions);
+      // Detect bundle bots (multiple buys in same block/slot)
+      const bundleBots = detectBundleBots(transactions);
 
-          // Detect snipers (bought in first 10 transactions)
-          const snipers = Math.min(10, transactions.length);
+      // Detect snipers (bought in first 10 transactions)
+      const snipers = Math.min(10, transactions.length);
 
-          // Detect wash trading
-          const washTrading = detectWashTrading(transactions);
+      // Detect wash trading
+      const washTrading = detectWashTrading(transactions);
 
-          // Detect honeypot (nobody can sell)
-          const { canSell, honeypotDetected } = detectHoneypot(transactions);
+      // Detect honeypot (nobody can sell)
+      const { canSell, honeypotDetected } = detectHoneypot(transactions);
 
-          // Estimate taxes (would need more sophisticated analysis)
-          const avgBuyTax = 0;
-          const avgSellTax = 0;
+      // Estimate taxes (would need more sophisticated analysis)
+      const avgBuyTax = 0;
+      const avgSellTax = 0;
 
-          const suspiciousVolume = washTrading || bundleBots > 10;
+      const suspiciousVolume = washTrading || bundleBots > 10;
 
-          let score = 15;
-          let riskLevel: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL' = 'LOW';
+      let score = 15;
+      let riskLevel: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL' = 'LOW';
 
-          if (honeypotDetected) {
-            riskLevel = 'CRITICAL';
-            score = 0;
-          } else if (bundleBots > 20 || (washTrading && !canSell)) {
-            riskLevel = 'HIGH';
-            score = 3;
-          } else if (bundleBots > 10 || washTrading) {
-            riskLevel = 'MEDIUM';
-            score = 8;
-          } else {
-            riskLevel = 'LOW';
-            score = 15;
-          }
+      if (honeypotDetected) {
+        riskLevel = 'CRITICAL';
+        score = 0;
+      } else if (bundleBots > 20 || (washTrading && !canSell)) {
+        riskLevel = 'HIGH';
+        score = 3;
+      } else if (bundleBots > 10 || washTrading) {
+        riskLevel = 'MEDIUM';
+        score = 8;
+      } else {
+        riskLevel = 'LOW';
+        score = 15;
+      }
 
-          return {
-            bundleBots,
-            snipers,
-            washTrading,
-            suspiciousVolume,
-            honeypotDetected,
-            canSell,
-            avgBuyTax,
-            avgSellTax,
-            riskLevel,
-            score,
-          };
-        },
-        {
-          maxRetries: 3,
-          retryableStatusCodes: [408, 429, 500, 502, 503, 504],
-        }
-      )
-    )
+      return {
+        bundleBots,
+        snipers,
+        washTrading,
+        suspiciousVolume,
+        honeypotDetected,
+        canSell,
+        avgBuyTax,
+        avgSellTax,
+        riskLevel,
+        score,
+      };
+    }, {
+      maxRetries: 3,
+      retryableStatusCodes: [408, 429, 500, 502, 503, 504],
+    })
+  )
     .catch(() => ({
       // Fallback
       bundleBots: 0,
