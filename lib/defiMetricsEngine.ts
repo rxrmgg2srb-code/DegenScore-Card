@@ -13,7 +13,6 @@
 
 import {
   getAllWalletDefiActivities,
-  DefiActivity,
   DefiActivityType,
   standardizeDefiActivities,
   StandardizedActivity,
