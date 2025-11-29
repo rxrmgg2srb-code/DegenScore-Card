@@ -173,8 +173,8 @@ async function fetchAllTransactions(
   const MAX_EMPTY = 3;
   const MAX_CONSECUTIVE_ERRORS = 5;
 
-  // 🔥 FILTRO HELIUS: Filtrar por program IDs de DEXes conocidos
-  // Esto es más confiable que usar type: 'SWAP' y evita problemas de continuación
+  // 🔥 FILTRO HELIUS: Filtrar por program IDs de DEXes conocidos + type SWAP
+  // Combinamos ambos filtros para obtener SOLO swaps de estos programas específicos
   const DEX_PROGRAMS = [
     'JUP6LkbZbjS1jKKwapdHNy74zcZ3tLCZByGQtd1ubGg', // Jupiter
     '675kPX9MHTjS2zt1qfr1NYHuzeLXfQM9H24wFSUt1Mp8', // Raydium AMM
@@ -189,12 +189,13 @@ async function fetchAllTransactions(
     'Dooar9JkhdZ7J3LHN3A7YCuoGRUggXhQaG4kijfLGU2j', // Lifinity V2
   ];
 
-  logger.info(`🔄 Fetching DEX transactions by program IDs (up to ${MAX_BATCHES} batches)`);
+  logger.info(`🔄 Fetching SWAP transactions from specific DEX programs (up to ${MAX_BATCHES} batches)`);
 
   while (fetchCount < MAX_BATCHES) {
     try {
       const batch = await getWalletTransactions(walletAddress, BATCH_SIZE, before, {
-        programs: DEX_PROGRAMS,
+        type: 'SWAP', // Solo SWAPs
+        programs: DEX_PROGRAMS, // De estos programas específicos
         commitment: 'confirmed',
       });
 
