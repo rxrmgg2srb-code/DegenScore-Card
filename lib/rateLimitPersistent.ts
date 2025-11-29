@@ -1,4 +1,4 @@
-import { prisma } from './prisma';
+// import { prisma } from './prisma'; // Temporarily disabled - RateLimitLog model not in schema
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { logger } from '@/lib/logger';
 
