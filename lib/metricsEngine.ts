@@ -233,10 +233,33 @@ async function fetchAllTransactions(
       // Special case: Helius 404 with continuation signature (not a real error)
       // When using filters, Helius returns 404 if no matching events in time window
       // but provides a 'before' signature to continue searching
-      if (error?.status === 404 && error?.message) {
-        const beforeMatch = error.message.match(/before.*parameter set to ([a-zA-Z0-9]+)/);
-        if (beforeMatch && beforeMatch[1]) {
-          const continuationSignature = beforeMatch[1];
+      if (error?.status === 404) {
+        let continuationSignature: string | null = null;
+
+        // Try to parse the error body as JSON first
+        if (error?.errorBody) {
+          try {
+            const errorJson = JSON.parse(error.errorBody);
+            if (errorJson?.error) {
+              const match = errorJson.error.match(/before.*parameter set to ([a-zA-Z0-9]+)/);
+              if (match && match[1]) {
+                continuationSignature = match[1];
+              }
+            }
+          } catch (e) {
+            // Fall back to regex on message
+          }
+        }
+
+        // Fall back to regex on error message if JSON parsing failed
+        if (!continuationSignature && error?.message) {
+          const beforeMatch = error.message.match(/before.*parameter set to ([a-zA-Z0-9]+)/);
+          if (beforeMatch && beforeMatch[1]) {
+            continuationSignature = beforeMatch[1];
+          }
+        }
+
+        if (continuationSignature) {
           logger.info(
             `  ⏭️ Batch ${fetchCount + 1}: No SWAP txs in this window, continuing from ${continuationSignature.substring(0, 20)}...`
           );

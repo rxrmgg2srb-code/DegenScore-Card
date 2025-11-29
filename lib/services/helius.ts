@@ -112,11 +112,18 @@ export async function getWalletTransactions(
           clearTimeout(timeoutId);
 
           if (!response.ok) {
-            // For 400 errors, try to get more details from response body
+            // For 400 and 404 errors, try to get more details from response body
             let errorDetails = '';
+            let errorBody = '';
             try {
-              const errorBody = await response.text();
-              errorDetails = errorBody ? ` - ${errorBody.substring(0, 200)}` : '';
+              errorBody = await response.text();
+              // For 404 errors, don't truncate (contains continuation signature)
+              // For other errors, limit to 200 chars to avoid huge error messages
+              if (response.status === 404) {
+                errorDetails = errorBody ? ` - ${errorBody}` : '';
+              } else {
+                errorDetails = errorBody ? ` - ${errorBody.substring(0, 200)}` : '';
+              }
             } catch (e) {
               // Ignore if we can't read the error body
             }
@@ -125,6 +132,7 @@ export async function getWalletTransactions(
               `Helius API error: ${response.status} ${response.statusText}${errorDetails}`
             );
             error.status = response.status;
+            error.errorBody = errorBody; // Store full error body for parsing
 
             // Log additional info for 400 errors to help debug
             if (response.status === 400) {
