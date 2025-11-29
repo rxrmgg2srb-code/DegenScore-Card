@@ -812,3 +812,17 @@ model SuperTokenAnalysis {
   @@index([viewCount(sort: Desc)])
   @@index([superScore(sort: Desc), globalRiskLevel])
 }
+// ---------------------------------------------------------------
+// RATE LIMITING - Persistent rate limit tracking
+// ---------------------------------------------------------------
+
+model RateLimitLog {
+  id          String   @id @default(cuid())
+  identifier  String   // IP address or custom identifier
+  endpoint    String?  // Optional endpoint tracking
+  timestamp   DateTime @default(now())
+
+  @@index([identifier, timestamp])
+  @@index([endpoint, timestamp])
+  @@index([timestamp]) // For cleanup queries
+}
