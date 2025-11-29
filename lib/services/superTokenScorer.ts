@@ -860,99 +860,99 @@ async function analyzeNewWallets(tokenAddress: string): Promise<NewWalletAnalysi
         const data = await response.json();
         const holders = data.result?.token_accounts || [];
 
-            // 🔥 FIX: Analyze a SAMPLE of 200 wallets (better than 100)
-            const sampleSize = Math.min(200, holders.length);
-            const sampleHolders = holders.slice(0, sampleSize);
+        // 🔥 FIX: Analyze a SAMPLE of 200 wallets (better than 100)
+        const sampleSize = Math.min(200, holders.length);
+        const sampleHolders = holders.slice(0, sampleSize);
 
-            let walletsUnder10DaysInSample = 0;
-            let suspiciousNewWallets = 0;
-            let totalAge = 0;
-            let analyzedCount = 0;
+        let walletsUnder10DaysInSample = 0;
+        let suspiciousNewWallets = 0;
+        let totalAge = 0;
+        let analyzedCount = 0;
 
-            // Analizar edad de cada wallet en la muestra
-            const connection = new Connection(HELIUS_RPC_URL, 'confirmed');
+        // Analizar edad de cada wallet en la muestra
+        const connection = new Connection(HELIUS_RPC_URL, 'confirmed');
 
-            for (const holder of sampleHolders) {
-              try {
-                const pubkey = new PublicKey(holder.owner);
-                const signatures = await connection.getSignaturesForAddress(pubkey, {
-                  limit: 1000,
-                });
-
-                if (signatures.length > 0) {
-                  const oldestSig = signatures[signatures.length - 1];
-                  const walletAge = (Date.now() / 1000 - (oldestSig?.blockTime || 0)) / 86400; // días
-
-                  totalAge += walletAge;
-                  analyzedCount++;
-
-                  if (walletAge < 10) {
-                    walletsUnder10DaysInSample++;
-
-                    // Si es nueva Y tiene mucho balance, es sospechoso
-                    const balance = parseFloat(holder.amount);
-                    if (balance > 1000000) {
-                      // threshold arbitrario
-                      suspiciousNewWallets++;
-                    }
-                  }
-                }
-              } catch (error) {
-                // Skip wallet on error
-              }
-            }
-
-            // 🔥 FIX: Calculate percentage correctly based on REAL total holders
-            // The percentage is: (new wallets in sample / sample size) * 100
-            // This gives us an ESTIMATE of the percentage in the total population
-            const percentageNewWalletsInSample =
-              analyzedCount > 0 ? (walletsUnder10DaysInSample / analyzedCount) * 100 : 0;
-
-            // Estimate total new wallets across ALL holders
-            const estimatedTotalNewWallets = Math.round(
-              (percentageNewWalletsInSample / 100) * (realTotalHolders || holders.length)
-            );
-
-            const avgWalletAge = analyzedCount > 0 ? totalAge / analyzedCount : 0;
-
-            // 🔥 FIX: Use the REAL total holders count
-            const totalWallets = realTotalHolders || holders.length;
-
-            // Calcular risk level basado en el porcentaje real
-            let riskLevel: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL' = 'LOW';
-            let score = 50;
-
-            if (percentageNewWalletsInSample > 70 || suspiciousNewWallets > 10) {
-              riskLevel = 'CRITICAL';
-              score = 0;
-            } else if (percentageNewWalletsInSample > 50 || suspiciousNewWallets > 5) {
-              riskLevel = 'HIGH';
-              score = 15;
-            } else if (percentageNewWalletsInSample > 30) {
-              riskLevel = 'MEDIUM';
-              score = 30;
-            } else {
-              riskLevel = 'LOW';
-              score = 50;
-            }
-
-            logger.info('✅ New Wallet Analysis Complete', {
-              tokenAddress,
-              totalWallets,
-              sampleSize: analyzedCount,
-              walletsUnder10Days: estimatedTotalNewWallets,
-              percentageNewWallets: percentageNewWalletsInSample.toFixed(2),
+        for (const holder of sampleHolders) {
+          try {
+            const pubkey = new PublicKey(holder.owner);
+            const signatures = await connection.getSignaturesForAddress(pubkey, {
+              limit: 1000,
             });
 
-            return {
-              totalWallets, // REAL total from DexScreener/Birdeye
-              walletsUnder10Days: estimatedTotalNewWallets, // Estimated from sample
-              percentageNewWallets: percentageNewWalletsInSample,
-              avgWalletAge,
-              suspiciousNewWallets,
-              riskLevel,
-              score,
-            };
+            if (signatures.length > 0) {
+              const oldestSig = signatures[signatures.length - 1];
+              const walletAge = (Date.now() / 1000 - (oldestSig?.blockTime || 0)) / 86400; // días
+
+              totalAge += walletAge;
+              analyzedCount++;
+
+              if (walletAge < 10) {
+                walletsUnder10DaysInSample++;
+
+                // Si es nueva Y tiene mucho balance, es sospechoso
+                const balance = parseFloat(holder.amount);
+                if (balance > 1000000) {
+                  // threshold arbitrario
+                  suspiciousNewWallets++;
+                }
+              }
+            }
+          } catch (error) {
+            // Skip wallet on error
+          }
+        }
+
+        // 🔥 FIX: Calculate percentage correctly based on REAL total holders
+        // The percentage is: (new wallets in sample / sample size) * 100
+        // This gives us an ESTIMATE of the percentage in the total population
+        const percentageNewWalletsInSample =
+          analyzedCount > 0 ? (walletsUnder10DaysInSample / analyzedCount) * 100 : 0;
+
+        // Estimate total new wallets across ALL holders
+        const estimatedTotalNewWallets = Math.round(
+          (percentageNewWalletsInSample / 100) * (realTotalHolders || holders.length)
+        );
+
+        const avgWalletAge = analyzedCount > 0 ? totalAge / analyzedCount : 0;
+
+        // 🔥 FIX: Use the REAL total holders count
+        const totalWallets = realTotalHolders || holders.length;
+
+        // Calcular risk level basado en el porcentaje real
+        let riskLevel: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL' = 'LOW';
+        let score = 50;
+
+        if (percentageNewWalletsInSample > 70 || suspiciousNewWallets > 10) {
+          riskLevel = 'CRITICAL';
+          score = 0;
+        } else if (percentageNewWalletsInSample > 50 || suspiciousNewWallets > 5) {
+          riskLevel = 'HIGH';
+          score = 15;
+        } else if (percentageNewWalletsInSample > 30) {
+          riskLevel = 'MEDIUM';
+          score = 30;
+        } else {
+          riskLevel = 'LOW';
+          score = 50;
+        }
+
+        logger.info('✅ New Wallet Analysis Complete', {
+          tokenAddress,
+          totalWallets,
+          sampleSize: analyzedCount,
+          walletsUnder10Days: estimatedTotalNewWallets,
+          percentageNewWallets: percentageNewWalletsInSample.toFixed(2),
+        });
+
+        return {
+          totalWallets, // REAL total from DexScreener/Birdeye
+          walletsUnder10Days: estimatedTotalNewWallets, // Estimated from sample
+          percentageNewWallets: percentageNewWalletsInSample,
+          avgWalletAge,
+          suspiciousNewWallets,
+          riskLevel,
+          score,
+        };
           } catch (error) {
             logger.error(
               '❌ New Wallet Analysis Failed',
