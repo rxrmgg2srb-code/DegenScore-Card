@@ -826,3 +826,22 @@ model RateLimitLog {
   @@index([endpoint, timestamp])
   @@index([timestamp]) // For cleanup queries
 }
+
+// ---------------------------------------------------------------
+// REFERRAL SYSTEM - Multi-level referral tracking
+// ---------------------------------------------------------------
+
+model Referral {
+  id              String   @id @default(cuid())
+  referrerAddress String   // Wallet that referred
+  referredAddress String  // Wallet that was referred
+  rewardAmount    Float    @default(0) // Total rewards earned
+  rewardPaid      Boolean  @default(false) // Whether reward was paid
+  hasPaid         Boolean  @default(false) // Whether referred user has paid
+  level           Int      @default(1) // Referral level (1,2,3)
+  createdAt       DateTime @default(now())
+
+  @@index([referrerAddress])
+  @@index([referredAddress])
+  @@index([referrerAddress, createdAt])
+}
