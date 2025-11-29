@@ -1,9 +1,9 @@
 /**
  * LEGACY COMPATIBILITY WRAPPER
  *
- * This file maintains backward compatibility while using the new professional metricsEngine.ts
- * All components that import from this file will automatically use the new engine.
+ * This file maintains backward compatibility while using the new DeFi-focused engine.
+ * Now using Solscan DeFi activities for more accurate analysis!
  */
 
-export { calculateAdvancedMetrics } from './metricsEngine';
+export { calculateDefiMetrics as calculateAdvancedMetrics } from './defiMetricsEngine';
 export type { WalletMetrics, Position, Trade } from './metricsEngine';
