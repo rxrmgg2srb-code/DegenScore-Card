@@ -40,11 +40,27 @@ function getClientIdentifier(req: NextApiRequest, customIdentifier?: string): st
 
 /**
  * Check rate limit using database persistence
+ * TODO: Re-enable when RateLimitLog model is added to Prisma schema
  */
 export async function checkRateLimitPersistent(
-  req: NextApiRequest,
+  _req: NextApiRequest,
   config: RateLimitConfig
 ): Promise<RateLimitResult> {
+  const { maxRequests, windowMs } = config;
+  const now = new Date();
+
+  // Temporarily disabled - RateLimitLog model not in schema
+  // TODO: Add RateLimitLog model to prisma/schema.prisma
+  logger.warn('Persistent rate limiting disabled - RateLimitLog model missing from schema');
+
+  // Allow all requests temporarily
+  return {
+    allowed: true,
+    remaining: maxRequests,
+    resetAt: new Date(now.getTime() + windowMs),
+  };
+
+  /* Original implementation - commented out until model is added
   const { maxRequests, windowMs, identifier: customIdentifier, endpoint } = config;
   const identifier = getClientIdentifier(req, customIdentifier);
   const now = new Date();
@@ -126,6 +142,7 @@ export async function checkRateLimitPersistent(
       resetAt: new Date(now.getTime() + windowMs),
     };
   }
+  */
 }
 
 /**
