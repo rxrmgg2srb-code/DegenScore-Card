@@ -190,27 +190,36 @@ export async function bulkUpdateScores(updates: Array<{ wallet: string; score: n
 
 /**
  * Efficient referral stats calculation
+ * TODO: Re-enable when Referral model is added to Prisma schema
  */
 export async function getReferralStatsOptimized(walletAddress: string) {
-  // Use aggregation instead of fetching all records
-  const stats = await prisma.referral.aggregate({
-    where: { referrerAddress: walletAddress },
-    _count: { _all: true },
-    _sum: { rewardAmount: true },
-  });
-
-  const paidCount = await prisma.referral.count({
-    where: {
-      referrerAddress: walletAddress,
-      hasPaid: true,
-    },
-  });
-
+  // Temporarily disabled - Referral model not in schema
+  // TODO: Add Referral model to prisma/schema.prisma
   return {
-    totalReferrals: stats._count._all,
-    paidReferrals: paidCount,
-    totalEarnings: stats._sum.rewardAmount || 0,
+    totalReferrals: 0,
+    paidReferrals: 0,
+    totalEarnings: 0,
   };
+
+  // Use aggregation instead of fetching all records
+  // const stats = await prisma.referral.aggregate({
+  //   where: { referrerAddress: walletAddress },
+  //   _count: { _all: true },
+  //   _sum: { rewardAmount: true },
+  // });
+
+  // const paidCount = await prisma.referral.count({
+  //   where: {
+  //     referrerAddress: walletAddress,
+  //     hasPaid: true,
+  //   },
+  // });
+
+  // return {
+  //   totalReferrals: stats._count._all,
+  //   paidReferrals: paidCount,
+  //   totalEarnings: stats._sum.rewardAmount || 0,
+  // };
 }
 
 /**
