@@ -22,7 +22,9 @@ interface RateLimitResult {
 
 /**
  * Get client identifier (IP or wallet)
+ * Temporarily disabled - used by persistent rate limiting
  */
+/*
 function getClientIdentifier(req: NextApiRequest, customIdentifier?: string): string {
   if (customIdentifier) {
     return customIdentifier;
@@ -37,6 +39,7 @@ function getClientIdentifier(req: NextApiRequest, customIdentifier?: string): st
 
   return ip;
 }
+*/
 
 /**
  * Check rate limit using database persistence
