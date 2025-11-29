@@ -355,28 +355,34 @@ function extractTrades(transactions: ParsedTransaction[], walletAddress: string)
     'PHOENIX',
   ]);
 
-  // 🚫 Tokens excluidos: Solo stablecoins y wrapped tokens
-  // Queremos contar TODOS los tokens especulativos (memecoins, shitcoins, etc.)
+  // 🚫 FILTRO CRÍTICO: Tokens excluidos (stablecoins y wrapped tokens)
+  // Solo queremos contar trades de tokens especulativos (memecoins, shitcoins, etc.)
+  // NO contamos swaps SOL <-> USDC, SOL <-> WETH, etc.
   const EXCLUDED_TOKENS = new Set([
-    // Stablecoins
+    // Stablecoins principales
     'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v', // USDC
     'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB', // USDT
     'Ea5SjE2Y6yvCeW5dYTn7PYMuW5ikXkvbGdcmSnXeaLjS', // PAI (USD stablecoin)
     'EPeUFDgHRxs9xxEPVaL6kfGQvCon7jmAWKVUHuux1Tpz', // BAI (another stablecoin)
     'AGFEad2et2ZJif9jaGpdMixQqvW5i81aBdvKe7PHNfz3', // FakeUSDC (stablecoin)
+    'EchesyfXePKdLtoiZSL8pBe8Myagyy8ZRqsACNCFGnvp', // FIDA-USD stablecoin
+    '7kbnvuGBxxj8AG9qp8Scn56muWGaRaFqxg1FsRp3PaFT', // UXD Stablecoin
+    'PoRTjZMPXb9T7dyU7tpLEZRQj7e6ssfAE62j2oQuc6y', // PORT (stablecoin-backed)
 
-    // Wrapped tokens principales
+    // Wrapped tokens principales (NO especulativos)
     'So11111111111111111111111111111111111111112',   // Wrapped SOL
     '7vfCXTUXx5WJV5JADk17DUJ4ksgau7utNKj4b963voxs', // Wrapped ETH
     '9n4nbM75f5Ui33ZbPYXn59EwSgE8CGsHtAeTH5YFeJ9E', // Wrapped BTC
     '3NZ9JMVBmGAqocybic2c7LQCJScmgsAZ6vQqTDzcqmJh', // Wrapped BTC (another version)
     '2FPyTwcZLUg1MDrwsyoP4D6s1tM7hAkHYRjkNb5w6Pxk', // Wrapped ETH (Sollet)
 
-    // Staked/Liquid staking tokens
+    // Staked/Liquid staking tokens (NO especulativos)
     'mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So',  // mSOL (Marinade staked SOL)
     '7dHbWXmci3dT8UFYWYZweBLXgycu7Y3iL6trKn1Y7ARj', // stSOL (Lido staked SOL)
     'He3iAEV5rYjv6Xf7PxKro19eVrC3QAcdic5CF2D2obPt', // scnSOL (Socean staked SOL)
     'DdFPRnccQqLD4zCHrBqdY95D6hvw6PLWp9DEXj1fLCL9', // daoSOL (staked SOL)
+    'bSo13r4TkiE4KumL71LsHTPpL2euBYLFx6h9HP3piy1', // bSOL (BlazeStake staked SOL)
+    'J1toso1uCk3RLmjorhTtrVwY9HJ7X8V9yYac6Y7kGCPn', // jitoSOL (Jito staked SOL)
   ]);
 
   let skippedStablecoin = 0;
