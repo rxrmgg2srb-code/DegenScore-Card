@@ -403,18 +403,7 @@ function extractTrades(transactions: ParsedTransaction[], walletAddress: string)
       txSources.set(tx.source, (txSources.get(tx.source) || 0) + 1);
     }
 
-    // ⭐ FILTRO PRINCIPAL: Solo incluir si es SWAP o viene de un DEX conocido
-    // Esto excluye transfers simples mientras captura todos los trades DEX
-    const isSwapType = tx.type === 'SWAP';
-    const isDexSource = tx.source && KNOWN_DEX_SOURCES.has(tx.source);
-
-    if (!isSwapType && !isDexSource) {
-      skippedNotDex++;
-      continue;
-    }
-
-    // Primero verificar que tiene tokenTransfers y nativeTransfers
-    // La presencia de ambos generalmente indica un swap/trade
+    // Verificar que tiene tokenTransfers y nativeTransfers (básico para un swap)
     if (!tx.tokenTransfers || tx.tokenTransfers.length === 0) {
       skippedNoTokenTransfers++;
       continue;
@@ -437,37 +426,30 @@ function extractTrades(transactions: ParsedTransaction[], walletAddress: string)
       }
     }
 
-    // Get token transfers involving this wallet (excluir SOL wrapped)
-    const relevantTokenTransfers = tx.tokenTransfers.filter(
-      (t) =>
-        t.mint !== SOL_MINT &&
-        (t.fromUserAccount === walletAddress || t.toUserAccount === walletAddress)
-    );
+    // Get ALL token transfers (no filter por wallet ni wrapped SOL)
+    const allTokenTransfers = tx.tokenTransfers.filter((t) => t.mint !== SOL_MINT);
 
-    if (relevantTokenTransfers.length === 0) {
+    if (allTokenTransfers.length === 0) {
       skippedNoToken++;
       continue;
     }
 
-    // 🔥 NUEVA LÓGICA: Calcular balance neto de tokens por mint
-    // Esto maneja correctamente casos donde hay múltiples transfers del mismo token
+    // Calcular balance neto de tokens
     const tokenNetBalances = new Map<string, number>();
 
-    for (const transfer of relevantTokenTransfers) {
+    for (const transfer of allTokenTransfers) {
       const currentBalance = tokenNetBalances.get(transfer.mint) || 0;
 
       if (transfer.toUserAccount === walletAddress) {
-        // Tokens entrando
         tokenNetBalances.set(transfer.mint, currentBalance + transfer.tokenAmount);
       }
 
       if (transfer.fromUserAccount === walletAddress) {
-        // Tokens saliendo
         tokenNetBalances.set(transfer.mint, currentBalance - transfer.tokenAmount);
       }
     }
 
-    // Determinar el token principal (el que tiene mayor cambio absoluto)
+    // Determinar el token principal
     let primaryMint = '';
     let primaryTokenNet = 0;
 
@@ -478,67 +460,26 @@ function extractTrades(transactions: ParsedTransaction[], walletAddress: string)
       }
     }
 
-    if (!primaryMint || primaryTokenNet === 0) {
+    // Si no hay token principal, usar el primero de la lista
+    if (!primaryMint && allTokenTransfers.length > 0) {
+      primaryMint = allTokenTransfers[0].mint;
+      primaryTokenNet = allTokenTransfers[0].tokenAmount;
+    }
+
+    if (!primaryMint) {
       skippedNoToken++;
       continue;
     }
 
-    // Determine if this is a buy or sell based on NET token flow and SOL flow
-    // Buy = SOL out (negative) and tokens in (positive)
-    // Sell = SOL in (positive) and tokens out (negative)
-    let isBuy = solNet < 0 && primaryTokenNet > 0;
-    let isSell = solNet > 0 && primaryTokenNet < 0;
+    // Determinar buy/sell basado en flujo de tokens
+    const isBuy = primaryTokenNet > 0;
+    const isSell = primaryTokenNet < 0;
 
-    // Si no es claramente buy o sell, asumimos buy si recibió tokens, sell si envió tokens
-    if (!isBuy && !isSell) {
-      if (primaryTokenNet > 0) {
-        isBuy = true; // Recibió tokens = buy
-      } else if (primaryTokenNet < 0) {
-        isSell = true; // Envió tokens = sell
-      } else {
-        // Realmente no podemos determinar, skip
-        skippedTransferOnly++;
-        continue;
-      }
-    }
-
-    const tokenAmount = Math.abs(primaryTokenNet);
-    if (tokenAmount === 0) {
-      skippedZeroAmount++;
-      continue;
-    }
-
-    // 🚫 Excluir stablecoins y wrapped tokens - Solo queremos trades especulativos
-    if (EXCLUDED_TOKENS.has(primaryMint)) {
-      skippedStablecoin++;
-      logger.debug('[Debug] Skipping stablecoin/wrapped token:', {
-        mint: primaryMint.substring(0, 20) + '...',
-        source: tx.source,
-        solAmount: Math.abs(solNet).toFixed(4),
-      });
-      continue;
-    }
-
-    // Calculate SOL amount (absolute value)
-    // Si solNet es 0, usar un valor mínimo para evitar división por cero
+    const tokenAmount = Math.abs(primaryTokenNet) || 1;
     const solAmount = Math.abs(solNet) || 0.000001;
-
     const pricePerToken = solAmount / tokenAmount;
 
-    // Sanity checks MUY relajados - confiar en los filtros de Helius
-    // Solo rechazar precios completamente imposibles
-    if (pricePerToken < 0.00000000001 || pricePerToken > 10000000) {
-      skippedSanity++;
-      continue;
-    }
-
-    // Permitir trades muy grandes (hasta 10,000 SOL)
-    if (solAmount > 10000) {
-      skippedSanity++;
-      continue;
-    }
-
-    // ✅ TRADE VÁLIDO - Agregar a la lista
+    // ✅ TRADE VÁLIDO - Agregar a la lista SIN FILTROS
     trades.push({
       timestamp: tx.timestamp,
       tokenMint: primaryMint,
