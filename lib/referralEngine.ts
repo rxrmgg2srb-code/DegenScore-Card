@@ -33,11 +33,11 @@ export interface ReferralLeaderboard {
 export async function trackReferral(
   _referrerCode: string,
   _newUserWallet: string
-): Promise<{ success: boolean; message: string }> {
+): Promise<{ success: boolean; message?: string; error?: string }> {
   logger.warn('[ReferralEngine] Disabled - Referral model not in schema');
   return {
     success: false,
-    message: 'Referral system currently disabled',
+    error: 'Referral system currently disabled',
   };
 }
 
