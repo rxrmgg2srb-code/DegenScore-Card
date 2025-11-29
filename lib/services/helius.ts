@@ -66,6 +66,7 @@ export interface HeliusTransaction {
 export interface TransactionFilters {
   type?: string; // e.g., 'SWAP', 'TRANSFER', etc.
   source?: string[]; // e.g., ['JUPITER', 'RAYDIUM']
+  programs?: string[]; // Program IDs to filter by (more reliable than type/source)
   commitment?: 'confirmed' | 'finalized';
 }
 
@@ -98,6 +99,12 @@ export async function getWalletTransactions(
         }
         if (filters?.source && filters.source.length > 0) {
           url += `&source=${filters.source.join(',')}`;
+        }
+        if (filters?.programs && filters.programs.length > 0) {
+          // Filter by program IDs (more reliable than type/source)
+          for (const program of filters.programs) {
+            url += `&accountInclude=${program}`;
+          }
         }
         if (filters?.commitment) {
           url += `&commitment=${filters.commitment}`;

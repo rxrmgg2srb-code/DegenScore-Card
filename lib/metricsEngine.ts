@@ -173,29 +173,28 @@ async function fetchAllTransactions(
   const MAX_EMPTY = 3;
   const MAX_CONSECUTIVE_ERRORS = 5;
 
-  // 🔥 FILTRO HELIUS: Solo obtener SWAPs de DEXes conocidos
-  // Esto reduce drásticamente el volumen de datos descargados
-  const DEX_SOURCES = [
-    'PUMP_AMM',
-    'PUMP_FUN',
-    'JUPITER',
-    'RAYDIUM',
-    'ORCA',
-    'SERUM',
-    'OPENBOOK',
-    'METEORA',
-    'DFLOW',
-    'LIFINITY',
-    'PHOENIX',
+  // 🔥 FILTRO HELIUS: Filtrar por program IDs de DEXes conocidos
+  // Esto es más confiable que usar type: 'SWAP' y evita problemas de continuación
+  const DEX_PROGRAMS = [
+    'JUP6LkbZbjS1jKKwapdHNy74zcZ3tLCZByGQtd1ubGg', // Jupiter
+    '675kPX9MHTjS2zt1qfr1NYHuzeLXfQM9H24wFSUt1Mp8', // Raydium AMM
+    'whirLbMiicVdio4qvUfM5KAg6Ct8VwpYzGff3uctyCc', // Orca Whirlpool
+    '9W959DqEETiGZocYWCQPaJ6sLmUzmacY1abbrkSyRQUM', // Orca Legacy
+    'srmqPvymJeFKQ4zGQed1GFppgkRHL9kaELCbyksJtPX', // Serum DEX
+    'EoTcMgcDRTJVZDMZWBoU6rhYHZfkNTVEAfz3uUJRcYGj', // Phoenix
+    'DjVE6JNiYqPL2QXyCUUh8rNjHrbz9hXHNYt99MQ59qw1', // Orca v1
+    '6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P', // Pump.fun (bonding curve)
+    'BSfD6SHZigAfDWSjzD5Q41jw8LmKwtmjskPH9XW1mrRW', // Meteora DLMM
+    'LBUZKhRxPF3XUpBCjp4YzTKgLccjZhTSDM9YuVaPwxo', // Meteora Pools
+    'Dooar9JkhdZ7J3LHN3A7YCuoGRUggXhQaG4kijfLGU2j', // Lifinity V2
   ];
 
-  logger.info(`🔄 Fetching SWAP transactions from DEXes (up to ${MAX_BATCHES} batches)`);
+  logger.info(`🔄 Fetching DEX transactions by program IDs (up to ${MAX_BATCHES} batches)`);
 
   while (fetchCount < MAX_BATCHES) {
     try {
       const batch = await getWalletTransactions(walletAddress, BATCH_SIZE, before, {
-        type: 'SWAP',
-        source: DEX_SOURCES,
+        programs: DEX_PROGRAMS,
         commitment: 'confirmed',
       });
 
