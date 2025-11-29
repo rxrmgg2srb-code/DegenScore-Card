@@ -437,6 +437,14 @@ function extractTrades(transactions: ParsedTransaction[], walletAddress: string)
       }
     }
 
+    // 🔥 FILTRO IMPORTANTE: La wallet debe tener cambio significativo de SOL (no solo fees)
+    // Si el cambio es muy pequeño (< 0.001 SOL), probablemente solo está pagando fees
+    const solNetAbs = Math.abs(solNet);
+    if (solNetAbs < 0.001) {
+      skippedNoToken++; // La wallet no está realmente tradiendo, solo pagando fees
+      continue;
+    }
+
     // Get token transfers involving this wallet (excluir SOL wrapped)
     const relevantTokenTransfers = tx.tokenTransfers.filter(
       (t) =>
