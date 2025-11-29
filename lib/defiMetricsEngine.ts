@@ -50,7 +50,7 @@ const EXCLUDED_TOKENS = new Set([
  */
 function extractTradesFromDefiActivities(
   activities: StandardizedActivity[],
-  walletAddress: string
+  _walletAddress: string
 ): Trade[] {
   const trades: Trade[] = [];
   let skippedNoSwapInfo = 0;
