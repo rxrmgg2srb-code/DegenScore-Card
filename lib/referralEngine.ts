@@ -149,7 +149,7 @@ export async function getReferralStats(_wallet: string): Promise<ReferralStats> 
     pendingRewards: 0,
     claimedRewards: 0,
     currentTier: ReferralTier.NONE,
-    nextMilestone: REFERRAL_MILESTONES[0],
+    nextMilestone: REFERRAL_MILESTONES[0] || null,
   };
 }
 
