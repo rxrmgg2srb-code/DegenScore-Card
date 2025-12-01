@@ -13,9 +13,11 @@
  */
 
 import { ParsedTransaction, getWalletTransactions } from './services/helius';
+import { getAllSwapActivities, SolscanDefiActivity } from './services/solscan';
 import { logger } from '@/lib/logger';
 
 const SOL_MINT = 'So11111111111111111111111111111111111111112';
+const WSOL_MINT = 'So11111111111111111111111111111111111111112'; // Wrapped SOL
 
 // ============================================================================
 // TYPE DEFINITIONS
@@ -92,37 +94,45 @@ export async function calculateAdvancedMetrics(
   onProgress?: (progress: number, message: string) => void
 ): Promise<WalletMetrics> {
   try {
-    logger.info('🔥 DegenScore Engine v2.0 - Professional Analysis Starting');
+    logger.info('🔥 DegenScore Engine v3.0 - Solscan DeFi Activities');
 
     if (onProgress) {
-      onProgress(5, '📡 Fetching transactions...');
+      onProgress(5, '📡 Fetching DeFi activities...');
     }
 
-    const allTransactions = await fetchAllTransactions(walletAddress, onProgress);
+    // Try Solscan first (cleaner, more accurate data)
+    let trades = await fetchTradesFromSolscan(walletAddress, onProgress);
 
-    if (!allTransactions || allTransactions.length === 0) {
-      logger.warn('❌ No transactions found for wallet:', { walletAddress });
-      logger.warn('⚠️ Returning default metrics (all zeros)');
-      return getDefaultMetrics();
-    }
-
-    logger.info(`📊 Total transactions fetched: ${allTransactions.length}`);
-
-    if (onProgress) {
-      onProgress(75, '💱 Analyzing trades...');
-    }
-
-    // Extract all trades
-    const trades = extractTrades(allTransactions, walletAddress);
-    logger.info(
-      `✅ Extracted ${trades.length} valid trades from ${allTransactions.length} transactions`
-    );
-
+    // Fallback to Helius if Solscan returns no data
     if (trades.length === 0) {
-      logger.warn('⚠️ No valid SWAP trades found in transactions');
-      logger.warn('⚠️ This wallet may not have any trading activity, only transfers');
-      logger.warn('⚠️ Returning default metrics (all zeros)');
-      return getDefaultMetrics();
+      logger.warn('⚠️ No trades from Solscan, falling back to Helius transaction parsing...');
+
+      const allTransactions = await fetchAllTransactions(walletAddress, onProgress);
+
+      if (!allTransactions || allTransactions.length === 0) {
+        logger.warn('❌ No transactions found for wallet:', { walletAddress });
+        logger.warn('⚠️ Returning default metrics (all zeros)');
+        return getDefaultMetrics();
+      }
+
+      logger.info(`📊 Total transactions fetched: ${allTransactions.length}`);
+
+      if (onProgress) {
+        onProgress(75, '💱 Analyzing trades...');
+      }
+
+      // Extract all trades from Helius transactions
+      trades = extractTrades(allTransactions, walletAddress);
+      logger.info(
+        `✅ Extracted ${trades.length} valid trades from ${allTransactions.length} transactions`
+      );
+
+      if (trades.length === 0) {
+        logger.warn('⚠️ No valid SWAP trades found in transactions');
+        logger.warn('⚠️ This wallet may not have any trading activity, only transfers');
+        logger.warn('⚠️ Returning default metrics (all zeros)');
+        return getDefaultMetrics();
+      }
     }
 
     if (onProgress) {
@@ -137,8 +147,8 @@ export async function calculateAdvancedMetrics(
       onProgress(95, '🎯 Calculating metrics...');
     }
 
-    // Calculate all metrics
-    const metrics = calculateMetrics(trades, positions, allTransactions);
+    // Calculate all metrics (note: for Solscan path, we use empty array for transactions)
+    const metrics = calculateMetrics(trades, positions, []);
 
     if (onProgress) {
       onProgress(100, '✅ Analysis complete!');
@@ -167,17 +177,38 @@ async function fetchAllTransactions(
   let consecutiveEmpty = 0;
   let consecutiveErrors = 0;
 
-  const MAX_BATCHES = 100; // Reducido de 100 a 30 para evitar timeouts
+  const MAX_BATCHES = 30; // Reducido de 100 a 30 para evitar timeouts
   const BATCH_SIZE = 100;
-  const DELAY_MS = 300; // Reducido de 100ms a 50ms para ser más rápido
+  const DELAY_MS = 200; // Reducido de 300ms a 200ms para mayor velocidad
   const MAX_EMPTY = 3;
-  const MAX_CONSECUTIVE_ERRORS = 5; // Stop if we get 5 errors in a row
+  const MAX_CONSECUTIVE_ERRORS = 5;
+  const MIN_TRANSACTIONS_FOR_ANALYSIS = 100; // Early stop si ya tenemos suficientes txs
 
-  logger.info(`🔄 Fetching up to ${MAX_BATCHES} batches (${BATCH_SIZE} each)`);
+  // 🔥 FILTRO HELIUS: Filtrar por program IDs de DEXes conocidos + type SWAP
+  // Combinamos ambos filtros para obtener SOLO swaps de estos programas específicos
+  const DEX_PROGRAMS = [
+    'JUP6LkbZbjS1jKKwapdHNy74zcZ3tLCZByGQtd1ubGg', // Jupiter
+    '675kPX9MHTjS2zt1qfr1NYHuzeLXfQM9H24wFSUt1Mp8', // Raydium AMM
+    'whirLbMiicVdio4qvUfM5KAg6Ct8VwpYzGff3uctyCc', // Orca Whirlpool
+    '9W959DqEETiGZocYWCQPaJ6sLmUzmacY1abbrkSyRQUM', // Orca Legacy
+    'srmqPvymJeFKQ4zGQed1GFppgkRHL9kaELCbyksJtPX', // Serum DEX
+    'EoTcMgcDRTJVZDMZWBoU6rhYHZfkNTVEAfz3uUJRcYGj', // Phoenix
+    'DjVE6JNiYqPL2QXyCUUh8rNjHrbz9hXHNYt99MQ59qw1', // Orca v1
+    '6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P', // Pump.fun (bonding curve)
+    'BSfD6SHZigAfDWSjzD5Q41jw8LmKwtmjskPH9XW1mrRW', // Meteora DLMM
+    'LBUZKhRxPF3XUpBCjp4YzTKgLccjZhTSDM9YuVaPwxo', // Meteora Pools
+    'Dooar9JkhdZ7J3LHN3A7YCuoGRUggXhQaG4kijfLGU2j', // Lifinity V2
+  ];
+
+  logger.info(`🔄 Fetching SWAP transactions from specific DEX programs (up to ${MAX_BATCHES} batches)`);
 
   while (fetchCount < MAX_BATCHES) {
     try {
-      const batch = await getWalletTransactions(walletAddress, BATCH_SIZE, before);
+      const batch = await getWalletTransactions(walletAddress, BATCH_SIZE, before, {
+        type: 'SWAP', // Solo SWAPs
+        programs: DEX_PROGRAMS, // De estos programas específicos
+        commitment: 'confirmed',
+      });
 
       if (batch.length > 0) {
         allTransactions.push(...batch);
@@ -187,6 +218,14 @@ async function fetchAllTransactions(
         logger.info(
           `  ✓ Batch ${fetchCount + 1}: ${batch.length} txs (Total: ${allTransactions.length})`
         );
+
+        // Early stop: si ya tenemos suficientes transacciones para un buen análisis
+        if (allTransactions.length >= MIN_TRANSACTIONS_FOR_ANALYSIS && fetchCount >= 5) {
+          logger.info(
+            `  ✅ Early stop: ${allTransactions.length} SWAP transactions collected (sufficient for analysis)`
+          );
+          break;
+        }
       } else {
         consecutiveEmpty++;
         consecutiveErrors = 0; // Reset error counter on successful empty response
@@ -204,12 +243,61 @@ async function fetchAllTransactions(
       if (onProgress) {
         onProgress(
           fetchProgress,
-          `📡 Batch ${fetchCount}/${MAX_BATCHES}... (${allTransactions.length} txs)`
+          `📡 Fetching swaps... (${allTransactions.length} found)`
         );
       }
 
       await new Promise((resolve) => setTimeout(resolve, DELAY_MS));
     } catch (error: any) {
+      // Special case: Helius 404 with continuation signature (not a real error)
+      // When using filters, Helius returns 404 if no matching events in time window
+      // but provides a 'before' signature to continue searching
+      if (error?.status === 404) {
+        let continuationSignature: string | null = null;
+
+        // Try to parse the error body as JSON first
+        if (error?.errorBody) {
+          try {
+            const errorJson = JSON.parse(error.errorBody);
+            if (errorJson?.error) {
+              const match = errorJson.error.match(/before.*parameter set to ([a-zA-Z0-9]+)/);
+              if (match && match[1]) {
+                continuationSignature = match[1];
+              }
+            }
+          } catch (e) {
+            // Fall back to regex on message
+          }
+        }
+
+        // Fall back to regex on error message if JSON parsing failed
+        if (!continuationSignature && error?.message) {
+          const beforeMatch = error.message.match(/before.*parameter set to ([a-zA-Z0-9]+)/);
+          if (beforeMatch && beforeMatch[1]) {
+            continuationSignature = beforeMatch[1];
+          }
+        }
+
+        if (continuationSignature) {
+          logger.info(
+            `  ⏭️ Batch ${fetchCount + 1}: No SWAP txs in this window, continuing from ${continuationSignature.substring(0, 20)}...`
+          );
+          before = continuationSignature;
+          consecutiveEmpty++;
+          consecutiveErrors = 0; // Don't count this as an error
+
+          if (consecutiveEmpty >= MAX_EMPTY) {
+            logger.info(`  ✅ No more SWAP transactions found`);
+            break;
+          }
+
+          fetchCount++;
+          await new Promise((resolve) => setTimeout(resolve, DELAY_MS));
+          continue;
+        }
+      }
+
+      // Real error - increment counter
       consecutiveErrors++;
 
       logger.error(
@@ -246,6 +334,125 @@ async function fetchAllTransactions(
 }
 
 // ============================================================================
+// SOLSCAN DEFI ACTIVITIES EXTRACTION
+// ============================================================================
+
+/**
+ * Fetch trades from Solscan DeFi Activities API
+ * This provides clean, structured swap data instead of parsing raw transactions
+ */
+async function fetchTradesFromSolscan(
+  walletAddress: string,
+  onProgress?: (progress: number, message: string) => void
+): Promise<Trade[]> {
+  try {
+    logger.info('🔥 Fetching DeFi activities from Solscan...');
+
+    if (onProgress) {
+      onProgress(10, '📡 Fetching DeFi activities...');
+    }
+
+    // Fetch all swap activities (up to 10 pages = 400 swaps)
+    const activities = await getAllSwapActivities(walletAddress, 10);
+
+    if (!activities || activities.length === 0) {
+      logger.warn('❌ No DeFi activities found from Solscan');
+      return [];
+    }
+
+    logger.info(`📊 Fetched ${activities.length} DeFi activities from Solscan`);
+
+    if (onProgress) {
+      onProgress(50, '💱 Parsing swap data...');
+    }
+
+    // Extract trades from activities
+    const trades = extractTradesFromSolscan(activities, walletAddress);
+
+    logger.info(`✅ Extracted ${trades.length} trades from Solscan DeFi activities`);
+
+    return trades;
+  } catch (error) {
+    logger.error('❌ Error fetching from Solscan:', error instanceof Error ? error : undefined, {
+      error: String(error),
+    });
+    return [];
+  }
+}
+
+/**
+ * Extract trades from Solscan DeFi Activities
+ */
+function extractTradesFromSolscan(
+  activities: SolscanDefiActivity[],
+  _walletAddress: string
+): Trade[] {
+  const trades: Trade[] = [];
+
+  for (const activity of activities) {
+    if (!activity.routers || activity.routers.length === 0) {
+      continue;
+    }
+
+    // Process each router in the swap
+    for (const router of activity.routers) {
+      const fromToken = router.from_token;
+      const toToken = router.to_token;
+      const fromAmount = router.from_amount;
+      const toAmount = router.to_amount;
+
+      // Determine if this is a buy or sell based on SOL/WSOL involvement
+      const fromIsSol = fromToken.address === SOL_MINT || fromToken.address === WSOL_MINT;
+      const toIsSol = toToken.address === SOL_MINT || toToken.address === WSOL_MINT;
+
+      let trade: Trade | null = null;
+
+      if (fromIsSol && !toIsSol) {
+        // SOL -> Token = BUY
+        trade = {
+          timestamp: activity.time,
+          tokenMint: toToken.address,
+          type: 'buy',
+          solAmount: fromAmount / Math.pow(10, fromToken.decimals),
+          tokenAmount: toAmount / Math.pow(10, toToken.decimals),
+          pricePerToken: 0, // Will calculate below
+        };
+      } else if (!fromIsSol && toIsSol) {
+        // Token -> SOL = SELL
+        trade = {
+          timestamp: activity.time,
+          tokenMint: fromToken.address,
+          type: 'sell',
+          solAmount: toAmount / Math.pow(10, toToken.decimals),
+          tokenAmount: fromAmount / Math.pow(10, fromToken.decimals),
+          pricePerToken: 0, // Will calculate below
+        };
+      }
+
+      // Calculate price per token
+      if (trade) {
+        trade.pricePerToken = trade.tokenAmount > 0
+          ? trade.solAmount / trade.tokenAmount
+          : 0;
+
+        // Skip dust trades (very small amounts)
+        if (trade.solAmount > 0.0001) {
+          trades.push(trade);
+        }
+      }
+    }
+  }
+
+  logger.info('🔍 Solscan trade extraction stats:', {
+    totalActivities: activities.length,
+    tradesExtracted: trades.length,
+    extractionRate: `${((trades.length / activities.length) * 100).toFixed(1)}%`,
+  });
+
+  return trades;
+}
+
+// ============================================================================
 // TRADE EXTRACTION
 // ============================================================================
 
@@ -267,51 +474,6 @@ function extractTrades(transactions: ParsedTransaction[], walletAddress: string)
   let txWithTokenAndNative = 0;
   let dustCount = 0;
 
-  // Lista de DEXes conocidos en Solana
-  const KNOWN_DEX_SOURCES = new Set([
-    'PUMP_AMM',
-    'PUMP_FUN',
-    'JUPITER',
-    'RAYDIUM',
-    'ORCA',
-    'SERUM',
-    'OPENBOOK',
-    'METEORA',
-    'DFLOW',
-    'LIFINITY',
-    'SABER',
-    'ALDRIN',
-    'MERCURIAL',
-    'MARINADE',
-    'PHOENIX',
-  ]);
-
-  // 🚫 Tokens excluidos: Solo stablecoins y wrapped tokens
-  // Queremos contar TODOS los tokens especulativos (memecoins, shitcoins, etc.)
-  const EXCLUDED_TOKENS = new Set([
-    // Stablecoins
-    'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v', // USDC
-    'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB', // USDT
-    'Ea5SjE2Y6yvCeW5dYTn7PYMuW5ikXkvbGdcmSnXeaLjS', // PAI (USD stablecoin)
-    'EPeUFDgHRxs9xxEPVaL6kfGQvCon7jmAWKVUHuux1Tpz', // BAI (another stablecoin)
-    'AGFEad2et2ZJif9jaGpdMixQqvW5i81aBdvKe7PHNfz3', // FakeUSDC (stablecoin)
-
-    // Wrapped tokens principales
-    'So11111111111111111111111111111111111111112',   // Wrapped SOL
-    '7vfCXTUXx5WJV5JADk17DUJ4ksgau7utNKj4b963voxs', // Wrapped ETH
-    '9n4nbM75f5Ui33ZbPYXn59EwSgE8CGsHtAeTH5YFeJ9E', // Wrapped BTC
-    '3NZ9JMVBmGAqocybic2c7LQCJScmgsAZ6vQqTDzcqmJh', // Wrapped BTC (another version)
-    '2FPyTwcZLUg1MDrwsyoP4D6s1tM7hAkHYRjkNb5w6Pxk', // Wrapped ETH (Sollet)
-
-    // Staked/Liquid staking tokens
-    'mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So',  // mSOL (Marinade staked SOL)
-    '7dHbWXmci3dT8UFYWYZweBLXgycu7Y3iL6trKn1Y7ARj', // stSOL (Lido staked SOL)
-    'He3iAEV5rYjv6Xf7PxKro19eVrC3QAcdic5CF2D2obPt', // scnSOL (Socean staked SOL)
-    'DdFPRnccQqLD4zCHrBqdY95D6hvw6PLWp9DEXj1fLCL9', // daoSOL (staked SOL)
-  ]);
-
-  let skippedStablecoin = 0;
-
   for (const tx of transactions) {
     // Track stats
     txTypes.set(tx.type, (txTypes.get(tx.type) || 0) + 1);
@@ -319,18 +481,7 @@ function extractTrades(transactions: ParsedTransaction[], walletAddress: string)
       txSources.set(tx.source, (txSources.get(tx.source) || 0) + 1);
     }
 
-    // ⭐ FILTRO PRINCIPAL: Solo incluir si es SWAP o viene de un DEX conocido
-    // Esto excluye transfers simples mientras captura todos los trades DEX
-    const isSwapType = tx.type === 'SWAP';
-    const isDexSource = tx.source && KNOWN_DEX_SOURCES.has(tx.source);
-
-    if (!isSwapType && !isDexSource) {
-      skippedNotDex++;
-      continue;
-    }
-
-    // Primero verificar que tiene tokenTransfers y nativeTransfers
-    // La presencia de ambos generalmente indica un swap/trade
+    // Verificar que tiene tokenTransfers y nativeTransfers (básico para un swap)
     if (!tx.tokenTransfers || tx.tokenTransfers.length === 0) {
       skippedNoTokenTransfers++;
       continue;
@@ -353,111 +504,62 @@ function extractTrades(transactions: ParsedTransaction[], walletAddress: string)
       }
     }
 
-    // Get token transfers involving this wallet (excluir SOL wrapped)
-    const relevantTokenTransfers = tx.tokenTransfers.filter(
-      (t) =>
-        t.mint !== SOL_MINT &&
-        (t.fromUserAccount === walletAddress || t.toUserAccount === walletAddress)
-    );
+    // Get ALL token transfers (no filter por wallet ni wrapped SOL)
+    const allTokenTransfers = tx.tokenTransfers.filter((t) => t.mint !== SOL_MINT);
 
-    if (relevantTokenTransfers.length === 0) {
+    if (allTokenTransfers.length === 0) {
       skippedNoToken++;
-      // Log cuando encontramos un DEX trade pero sin tokens relevantes para debug
-      if (isDexSource) {
-        logger.debug('[Debug] DEX trade sin tokens relevantes:', {
-          source: tx.source,
-          totalTokenTransfers: tx.tokenTransfers?.length || 0,
-          mints: tx.tokenTransfers?.slice(0, 5).map(t => t.mint.substring(0, 8)) || [],
-        });
+      continue;
+    }
+
+    // Calcular balance neto de tokens
+    const tokenNetBalances = new Map<string, number>();
+
+    for (const transfer of allTokenTransfers) {
+      const currentBalance = tokenNetBalances.get(transfer.mint) || 0;
+
+      if (transfer.toUserAccount === walletAddress) {
+        tokenNetBalances.set(transfer.mint, currentBalance + transfer.tokenAmount);
       }
+
+      if (transfer.fromUserAccount === walletAddress) {
+        tokenNetBalances.set(transfer.mint, currentBalance - transfer.tokenAmount);
+      }
+    }
+
+    // Determinar el token principal
+    let primaryMint = '';
+    let primaryTokenNet = 0;
+
+    for (const [mint, netBalance] of tokenNetBalances.entries()) {
+      if (Math.abs(netBalance) > Math.abs(primaryTokenNet)) {
+        primaryMint = mint;
+        primaryTokenNet = netBalance;
+      }
+    }
+
+    // Si no hay token principal, usar el primero de la lista
+    if (!primaryMint && allTokenTransfers.length > 0 && allTokenTransfers[0]) {
+      primaryMint = allTokenTransfers[0].mint;
+      primaryTokenNet = allTokenTransfers[0].tokenAmount;
+    }
+
+    if (!primaryMint) {
+      skippedNoToken++;
       continue;
     }
 
-    // Determine if this is a buy or sell based on direction of token flow
-    // Buy = tokens come IN to wallet
-    // Sell = tokens go OUT of wallet
-    const tokensIn = relevantTokenTransfers.filter((t) => t.toUserAccount === walletAddress);
-    const tokensOut = relevantTokenTransfers.filter((t) => t.fromUserAccount === walletAddress);
+    // Determinar buy/sell basado en flujo de tokens
+    const isBuy = primaryTokenNet > 0;
 
-    const isBuy = tokensIn.length > 0 && tokensOut.length === 0;
-    const isSell = tokensOut.length > 0 && tokensIn.length === 0;
-
-    // Si no es claramente buy o sell, podría ser un trade complejo, skip por ahora
-    if (!isBuy && !isSell) {
-      // Podría ser un swap token-token o algo más complejo
-      skippedTransferOnly++;
-      logger.debug('[Debug] Skipped transferOnly:', {
-        source: tx.source || 'UNKNOWN',
-        type: tx.type,
-        isBuy,
-        isSell,
-        solNet: solNet.toFixed(6),
-        tokensInCount: tokensIn.length,
-        tokensOutCount: tokensOut.length,
-        relevantTokensCount: relevantTokenTransfers.length,
-      });
-      continue;
-    }
-
-    // Get the primary token transfer
-    const tokenTransfer = isBuy ? tokensIn[0] : tokensOut[0];
-    if (!tokenTransfer) {
-      continue;
-    }
-
-    const tokenAmount = tokenTransfer.tokenAmount;
-    if (tokenAmount === 0) {
-      skippedZeroAmount++;
-      continue;
-    }
-
-    // 🚫 Excluir stablecoins y wrapped tokens - Solo queremos trades especulativos
-    if (EXCLUDED_TOKENS.has(tokenTransfer.mint)) {
-      skippedStablecoin++;
-      logger.debug('[Debug] Skipping stablecoin/wrapped token:', {
-        mint: tokenTransfer.mint.substring(0, 20) + '...',
-        source: tx.source,
-        solAmount: Math.abs(solNet).toFixed(4),
-      });
-      continue;
-    }
-
-    // Calculate SOL amount (absolute value)
-    const solAmount = Math.abs(solNet);
-
-    // Dust check - muy pequeño threshold para capturar más trades
-    // Solo rechazar si es realmente insignificante
-    if (solAmount < 0.000001) {
-      dustCount++;
-      skippedDust++;
-      logger.debug('[Debug] Skipping dust (non-DEX):', {
-        solNet: solNet.toFixed(9),
-        type: tx.type,
-        source: tx.source || 'UNKNOWN',
-        description: tx.description?.substring(0, 50),
-      });
-      continue;
-    }
-
+    const tokenAmount = Math.abs(primaryTokenNet) || 1;
+    const solAmount = Math.abs(solNet) || 0.000001;
     const pricePerToken = solAmount / tokenAmount;
 
-    // Sanity checks mejorados
-    // Permitir un rango muy amplio de precios
-    if (pricePerToken < 0.000000001 || pricePerToken > 1000000) {
-      skippedSanity++;
-      continue;
-    }
-
-    // Permitir trades grandes (hasta 1000 SOL)
-    if (solAmount > 1000) {
-      skippedSanity++;
-      continue;
-    }
-
-    // ✅ TRADE VÁLIDO - Agregar a la lista
+    // ✅ TRADE VÁLIDO - Agregar a la lista SIN FILTROS
     trades.push({
       timestamp: tx.timestamp,
-      tokenMint: tokenTransfer.mint,
+      tokenMint: primaryMint,
       type: isBuy ? 'buy' : 'sell',
       solAmount,
       tokenAmount,
@@ -504,7 +606,6 @@ function extractTrades(transactions: ParsedTransaction[], walletAddress: string)
       noNativeTransfers: skippedNoNativeTransfers,
       dust: skippedDust,
       noTokenForWallet: skippedNoToken,
-      stablecoinsOrWrapped: skippedStablecoin,
       zeroAmount: skippedZeroAmount,
       transferOnly: skippedTransferOnly,
       failedSanityChecks: skippedSanity,
