@@ -641,7 +641,7 @@ function buildPositions(trades: Trade[]): Position[] {
       }
 
       let tokensToSell = trade.tokenAmount;
-      let solReceived = trade.solAmount;
+      const totalSolReceived = trade.solAmount;
 
       while (tokensToSell > 0 && tokenPositions.length > 0) {
         const position = tokenPositions[0];
@@ -656,8 +656,10 @@ function buildPositions(trades: Trade[]): Position[] {
 
         const tokensAvailable = position.tokensBought - (position.tokensSold || 0);
         const tokensToClose = Math.min(tokensToSell, tokensAvailable);
-        const percentClosed = tokensToClose / position.tokensBought;
-        const solFromThisSell = solReceived * percentClosed;
+        
+        // 🔥 FIX: Distribuir SOL proporcionalmente basado en tokens vendidos
+        // solFromThisSell = (tokens vendidos de esta posición / total tokens en venta) * total SOL recibido
+        const solFromThisSell = (tokensToClose / trade.tokenAmount) * totalSolReceived;
 
         // Update position
         position.tokensSold = (position.tokensSold || 0) + tokensToClose;
@@ -667,7 +669,9 @@ function buildPositions(trades: Trade[]): Position[] {
         position.holdTime = trade.timestamp - position.entryTime;
 
         // Calculate P&L
-        const costBasis = position.buyAmount * percentClosed;
+        // costBasis = costo proporcional de los tokens que estamos cerrando
+        const percentOfPositionClosed = tokensToClose / position.tokensBought;
+        const costBasis = position.buyAmount * percentOfPositionClosed;
         position.profitLoss = solFromThisSell - costBasis;
         position.profitLossPercent = ((solFromThisSell - costBasis) / costBasis) * 100;
 
@@ -688,7 +692,6 @@ function buildPositions(trades: Trade[]): Position[] {
         }
 
         tokensToSell -= tokensToClose;
-        solReceived -= solFromThisSell;
       }
     }
   }
