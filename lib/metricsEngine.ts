@@ -437,6 +437,14 @@ function extractTrades(transactions: ParsedTransaction[], walletAddress: string)
       }
     }
 
+    // 🔥 FILTRO IMPORTANTE: La wallet debe tener cambio significativo de SOL (no solo fees)
+    // Si el cambio es muy pequeño (< 0.001 SOL), probablemente solo está pagando fees
+    const solNetAbs = Math.abs(solNet);
+    if (solNetAbs < 0.001) {
+      skippedNoToken++; // La wallet no está realmente tradiendo, solo pagando fees
+      continue;
+    }
+
     // Get token transfers involving this wallet (excluir SOL wrapped)
     const relevantTokenTransfers = tx.tokenTransfers.filter(
       (t) =>
@@ -446,6 +454,14 @@ function extractTrades(transactions: ParsedTransaction[], walletAddress: string)
 
     if (relevantTokenTransfers.length === 0) {
       skippedNoToken++;
+      // Log cuando encontramos un DEX trade pero sin tokens relevantes para debug
+      if (isDexSource) {
+        logger.debug('[Debug] DEX trade sin tokens relevantes:', {
+          source: tx.source,
+          totalTokenTransfers: tx.tokenTransfers?.length || 0,
+          mints: tx.tokenTransfers?.slice(0, 5).map(t => t.mint.substring(0, 8)) || [],
+        });
+      }
       continue;
     }
 
@@ -486,20 +502,21 @@ function extractTrades(transactions: ParsedTransaction[], walletAddress: string)
     // Determine if this is a buy or sell based on NET token flow and SOL flow
     // Buy = SOL out (negative) and tokens in (positive)
     // Sell = SOL in (positive) and tokens out (negative)
-    let isBuy = solNet < 0 && primaryTokenNet > 0;
-    let isSell = solNet > 0 && primaryTokenNet < 0;
+    const isBuy = solNet < 0 && primaryTokenNet > 0;
+    const isSell = solNet > 0 && primaryTokenNet < 0;
 
-    // Si no es claramente buy o sell, asumimos buy si recibió tokens, sell si envió tokens
+    // Si no es claramente buy o sell, podría ser un swap token-token o algo más complejo
     if (!isBuy && !isSell) {
-      if (primaryTokenNet > 0) {
-        isBuy = true; // Recibió tokens = buy
-      } else if (primaryTokenNet < 0) {
-        isSell = true; // Envió tokens = sell
-      } else {
-        // Realmente no podemos determinar, skip
-        skippedTransferOnly++;
-        continue;
-      }
+      skippedTransferOnly++;
+      logger.debug('[Debug] Skipped complex trade:', {
+        source: tx.source || 'UNKNOWN',
+        type: tx.type,
+        solNet: solNet.toFixed(6),
+        primaryTokenNet: primaryTokenNet.toFixed(6),
+        primaryMint: primaryMint.substring(0, 20) + '...',
+        tokenMints: Array.from(tokenNetBalances.keys()).map(m => m.substring(0, 8)),
+      });
+      continue;
     }
 
     const tokenAmount = Math.abs(primaryTokenNet);
@@ -520,20 +537,33 @@ function extractTrades(transactions: ParsedTransaction[], walletAddress: string)
     }
 
     // Calculate SOL amount (absolute value)
-    // Si solNet es 0, usar un valor mínimo para evitar división por cero
-    const solAmount = Math.abs(solNet) || 0.000001;
+    const solAmount = Math.abs(solNet);
+
+    // Dust check - muy pequeño threshold para capturar más trades
+    // Solo rechazar si es realmente insignificante
+    if (solAmount < 0.000001) {
+      dustCount++;
+      skippedDust++;
+      logger.debug('[Debug] Skipping dust (non-DEX):', {
+        solNet: solNet.toFixed(9),
+        type: tx.type,
+        source: tx.source || 'UNKNOWN',
+        description: tx.description?.substring(0, 50),
+      });
+      continue;
+    }
 
     const pricePerToken = solAmount / tokenAmount;
 
-    // Sanity checks MUY relajados - confiar en los filtros de Helius
-    // Solo rechazar precios completamente imposibles
-    if (pricePerToken < 0.00000000001 || pricePerToken > 10000000) {
+    // Sanity checks mejorados
+    // Permitir un rango muy amplio de precios
+    if (pricePerToken < 0.000000001 || pricePerToken > 1000000) {
       skippedSanity++;
       continue;
     }
 
-    // Permitir trades muy grandes (hasta 10,000 SOL)
-    if (solAmount > 10000) {
+    // Permitir trades grandes (hasta 1000 SOL)
+    if (solAmount > 1000) {
       skippedSanity++;
       continue;
     }
