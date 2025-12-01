@@ -167,12 +167,11 @@ async function fetchAllTransactions(
   let consecutiveEmpty = 0;
   let consecutiveErrors = 0;
 
-  const MAX_BATCHES = 30; // Reducido de 100 a 30 para evitar timeouts
+  const MAX_BATCHES = 100;
   const BATCH_SIZE = 100;
-  const DELAY_MS = 200; // Reducido de 300ms a 200ms para mayor velocidad
+  const DELAY_MS = 300;
   const MAX_EMPTY = 3;
   const MAX_CONSECUTIVE_ERRORS = 5;
-  const MIN_TRANSACTIONS_FOR_ANALYSIS = 100; // Early stop si ya tenemos suficientes txs
 
   // 🔥 FILTRO HELIUS: Filtrar por program IDs de DEXes conocidos + type SWAP
   // Combinamos ambos filtros para obtener SOLO swaps de estos programas específicos
@@ -208,14 +207,6 @@ async function fetchAllTransactions(
         logger.info(
           `  ✓ Batch ${fetchCount + 1}: ${batch.length} txs (Total: ${allTransactions.length})`
         );
-
-        // Early stop: si ya tenemos suficientes transacciones para un buen análisis
-        if (allTransactions.length >= MIN_TRANSACTIONS_FOR_ANALYSIS && fetchCount >= 5) {
-          logger.info(
-            `  ✅ Early stop: ${allTransactions.length} SWAP transactions collected (sufficient for analysis)`
-          );
-          break;
-        }
       } else {
         consecutiveEmpty++;
         consecutiveErrors = 0; // Reset error counter on successful empty response
@@ -364,34 +355,28 @@ function extractTrades(transactions: ParsedTransaction[], walletAddress: string)
     'PHOENIX',
   ]);
 
-  // 🚫 FILTRO CRÍTICO: Tokens excluidos (stablecoins y wrapped tokens)
-  // Solo queremos contar trades de tokens especulativos (memecoins, shitcoins, etc.)
-  // NO contamos swaps SOL <-> USDC, SOL <-> WETH, etc.
+  // 🚫 Tokens excluidos: Solo stablecoins y wrapped tokens
+  // Queremos contar TODOS los tokens especulativos (memecoins, shitcoins, etc.)
   const EXCLUDED_TOKENS = new Set([
-    // Stablecoins principales
+    // Stablecoins
     'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v', // USDC
     'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB', // USDT
     'Ea5SjE2Y6yvCeW5dYTn7PYMuW5ikXkvbGdcmSnXeaLjS', // PAI (USD stablecoin)
     'EPeUFDgHRxs9xxEPVaL6kfGQvCon7jmAWKVUHuux1Tpz', // BAI (another stablecoin)
     'AGFEad2et2ZJif9jaGpdMixQqvW5i81aBdvKe7PHNfz3', // FakeUSDC (stablecoin)
-    'EchesyfXePKdLtoiZSL8pBe8Myagyy8ZRqsACNCFGnvp', // FIDA-USD stablecoin
-    '7kbnvuGBxxj8AG9qp8Scn56muWGaRaFqxg1FsRp3PaFT', // UXD Stablecoin
-    'PoRTjZMPXb9T7dyU7tpLEZRQj7e6ssfAE62j2oQuc6y', // PORT (stablecoin-backed)
 
-    // Wrapped tokens principales (NO especulativos)
+    // Wrapped tokens principales
     'So11111111111111111111111111111111111111112',   // Wrapped SOL
     '7vfCXTUXx5WJV5JADk17DUJ4ksgau7utNKj4b963voxs', // Wrapped ETH
     '9n4nbM75f5Ui33ZbPYXn59EwSgE8CGsHtAeTH5YFeJ9E', // Wrapped BTC
     '3NZ9JMVBmGAqocybic2c7LQCJScmgsAZ6vQqTDzcqmJh', // Wrapped BTC (another version)
     '2FPyTwcZLUg1MDrwsyoP4D6s1tM7hAkHYRjkNb5w6Pxk', // Wrapped ETH (Sollet)
 
-    // Staked/Liquid staking tokens (NO especulativos)
+    // Staked/Liquid staking tokens
     'mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So',  // mSOL (Marinade staked SOL)
     '7dHbWXmci3dT8UFYWYZweBLXgycu7Y3iL6trKn1Y7ARj', // stSOL (Lido staked SOL)
     'He3iAEV5rYjv6Xf7PxKro19eVrC3QAcdic5CF2D2obPt', // scnSOL (Socean staked SOL)
     'DdFPRnccQqLD4zCHrBqdY95D6hvw6PLWp9DEXj1fLCL9', // daoSOL (staked SOL)
-    'bSo13r4TkiE4KumL71LsHTPpL2euBYLFx6h9HP3piy1', // bSOL (BlazeStake staked SOL)
-    'J1toso1uCk3RLmjorhTtrVwY9HJ7X8V9yYac6Y7kGCPn', // jitoSOL (Jito staked SOL)
   ]);
 
   let skippedStablecoin = 0;
@@ -435,14 +420,6 @@ function extractTrades(transactions: ParsedTransaction[], walletAddress: string)
       if (nt.toUserAccount === walletAddress) {
         solNet += nt.amount / 1e9;
       }
-    }
-
-    // 🔥 FILTRO IMPORTANTE: La wallet debe tener cambio significativo de SOL (no solo fees)
-    // Si el cambio es muy pequeño (< 0.001 SOL), probablemente solo está pagando fees
-    const solNetAbs = Math.abs(solNet);
-    if (solNetAbs < 0.001) {
-      skippedNoToken++; // La wallet no está realmente tradiendo, solo pagando fees
-      continue;
     }
 
     // Get token transfers involving this wallet (excluir SOL wrapped)
