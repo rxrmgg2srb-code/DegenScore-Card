@@ -14,6 +14,7 @@
 
 import { ParsedTransaction, getWalletTransactions } from './services/helius';
 import { logger } from '@/lib/logger';
+import { PnLCalculator, convertTradeToTransaction, type Transaction } from './pnlCalculator';
 
 const SOL_MINT = 'So11111111111111111111111111111111111111112';
 
@@ -78,6 +79,14 @@ export interface WalletMetrics {
 
   // Token data
   favoriteTokens: Array<{ mint: string; symbol: string; count: number }>;
+
+  // Enhanced P&L metrics (new)
+  totalExpenses?: number; // Total SOL spent on buys
+  totalIncome?: number; // Total SOL received from sells
+  netBalance?: number; // Income - Expenses
+  netBalanceAfterFees?: number; // Net after fees
+  topGainers?: Array<{ mint: string; pnl: number; roi: number }>;
+  topLosers?: Array<{ mint: string; pnl: number; roi: number }>;
 
   // The ultimate score (0-100)
   degenScore: number;
@@ -173,33 +182,14 @@ async function fetchAllTransactions(
   const MAX_EMPTY = 3;
   const MAX_CONSECUTIVE_ERRORS = 5;
 
-  // 🔥 FILTRO HELIUS: Filtrar por program IDs de DEXes conocidos + type SWAP
-  // Combinamos ambos filtros para obtener SOLO swaps de estos programas específicos
-  const DEX_PROGRAMS = [
-    'JUP6LkbZbjS1jKKwapdHNy74zcZ3tLCZByGQtd1ubGg', // Jupiter
-    '675kPX9MHTjS2zt1qfr1NYHuzeLXfQM9H24wFSUt1Mp8', // Raydium AMM
-    'whirLbMiicVdio4qvUfM5KAg6Ct8VwpYzGff3uctyCc', // Orca Whirlpool
-    '9W959DqEETiGZocYWCQPaJ6sLmUzmacY1abbrkSyRQUM', // Orca Legacy
-    'srmqPvymJeFKQ4zGQed1GFppgkRHL9kaELCbyksJtPX', // Serum DEX
-    'EoTcMgcDRTJVZDMZWBoU6rhYHZfkNTVEAfz3uUJRcYGj', // Phoenix
-    'DjVE6JNiYqPL2QXyCUUh8rNjHrbz9hXHNYt99MQ59qw1', // Orca v1
-    '6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P', // Pump.fun (bonding curve)
-    'BSfD6SHZigAfDWSjzD5Q41jw8LmKwtmjskPH9XW1mrRW', // Meteora DLMM
-    'LBUZKhRxPF3XUpBCjp4YzTKgLccjZhTSDM9YuVaPwxo', // Meteora Pools
-    'Dooar9JkhdZ7J3LHN3A7YCuoGRUggXhQaG4kijfLGU2j', // Lifinity V2
-  ];
-
-  logger.info(`🔄 Fetching SWAP transactions from specific DEX programs (up to ${MAX_BATCHES} batches)`);
+  logger.info(`🔄 Fetching wallet transactions (up to ${MAX_BATCHES} batches)`);
 
   while (fetchCount < MAX_BATCHES) {
     try {
-      const batch = await getWalletTransactions(walletAddress, BATCH_SIZE, before, {
-        type: 'SWAP', // Solo SWAPs
-        programs: DEX_PROGRAMS, // De estos programas específicos
-        commitment: 'confirmed',
-      });
+      const batch = await getWalletTransactions(walletAddress, BATCH_SIZE, before);
 
       if (batch.length > 0) {
+        // Add all transactions - filtering will happen in extractTrades
         allTransactions.push(...batch);
         before = batch[batch.length - 1]?.signature;
         consecutiveEmpty = 0;
@@ -798,6 +788,50 @@ function calculateMetrics(
     totalTrades,
   });
 
+  // ========================================================================
+  // ENHANCED P&L CALCULATION (NEW)
+  // ========================================================================
+  let enhancedPnL: {
+    totalExpenses: number;
+    totalIncome: number;
+    netBalance: number;
+    netBalanceAfterFees: number;
+    topGainers: Array<{ mint: string; pnl: number; roi: number }>;
+    topLosers: Array<{ mint: string; pnl: number; roi: number }>;
+  } | undefined;
+
+  try {
+    // Convert trades to Transaction format and calculate enhanced P&L
+    const transactions: Transaction[] = trades.map(convertTradeToTransaction);
+    const pnlCalculator = new PnLCalculator(transactions, 'FIFO');
+    const pnlSummary = pnlCalculator.calculateSummary();
+
+    enhancedPnL = {
+      totalExpenses: pnlSummary.totalExpenses,
+      totalIncome: pnlSummary.totalIncome,
+      netBalance: pnlSummary.netBalance,
+      netBalanceAfterFees: pnlSummary.netBalanceAfterFees,
+      topGainers: pnlSummary.topGainers.slice(0, 5).map(t => ({
+        mint: t.tokenMint,
+        pnl: t.realizedPnL,
+        roi: t.realizedPnLPercent,
+      })),
+      topLosers: pnlSummary.topLosers.slice(0, 5).map(t => ({
+        mint: t.tokenMint,
+        pnl: t.realizedPnL,
+        roi: t.realizedPnLPercent,
+      })),
+    };
+
+    logger.info('✅ Enhanced P&L calculated', {
+      expenses: enhancedPnL.totalExpenses.toFixed(4),
+      income: enhancedPnL.totalIncome.toFixed(4),
+      netBalance: enhancedPnL.netBalance.toFixed(4),
+    });
+  } catch (error) {
+    logger.warn('⚠️ Failed to calculate enhanced P&L', { error: String(error) });
+  }
+
   return {
     totalTrades,
     totalVolume,
@@ -823,6 +857,7 @@ function calculateMetrics(
     longestWinStreak,
     longestLossStreak,
     volatilityScore,
+    ...enhancedPnL,
   };
 }
 
