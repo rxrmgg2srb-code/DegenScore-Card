@@ -401,14 +401,40 @@ function extractTrades(transactions: ParsedTransaction[], walletAddress: string)
 
     txWithTokenAndNative++;
 
-    // Calculate net SOL change for the wallet
+    // 🔥 FIX: Use accountData.nativeBalanceChange for accurate SOL amount
+    // This avoids inflating PnL by summing ALL native transfers (which can include
+    // intermediate transfers, fee refunds, rent deposits, etc.)
     let solNet = 0;
-    for (const nt of tx.nativeTransfers) {
-      if (nt.fromUserAccount === walletAddress) {
-        solNet -= nt.amount / 1e9;
+    
+    if (tx.accountData && tx.accountData.length > 0) {
+      // Find the wallet's account data entry
+      const walletAccountData = tx.accountData.find(
+        (acc) => acc.account === walletAddress
+      );
+      
+      if (walletAccountData) {
+        // nativeBalanceChange is in lamports and already signed (positive = received, negative = sent)
+        solNet = walletAccountData.nativeBalanceChange / 1e9;
+      } else {
+        // Fallback: sum native transfers if accountData doesn't include wallet
+        for (const nt of tx.nativeTransfers || []) {
+          if (nt.fromUserAccount === walletAddress) {
+            solNet -= nt.amount / 1e9;
+          }
+          if (nt.toUserAccount === walletAddress) {
+            solNet += nt.amount / 1e9;
+          }
+        }
       }
-      if (nt.toUserAccount === walletAddress) {
-        solNet += nt.amount / 1e9;
+    } else {
+      // Fallback: sum native transfers if no accountData
+      for (const nt of tx.nativeTransfers || []) {
+        if (nt.fromUserAccount === walletAddress) {
+          solNet -= nt.amount / 1e9;
+        }
+        if (nt.toUserAccount === walletAddress) {
+          solNet += nt.amount / 1e9;
+        }
       }
     }
 
@@ -702,28 +728,31 @@ function calculateMetrics(
   const totalVolume = trades.reduce((sum, t) => sum + t.solAmount, 0);
   const totalFees = allTransactions.reduce((sum, tx) => sum + tx.fee / 1e9, 0);
 
-  // Closed positions only (for realized metrics)
-  const closedPositions = positions.filter((p) => !p.isOpen);
+  // 🔥 FIX: Count positions with ANY sells (not just fully closed ones)
+  // This prevents win rate inflation from only counting closed winning positions
+  // while ignoring open/abandoned losing positions
+  const positionsWithSells = positions.filter((p) => (p.tokensSold || 0) > 0);
 
-  // P&L calculation
-  const realizedPnL = closedPositions.reduce((sum, p) => sum + (p.profitLoss || 0), 0);
+  // P&L calculation - use all positions with sells to get realized P&L
+  const realizedPnL = positionsWithSells.reduce((sum, p) => sum + (p.profitLoss || 0), 0);
   const unrealizedPnL = 0; // Would need current prices
   const profitLoss = realizedPnL + unrealizedPnL;
 
-  // Win rate
-  const winningTrades = closedPositions.filter((p) => (p.profitLoss || 0) > 0).length;
-  const totalClosedTrades = closedPositions.length;
-  const winRate = totalClosedTrades > 0 ? (winningTrades / totalClosedTrades) * 100 : 0;
+  // Win rate - count ALL positions that had sells (even partial)
+  // This matches how trading platforms like gmgn.ai calculate win rate
+  const winningTrades = positionsWithSells.filter((p) => (p.profitLoss || 0) > 0).length;
+  const totalPositionsTraded = positionsWithSells.length;
+  const winRate = totalPositionsTraded > 0 ? (winningTrades / totalPositionsTraded) * 100 : 0;
 
-  // Best/worst trades
-  const sortedByPnL = [...closedPositions].sort(
+  // Best/worst trades - use positions with sells
+  const sortedByPnL = [...positionsWithSells].sort(
     (a, b) => (b.profitLoss || 0) - (a.profitLoss || 0)
   );
   const bestTrade = sortedByPnL[0]?.profitLoss || 0;
   const worstTrade = sortedByPnL[sortedByPnL.length - 1]?.profitLoss || 0;
 
-  // Rugs
-  const ruggedPositions = closedPositions.filter((p) => p.isRug);
+  // Rugs - use positions with sells to detect rugs that were partially exited
+  const ruggedPositions = positionsWithSells.filter((p) => p.isRug);
   const rugsSurvived = ruggedPositions.length;
   const totalRugValue = Math.abs(ruggedPositions.reduce((sum, p) => sum + (p.profitLoss || 0), 0));
 
@@ -732,20 +761,20 @@ function calculateMetrics(
     (p) => p.profitLossPercent && p.profitLossPercent > -90 && p.profitLossPercent < -50
   ).length;
 
-  // Moonshots
-  const moonshots = closedPositions.filter((p) => p.isMoonshot).length;
+  // Moonshots - use positions with sells
+  const moonshots = positionsWithSells.filter((p) => p.isMoonshot).length;
 
-  // Hold time
+  // Hold time - use positions with sells (they have holdTime calculated)
   const avgHoldTime =
-    closedPositions.length > 0
-      ? closedPositions.reduce((sum, p) => sum + (p.holdTime || 0), 0) / closedPositions.length
+    positionsWithSells.length > 0
+      ? positionsWithSells.reduce((sum, p) => sum + (p.holdTime || 0), 0) / positionsWithSells.length
       : 0;
 
-  // Quick flips (<1 hour)
-  const quickFlips = closedPositions.filter((p) => (p.holdTime || 0) < 3600).length;
+  // Quick flips (<1 hour) - use positions with sells
+  const quickFlips = positionsWithSells.filter((p) => (p.holdTime || 0) < 3600).length;
 
-  // Diamond hands (>30 days AND profitable)
-  const diamondHands = closedPositions.filter(
+  // Diamond hands (>30 days AND profitable) - use positions with sells
+  const diamondHands = positionsWithSells.filter(
     (p) => (p.holdTime || 0) > 30 * 24 * 3600 && (p.profitLoss || 0) > 0
   ).length;
 
@@ -756,11 +785,11 @@ function calculateMetrics(
   const firstTradeDate =
     trades.length > 0 ? (trades[0]?.timestamp ?? Date.now() / 1000) : Date.now() / 1000;
 
-  // Win/loss streaks
-  const { longestWinStreak, longestLossStreak } = calculateStreaks(closedPositions);
+  // Win/loss streaks - use positions with sells
+  const { longestWinStreak, longestLossStreak } = calculateStreaks(positionsWithSells);
 
-  // Volatility score (std dev of returns)
-  const volatilityScore = calculateVolatility(closedPositions);
+  // Volatility score (std dev of returns) - use positions with sells
+  const volatilityScore = calculateVolatility(positionsWithSells);
 
   // Favorite tokens
   const tokenCounts = new Map<string, number>();
