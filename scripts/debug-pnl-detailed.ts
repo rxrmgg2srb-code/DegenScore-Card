@@ -3,7 +3,6 @@
  */
 
 import { calculateAdvancedMetrics } from '../lib/metricsEngine';
-import { PnLCalculator, convertTradeToTransaction } from '../lib/pnlCalculator';
 
 async function debugWalletDetailed() {
     const wallet = 'B7nB9QX1KC4QXp5GMxR8xzh3yzoqp6NjxSwfNBXtgPc1';

@@ -50,10 +50,12 @@ async function findToken() {
 
         if (metrics.topGainers && metrics.topGainers.length > 0) {
             const top1 = metrics.topGainers[0];
-            console.log(`Nuestro Top #1:`);
-            console.log(`  Token: ${top1.mint}`);
-            console.log(`  ROI: ${top1.roi.toFixed(2)}%`);
-            console.log(`  P&L: ${top1.pnl.toFixed(4)} SOL\n`);
+            if (top1) {
+                console.log(`Nuestro Top #1:`);
+                console.log(`  Token: ${top1.mint}`);
+                console.log(`  ROI: ${top1.roi.toFixed(2)}%`);
+                console.log(`  P&L: ${top1.pnl.toFixed(4)} SOL\n`);
+            }
         }
 
         console.log(`ROI Real (usuario dice): 668.32%`);

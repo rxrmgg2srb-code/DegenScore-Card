@@ -23,12 +23,12 @@ async function debugWallet() {
         console.log(`  DegenScore: ${metrics.degenScore}`);
 
         // Analizar posiciones
-        const positions = metrics._debugPositions || [];
+        const positions = (metrics as any)._debugPositions || [];
         console.log(`\n📦 Total Positions: ${positions.length}`);
 
         // Posiciones cerradas por P&L
-        const closedPositions = positions.filter(p => !p.isOpen);
-        const sortedByPnL = [...closedPositions].sort((a, b) => (b.profitLoss || 0) - (a.profitLoss || 0));
+        const closedPositions = positions.filter((p: any) => !p.isOpen);
+        const sortedByPnL = [...closedPositions].sort((a: any, b: any) => (b.profitLoss || 0) - (a.profitLoss || 0));
 
         console.log(`\n🏆 TOP 10 WINNING POSITIONS:`);
         sortedByPnL.slice(0, 10).forEach((pos, i) => {
@@ -50,8 +50,8 @@ async function debugWallet() {
 
         // Análisis de distribución
         console.log(`\n📊 P&L DISTRIBUTION:`);
-        const pnls = closedPositions.map(p => p.profitLoss || 0);
-        const totalPnL = pnls.reduce((sum, pnl) => sum + pnl, 0);
+        const pnls = closedPositions.map((p: any) => p.profitLoss || 0);
+        const totalPnL = pnls.reduce((sum: number, pnl: number) => sum + pnl, 0);
         const avgPnL = totalPnL / closedPositions.length;
         const maxPnL = Math.max(...pnls);
         const minPnL = Math.min(...pnls);
@@ -63,20 +63,20 @@ async function debugWallet() {
 
         // Detectar posiciones sospechosas (muy alto P&L con muy bajo cost basis)
         console.log(`\n⚠️  SUSPICIOUS POSITIONS (High P&L, Low Cost):`);
-        const suspicious = closedPositions.filter(p =>
+        const suspicious = closedPositions.filter((p: any) =>
             p.buyAmount < 0.01 && (p.profitLoss || 0) > 10
         );
 
         console.log(`  Found ${suspicious.length} positions with cost < 0.01 SOL but P&L > 10 SOL:`);
-        suspicious.slice(0, 5).forEach(pos => {
+        suspicious.slice(0, 5).forEach((pos: any) => {
             console.log(`    - Token: ${pos.tokenMint.substring(0, 12)}...`);
             console.log(`      Buy: ${pos.buyAmount.toFixed(6)} SOL -> Sell: ${(pos.sellAmount || 0).toFixed(4)} SOL`);
             console.log(`      P&L: ${(pos.profitLoss || 0).toFixed(4)} SOL`);
         });
 
         // Análisis de cost basis total
-        const totalCost = closedPositions.reduce((sum, p) => sum + p.buyAmount, 0);
-        const totalSell = closedPositions.reduce((sum, p) => sum + (p.sellAmount || 0), 0);
+        const totalCost = closedPositions.reduce((sum: number, p: any) => sum + p.buyAmount, 0);
+        const totalSell = closedPositions.reduce((sum: number, p: any) => sum + (p.sellAmount || 0), 0);
         console.log(`\n💰 CASH FLOW:`);
         console.log(`  Total Invested (Sum of all buys): ${totalCost.toFixed(2)} SOL`);
         console.log(`  Total Received (Sum of all sells): ${totalSell.toFixed(2)} SOL`);
