@@ -724,8 +724,13 @@ function calculateMetrics(
   // Closed positions only (for realized metrics)
   const closedPositions = positions.filter((p) => !p.isOpen);
 
-  // P&L calculation
-  const realizedPnL = closedPositions.reduce((sum, p) => sum + (p.profitLoss || 0), 0);
+  // P&L calculation (Cash Flow Method)
+  // This is more accurate for total wallet P&L as it includes all inflows/outflows
+  const totalSolSpent = trades.filter(t => t.type === 'buy').reduce((sum, t) => sum + t.solAmount, 0);
+  const totalSolReceived = trades.filter(t => t.type === 'sell').reduce((sum, t) => sum + t.solAmount, 0);
+
+  // Realized PnL based on Cash Flow
+  const realizedPnL = totalSolReceived - totalSolSpent;
   const unrealizedPnL = 0; // Would need current prices
   const profitLoss = realizedPnL + unrealizedPnL;
 
