@@ -3,7 +3,6 @@
  */
 
 import { getWalletTransactions } from '../lib/services/helius';
-import { logger } from '@/lib/logger';
 
 // Importar extractTrades del metricsEngine
 // Como no está exportado, usamos lógica inline similar
@@ -42,7 +41,8 @@ async function analyze30DaysV2() {
         const batch = await getWalletTransactions(wallet, 100, before);
         if (batch.length === 0) break;
 
-        const lastTxTime = batch[batch.length - 1].timestamp * 1000;
+        const lastTx = batch[batch.length - 1]!;
+        const lastTxTime = lastTx.timestamp * 1000;
         const relevantTxs = batch.filter((tx: any) => tx.timestamp * 1000 >= startTime);
         allTxs.push(...relevantTxs);
 
@@ -50,7 +50,7 @@ async function analyze30DaysV2() {
             keepFetching = false;
             console.log('  ✅ Reached 30 day limit');
         } else {
-            before = batch[batch.length - 1].signature;
+            before = lastTx.signature;
             process.stdout.write(`  Fetched ${allTxs.length} txs...\r`);
             await new Promise(r => setTimeout(r, 200));
         }

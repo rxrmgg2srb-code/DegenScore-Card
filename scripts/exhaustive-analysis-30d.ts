@@ -28,13 +28,14 @@ async function exhaustiveAnalysis() {
         const batch = await getWalletTransactions(wallet, 100, before);
         if (batch.length === 0) break;
 
-        const lastTxTime = batch[batch.length - 1].timestamp * 1000;
+        const lastTx = batch[batch.length - 1]!;
+        const lastTxTime = lastTx.timestamp * 1000;
         const relevantTxs = batch.filter((tx: any) => tx.timestamp * 1000 >= startTime);
         allTxs.push(...relevantTxs);
 
         if (lastTxTime < startTime) keepFetching = false;
         else {
-            before = batch[batch.length - 1].signature;
+            before = lastTx.signature;
             process.stdout.write(`  ${allTxs.length} txs...\r`);
             await new Promise(r => setTimeout(r, 200));
         }

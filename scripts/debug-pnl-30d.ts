@@ -3,7 +3,6 @@
  */
 
 import { calculateAdvancedMetrics } from '../lib/metricsEngine';
-import { PnLCalculator, convertTradeToTransaction } from '../lib/pnlCalculator';
 
 async function debug30Days() {
     const wallet = 'B7nB9QX1KC4QXp5GMxR8xzh3yzoqp6NjxSwfNBXtgPc1';
@@ -17,7 +16,7 @@ async function debug30Days() {
     try {
         // Obtenemos todas las métricas (el engine ya extrae todos los trades)
         // Nota: Esto es ineficiente porque procesa todo, pero seguro para debugging
-        const metrics = await calculateAdvancedMetrics(wallet);
+        await calculateAdvancedMetrics(wallet);
 
         // Accedemos a los trades internos si es posible, o los reconstruimos
         // Como calculateAdvancedMetrics no devuelve los trades raw, vamos a usar 
