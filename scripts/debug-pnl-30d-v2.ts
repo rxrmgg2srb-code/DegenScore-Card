@@ -3,7 +3,7 @@
  */
 
 import { getWalletTransactions } from '../lib/services/helius';
-import { logger } from '@/lib/logger';
+
 
 // Importar extractTrades del metricsEngine
 // Como no está exportado, usamos lógica inline similar

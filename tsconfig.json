@@ -1,7 +1,11 @@
 {
   "compilerOptions": {
     "target": "ES2017",
-    "lib": ["dom", "dom.iterable", "esnext"],
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
     "allowJs": true,
     "skipLibCheck": true,
     // SECURITY: Strict mode enabled for type safety
@@ -29,11 +33,18 @@
     "jsx": "preserve",
     "forceConsistentCasingInFileNames": true,
     "paths": {
-      "@/*": ["./*"]
+      "@/*": [
+        "./*"
+      ]
     },
     "baseUrl": "."
   },
-  "include": ["next-env.d.ts", "**/*.mts", "**/*.ts", "**/*.tsx"],
+  "include": [
+    "next-env.d.ts",
+    "**/*.mts",
+    "**/*.ts",
+    "**/*.tsx"
+  ],
   "exclude": [
     "node_modules",
     ".next",
@@ -46,6 +57,7 @@
     "**/*.spec.ts",
     "e2e",
     "playwright.config.ts",
-    "sentry.*.config.ts"
+    "sentry.*.config.ts",
+    "scripts"
   ]
 }
