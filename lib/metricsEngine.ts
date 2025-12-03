@@ -436,11 +436,28 @@ function extractTrades(transactions: ParsedTransaction[], walletAddress: string)
       }
     }
 
-    // Determinar el token principal (el que tiene mayor cambio absoluto)
+    // Combine Native SOL + WSOL for effective SOL flow
+    const WSOL_MINT = 'So11111111111111111111111111111111111111112';
+
+    let wsolNet = 0;
+    if (tokenNetBalances.has(WSOL_MINT)) {
+      wsolNet = tokenNetBalances.get(WSOL_MINT) || 0;
+      // Remove WSOL from token balances so it's not treated as the traded token
+      tokenNetBalances.delete(WSOL_MINT);
+    }
+
+    // Effective SOL = Native SOL + Wrapped SOL + Stablecoins (converted)
+    // TODO: Add stablecoin support if needed, but user confirmed only SOL trades
+    const effectiveSolNet = solNet + wsolNet;
+
+    // Get primary mint (excluding WSOL which is now part of SOL flow)
     let primaryMint = '';
     let primaryTokenNet = 0;
 
     for (const [mint, netBalance] of tokenNetBalances.entries()) {
+      // Skip excluded tokens (stablecoins, etc) from being the primary traded token
+      if (EXCLUDED_TOKENS.has(mint)) continue;
+
       if (Math.abs(netBalance) > Math.abs(primaryTokenNet)) {
         primaryMint = mint;
         primaryTokenNet = netBalance;
@@ -452,15 +469,15 @@ function extractTrades(transactions: ParsedTransaction[], walletAddress: string)
       continue;
     }
 
-    // Mejorar la detección de buy/sell con mejor tolerancia
-    // Buy = SOL sale (negative) y tokens entran (positive)
-    // Sell = SOL entra (positive) y tokens salen (negative)
+    // Determine if this is a buy or sell based on NET token flow and EFFECTIVE SOL flow
+    // Buy = SOL out (negative) and tokens in (positive)
+    // Sell = SOL in (positive) and tokens out (negative)
 
-    // Tolerancia para casos edge donde solNet puede ser casi cero por fees/slippage
-    const TOLERANCE = 0.0001; // ~$0.013 USD
+    // Tolerancia para casos edge
+    const TOLERANCE = 0.0001;
 
-    let isBuy = solNet < -TOLERANCE && primaryTokenNet > 0;
-    let isSell = solNet > TOLERANCE && primaryTokenNet < 0;
+    let isBuy = effectiveSolNet < -TOLERANCE && primaryTokenNet > 0;
+    let isSell = effectiveSolNet > TOLERANCE && primaryTokenNet < 0;
 
     // Caso especial: Si es tipo SWAP, ser más permisivo
     const isSwapType = tx.type === 'SWAP';
@@ -477,7 +494,7 @@ function extractTrades(transactions: ParsedTransaction[], walletAddress: string)
         if (inferredBuy || inferredSell) {
           logger.debug('[Debug] Inferred trade from SWAP:', {
             type: inferredBuy ? 'buy' : 'sell',
-            solNet: solNet.toFixed(6),
+            solNet: effectiveSolNet.toFixed(6),
             tokenNet: primaryTokenNet.toFixed(6),
             mint: primaryMint.substring(0, 12),
           });
@@ -492,41 +509,19 @@ function extractTrades(transactions: ParsedTransaction[], walletAddress: string)
       } else {
         // No es SWAP y no podemos clasificar - skip
         skippedTransferOnly++;
-        logger.debug('[Debug] Skipped ambiguous transaction:', {
-          source: tx.source || 'UNKNOWN',
-          type: tx.type,
-          solNet: solNet.toFixed(6),
-          primaryTokenNet: primaryTokenNet.toFixed(6),
-          primaryMint: primaryMint.substring(0, 12) + '...',
-        });
         continue;
       }
     }
 
     const tokenAmount = Math.abs(primaryTokenNet);
-    if (tokenAmount === 0) {
-      skippedZeroAmount++;
-      continue;
-    }
 
-    // 🚫 Excluir stablecoins y wrapped tokens - Solo queremos trades especulativos
-    if (EXCLUDED_TOKENS.has(primaryMint)) {
-      skippedStablecoin++;
-      logger.debug('[Debug] Skipping stablecoin/wrapped token:', {
-        mint: primaryMint.substring(0, 20) + '...',
-        source: tx.source,
-        solAmount: Math.abs(solNet).toFixed(4),
-      });
-      continue;
-    }
 
-    // Calculate SOL amount (absolute value)
-    const solAmount = Math.abs(solNet);
+
+    // Calculate SOL amount (absolute value of EFFECTIVE SOL)
+    const solAmount = Math.abs(effectiveSolNet);
 
     // Dust check - filtrar trades muy pequeños que distorsionan P&L
     // 0.001 SOL = ~$0.13 USD es el mínimo razonable para un trade real
-    // Esto previene que compras de 0.00001 SOL que se venden por 0.01 SOL
-    // aparezcan como ganancias de 100,000%
     if (solAmount < 0.001) {
       dustCount++;
       skippedDust++;
@@ -563,7 +558,7 @@ function extractTrades(transactions: ParsedTransaction[], walletAddress: string)
       tokenAmount,
       pricePerToken,
     });
-  }
+  } // End of transaction loop
 
   // Convert maps to objects for logging
   const topTransactionTypes = Object.fromEntries(
