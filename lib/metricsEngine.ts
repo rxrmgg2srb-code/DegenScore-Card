@@ -326,25 +326,6 @@ function extractTrades(transactions: ParsedTransaction[], walletAddress: string)
   let txWithTokenAndNative = 0;
   let dustCount = 0;
 
-  // Lista de DEXes conocidos en Solana
-  const KNOWN_DEX_SOURCES = new Set([
-    'PUMP_AMM',
-    'PUMP_FUN',
-    'JUPITER',
-    'RAYDIUM',
-    'ORCA',
-    'SERUM',
-    'OPENBOOK',
-    'METEORA',
-    'DFLOW',
-    'LIFINITY',
-    'SABER',
-    'ALDRIN',
-    'MERCURIAL',
-    'MARINADE',
-    'PHOENIX',
-  ]);
-
   // 🚫 Tokens excluidos: Solo stablecoins y wrapped tokens
   // Queremos contar TODOS los tokens especulativos (memecoins, shitcoins, etc.)
   const EXCLUDED_TOKENS = new Set([
@@ -378,15 +359,9 @@ function extractTrades(transactions: ParsedTransaction[], walletAddress: string)
       txSources.set(tx.source, (txSources.get(tx.source) || 0) + 1);
     }
 
-    // ⭐ FILTRO PRINCIPAL: Solo incluir si es SWAP o viene de un DEX conocido
-    // Esto excluye transfers simples mientras captura todos los trades DEX
-    const isSwapType = tx.type === 'SWAP';
-    const isDexSource = tx.source && KNOWN_DEX_SOURCES.has(tx.source);
-
-    if (!isSwapType && !isDexSource) {
-      skippedNotDex++;
-      continue;
-    }
+    // ⭐ NUEVO FILTRO: Aceptar cualquier transacción con tokenTransfers + nativeTransfers
+    // La lógica posterior determinará si es un trade válido
+    // Esto captura trades que no están marcados como "SWAP" o de un DEX conocido
 
     // Primero verificar que tiene tokenTransfers y nativeTransfers
     // La presencia de ambos generalmente indica un swap/trade
@@ -421,14 +396,6 @@ function extractTrades(transactions: ParsedTransaction[], walletAddress: string)
 
     if (relevantTokenTransfers.length === 0) {
       skippedNoToken++;
-      // Log cuando encontramos un DEX trade pero sin tokens relevantes para debug
-      if (isDexSource) {
-        logger.debug('[Debug] DEX trade sin tokens relevantes:', {
-          source: tx.source,
-          totalTokenTransfers: tx.tokenTransfers?.length || 0,
-          mints: tx.tokenTransfers?.slice(0, 5).map(t => t.mint.substring(0, 8)) || [],
-        });
-      }
       continue;
     }
 
@@ -466,24 +433,55 @@ function extractTrades(transactions: ParsedTransaction[], walletAddress: string)
       continue;
     }
 
-    // Determine if this is a buy or sell based on NET token flow and SOL flow
-    // Buy = SOL out (negative) and tokens in (positive)
-    // Sell = SOL in (positive) and tokens out (negative)
-    const isBuy = solNet < 0 && primaryTokenNet > 0;
-    const isSell = solNet > 0 && primaryTokenNet < 0;
+    // Mejorar la detección de buy/sell con mejor tolerancia
+    // Buy = SOL sale (negative) y tokens entran (positive)
+    // Sell = SOL entra (positive) y tokens salen (negative)
 
-    // Si no es claramente buy o sell, podría ser un swap token-token o algo más complejo
+    // Tolerancia para casos edge donde solNet puede ser casi cero por fees/slippage
+    const TOLERANCE = 0.0001; // ~$0.013 USD
+
+    let isBuy = solNet < -TOLERANCE && primaryTokenNet > 0;
+    let isSell = solNet > TOLERANCE && primaryTokenNet < 0;
+
+    // Caso especial: Si es tipo SWAP, ser más permisivo
+    const isSwapType = tx.type === 'SWAP';
+    const hasSignificantTokenFlow = Math.abs(primaryTokenNet) > 1; // Al menos 1 token
+
+    // Si no podemos determinar claramente el tipo
     if (!isBuy && !isSell) {
-      skippedTransferOnly++;
-      logger.debug('[Debug] Skipped complex trade:', {
-        source: tx.source || 'UNKNOWN',
-        type: tx.type,
-        solNet: solNet.toFixed(6),
-        primaryTokenNet: primaryTokenNet.toFixed(6),
-        primaryMint: primaryMint.substring(0, 20) + '...',
-        tokenMints: Array.from(tokenNetBalances.keys()).map(m => m.substring(0, 8)),
-      });
-      continue;
+      // Si es un SWAP con flujo significativo de tokens, intentar inferir
+      if (isSwapType && hasSignificantTokenFlow) {
+        // Inferir del flujo predominante
+        const inferredBuy = primaryTokenNet > 0;
+        const inferredSell = primaryTokenNet < 0;
+
+        if (inferredBuy || inferredSell) {
+          logger.debug('[Debug] Inferred trade from SWAP:', {
+            type: inferredBuy ? 'buy' : 'sell',
+            solNet: solNet.toFixed(6),
+            tokenNet: primaryTokenNet.toFixed(6),
+            mint: primaryMint.substring(0, 12),
+          });
+
+          // Continuar con la inferencia
+          isBuy = inferredBuy;
+          isSell = inferredSell;
+        } else {
+          skippedTransferOnly++;
+          continue;
+        }
+      } else {
+        // No es SWAP y no podemos clasificar - skip
+        skippedTransferOnly++;
+        logger.debug('[Debug] Skipped ambiguous transaction:', {
+          source: tx.source || 'UNKNOWN',
+          type: tx.type,
+          solNet: solNet.toFixed(6),
+          primaryTokenNet: primaryTokenNet.toFixed(6),
+          primaryMint: primaryMint.substring(0, 12) + '...',
+        });
+        continue;
+      }
     }
 
     const tokenAmount = Math.abs(primaryTokenNet);
@@ -506,31 +504,33 @@ function extractTrades(transactions: ParsedTransaction[], walletAddress: string)
     // Calculate SOL amount (absolute value)
     const solAmount = Math.abs(solNet);
 
-    // Dust check - muy pequeño threshold para capturar más trades
-    // Solo rechazar si es realmente insignificante
-    if (solAmount < 0.000001) {
+    // Dust check - filtrar trades muy pequeños que distorsionan P&L
+    // 0.001 SOL = ~$0.13 USD es el mínimo razonable para un trade real
+    // Esto previene que compras de 0.00001 SOL que se venden por 0.01 SOL
+    // aparezcan como ganancias de 100,000%
+    if (solAmount < 0.001) {
       dustCount++;
       skippedDust++;
-      logger.debug('[Debug] Skipping dust (non-DEX):', {
-        solNet: solNet.toFixed(9),
-        type: tx.type,
+      logger.debug('[Debug] Skipping dust trade:', {
+        solAmount: solAmount.toFixed(9),
+        tokenMint: primaryMint.substring(0, 12),
+        type: isBuy ? 'buy' : 'sell',
         source: tx.source || 'UNKNOWN',
-        description: tx.description?.substring(0, 50),
       });
       continue;
     }
 
     const pricePerToken = solAmount / tokenAmount;
 
-    // Sanity checks mejorados
-    // Permitir un rango muy amplio de precios
-    if (pricePerToken < 0.000000001 || pricePerToken > 1000000) {
+    // Sanity checks mejorados y relajados
+    // Permitir un rango muy amplio de precios para memecoins con muchos ceros
+    if (pricePerToken < 0.000000000000001 || pricePerToken > 10000000) {
       skippedSanity++;
       continue;
     }
 
-    // Permitir trades grandes (hasta 1000 SOL)
-    if (solAmount > 1000) {
+    // Permitir trades grandes (hasta 10,000 SOL para ballenas)
+    if (solAmount > 10000) {
       skippedSanity++;
       continue;
     }
@@ -646,7 +646,7 @@ function buildPositions(trades: Trade[]): Position[] {
 
         const tokensAvailable = position.tokensBought - (position.tokensSold || 0);
         const tokensToClose = Math.min(tokensToSell, tokensAvailable);
-        
+
         // 🔥 FIX: Distribuir SOL proporcionalmente basado en tokens vendidos
         // solFromThisSell = (tokens vendidos de esta posición / total tokens en venta) * total SOL recibido
         const solFromThisSell = (tokensToClose / trade.tokenAmount) * totalSolReceived;
