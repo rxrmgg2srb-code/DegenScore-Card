@@ -359,6 +359,12 @@ function extractTrades(transactions: ParsedTransaction[], walletAddress: string)
       txSources.set(tx.source, (txSources.get(tx.source) || 0) + 1);
     }
 
+    // ⭐ FILTRO: Excluir BURN - no son ventas reales
+    if (tx.type === 'BURN') {
+      skippedNotDex++;
+      continue;
+    }
+
     // ⭐ NUEVO FILTRO: Aceptar cualquier transacción con tokenTransfers + nativeTransfers
     // La lógica posterior determinará si es un trade válido
     // Esto captura trades que no están marcados como "SWAP" o de un DEX conocido
@@ -377,13 +383,26 @@ function extractTrades(transactions: ParsedTransaction[], walletAddress: string)
     txWithTokenAndNative++;
 
     // Calculate net SOL change for the wallet
+    // MEJORADO: Intentar usar accountData primero para mayor precisión
     let solNet = 0;
-    for (const nt of tx.nativeTransfers) {
-      if (nt.fromUserAccount === walletAddress) {
-        solNet -= nt.amount / 1e9;
+
+    // Try using accountData for more accurate values (includes actual swap amounts)
+    if (tx.accountData && tx.accountData.length > 0) {
+      const walletAccountData = tx.accountData.find((acc: any) => acc.account === walletAddress);
+      if (walletAccountData && walletAccountData.nativeBalanceChange) {
+        solNet = walletAccountData.nativeBalanceChange / 1e9;
       }
-      if (nt.toUserAccount === walletAddress) {
-        solNet += nt.amount / 1e9;
+    }
+
+    // Fallback to nativeTransfers if accountData not available or didn't provide a change
+    if (solNet === 0) {
+      for (const nt of tx.nativeTransfers) {
+        if (nt.fromUserAccount === walletAddress) {
+          solNet -= nt.amount / 1e9;
+        }
+        if (nt.toUserAccount === walletAddress) {
+          solNet += nt.amount / 1e9;
+        }
       }
     }
 
