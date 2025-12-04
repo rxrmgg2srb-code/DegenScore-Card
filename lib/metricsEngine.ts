@@ -176,7 +176,6 @@ async function fetchAllTransactions(
   let consecutiveEmpty = 0;
   let consecutiveErrors = 0;
 
-  const MAX_BATCHES = 100;
   const BATCH_SIZE = 100;
   const DELAY_MS = 300;
   const MAX_EMPTY = 3;
@@ -185,9 +184,9 @@ async function fetchAllTransactions(
   // Time limit: Only analyze last 12 months (prevents timeout on very old wallets)
   const TWELVE_MONTHS_AGO = Date.now() / 1000 - (365 * 24 * 60 * 60);
 
-  logger.info(`🔄 Fetching wallet transactions (last 12 months, up to ${MAX_BATCHES} batches)`);
+  logger.info(`🔄 Fetching wallet transactions (last 12 months, no batch limit)`);
 
-  while (fetchCount < MAX_BATCHES) {
+  while (true) {
     try {
       const batch = await getWalletTransactions(walletAddress, BATCH_SIZE, before);
 
@@ -228,7 +227,8 @@ async function fetchAllTransactions(
 
       fetchCount++;
 
-      const fetchProgress = 5 + Math.floor((fetchCount / MAX_BATCHES) * 65);
+      // Progress based on transaction count (assuming ~10k txs for 12 months as average)
+      const fetchProgress = 5 + Math.min(65, Math.floor((allTransactions.length / 10000) * 65));
       if (onProgress) {
         onProgress(
           fetchProgress,
