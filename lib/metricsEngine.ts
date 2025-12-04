@@ -16,7 +16,7 @@ import { ParsedTransaction, getWalletTransactions } from './services/helius';
 import { logger } from '@/lib/logger';
 import { PnLCalculator, convertTradeToTransaction, type Transaction } from './pnlCalculator';
 
-const SOL_MINT = 'So11111111111111111111111111111111111111112';
+
 
 // ============================================================================
 // TYPE DEFINITIONS
