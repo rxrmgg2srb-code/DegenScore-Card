@@ -406,11 +406,10 @@ function extractTrades(transactions: ParsedTransaction[], walletAddress: string)
       }
     }
 
-    // Get token transfers involving this wallet (excluir SOL wrapped)
+    // Get token transfers involving this wallet
+    // NOTE: We now INCLUDE WSOL here because we handle it separately later
     const relevantTokenTransfers = tx.tokenTransfers.filter(
-      (t) =>
-        t.mint !== SOL_MINT &&
-        (t.fromUserAccount === walletAddress || t.toUserAccount === walletAddress)
+      (t) => (t.fromUserAccount === walletAddress || t.toUserAccount === walletAddress)
     );
 
     if (relevantTokenTransfers.length === 0) {
