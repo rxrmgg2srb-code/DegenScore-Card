@@ -442,6 +442,13 @@ function extractTrades(transactions: ParsedTransaction[], walletAddress: string)
     let wsolNet = 0;
     if (tokenNetBalances.has(WSOL_MINT)) {
       wsolNet = tokenNetBalances.get(WSOL_MINT) || 0;
+      if (wsolNet !== 0) {
+        logger.info('🔥 WSOL DETECTED!', {
+          wsolNet: wsolNet.toFixed(6),
+          solNet: solNet.toFixed(6),
+          signature: tx.signature?.substring(0, 12)
+        });
+      }
       // Remove WSOL from token balances so it's not treated as the traded token
       tokenNetBalances.delete(WSOL_MINT);
     }
