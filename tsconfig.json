@@ -58,6 +58,8 @@
     "e2e",
     "playwright.config.ts",
     "sentry.*.config.ts",
-    "scripts"
+    "scripts",
+    "DegenScore-Card",
+    "**/e2e/**"
   ]
 }
