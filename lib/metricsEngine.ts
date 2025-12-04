@@ -182,13 +182,31 @@ async function fetchAllTransactions(
   const MAX_EMPTY = 3;
   const MAX_CONSECUTIVE_ERRORS = 5;
 
-  logger.info(`🔄 Fetching wallet transactions (up to ${MAX_BATCHES} batches)`);
+  // Time limit: Only analyze last 12 months (prevents timeout on very old wallets)
+  const TWELVE_MONTHS_AGO = Date.now() / 1000 - (365 * 24 * 60 * 60);
+
+  logger.info(`🔄 Fetching wallet transactions (last 12 months, up to ${MAX_BATCHES} batches)`);
 
   while (fetchCount < MAX_BATCHES) {
     try {
       const batch = await getWalletTransactions(walletAddress, BATCH_SIZE, before);
 
       if (batch.length > 0) {
+        // Check if oldest transaction in this batch is beyond 12 months
+        const oldestTxTimestamp = batch[batch.length - 1]?.timestamp;
+        if (oldestTxTimestamp && oldestTxTimestamp < TWELVE_MONTHS_AGO) {
+          // Filter out transactions older than 12 months
+          const recentBatch = batch.filter(tx => tx.timestamp >= TWELVE_MONTHS_AGO);
+          if (recentBatch.length > 0) {
+            allTransactions.push(...recentBatch);
+          }
+          logger.info(
+            `  ⏱️ Reached 12-month limit (filtered ${batch.length - recentBatch.length} old txs)`
+          );
+          logger.info(`  ✅ Analysis complete: ${allTransactions.length} transactions in last 12 months`);
+          break;
+        }
+
         // Add all transactions - filtering will happen in extractTrades
         allTransactions.push(...batch);
         before = batch[batch.length - 1]?.signature;
