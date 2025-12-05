@@ -194,7 +194,11 @@ async function fetchAllTransactions(
     return sortedTxs;
 
   } catch (error) {
-    logger.error('Error fetching transactions in parallel', error);
+    logger.error(
+      'Error fetching transactions in parallel',
+      error instanceof Error ? error : undefined,
+      { error: String(error) }
+    );
     return [];
   }
 }
