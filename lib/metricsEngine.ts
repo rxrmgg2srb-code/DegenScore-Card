@@ -205,7 +205,10 @@ async function fetchAllTransactions(
     }
 
     try {
-      const batch = await getWalletTransactions(walletAddress, BATCH_SIZE, before);
+      // 🔥 OPTIMIZACIÓN CRÍTICA: Filtrar solo por 'SWAP'
+      // Esto ignora miles de transacciones de spam/transferencias en wallets de influencers
+      // permitiendo que el límite de 3000 txs cubra mucho más tiempo de historia real.
+      const batch = await getWalletTransactions(walletAddress, BATCH_SIZE, before, 'SWAP');
 
       if (batch.length > 0) {
         // Check if oldest transaction in this batch is beyond 12 months

@@ -84,7 +84,8 @@ export interface HeliusTransaction {
 export async function getWalletTransactions(
   walletAddress: string,
   limit: number = 100,
-  before?: string
+  before?: string,
+  type?: string
 ): Promise<ParsedTransaction[]> {
   return heliusCircuitBreaker.execute(() =>
     retry(
@@ -94,6 +95,11 @@ export async function getWalletTransactions(
         // Agregar parámetro de paginación si existe
         if (before) {
           url += `&before=${before}`;
+        }
+
+        // Agregar filtro de tipo si existe (ej. SWAP)
+        if (type) {
+          url += `&type=${type}`;
         }
 
         // Timeout de 30 segundos para prevenir hangs (aumentado porque Helius puede tardar)
