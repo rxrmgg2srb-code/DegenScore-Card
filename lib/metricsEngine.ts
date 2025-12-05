@@ -170,6 +170,41 @@ async function fetchAllTransactions(
   walletAddress: string,
   onProgress?: (progress: number, message: string) => void
 ): Promise<ParsedTransaction[]> {
+  // 🔥 ESTRATEGIA: Descargar SWAP y UNKNOWN en paralelo
+  // - SWAP: Captura Jupiter, Raydium, Orca, etc.
+  // - UNKNOWN: Captura Pump.fun y nuevos protocolos que Helius aún no etiqueta
+  // - Ignoramos TRANSFER para evitar spam masivo
+
+  const typesToFetch = ['SWAP', 'UNKNOWN'];
+  logger.info(`🔄 Fetching transactions for types: ${typesToFetch.join(', ')}`);
+
+  try {
+    const results = await Promise.all(
+      typesToFetch.map(type => fetchTransactionsByType(walletAddress, type, onProgress))
+    );
+
+    // Combinar y deduplicar por signature
+    const allTxs = results.flat();
+    const uniqueTxs = Array.from(new Map(allTxs.map(tx => [tx.signature, tx])).values());
+
+    // Ordenar por timestamp (ascendente para el análisis)
+    const sortedTxs = uniqueTxs.sort((a, b) => a.timestamp - b.timestamp);
+
+    logger.info(`✅ Total unique transactions fetched: ${sortedTxs.length}`);
+    return sortedTxs;
+
+  } catch (error) {
+    logger.error('Error fetching transactions in parallel', error);
+    return [];
+  }
+}
+
+// Helper function to fetch transactions of a specific type
+async function fetchTransactionsByType(
+  walletAddress: string,
+  type: string,
+  onProgress?: (progress: number, message: string) => void
+): Promise<ParsedTransaction[]> {
   const allTransactions: ParsedTransaction[] = [];
   let before: string | undefined;
   let fetchCount = 0;
@@ -177,169 +212,110 @@ async function fetchAllTransactions(
   let consecutiveErrors = 0;
 
   const BATCH_SIZE = 100;
-  const DELAY_MS = 200; // Reducido para mayor velocidad
+  const DELAY_MS = 200;
   const MAX_EMPTY = 3;
   const MAX_CONSECUTIVE_ERRORS = 5;
 
-  // 🛡️ SAFETY LIMITS
-  const MAX_TRANSACTIONS = 3000; // Analizar máx 3000 txs para evitar timeout
-  const TIME_LIMIT_MS = 45000; // 45 segundos máximo de fetching
+  // 🛡️ SAFETY LIMITS (Per type)
+  const MAX_TRANSACTIONS = 2000; // 2000 por tipo = 4000 total max
+  const TIME_LIMIT_MS = 40000; // 40s max per thread
   const startTime = Date.now();
 
-  // Time limit: Only analyze last 12 months (prevents timeout on very old wallets)
   const TWELVE_MONTHS_AGO = Date.now() / 1000 - (365 * 24 * 60 * 60);
 
-  logger.info(`🔄 Fetching wallet transactions (last 12 months, max ${MAX_TRANSACTIONS} txs)`);
+  logger.info(`🔄 Fetching ${type} transactions...`);
 
   while (true) {
-    // 🛡️ Safety check: Time limit
     if (Date.now() - startTime > TIME_LIMIT_MS) {
-      logger.warn(`⚠️ Time limit reached (${TIME_LIMIT_MS}ms). Stopping fetch.`);
+      logger.warn(`⚠️ [${type}] Time limit reached. Stopping.`);
       break;
     }
 
-    // 🛡️ Safety check: Transaction count limit
     if (allTransactions.length >= MAX_TRANSACTIONS) {
-      logger.warn(`⚠️ Transaction limit reached (${MAX_TRANSACTIONS}). Stopping fetch.`);
+      logger.warn(`⚠️ [${type}] Limit reached (${MAX_TRANSACTIONS}). Stopping.`);
       break;
     }
 
     try {
-      // 🔥 OPTIMIZACIÓN CRÍTICA: Filtrar solo por 'SWAP'
-      // Esto ignora miles de transacciones de spam/transferencias en wallets de influencers
-      // permitiendo que el límite de 3000 txs cubra mucho más tiempo de historia real.
-      const batch = await getWalletTransactions(walletAddress, BATCH_SIZE, before, 'SWAP');
+      const batch = await getWalletTransactions(walletAddress, BATCH_SIZE, before, type);
 
       if (batch.length > 0) {
-        // Check if oldest transaction in this batch is beyond 12 months
         const oldestTxTimestamp = batch[batch.length - 1]?.timestamp;
         if (oldestTxTimestamp && oldestTxTimestamp < TWELVE_MONTHS_AGO) {
-          // Filter out transactions older than 12 months
           const recentBatch = batch.filter(tx => tx.timestamp >= TWELVE_MONTHS_AGO);
-          if (recentBatch.length > 0) {
-            allTransactions.push(...recentBatch);
-          }
-          logger.info(
-            `  ⏱️ Reached 12-month limit (filtered ${batch.length - recentBatch.length} old txs)`
-          );
-          logger.info(`  ✅ Analysis complete: ${allTransactions.length} transactions in last 12 months`);
+          if (recentBatch.length > 0) allTransactions.push(...recentBatch);
+          logger.info(`  ⏱️ [${type}] Reached 12-month limit`);
           break;
         }
 
-        // Add all transactions - filtering will happen in extractTrades
         allTransactions.push(...batch);
         before = batch[batch.length - 1]?.signature;
         consecutiveEmpty = 0;
-        consecutiveErrors = 0; // Reset error counter on success
-        logger.info(
-          `  ✓ Batch ${fetchCount + 1}: ${batch.length} txs (Total: ${allTransactions.length})`
-        );
+        consecutiveErrors = 0;
+
+        if (fetchCount % 5 === 0) {
+          logger.info(`  ✓ [${type}] Batch ${fetchCount + 1}: ${batch.length} txs (Total: ${allTransactions.length})`);
+        }
       } else {
         consecutiveEmpty++;
-        consecutiveErrors = 0; // Reset error counter on successful empty response
-        logger.info(`  ⚠️ Batch ${fetchCount + 1}: empty (${consecutiveEmpty}/${MAX_EMPTY})`);
-
+        consecutiveErrors = 0;
         if (consecutiveEmpty >= MAX_EMPTY) {
-          logger.info(`  ✅ No more transactions`);
+          logger.info(`  ✅ [${type}] No more transactions`);
           break;
         }
       }
 
       fetchCount++;
 
-      // Progress based on transaction count (assuming ~10k txs for 12 months as average)
-      const fetchProgress = 5 + Math.min(65, Math.floor((allTransactions.length / 10000) * 65));
-      if (onProgress) {
-        onProgress(
-          fetchProgress,
-          `📡 Fetching swaps... (${allTransactions.length} found)`
-        );
+      if (onProgress && type === 'SWAP') {
+        const progress = 10 + Math.min(50, Math.floor((allTransactions.length / 2000) * 50));
+        onProgress(progress, `Fetching ${type}s... (${allTransactions.length})`);
       }
 
       await new Promise((resolve) => setTimeout(resolve, DELAY_MS));
+
     } catch (error: any) {
-      // Special case: Helius 404 with continuation signature (not a real error)
-      // When using filters, Helius returns 404 if no matching events in time window
-      // but provides a 'before' signature to continue searching
+      // Handle Helius 404 pagination logic
       if (error?.status === 404) {
         let continuationSignature: string | null = null;
-
-        // Try to parse the error body as JSON first
         if (error?.errorBody) {
           try {
-            const errorJson = JSON.parse(error.errorBody);
-            if (errorJson?.error) {
-              const match = errorJson.error.match(/before.*parameter set to ([a-zA-Z0-9]+)/);
-              if (match && match[1]) {
-                continuationSignature = match[1];
-              }
-            }
-          } catch (e) {
-            // Fall back to regex on message
-          }
+            const json = JSON.parse(error.errorBody);
+            const match = json.error?.match(/before.*parameter set to ([a-zA-Z0-9]+)/);
+            if (match) continuationSignature = match[1];
+          } catch (e) { }
         }
-
-        // Fall back to regex on error message if JSON parsing failed
         if (!continuationSignature && error?.message) {
-          const beforeMatch = error.message.match(/before.*parameter set to ([a-zA-Z0-9]+)/);
-          if (beforeMatch && beforeMatch[1]) {
-            continuationSignature = beforeMatch[1];
-          }
+          const match = error.message.match(/before.*parameter set to ([a-zA-Z0-9]+)/);
+          if (match) continuationSignature = match[1];
         }
 
         if (continuationSignature) {
-          logger.info(
-            `  ⏭️ Batch ${fetchCount + 1}: No SWAP txs in this window, continuing from ${continuationSignature.substring(0, 20)}...`
-          );
+          logger.info(`  ⏭️ [${type}] Skipping gap, continuing from ${continuationSignature.substring(0, 10)}...`);
           before = continuationSignature;
           consecutiveEmpty++;
-          consecutiveErrors = 0; // Don't count this as an error
-
-          if (consecutiveEmpty >= MAX_EMPTY) {
-            logger.info(`  ✅ No more SWAP transactions found`);
-            break;
-          }
-
+          consecutiveErrors = 0;
+          if (consecutiveEmpty >= MAX_EMPTY) break;
           fetchCount++;
           await new Promise((resolve) => setTimeout(resolve, DELAY_MS));
           continue;
         }
       }
 
-      // Real error - increment counter
       consecutiveErrors++;
+      logger.warn(`  ❌ [${type}] Error batch ${fetchCount + 1}: ${error.message}`);
 
-      logger.error(
-        `  ❌ Error batch ${fetchCount + 1}`,
-        error instanceof Error ? error : undefined,
-        {
-          error: String(error),
-          status: error?.status,
-          before: before ? `${before.substring(0, 20)}...` : 'none',
-          consecutiveErrors,
-        }
-      );
-
-      // If we're getting too many consecutive errors, stop trying
       if (consecutiveErrors >= MAX_CONSECUTIVE_ERRORS) {
-        logger.error(`  ⛔ Too many consecutive errors (${consecutiveErrors}), stopping fetch`);
-        // If we have some transactions, use what we have
-        if (allTransactions.length > 0) {
-          logger.warn(`  ⚠️ Using ${allTransactions.length} transactions fetched before errors`);
-          break;
-        }
-        // Otherwise, return empty to trigger default metrics
-        logger.error(`  ❌ No transactions fetched due to errors`);
-        return [];
+        logger.error(`  ⛔ [${type}] Too many errors, stopping.`);
+        break;
       }
 
       fetchCount++;
       await new Promise((resolve) => setTimeout(resolve, 500));
-      continue;
     }
   }
 
-  return allTransactions.sort((a, b) => a.timestamp - b.timestamp);
+  return allTransactions;
 }
 
 // ============================================================================
