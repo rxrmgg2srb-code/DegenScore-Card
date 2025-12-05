@@ -216,13 +216,15 @@ async function fetchTransactionsByType(
   let consecutiveErrors = 0;
 
   const BATCH_SIZE = 100;
-  const DELAY_MS = 200;
+  const DELAY_MS = 150; // Aún más rápido
   const MAX_EMPTY = 3;
   const MAX_CONSECUTIVE_ERRORS = 5;
 
   // 🛡️ SAFETY LIMITS (Per type)
-  const MAX_TRANSACTIONS = 2000; // 2000 por tipo = 4000 total max
-  const TIME_LIMIT_MS = 40000; // 40s max per thread
+  // Solicitud usuario: "100 batches" -> 100 * 100 = 10,000 txs
+  // Dividimos entre 2 tipos (SWAP + UNKNOWN) -> 5,000 por tipo
+  const MAX_TRANSACTIONS = 5000;
+  const TIME_LIMIT_MS = 55000; // 55s max (al límite de Vercel)
   const startTime = Date.now();
 
   const TWELVE_MONTHS_AGO = Date.now() / 1000 - (365 * 24 * 60 * 60);
