@@ -170,45 +170,6 @@ async function fetchAllTransactions(
   walletAddress: string,
   onProgress?: (progress: number, message: string) => void
 ): Promise<ParsedTransaction[]> {
-  // 🔥 ESTRATEGIA: Descargar SWAP y UNKNOWN en paralelo
-  // - SWAP: Captura Jupiter, Raydium, Orca, etc.
-  // - UNKNOWN: Captura Pump.fun y nuevos protocolos que Helius aún no etiqueta
-  // - Ignoramos TRANSFER para evitar spam masivo
-
-  const typesToFetch = ['SWAP', 'UNKNOWN'];
-  logger.info(`🔄 Fetching transactions for types: ${typesToFetch.join(', ')}`);
-
-  try {
-    const results = await Promise.all(
-      typesToFetch.map(type => fetchTransactionsByType(walletAddress, type, onProgress))
-    );
-
-    // Combinar y deduplicar por signature
-    const allTxs = results.flat();
-    const uniqueTxs = Array.from(new Map(allTxs.map(tx => [tx.signature, tx])).values());
-
-    // Ordenar por timestamp (ascendente para el análisis)
-    const sortedTxs = uniqueTxs.sort((a, b) => a.timestamp - b.timestamp);
-
-    logger.info(`✅ Total unique transactions fetched: ${sortedTxs.length}`);
-    return sortedTxs;
-
-  } catch (error) {
-    logger.error(
-      'Error fetching transactions in parallel',
-      error instanceof Error ? error : undefined,
-      { error: String(error) }
-    );
-    return [];
-  }
-}
-
-// Helper function to fetch transactions of a specific type
-async function fetchTransactionsByType(
-  walletAddress: string,
-  type: string,
-  onProgress?: (progress: number, message: string) => void
-): Promise<ParsedTransaction[]> {
   const allTransactions: ParsedTransaction[] = [];
   let before: string | undefined;
   let fetchCount = 0;
@@ -216,112 +177,111 @@ async function fetchTransactionsByType(
   let consecutiveErrors = 0;
 
   const BATCH_SIZE = 100;
-  const DELAY_MS = 150; // Aún más rápido
+  const DELAY_MS = 150;
   const MAX_EMPTY = 3;
   const MAX_CONSECUTIVE_ERRORS = 5;
 
-  // 🛡️ SAFETY LIMITS (Per type)
-  // Solicitud usuario: "100 batches" -> 100 * 100 = 10,000 txs
-  // Dividimos entre 2 tipos (SWAP + UNKNOWN) -> 5,000 por tipo
-  const MAX_TRANSACTIONS = 5000;
-  const TIME_LIMIT_MS = 55000; // 55s max (al límite de Vercel)
+  // 🛡️ SAFETY LIMITS
+  // Volvemos a pedir TODO (sin filtro de tipo) para no perder nada
+  // Mantenemos límites altos para profundizar lo máximo posible
+  const MAX_TRANSACTIONS = 10000; // 100 batches
+  const TIME_LIMIT_MS = 55000; // 55s
   const startTime = Date.now();
 
+  // Time limit: Only analyze last 12 months
   const TWELVE_MONTHS_AGO = Date.now() / 1000 - (365 * 24 * 60 * 60);
 
-  logger.info(`🔄 Fetching ${type} transactions...`);
+  logger.info(`🔄 Fetching ALL wallet transactions (last 12 months, max ${MAX_TRANSACTIONS} txs)`);
 
   while (true) {
+    // 🛡️ Safety check: Time limit
     if (Date.now() - startTime > TIME_LIMIT_MS) {
-      logger.warn(`⚠️ [${type}] Time limit reached. Stopping.`);
+      logger.warn(`⚠️ Time limit reached (${TIME_LIMIT_MS}ms). Stopping fetch.`);
       break;
     }
 
+    // 🛡️ Safety check: Transaction count limit
     if (allTransactions.length >= MAX_TRANSACTIONS) {
-      logger.warn(`⚠️ [${type}] Limit reached (${MAX_TRANSACTIONS}). Stopping.`);
+      logger.warn(`⚠️ Transaction limit reached (${MAX_TRANSACTIONS}). Stopping fetch.`);
       break;
     }
 
     try {
-      const batch = await getWalletTransactions(walletAddress, BATCH_SIZE, before, type);
+      // Sin filtro de tipo: pedimos TODO
+      const batch = await getWalletTransactions(walletAddress, BATCH_SIZE, before);
 
       if (batch.length > 0) {
+        // Check if oldest transaction in this batch is beyond 12 months
         const oldestTxTimestamp = batch[batch.length - 1]?.timestamp;
         if (oldestTxTimestamp && oldestTxTimestamp < TWELVE_MONTHS_AGO) {
+          // Filter out transactions older than 12 months
           const recentBatch = batch.filter(tx => tx.timestamp >= TWELVE_MONTHS_AGO);
-          if (recentBatch.length > 0) allTransactions.push(...recentBatch);
-          logger.info(`  ⏱️ [${type}] Reached 12-month limit`);
+          if (recentBatch.length > 0) {
+            allTransactions.push(...recentBatch);
+          }
+          logger.info(
+            `  ⏱️ Reached 12-month limit (filtered ${batch.length - recentBatch.length} old txs)`
+          );
+          logger.info(`  ✅ Analysis complete: ${allTransactions.length} transactions in last 12 months`);
           break;
         }
 
+        // Add all transactions
         allTransactions.push(...batch);
         before = batch[batch.length - 1]?.signature;
         consecutiveEmpty = 0;
-        consecutiveErrors = 0;
+        consecutiveErrors = 0; // Reset error counter on success
 
         if (fetchCount % 5 === 0) {
-          logger.info(`  ✓ [${type}] Batch ${fetchCount + 1}: ${batch.length} txs (Total: ${allTransactions.length})`);
+          logger.info(
+            `  ✓ Batch ${fetchCount + 1}: ${batch.length} txs (Total: ${allTransactions.length})`
+          );
         }
       } else {
         consecutiveEmpty++;
-        consecutiveErrors = 0;
+        consecutiveErrors = 0; // Reset error counter on successful empty response
+        logger.info(`  ⚠️ Batch ${fetchCount + 1}: empty (${consecutiveEmpty}/${MAX_EMPTY})`);
+
         if (consecutiveEmpty >= MAX_EMPTY) {
-          logger.info(`  ✅ [${type}] No more transactions`);
+          logger.info(`  ✅ No more transactions`);
           break;
         }
       }
 
       fetchCount++;
 
-      if (onProgress && type === 'SWAP') {
-        const progress = 10 + Math.min(50, Math.floor((allTransactions.length / 2000) * 50));
-        onProgress(progress, `Fetching ${type}s... (${allTransactions.length})`);
+      // Progress update
+      const fetchProgress = 5 + Math.min(65, Math.floor((allTransactions.length / 10000) * 65));
+      if (onProgress) {
+        onProgress(
+          fetchProgress,
+          `📡 Fetching history... (${allTransactions.length} txs)`
+        );
       }
 
       await new Promise((resolve) => setTimeout(resolve, DELAY_MS));
-
     } catch (error: any) {
-      // Handle Helius 404 pagination logic
-      if (error?.status === 404) {
-        let continuationSignature: string | null = null;
-        if (error?.errorBody) {
-          try {
-            const json = JSON.parse(error.errorBody);
-            const match = json.error?.match(/before.*parameter set to ([a-zA-Z0-9]+)/);
-            if (match) continuationSignature = match[1];
-          } catch (e) { }
-        }
-        if (!continuationSignature && error?.message) {
-          const match = error.message.match(/before.*parameter set to ([a-zA-Z0-9]+)/);
-          if (match) continuationSignature = match[1];
-        }
-
-        if (continuationSignature) {
-          logger.info(`  ⏭️ [${type}] Skipping gap, continuing from ${continuationSignature.substring(0, 10)}...`);
-          before = continuationSignature;
-          consecutiveEmpty++;
-          consecutiveErrors = 0;
-          if (consecutiveEmpty >= MAX_EMPTY) break;
-          fetchCount++;
-          await new Promise((resolve) => setTimeout(resolve, DELAY_MS));
-          continue;
-        }
-      }
-
       consecutiveErrors++;
-      logger.warn(`  ❌ [${type}] Error batch ${fetchCount + 1}: ${error.message}`);
+      logger.error(
+        `  ❌ Error batch ${fetchCount + 1}`,
+        error instanceof Error ? error : undefined,
+        {
+          error: String(error),
+          status: error?.status,
+          consecutiveErrors,
+        }
+      );
 
       if (consecutiveErrors >= MAX_CONSECUTIVE_ERRORS) {
-        logger.error(`  ⛔ [${type}] Too many errors, stopping.`);
+        logger.error(`  ⛔ Too many consecutive errors (${consecutiveErrors}), stopping fetch`);
         break;
       }
 
-      fetchCount++;
       await new Promise((resolve) => setTimeout(resolve, 500));
     }
   }
 
-  return allTransactions;
+  return allTransactions.sort((a, b) => a.timestamp - b.timestamp);
 }
 
 // ============================================================================
@@ -799,83 +759,121 @@ function calculateMetrics(
 
   // First trade date
   const firstTradeDate =
-    trades.length > 0 ? (trades[0]?.timestamp ?? Date.now() / 1000) : Date.now() / 1000;
+    trades.length > 0
+      ? Math.min(...trades.map((t) => t.timestamp))
+      : Date.now() / 1000;
 
-  // Win/loss streaks
-  const { longestWinStreak, longestLossStreak } = calculateStreaks(closedPositions);
+  // Streaks
+  let currentWinStreak = 0;
+  let maxWinStreak = 0;
+  let currentLossStreak = 0;
+  let maxLossStreak = 0;
 
-  // Volatility score (std dev of returns)
-  const volatilityScore = calculateVolatility(closedPositions);
+  for (const pos of closedPositions.sort((a, b) => a.exitTime! - b.exitTime!)) {
+    if ((pos.profitLoss || 0) > 0) {
+      currentWinStreak++;
+      currentLossStreak = 0;
+      if (currentWinStreak > maxWinStreak) maxWinStreak = currentWinStreak;
+    } else {
+      currentLossStreak++;
+      currentWinStreak = 0;
+      if (currentLossStreak > maxLossStreak) maxLossStreak = currentLossStreak;
+    }
+  }
 
-  // Favorite tokens
+  // Volatility Score (0-100)
+  // Based on variance of P&L %
+  const pnlPercents = closedPositions.map((p) => p.profitLossPercent || 0);
+  const avgPnlPercent =
+    pnlPercents.length > 0
+      ? pnlPercents.reduce((sum, p) => sum + p, 0) / pnlPercents.length
+      : 0;
+  const variance =
+    pnlPercents.length > 0
+      ? pnlPercents.reduce((sum, p) => sum + Math.pow(p - avgPnlPercent, 2), 0) /
+      pnlPercents.length
+      : 0;
+  const stdDev = Math.sqrt(variance);
+  const volatilityScore = Math.min(100, Math.max(0, stdDev / 10)); // Normalize somewhat arbitrary
+
+  // Favorite Tokens
   const tokenCounts = new Map<string, number>();
-  trades.forEach((t) => {
+  const tokenSymbols = new Map<string, string>();
+
+  for (const t of trades) {
     tokenCounts.set(t.tokenMint, (tokenCounts.get(t.tokenMint) || 0) + 1);
-  });
+    // We don't have symbols here yet, would need metadata fetch
+    // For now, use mint as symbol fallback
+    if (!tokenSymbols.has(t.tokenMint)) {
+      tokenSymbols.set(t.tokenMint, t.tokenMint.substring(0, 4));
+    }
+  }
+
   const favoriteTokens = Array.from(tokenCounts.entries())
     .sort((a, b) => b[1] - a[1])
+    .slice(0, 3)
+    .map(([mint, count]) => ({
+      mint,
+      symbol: tokenSymbols.get(mint) || 'UNK',
+      count,
+    }));
+
+  // Enhanced P&L metrics
+  const topGainers = closedPositions
+    .filter(p => (p.profitLoss || 0) > 0)
+    .sort((a, b) => (b.profitLoss || 0) - (a.profitLoss || 0))
     .slice(0, 5)
-    .map(([mint, count]) => ({ mint, symbol: mint.slice(0, 8), count }));
+    .map(p => ({
+      mint: p.tokenMint,
+      pnl: p.profitLoss || 0,
+      roi: p.profitLossPercent || 0
+    }));
 
-  // ========================================================================
-  // CALCULATE DEGEN SCORE (0-100)
-  // ========================================================================
-  const degenScore = calculateDegenScore({
-    profitLoss,
-    winRate,
-    totalVolume,
-    rugsSurvived,
-    moonshots,
-    avgHoldTime,
-    volatilityScore,
-    quickFlips,
-    diamondHands,
-    totalTrades,
-  });
+  const topLosers = closedPositions
+    .filter(p => (p.profitLoss || 0) < 0)
+    .sort((a, b) => (a.profitLoss || 0) - (b.profitLoss || 0))
+    .slice(0, 5)
+    .map(p => ({
+      mint: p.tokenMint,
+      pnl: p.profitLoss || 0,
+      roi: p.profitLossPercent || 0
+    }));
 
-  // ========================================================================
-  // ENHANCED P&L CALCULATION (NEW)
-  // ========================================================================
-  let enhancedPnL: {
-    totalExpenses: number;
-    totalIncome: number;
-    netBalance: number;
-    netBalanceAfterFees: number;
-    topGainers: Array<{ mint: string; pnl: number; roi: number }>;
-    topLosers: Array<{ mint: string; pnl: number; roi: number }>;
-  } | undefined;
+  // Calculate DegenScore (0-100)
+  // This is a proprietary formula based on the metrics above
+  let score = 50; // Base score
 
-  try {
-    // Convert trades to Transaction format and calculate enhanced P&L
-    const transactions: Transaction[] = trades.map(convertTradeToTransaction);
-    const pnlCalculator = new PnLCalculator(transactions, 'FIFO');
-    const pnlSummary = pnlCalculator.calculateSummary();
+  // 1. Profitability (+/- 20)
+  if (winRate > 60) score += 10;
+  if (winRate > 70) score += 10;
+  if (winRate < 40) score -= 10;
+  if (winRate < 30) score -= 10;
 
-    enhancedPnL = {
-      totalExpenses: pnlSummary.totalExpenses,
-      totalIncome: pnlSummary.totalIncome,
-      netBalance: pnlSummary.netBalance,
-      netBalanceAfterFees: pnlSummary.netBalanceAfterFees,
-      topGainers: pnlSummary.topGainers.slice(0, 5).map(t => ({
-        mint: t.tokenMint,
-        pnl: t.realizedPnL,
-        roi: t.realizedPnLPercent,
-      })),
-      topLosers: pnlSummary.topLosers.slice(0, 5).map(t => ({
-        mint: t.tokenMint,
-        pnl: t.realizedPnL,
-        roi: t.realizedPnLPercent,
-      })),
-    };
+  // 2. P&L (+/- 20)
+  if (profitLoss > 10) score += 10; // > 10 SOL profit
+  if (profitLoss > 100) score += 10; // > 100 SOL profit
+  if (profitLoss < -10) score -= 10;
+  if (profitLoss < -50) score -= 10;
 
-    logger.info('✅ Enhanced P&L calculated', {
-      expenses: enhancedPnL.totalExpenses.toFixed(4),
-      income: enhancedPnL.totalIncome.toFixed(4),
-      netBalance: enhancedPnL.netBalance.toFixed(4),
-    });
-  } catch (error) {
-    logger.warn('⚠️ Failed to calculate enhanced P&L', { error: String(error) });
-  }
+  // 3. Experience (+/- 10)
+  if (totalTrades > 100) score += 5;
+  if (totalTrades > 1000) score += 5;
+  if (totalTrades < 10) score -= 5;
+
+  // 4. Diamond Hands (+/- 10)
+  if (diamondHands > 0) score += 5;
+  if (diamondHands > 5) score += 5;
+  if (quickFlips > totalClosedTrades * 0.8) score -= 5; // Too many quick flips
+
+  // 5. Rug Resilience (+/- 10)
+  if (rugsCaught > 0) score += 5; // Smart enough to exit
+  if (rugsSurvived > 5) score -= 5; // Getting rugged too often
+
+  // 6. Moonshots (+/- 10)
+  if (moonshots > 0) score += 10;
+
+  // Clamp score
+  score = Math.max(1, Math.min(100, score));
 
   return {
     totalTrades,
@@ -884,11 +882,10 @@ function calculateMetrics(
     winRate,
     bestTrade,
     worstTrade,
-    avgTradeSize: totalTrades > 0 ? totalVolume / totalTrades : 0,
+    avgTradeSize: totalVolume / totalTrades || 0,
     totalFees,
-    favoriteTokens,
     tradingDays: uniqueDays,
-    degenScore,
+
     rugsSurvived,
     rugsCaught,
     totalRugValue,
@@ -902,126 +899,18 @@ function calculateMetrics(
     longestWinStreak,
     longestLossStreak,
     volatilityScore,
-    ...enhancedPnL,
+
+    favoriteTokens,
+    degenScore: Math.round(score),
+
+    // New fields
+    totalExpenses: totalSolSpent,
+    totalIncome: totalSolReceived,
+    netBalance: profitLoss,
+    netBalanceAfterFees: profitLoss - totalFees,
+    topGainers,
+    topLosers
   };
-}
-
-// ============================================================================
-// DEGEN SCORE ALGORITHM (The Holy Grail)
-// ============================================================================
-
-function calculateDegenScore(params: {
-  profitLoss: number;
-  winRate: number;
-  totalVolume: number;
-  rugsSurvived: number;
-  moonshots: number;
-  avgHoldTime: number;
-  volatilityScore: number;
-  quickFlips: number;
-  diamondHands: number;
-  totalTrades: number;
-}): number {
-  let score = 0;
-
-  // 1. Profit/Loss Score (30 points max)
-  // Normalized: +10 SOL = 30 points, -10 SOL = 0 points
-  const plScore = Math.max(0, Math.min(30, (params.profitLoss / 10) * 30 + 15));
-  score += plScore;
-
-  // 2. Win Rate Score (20 points max)
-  // 50% = 10 points, 100% = 20 points, 0% = 0 points
-  const wrScore = Math.max(0, Math.min(20, (params.winRate / 50) * 10));
-  score += wrScore;
-
-  // 3. Volume Score (10 points max)
-  // 100 SOL = 10 points (caps at 10)
-  const volumeScore = Math.min(10, (params.totalVolume / 100) * 10);
-  score += volumeScore;
-
-  // 4. Moonshot Bonus (10 points max)
-  // Each moonshot = 5 points (caps at 2)
-  const moonshotScore = Math.min(10, params.moonshots * 5);
-  score += moonshotScore;
-
-  // 5. Rug Penalty (-1 point per rug, caps at -15)
-  const rugPenalty = Math.max(-15, -params.rugsSurvived);
-  score += rugPenalty;
-
-  // 6. Diamond Hands Bonus (10 points max)
-  // Each diamond hand = 2 points (caps at 5)
-  const diamondScore = Math.min(10, params.diamondHands * 2);
-  score += diamondScore;
-
-  // 7. Quick Flip Penalty (-0.5 points each, caps at -10)
-  // Penalize paper hands
-  const quickFlipPenalty = Math.max(-10, -params.quickFlips * 0.5);
-  score += quickFlipPenalty;
-
-  // 8. Volatility Penalty (up to -10 points)
-  // High volatility = risky = bad
-  const volatilityPenalty = -Math.min(10, params.volatilityScore / 10);
-  score += volatilityPenalty;
-
-  // 9. Activity Bonus (10 points max)
-  // 100+ trades = 10 points
-  const activityScore = Math.min(10, (params.totalTrades / 100) * 10);
-  score += activityScore;
-
-  // Normalize to 0-100
-  score = Math.max(0, Math.min(100, score));
-
-  return Math.round(score);
-}
-
-// ============================================================================
-// HELPER FUNCTIONS
-// ============================================================================
-
-function calculateStreaks(positions: Position[]): {
-  longestWinStreak: number;
-  longestLossStreak: number;
-} {
-  let currentWinStreak = 0;
-  let currentLossStreak = 0;
-  let longestWinStreak = 0;
-  let longestLossStreak = 0;
-
-  for (const position of positions) {
-    const pnl = position.profitLoss || 0;
-
-    if (pnl > 0) {
-      currentWinStreak++;
-      currentLossStreak = 0;
-      longestWinStreak = Math.max(longestWinStreak, currentWinStreak);
-    } else {
-      currentLossStreak++;
-      currentWinStreak = 0;
-      longestLossStreak = Math.max(longestLossStreak, currentLossStreak);
-    }
-  }
-
-  return { longestWinStreak, longestLossStreak };
-}
-
-function calculateVolatility(positions: Position[]): number {
-  if (positions.length === 0) {
-    return 0;
-  }
-
-  const returns = positions
-    .filter((p) => p.profitLossPercent !== undefined)
-    .map((p) => p.profitLossPercent!);
-
-  if (returns.length === 0) {
-    return 0;
-  }
-
-  const mean = returns.reduce((sum, r) => sum + r, 0) / returns.length;
-  const variance = returns.reduce((sum, r) => sum + Math.pow(r - mean, 2), 0) / returns.length;
-  const stdDev = Math.sqrt(variance);
-
-  return stdDev;
 }
 
 function getDefaultMetrics(): WalletMetrics {
@@ -1034,9 +923,7 @@ function getDefaultMetrics(): WalletMetrics {
     worstTrade: 0,
     avgTradeSize: 0,
     totalFees: 0,
-    favoriteTokens: [],
     tradingDays: 0,
-    degenScore: 0,
     rugsSurvived: 0,
     rugsCaught: 0,
     totalRugValue: 0,
@@ -1050,5 +937,7 @@ function getDefaultMetrics(): WalletMetrics {
     longestWinStreak: 0,
     longestLossStreak: 0,
     volatilityScore: 0,
+    favoriteTokens: [],
+    degenScore: 0,
   };
 }
