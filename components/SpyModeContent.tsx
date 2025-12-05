@@ -94,7 +94,9 @@ export function SpyModeContent() {
         throw new Error(data.error || 'Error al analizar la wallet');
       }
 
-      if (data.success && data.metrics) {
+      // FIX: La API devuelve los datos directamente, no envueltos en data.metrics
+      if (data && typeof data.degenScore === 'number') {
+        const metrics = data; // La respuesta ES las métricas
         // Calcular tier basado en degenScore
         const getTier = (score: number) => {
           if (score >= 90) return 'Diamond';
@@ -105,25 +107,25 @@ export function SpyModeContent() {
         };
 
         // Guardar datos completos del análisis para usarlos al guardar
-        setAnalysisData(data.metrics);
+        setAnalysisData(metrics);
 
         setCardData({
           walletAddress: targetWallet.trim(),
-          displayName: data.metrics.displayName || undefined,
-          profileImage: data.metrics.profileImage || undefined,
-          degenScore: data.metrics.degenScore || 0,
-          tier: getTier(data.metrics.degenScore || 0),
+          displayName: metrics.displayName || undefined,
+          profileImage: metrics.profileImage || undefined,
+          degenScore: metrics.degenScore || 0,
+          tier: getTier(metrics.degenScore || 0),
           stats: {
-            winRate: data.metrics.winRate || 0,
-            totalVolume: data.metrics.totalVolume || 0,
-            profitLoss: data.metrics.profitLoss || 0,
-            totalTrades: data.metrics.totalTrades || 0,
-            avgHoldTime: data.metrics.avgHoldTime,
-            level: data.metrics.level || 1,
+            winRate: metrics.winRate || 0,
+            totalVolume: metrics.totalVolume || 0,
+            profitLoss: metrics.profitLoss || 0,
+            totalTrades: metrics.totalTrades || 0,
+            avgHoldTime: metrics.avgHoldTime,
+            level: metrics.level || 1,
           },
-          badges: data.metrics.badges || [],
-          twitter: data.metrics.twitter,
-          telegram: data.metrics.telegram,
+          badges: metrics.badges || [],
+          twitter: metrics.twitter,
+          telegram: metrics.telegram,
         });
 
         // 🎯 NUEVO: Mostrar formulario automáticamente después del análisis
@@ -131,14 +133,14 @@ export function SpyModeContent() {
 
         // Pre-llenar el formulario si ya hay datos guardados
         setProfileForm({
-          displayName: data.metrics.displayName || '',
-          twitter: data.metrics.twitter || '',
-          telegram: data.metrics.telegram || '',
-          profileImage: data.metrics.profileImage || null,
+          displayName: metrics.displayName || '',
+          twitter: metrics.twitter || '',
+          telegram: metrics.telegram || '',
+          profileImage: metrics.profileImage || null,
         });
 
-        if (data.metrics.profileImage) {
-          setImagePreview(data.metrics.profileImage);
+        if (metrics.profileImage) {
+          setImagePreview(metrics.profileImage);
         }
       }
     } catch (err: any) {
