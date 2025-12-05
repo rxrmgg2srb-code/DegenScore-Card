@@ -177,16 +177,33 @@ async function fetchAllTransactions(
   let consecutiveErrors = 0;
 
   const BATCH_SIZE = 100;
-  const DELAY_MS = 300;
+  const DELAY_MS = 200; // Reducido para mayor velocidad
   const MAX_EMPTY = 3;
   const MAX_CONSECUTIVE_ERRORS = 5;
+
+  // 🛡️ SAFETY LIMITS
+  const MAX_TRANSACTIONS = 3000; // Analizar máx 3000 txs para evitar timeout
+  const TIME_LIMIT_MS = 45000; // 45 segundos máximo de fetching
+  const startTime = Date.now();
 
   // Time limit: Only analyze last 12 months (prevents timeout on very old wallets)
   const TWELVE_MONTHS_AGO = Date.now() / 1000 - (365 * 24 * 60 * 60);
 
-  logger.info(`🔄 Fetching wallet transactions (last 12 months, no batch limit)`);
+  logger.info(`🔄 Fetching wallet transactions (last 12 months, max ${MAX_TRANSACTIONS} txs)`);
 
   while (true) {
+    // 🛡️ Safety check: Time limit
+    if (Date.now() - startTime > TIME_LIMIT_MS) {
+      logger.warn(`⚠️ Time limit reached (${TIME_LIMIT_MS}ms). Stopping fetch.`);
+      break;
+    }
+
+    // 🛡️ Safety check: Transaction count limit
+    if (allTransactions.length >= MAX_TRANSACTIONS) {
+      logger.warn(`⚠️ Transaction limit reached (${MAX_TRANSACTIONS}). Stopping fetch.`);
+      break;
+    }
+
     try {
       const batch = await getWalletTransactions(walletAddress, BATCH_SIZE, before);
 
