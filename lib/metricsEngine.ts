@@ -14,7 +14,7 @@
 
 import { ParsedTransaction, getWalletTransactions } from './services/helius';
 import { logger } from '@/lib/logger';
-import { PnLCalculator, convertTradeToTransaction, type Transaction } from './pnlCalculator';
+
 
 
 
@@ -896,8 +896,8 @@ function calculateMetrics(
     realizedPnL,
     unrealizedPnL,
     firstTradeDate,
-    longestWinStreak,
-    longestLossStreak,
+    longestWinStreak: maxWinStreak,
+    longestLossStreak: maxLossStreak,
     volatilityScore,
 
     favoriteTokens,
