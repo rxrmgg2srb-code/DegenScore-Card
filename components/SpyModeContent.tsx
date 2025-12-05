@@ -68,6 +68,14 @@ export function SpyModeContent() {
     setCardData(null);
     setAnalysisData(null);
     setSaveSuccess(false);
+    setShowProfileForm(false);
+    setProfileForm({
+      displayName: '',
+      twitter: '',
+      telegram: '',
+      profileImage: null,
+    });
+    setImagePreview(null);
 
     try {
       const response = await fetch('/api/analyze', {
@@ -117,6 +125,21 @@ export function SpyModeContent() {
           twitter: data.metrics.twitter,
           telegram: data.metrics.telegram,
         });
+
+        // 🎯 NUEVO: Mostrar formulario automáticamente después del análisis
+        setShowProfileForm(true);
+
+        // Pre-llenar el formulario si ya hay datos guardados
+        setProfileForm({
+          displayName: data.metrics.displayName || '',
+          twitter: data.metrics.twitter || '',
+          telegram: data.metrics.telegram || '',
+          profileImage: data.metrics.profileImage || null,
+        });
+
+        if (data.metrics.profileImage) {
+          setImagePreview(data.metrics.profileImage);
+        }
       }
     } catch (err: any) {
       setError(err.message || 'Error al analizar la wallet');
@@ -428,140 +451,143 @@ export function SpyModeContent() {
                     </div>
                   )}
 
-                  {/* Botón para guardar en leaderboard */}
-                  {!saveSuccess && (
+                  {/* Formulario de perfil - Se muestra automáticamente */}
+                  {!saveSuccess && showProfileForm && (
                     <div className="mt-8">
-                      {!showProfileForm ? (
-                        <button
-                          onClick={() => setShowProfileForm(true)}
-                          className="w-full bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white font-bold py-4 px-6 rounded-lg transition-all transform hover:scale-105"
-                        >
-                          💾 Guardar en Leaderboard (Gratis - Solo Admin)
-                        </button>
-                      ) : (
-                        <div className="bg-gray-800/50 backdrop-blur-lg rounded-2xl p-8 border border-green-500/20">
-                          <h4 className="text-2xl font-bold text-green-400 mb-6 text-center">
-                            📝 Datos del Influencer
-                          </h4>
+                      <div className="bg-gray-800/50 backdrop-blur-lg rounded-2xl p-8 border border-green-500/20">
+                        <h4 className="text-2xl font-bold text-green-400 mb-2 text-center">
+                          📝 Personalizar Card del Influencer
+                        </h4>
+                        <p className="text-center text-gray-400 text-sm mb-6">
+                          🎁 Gratis en modo espía - Añade los datos para crear la card perfecta
+                        </p>
 
-                          {/* Profile Image Upload */}
-                          <div className="flex flex-col items-center mb-6">
-                            <label className="text-gray-300 text-sm font-medium mb-3">
-                              Foto de Perfil
-                            </label>
-                            <div className="relative">
-                              <div className="w-32 h-32 rounded-full border-4 border-green-500/50 overflow-hidden bg-gray-800 flex items-center justify-center">
-                                {imagePreview ? (
-                                  <img
-                                    src={imagePreview}
-                                    alt="Profile preview"
-                                    className="w-full h-full object-cover"
-                                  />
-                                ) : (
-                                  <div className="text-gray-500 text-center">
-                                    <div className="text-4xl mb-2">📷</div>
-                                    <div className="text-xs">Subir</div>
-                                  </div>
-                                )}
-                              </div>
-                              <label
-                                htmlFor="spy-profile-image"
-                                className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 hover:opacity-100 transition cursor-pointer"
-                              >
-                                <span className="text-white text-sm font-bold">
-                                  {isUploadingImage ? '⏳' : '📸 Cambiar'}
-                                </span>
-                              </label>
-                              <input
-                                id="spy-profile-image"
-                                type="file"
-                                accept="image/*"
-                                onChange={handleImageUpload}
-                                disabled={isUploadingImage}
-                                className="hidden"
-                              />
-                            </div>
-                          </div>
-
-                          {/* Form Fields */}
-                          <div className="space-y-4">
-                            <div>
-                              <label className="block text-gray-300 text-sm font-medium mb-2">
-                                Nombre del Influencer *
-                              </label>
-                              <input
-                                type="text"
-                                value={profileForm.displayName}
-                                onChange={(e) =>
-                                  setProfileForm({ ...profileForm, displayName: e.target.value })
-                                }
-                                placeholder="Ej: CryptoGuru"
-                                className="w-full px-4 py-3 bg-gray-900/50 border border-green-500/30 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-green-500"
-                                required
-                              />
-                            </div>
-
-                            <div>
-                              <label className="block text-gray-300 text-sm font-medium mb-2">
-                                Twitter/X (opcional)
-                              </label>
-                              <input
-                                type="text"
-                                value={profileForm.twitter}
-                                onChange={(e) =>
-                                  setProfileForm({ ...profileForm, twitter: e.target.value })
-                                }
-                                placeholder="@username"
-                                className="w-full px-4 py-3 bg-gray-900/50 border border-green-500/30 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-green-500"
-                              />
-                            </div>
-
-                            <div>
-                              <label className="block text-gray-300 text-sm font-medium mb-2">
-                                Telegram (opcional)
-                              </label>
-                              <input
-                                type="text"
-                                value={profileForm.telegram}
-                                onChange={(e) =>
-                                  setProfileForm({ ...profileForm, telegram: e.target.value })
-                                }
-                                placeholder="@username"
-                                className="w-full px-4 py-3 bg-gray-900/50 border border-green-500/30 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-green-500"
-                              />
-                            </div>
-                          </div>
-
-                          {/* Action Buttons */}
-                          <div className="flex gap-4 mt-6">
-                            <button
-                              onClick={() => setShowProfileForm(false)}
-                              disabled={isSaving}
-                              className="flex-1 bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800 text-white font-bold py-3 px-6 rounded-lg transition"
-                            >
-                              Cancelar
-                            </button>
-                            <button
-                              onClick={handleSaveToLeaderboard}
-                              disabled={isSaving || !profileForm.displayName.trim()}
-                              className="flex-1 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 disabled:from-gray-600 disabled:to-gray-700 disabled:cursor-not-allowed text-white font-bold py-3 px-6 rounded-lg transition"
-                            >
-                              {isSaving ? (
-                                <div className="flex items-center justify-center gap-2">
-                                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                                  <span>Guardando...</span>
-                                </div>
+                        {/* Profile Image Upload */}
+                        <div className="flex flex-col items-center mb-6">
+                          <label className="text-gray-300 text-sm font-medium mb-3">
+                            Foto de Perfil
+                          </label>
+                          <div className="relative">
+                            <div className="w-32 h-32 rounded-full border-4 border-green-500/50 overflow-hidden bg-gray-800 flex items-center justify-center">
+                              {imagePreview ? (
+                                <img
+                                  src={imagePreview}
+                                  alt="Profile preview"
+                                  className="w-full h-full object-cover"
+                                />
                               ) : (
-                                '💾 Guardar Gratis'
+                                <div className="text-gray-500 text-center">
+                                  <div className="text-4xl mb-2">📷</div>
+                                  <div className="text-xs">Subir</div>
+                                </div>
                               )}
-                            </button>
+                            </div>
+                            <label
+                              htmlFor="spy-profile-image"
+                              className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 hover:opacity-100 transition cursor-pointer"
+                            >
+                              <span className="text-white text-sm font-bold">
+                                {isUploadingImage ? '⏳' : '📸 Cambiar'}
+                              </span>
+                            </label>
+                            <input
+                              id="spy-profile-image"
+                              type="file"
+                              accept="image/*"
+                              onChange={handleImageUpload}
+                              disabled={isUploadingImage}
+                              className="hidden"
+                            />
+                          </div>
+                        </div>
+
+                        {/* Form Fields */}
+                        <div className="space-y-4">
+                          <div>
+                            <label className="block text-gray-300 text-sm font-medium mb-2">
+                              Nombre del Influencer *
+                            </label>
+                            <input
+                              type="text"
+                              value={profileForm.displayName}
+                              onChange={(e) =>
+                                setProfileForm({ ...profileForm, displayName: e.target.value })
+                              }
+                              placeholder="Ej: CryptoGuru"
+                              className="w-full px-4 py-3 bg-gray-900/50 border border-green-500/30 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-green-500"
+                              required
+                            />
                           </div>
 
-                          <p className="text-xs text-gray-500 mt-4 text-center">
-                            🎁 Modo Espía: Gratis solo para admin
-                          </p>
+                          <div>
+                            <label className="block text-gray-300 text-sm font-medium mb-2">
+                              Twitter/X (opcional)
+                            </label>
+                            <input
+                              type="text"
+                              value={profileForm.twitter}
+                              onChange={(e) =>
+                                setProfileForm({ ...profileForm, twitter: e.target.value })
+                              }
+                              placeholder="@username"
+                              className="w-full px-4 py-3 bg-gray-900/50 border border-green-500/30 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-green-500"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-gray-300 text-sm font-medium mb-2">
+                              Telegram (opcional)
+                            </label>
+                            <input
+                              type="text"
+                              value={profileForm.telegram}
+                              onChange={(e) =>
+                                setProfileForm({ ...profileForm, telegram: e.target.value })
+                              }
+                              placeholder="@username"
+                              className="w-full px-4 py-3 bg-gray-900/50 border border-green-500/30 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-green-500"
+                            />
+                          </div>
                         </div>
-                      )}
+
+                        {/* Action Buttons */}
+                        <div className="flex gap-4 mt-6">
+                          <button
+                            onClick={() => {
+                              setShowProfileForm(false);
+                              setProfileForm({
+                                displayName: '',
+                                twitter: '',
+                                telegram: '',
+                                profileImage: null,
+                              });
+                              setImagePreview(null);
+                            }}
+                            disabled={isSaving}
+                            className="flex-1 bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800 text-white font-bold py-3 px-6 rounded-lg transition"
+                          >
+                            ❌ Omitir
+                          </button>
+                          <button
+                            onClick={handleSaveToLeaderboard}
+                            disabled={isSaving || !profileForm.displayName.trim()}
+                            className="flex-1 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 disabled:from-gray-600 disabled:to-gray-700 disabled:cursor-not-allowed text-white font-bold py-3 px-6 rounded-lg transition"
+                          >
+                            {isSaving ? (
+                              <div className="flex items-center justify-center gap-2">
+                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                <span>Guardando...</span>
+                              </div>
+                            ) : (
+                              '💾 Guardar Gratis'
+                            )}
+                          </button>
+                        </div>
+
+                        <p className="text-xs text-gray-500 mt-4 text-center">
+                          🎁 Modo Espía: Gratis solo para admin - Crea cards de influencers sin costo
+                        </p>
+                      </div>
                     </div>
                   )}
                 </div>
