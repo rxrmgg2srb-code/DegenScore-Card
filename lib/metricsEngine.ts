@@ -297,6 +297,145 @@ export interface WalletMetrics {
     recommendation: string;         // AI recommendation
   };
 
+  // ═══════════════════════════════════════════════════════════════════════════
+  // 🏆 ELITE LEVEL ANALYTICS (FINAL 15 IMPROVEMENTS)
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  // 1️⃣1️⃣ PSYCHOLOGICAL PATTERN ANALYSIS
+  psychologicalPatterns?: {
+    fomoScore: number;              // 0-100 tendency to FOMO
+    panicSellScore: number;         // 0-100 tendency to panic sell
+    revengeTradingScore: number;    // 0-100 revenge trading after losses
+    overconfidenceScore: number;    // 0-100 overconfidence after wins
+    emotionalControlScore: number;  // 0-100 overall emotional control
+    tiltDetected: boolean;          // Currently on tilt?
+  };
+
+  // 1️⃣2️⃣ MARKET CAP PREFERENCE
+  marketCapPreference?: {
+    microCapTrades: number;         // <$1M mcap
+    smallCapTrades: number;         // $1M-$10M
+    midCapTrades: number;           // $10M-$100M
+    largeCapTrades: number;         // >$100M
+    preferredCapRange: 'micro' | 'small' | 'mid' | 'large';
+    riskAppetiteScore: number;      // 0-100 based on cap sizes
+  };
+
+  // 1️⃣3️⃣ POSITION SIZING ANALYSIS
+  positionSizing?: {
+    avgPositionSize: number;        // Average SOL per trade
+    maxPositionSize: number;        // Largest position
+    minPositionSize: number;        // Smallest position
+    positionVariance: number;       // How much sizing varies
+    kellyCriterionScore: number;    // 0-100 optimal sizing
+    oversizingRisk: boolean;        // Takes too large positions?
+  };
+
+  // 1️⃣4️⃣ WHALE BEHAVIOR DETECTION
+  whaleBehavior?: {
+    isWhale: boolean;               // Volume > 100 SOL
+    avgImpactOnPrice: number;       // Estimated price impact %
+    movesMarkets: boolean;          // Large enough to move price
+    whaleScore: number;             // 0-100 whale status
+  };
+
+  // 1️⃣5️⃣ BOT VS HUMAN DETECTION
+  botVsHuman?: {
+    humanProbability: number;       // 0-100% likely human
+    botIndicators: string[];        // Signs of bot behavior
+    tradingSpeed: 'instant' | 'fast' | 'normal' | 'slow';
+    patternRegularity: number;      // 0-100 how regular patterns are
+  };
+
+  // 1️⃣6️⃣ RECOVERY ANALYSIS
+  recoveryPatterns?: {
+    avgRecoveryTime: number;        // Seconds to recover from loss
+    recoversQuickly: boolean;       // Good at bouncing back
+    doublesDownOnLoss: boolean;     // Increases size after loss (bad)
+    takesBreakAfterLoss: boolean;   // Pauses after loss (good)
+    recoveryScore: number;          // 0-100
+  };
+
+  // 1️⃣7️⃣ MOMENTUM VS CONTRARIAN
+  tradingApproach?: {
+    momentumScore: number;          // 0-100 follows momentum
+    contrarianScore: number;        // 0-100 goes against trend
+    breakoutTrader: boolean;        // Trades breakouts
+    dipBuyer: boolean;              // Buys dips
+    topBuyer: boolean;              // Buys tops (bad)
+    approachType: 'momentum' | 'contrarian' | 'mixed';
+  };
+
+  // 1️⃣8️⃣ PORTFOLIO CONCENTRATION
+  portfolioMetrics?: {
+    concentrationScore: number;     // 0-100 how concentrated
+    topTokenPercent: number;        // % in largest position
+    top3TokensPercent: number;      // % in top 3
+    diversificationLevel: 'concentrated' | 'balanced' | 'diversified';
+    optimalAllocation: boolean;     // Good allocation?
+  };
+
+  // 1️⃣9️⃣ TOKEN ROTATION SPEED
+  rotationMetrics?: {
+    avgHoldDuration: number;        // Average seconds holding
+    rotationSpeed: 'ultra_fast' | 'fast' | 'moderate' | 'slow' | 'hodler';
+    churnRate: number;              // % portfolio turnover per month
+    overtrading: boolean;           // Too much trading?
+  };
+
+  // 2️⃣0️⃣ LIQUIDITY AWARENESS
+  liquidityAnalysis?: {
+    avgPoolLiquidity: number;       // Avg liquidity of pools traded
+    tradesLowLiquidity: boolean;    // Trades illiquid tokens
+    slippageAwareness: number;      // 0-100 avoids high slippage
+    liquidityRisk: 'low' | 'medium' | 'high';
+  };
+
+  // 2️⃣1️⃣ TIMING PRECISION
+  timingAnalysis?: {
+    buyTimingScore: number;         // 0-100 quality of buy timing
+    sellTimingScore: number;        // 0-100 quality of sell timing
+    peakDetection: number;          // How often sells near peak
+    bottomDetection: number;        // How often buys near bottom
+    overallTimingScore: number;     // 0-100 combined
+  };
+
+  // 2️⃣2️⃣ GAS OPTIMIZATION
+  gasOptimization?: {
+    avgPriorityFee: number;         // Average priority fee used
+    overpaysGas: boolean;           // Pays too much
+    gasEfficiencyScore: number;     // 0-100
+    totalGasSpent: number;          // Total on gas/priority
+  };
+
+  // 2️⃣3️⃣ TRADE QUALITY BREAKDOWN
+  tradeQuality?: {
+    excellentTrades: number;        // >50% profit
+    goodTrades: number;             // 10-50% profit
+    breakEvenTrades: number;        // -10% to +10%
+    badTrades: number;              // -10% to -50%
+    terribleTrades: number;         // <-50%
+    qualityDistribution: string;    // Visual distribution
+  };
+
+  // 2️⃣4️⃣ LEARNING CURVE
+  learningCurve?: {
+    improvingOverTime: boolean;     // Getting better?
+    recentVsOldWinRate: number;     // Difference in win rates
+    learningScore: number;          // 0-100 improvement rate
+    plateauDetected: boolean;       // Stopped improving?
+  };
+
+  // 2️⃣5️⃣ FINAL COMPREHENSIVE SCORE
+  comprehensiveAnalysis?: {
+    overallSkillScore: number;      // 0-100 combined skill
+    strengthAreas: string[];        // What they're good at
+    weaknessAreas: string[];        // What to improve
+    traderRank: 'novice' | 'beginner' | 'intermediate' | 'advanced' | 'expert' | 'elite';
+    percentileBracket: string;      // "Top 10%", etc.
+    personalizedAdvice: string[];   // AI generated advice
+  };
+
   // The ultimate score (0-100)
   degenScore: number;
 }
@@ -1823,6 +1962,468 @@ function classifyTradingStyle(
     marketConditionFit,
     styleScore,
     recommendation
+  };
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 🏆 ELITE LEVEL ANALYTICS FUNCTIONS (FINAL 15)
+// ═══════════════════════════════════════════════════════════════════════════
+
+// 1️⃣1️⃣ PSYCHOLOGICAL PATTERNS
+function analyzePsychologicalPatterns(trades: Trade[], positions: Position[]) {
+  const closedPositions = positions.filter(p => !p.isOpen);
+
+  // FOMO detection: Buys right after someone else made big gains
+  // Simplified: rapid succession of buys after seeing green
+  const buyAfterBuy = trades.filter((t, i) =>
+    i > 0 && t.type === 'buy' && trades[i - 1].type === 'buy' &&
+    (t.timestamp - trades[i - 1].timestamp) < 300 // Within 5 min
+  ).length;
+  const fomoScore = Math.min(100, (buyAfterBuy / (trades.length || 1)) * 200);
+
+  // Panic sell: Sells immediately after small loss
+  let panicSells = 0;
+  for (let i = 1; i < closedPositions.length; i++) {
+    const prev = closedPositions[i - 1];
+    const curr = closedPositions[i];
+    if ((prev.profitLoss || 0) < 0 && curr.holdTime && curr.holdTime < 60) {
+      panicSells++;
+    }
+  }
+  const panicSellScore = Math.min(100, (panicSells / (closedPositions.length || 1)) * 200);
+
+  // Revenge trading: Bigger position after a loss
+  let revengeTrades = 0;
+  for (let i = 1; i < trades.length; i++) {
+    const prevPos = closedPositions.find(p => p.tokenMint === trades[i - 1].tokenMint);
+    if (prevPos && (prevPos.profitLoss || 0) < 0 && trades[i].solAmount > trades[i - 1].solAmount * 1.5) {
+      revengeTrades++;
+    }
+  }
+  const revengeTradingScore = Math.min(100, (revengeTrades / (trades.length || 1)) * 200);
+
+  // Overconfidence: Bigger position after wins
+  let overconfidentTrades = 0;
+  for (let i = 1; i < trades.length; i++) {
+    const prevPos = closedPositions.find(p => p.tokenMint === trades[i - 1].tokenMint);
+    if (prevPos && (prevPos.profitLoss || 0) > 0 && trades[i].solAmount > trades[i - 1].solAmount * 2) {
+      overconfidentTrades++;
+    }
+  }
+  const overconfidenceScore = Math.min(100, (overconfidentTrades / (trades.length || 1)) * 150);
+
+  // Emotional control is inverse of other scores
+  const emotionalControlScore = Math.max(0, 100 - (fomoScore + panicSellScore + revengeTradingScore + overconfidenceScore) / 4);
+
+  // Tilt detected if multiple negative indicators
+  const tiltDetected = fomoScore > 50 && revengeTradingScore > 50;
+
+  return {
+    fomoScore,
+    panicSellScore,
+    revengeTradingScore,
+    overconfidenceScore,
+    emotionalControlScore,
+    tiltDetected
+  };
+}
+
+// 1️⃣3️⃣ POSITION SIZING ANALYSIS
+function analyzePositionSizing(trades: Trade[], totalVolume: number, winRate: number) {
+  const sizes = trades.map(t => t.solAmount);
+
+  if (sizes.length === 0) {
+    return {
+      avgPositionSize: 0,
+      maxPositionSize: 0,
+      minPositionSize: 0,
+      positionVariance: 0,
+      kellyCriterionScore: 50,
+      oversizingRisk: false
+    };
+  }
+
+  const avgPositionSize = totalVolume / trades.length;
+  const maxPositionSize = Math.max(...sizes);
+  const minPositionSize = Math.min(...sizes);
+
+  // Variance
+  const variance = sizes.reduce((sum, s) => sum + Math.pow(s - avgPositionSize, 2), 0) / sizes.length;
+  const positionVariance = Math.sqrt(variance);
+
+  // Kelly Criterion simplified: optimal bet = (winRate * avgWin - (1-winRate) * avgLoss) / avgWin
+  // Score how close they are to optimal
+  const kellyCriterionScore = winRate > 50 ? Math.min(100, winRate) : Math.max(0, 100 - (50 - winRate) * 2);
+
+  // Oversizing if max is more than 5x average
+  const oversizingRisk = maxPositionSize > avgPositionSize * 5;
+
+  return {
+    avgPositionSize,
+    maxPositionSize,
+    minPositionSize,
+    positionVariance,
+    kellyCriterionScore,
+    oversizingRisk
+  };
+}
+
+// 1️⃣4️⃣ WHALE BEHAVIOR
+function analyzeWhaleBehavior(totalVolume: number, trades: Trade[]) {
+  const isWhale = totalVolume > 100;
+  const avgTradeSize = totalVolume / (trades.length || 1);
+
+  // Estimate price impact (larger trades = more impact)
+  const avgImpactOnPrice = Math.min(10, avgTradeSize * 0.1);
+  const movesMarkets = avgTradeSize > 10;
+
+  // Whale score based on volume
+  let whaleScore = 0;
+  if (totalVolume > 1000) whaleScore = 100;
+  else if (totalVolume > 500) whaleScore = 80;
+  else if (totalVolume > 100) whaleScore = 60;
+  else if (totalVolume > 50) whaleScore = 40;
+  else if (totalVolume > 10) whaleScore = 20;
+
+  return { isWhale, avgImpactOnPrice, movesMarkets, whaleScore };
+}
+
+// 1️⃣5️⃣ BOT VS HUMAN DETECTION
+function detectBotVsHuman(trades: Trade[]) {
+  if (trades.length < 5) {
+    return {
+      humanProbability: 80,
+      botIndicators: [],
+      tradingSpeed: 'normal' as const,
+      patternRegularity: 50
+    };
+  }
+
+  const indicators: string[] = [];
+
+  // Check timing patterns
+  const intervals = trades.slice(1).map((t, i) => t.timestamp - trades[i].timestamp);
+  const avgInterval = intervals.reduce((a, b) => a + b, 0) / intervals.length;
+
+  // Very regular intervals = likely bot
+  const intervalVariance = intervals.reduce((sum, i) => sum + Math.pow(i - avgInterval, 2), 0) / intervals.length;
+  const patternRegularity = Math.min(100, 100 - Math.sqrt(intervalVariance) / 10);
+
+  if (patternRegularity > 80) indicators.push('Very regular trading intervals');
+
+  // Trading speed
+  let tradingSpeed: 'instant' | 'fast' | 'normal' | 'slow' = 'normal';
+  if (avgInterval < 10) { tradingSpeed = 'instant'; indicators.push('Instant trade execution'); }
+  else if (avgInterval < 60) tradingSpeed = 'fast';
+  else if (avgInterval > 3600) tradingSpeed = 'slow';
+
+  // 24/7 trading
+  const hours = new Set(trades.map(t => new Date(t.timestamp * 1000).getHours()));
+  if (hours.size > 20) indicators.push('Trades at all hours');
+
+  // Human probability
+  let humanProbability = 80;
+  humanProbability -= indicators.length * 15;
+  humanProbability = Math.max(10, Math.min(100, humanProbability));
+
+  return { humanProbability, botIndicators: indicators, tradingSpeed, patternRegularity };
+}
+
+// 1️⃣6️⃣ RECOVERY PATTERNS
+function analyzeRecoveryPatterns(trades: Trade[], positions: Position[]) {
+  const closedPositions = positions.filter(p => !p.isOpen);
+  const sorted = closedPositions.sort((a, b) => (a.exitTime || 0) - (b.exitTime || 0));
+
+  let recoveryTimes: number[] = [];
+  let doublesDown = 0;
+  let takesBreak = 0;
+
+  for (let i = 1; i < sorted.length; i++) {
+    const prev = sorted[i - 1];
+    const curr = sorted[i];
+
+    if ((prev.profitLoss || 0) < 0 && (curr.profitLoss || 0) > 0) {
+      recoveryTimes.push((curr.exitTime || 0) - (prev.exitTime || 0));
+    }
+
+    // Check if position size increased after loss
+    if ((prev.profitLoss || 0) < 0 && curr.buyAmount > prev.buyAmount * 1.5) {
+      doublesDown++;
+    }
+
+    // Check if took a break (>1 hour between trades)
+    if ((prev.profitLoss || 0) < 0 && ((curr.entryTime || 0) - (prev.exitTime || 0)) > 3600) {
+      takesBreak++;
+    }
+  }
+
+  const losses = sorted.filter(p => (p.profitLoss || 0) < 0).length;
+  const avgRecoveryTime = recoveryTimes.length > 0
+    ? recoveryTimes.reduce((a, b) => a + b, 0) / recoveryTimes.length
+    : 0;
+
+  const recoversQuickly = avgRecoveryTime < 3600; // Within 1 hour
+  const doublesDownOnLoss = losses > 0 ? doublesDown / losses > 0.3 : false;
+  const takesBreakAfterLoss = losses > 0 ? takesBreak / losses > 0.3 : true;
+
+  // Recovery score
+  let recoveryScore = 50;
+  if (recoversQuickly) recoveryScore += 20;
+  if (takesBreakAfterLoss) recoveryScore += 20;
+  if (!doublesDownOnLoss) recoveryScore += 10;
+
+  return {
+    avgRecoveryTime,
+    recoversQuickly,
+    doublesDownOnLoss,
+    takesBreakAfterLoss,
+    recoveryScore: Math.min(100, recoveryScore)
+  };
+}
+
+// 1️⃣7️⃣ TRADING APPROACH
+function analyzeTradingApproach(positions: Position[]) {
+  const closedPositions = positions.filter(p => !p.isOpen);
+
+  // Check profit patterns to infer approach
+  let breakoutWins = 0;
+  let dipBuys = 0;
+  let topBuys = 0;
+
+  for (const pos of closedPositions) {
+    const pnlPercent = pos.profitLossPercent || 0;
+
+    // Big wins suggest caught a breakout
+    if (pnlPercent > 100) breakoutWins++;
+
+    // Small consistent wins suggest dip buying
+    if (pnlPercent > 0 && pnlPercent < 30) dipBuys++;
+
+    // Quick losses suggest bought tops
+    if (pnlPercent < -30 && (pos.holdTime || 0) < 3600) topBuys++;
+  }
+
+  const total = closedPositions.length || 1;
+  const momentumScore = Math.min(100, (breakoutWins / total) * 200);
+  const contrarianScore = Math.min(100, (dipBuys / total) * 150);
+
+  const breakoutTrader = breakoutWins / total > 0.2;
+  const dipBuyer = dipBuys / total > 0.3;
+  const topBuyer = topBuys / total > 0.2;
+
+  const approachType: 'momentum' | 'contrarian' | 'mixed' =
+    momentumScore > contrarianScore + 20 ? 'momentum' :
+      contrarianScore > momentumScore + 20 ? 'contrarian' : 'mixed';
+
+  return { momentumScore, contrarianScore, breakoutTrader, dipBuyer, topBuyer, approachType };
+}
+
+// 1️⃣8️⃣ PORTFOLIO METRICS
+function analyzePortfolioMetrics(trades: Trade[], totalVolume: number) {
+  const tokenVolumes = new Map<string, number>();
+
+  for (const trade of trades) {
+    tokenVolumes.set(trade.tokenMint, (tokenVolumes.get(trade.tokenMint) || 0) + trade.solAmount);
+  }
+
+  const volumes = [...tokenVolumes.values()].sort((a, b) => b - a);
+  const topTokenPercent = volumes[0] ? (volumes[0] / totalVolume) * 100 : 0;
+  const top3TokensPercent = volumes.slice(0, 3).reduce((a, b) => a + b, 0) / totalVolume * 100;
+
+  // Herfindahl index for concentration
+  let herfindahl = 0;
+  for (const vol of volumes) {
+    const share = vol / totalVolume;
+    herfindahl += share * share;
+  }
+  const concentrationScore = herfindahl * 100;
+
+  const diversificationLevel: 'concentrated' | 'balanced' | 'diversified' =
+    concentrationScore > 40 ? 'concentrated' :
+      concentrationScore > 20 ? 'balanced' : 'diversified';
+
+  const optimalAllocation = concentrationScore < 30 && concentrationScore > 10;
+
+  return { concentrationScore, topTokenPercent, top3TokensPercent, diversificationLevel, optimalAllocation };
+}
+
+// 1️⃣9️⃣ ROTATION METRICS
+function analyzeRotationSpeed(positions: Position[], trades: Trade[]) {
+  const holdTimes = positions.filter(p => !p.isOpen).map(p => p.holdTime || 0);
+  const avgHoldDuration = holdTimes.length > 0
+    ? holdTimes.reduce((a, b) => a + b, 0) / holdTimes.length
+    : 0;
+
+  let rotationSpeed: 'ultra_fast' | 'fast' | 'moderate' | 'slow' | 'hodler' = 'moderate';
+  if (avgHoldDuration < 300) rotationSpeed = 'ultra_fast';
+  else if (avgHoldDuration < 3600) rotationSpeed = 'fast';
+  else if (avgHoldDuration < 86400) rotationSpeed = 'moderate';
+  else if (avgHoldDuration < 604800) rotationSpeed = 'slow';
+  else rotationSpeed = 'hodler';
+
+  // Churn rate (simplified)
+  const uniqueTokens = new Set(trades.map(t => t.tokenMint)).size;
+  const churnRate = Math.min(100, (trades.length / (uniqueTokens || 1)) * 10);
+
+  const overtrading = rotationSpeed === 'ultra_fast' && trades.length > 100;
+
+  return { avgHoldDuration, rotationSpeed, churnRate, overtrading };
+}
+
+// 2️⃣2️⃣ GAS OPTIMIZATION
+function analyzeGasOptimization(transactions: ParsedTransaction[]) {
+  const fees = transactions.map(tx => tx.fee / 1e9);
+  const totalGasSpent = fees.reduce((a, b) => a + b, 0);
+  const avgPriorityFee = fees.length > 0 ? totalGasSpent / fees.length : 0;
+
+  // Average Solana tx fee is ~0.000005 SOL, priority can add up to 0.01+
+  const overpaysGas = avgPriorityFee > 0.001;
+  const gasEfficiencyScore = overpaysGas ? Math.max(0, 100 - avgPriorityFee * 10000) : 90;
+
+  return { avgPriorityFee, overpaysGas, gasEfficiencyScore, totalGasSpent };
+}
+
+// 2️⃣3️⃣ TRADE QUALITY BREAKDOWN
+function analyzeTradeQuality(positions: Position[]) {
+  const closedPositions = positions.filter(p => !p.isOpen);
+
+  let excellent = 0, good = 0, breakEven = 0, bad = 0, terrible = 0;
+
+  for (const pos of closedPositions) {
+    const pnl = pos.profitLossPercent || 0;
+    if (pnl > 50) excellent++;
+    else if (pnl > 10) good++;
+    else if (pnl > -10) breakEven++;
+    else if (pnl > -50) bad++;
+    else terrible++;
+  }
+
+  const total = closedPositions.length || 1;
+  const distribution = `🟢${Math.round(excellent / total * 100)}% 🟡${Math.round((good + breakEven) / total * 100)}% 🔴${Math.round((bad + terrible) / total * 100)}%`;
+
+  return {
+    excellentTrades: excellent,
+    goodTrades: good,
+    breakEvenTrades: breakEven,
+    badTrades: bad,
+    terribleTrades: terrible,
+    qualityDistribution: distribution
+  };
+}
+
+// 2️⃣4️⃣ LEARNING CURVE
+function analyzeLearningCurve(positions: Position[]) {
+  const closedPositions = positions.filter(p => !p.isOpen)
+    .sort((a, b) => (a.exitTime || 0) - (b.exitTime || 0));
+
+  if (closedPositions.length < 10) {
+    return { improvingOverTime: false, recentVsOldWinRate: 0, learningScore: 50, plateauDetected: false };
+  }
+
+  const mid = Math.floor(closedPositions.length / 2);
+  const oldPositions = closedPositions.slice(0, mid);
+  const recentPositions = closedPositions.slice(mid);
+
+  const oldWins = oldPositions.filter(p => (p.profitLoss || 0) > 0).length;
+  const recentWins = recentPositions.filter(p => (p.profitLoss || 0) > 0).length;
+
+  const oldWinRate = (oldWins / oldPositions.length) * 100;
+  const recentWinRate = (recentWins / recentPositions.length) * 100;
+
+  const recentVsOldWinRate = recentWinRate - oldWinRate;
+  const improvingOverTime = recentVsOldWinRate > 5;
+  const plateauDetected = Math.abs(recentVsOldWinRate) < 2;
+
+  // Learning score
+  let learningScore = 50;
+  if (improvingOverTime) learningScore = 50 + recentVsOldWinRate;
+  else if (recentVsOldWinRate < 0) learningScore = 50 + recentVsOldWinRate;
+
+  return {
+    improvingOverTime,
+    recentVsOldWinRate,
+    learningScore: Math.min(100, Math.max(0, learningScore)),
+    plateauDetected
+  };
+}
+
+// 2️⃣5️⃣ COMPREHENSIVE ANALYSIS
+function generateComprehensiveAnalysis(
+  winRate: number,
+  profitFactor: number,
+  emotionalControlScore: number,
+  consistencyScore: number,
+  recoveryScore: number
+) {
+  // Overall skill score
+  const overallSkillScore = Math.round(
+    (winRate * 0.3) +
+    (profitFactor * 10 * 0.2) +
+    (emotionalControlScore * 0.2) +
+    (consistencyScore * 0.15) +
+    (recoveryScore * 0.15)
+  );
+
+  // Identify strengths
+  const strengthAreas: string[] = [];
+  if (winRate > 55) strengthAreas.push('High win rate');
+  if (profitFactor > 1.5) strengthAreas.push('Good risk/reward');
+  if (emotionalControlScore > 70) strengthAreas.push('Emotional discipline');
+  if (consistencyScore > 70) strengthAreas.push('Consistent performance');
+
+  // Identify weaknesses
+  const weaknessAreas: string[] = [];
+  if (winRate < 45) weaknessAreas.push('Low win rate - improve entry timing');
+  if (profitFactor < 1) weaknessAreas.push('Negative expectancy - cut losses faster');
+  if (emotionalControlScore < 50) weaknessAreas.push('Emotional trading - take breaks');
+  if (consistencyScore < 50) weaknessAreas.push('Inconsistent results - develop a system');
+
+  // Trader rank
+  let traderRank: 'novice' | 'beginner' | 'intermediate' | 'advanced' | 'expert' | 'elite' = 'intermediate';
+  if (overallSkillScore >= 90) traderRank = 'elite';
+  else if (overallSkillScore >= 80) traderRank = 'expert';
+  else if (overallSkillScore >= 65) traderRank = 'advanced';
+  else if (overallSkillScore >= 50) traderRank = 'intermediate';
+  else if (overallSkillScore >= 35) traderRank = 'beginner';
+  else traderRank = 'novice';
+
+  // Percentile bracket
+  let percentileBracket = 'Top 50%';
+  if (overallSkillScore >= 90) percentileBracket = 'Top 1%';
+  else if (overallSkillScore >= 80) percentileBracket = 'Top 5%';
+  else if (overallSkillScore >= 70) percentileBracket = 'Top 10%';
+  else if (overallSkillScore >= 60) percentileBracket = 'Top 25%';
+
+  // Personalized advice
+  const personalizedAdvice: string[] = [];
+
+  if (winRate < 50) {
+    personalizedAdvice.push('📊 Focus on improving entry criteria - wait for better setups');
+  }
+  if (emotionalControlScore < 60) {
+    personalizedAdvice.push('🧘 Take a 15-minute break after every 3 losses');
+  }
+  if (profitFactor < 1.5) {
+    personalizedAdvice.push('📈 Let winners run longer - use trailing stops');
+  }
+  if (consistencyScore < 60) {
+    personalizedAdvice.push('📝 Journal every trade to identify patterns');
+  }
+  if (strengthAreas.length > 2) {
+    personalizedAdvice.push('✅ You have solid fundamentals - focus on scaling');
+  }
+
+  if (personalizedAdvice.length === 0) {
+    personalizedAdvice.push('🎯 Maintain your current strategy - it\'s working well');
+  }
+
+  return {
+    overallSkillScore,
+    strengthAreas,
+    weaknessAreas,
+    traderRank,
+    percentileBracket,
+    personalizedAdvice
   };
 }
 
