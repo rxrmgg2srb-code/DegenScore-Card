@@ -1648,7 +1648,6 @@ function analyzeTimeframes(trades: Trade[], positions: Position[]) {
 
 // 2️⃣ ALPHA GENERATION (vs SOL HODL)
 function calculateAlphaMetrics(
-  trades: Trade[],
   profitLoss: number,
   totalVolume: number
 ) {
@@ -2531,7 +2530,7 @@ async function calculateMetrics(
   const timeframeAnalysis = analyzeTimeframes(trades, positions);
 
   // 2️⃣ Alpha vs SOL hodl
-  const alphaMetrics = calculateAlphaMetrics(trades, profitLoss, totalVolume);
+  const alphaMetrics = calculateAlphaMetrics(profitLoss, totalVolume);
 
   // 3️⃣ Advanced risk metrics
   const riskMetrics = calculateAdvancedRiskMetrics(positions, advancedPerformance.maxDrawdown);
