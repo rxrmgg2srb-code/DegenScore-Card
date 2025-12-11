@@ -45,11 +45,25 @@ export interface Position {
 export interface Trade {
   timestamp: number;
   tokenMint: string;
+  tokenSymbol?: string;   // 🆕 Token symbol if available
   type: 'buy' | 'sell';
   solAmount: number;
   tokenAmount: number;
   pricePerToken: number;
+  dexSource?: string;     // 🆕 Which DEX (Raydium, Orca, Jupiter, etc.)
+  signature?: string;     // 🆕 Transaction signature for verification
 }
+
+// 🆕 DEX Fee rates (accurate for each DEX)
+const DEX_FEE_RATES: Record<string, number> = {
+  'RAYDIUM': 0.0025,      // 0.25%
+  'ORCA': 0.003,          // 0.30%
+  'JUPITER': 0.002,       // 0.20% (aggregator)
+  'METEORA': 0.003,       // 0.30%
+  'PUMP.FUN': 0.01,       // 1.00%
+  'MOONSHOT': 0.02,       // 2.00%
+  'UNKNOWN': 0.0025,      // Default 0.25%
+};
 
 export interface WalletMetrics {
   // Basic metrics
@@ -129,6 +143,23 @@ export interface WalletMetrics {
     amount: number;
     timestamp: number;
   }>;
+
+  // 🆕 USD P&L (for display purposes)
+  solPriceUSD?: number;          // SOL price at calculation time
+  profitLossUSD?: number;        // P&L in USD
+  totalVolumeUSD?: number;       // Volume in USD
+
+  // 🆕 DEX Statistics
+  dexBreakdown?: Record<string, {
+    trades: number;
+    volume: number;
+    fees: number;
+  }>;
+
+  // 🆕 Data Quality Metrics
+  failedTransactions?: number;   // Transactions that failed
+  dataCompleteness?: number;     // 0-100% of how complete the data is
+  analysisTimeMs?: number;       // How long analysis took
 
   // The ultimate score (0-100)
   degenScore: number;
@@ -348,6 +379,42 @@ async function fetchAllTransactions(
   logger.info(`📊 Fetch complete: ${allTransactions.length} total (${swapCount} SWAPs + ${regularCount} regular)`);
 
   return allTransactions.sort((a, b) => a.timestamp - b.timestamp);
+}
+
+// ============================================================================
+// 🆕 DEX SOURCE DETECTION
+// ============================================================================
+
+/**
+ * Detect which DEX was used for a transaction
+ * This allows accurate fee calculation per DEX
+ */
+function detectDexSource(tx: ParsedTransaction): string {
+  // Check tx.source first (most reliable when available)
+  const source = (tx.source || '').toUpperCase();
+
+  // Known DEX sources
+  if (source.includes('RAYDIUM')) return 'RAYDIUM';
+  if (source.includes('ORCA')) return 'ORCA';
+  if (source.includes('JUPITER')) return 'JUPITER';
+  if (source.includes('METEORA')) return 'METEORA';
+  if (source.includes('PUMP')) return 'PUMP.FUN';
+  if (source.includes('MOONSHOT')) return 'MOONSHOT';
+  if (source.includes('LIFINITY')) return 'LIFINITY';
+  if (source.includes('PHOENIX')) return 'PHOENIX';
+  if (source.includes('OPENBOOK')) return 'OPENBOOK';
+
+  // Check type for additional hints
+  const type = (tx.type || '').toUpperCase();
+  if (type.includes('SWAP')) {
+    // If it's a swap but source unknown, likely Jupiter aggregated
+    return 'JUPITER';
+  }
+
+  // Check account keys for known DEX program IDs
+  // (Would need to parse instructions for more accuracy)
+
+  return 'UNKNOWN';
 }
 
 // ============================================================================
@@ -615,6 +682,9 @@ function extractTrades(transactions: ParsedTransaction[], walletAddress: string)
     }
 
     // ✅ TRADE VÁLIDO - Agregar a la lista
+    // 🆕 Detect DEX source for accurate fee calculation
+    const dexSource = detectDexSource(tx);
+
     trades.push({
       timestamp: tx.timestamp,
       tokenMint: primaryMint,
@@ -622,6 +692,8 @@ function extractTrades(transactions: ParsedTransaction[], walletAddress: string)
       solAmount,
       tokenAmount,
       pricePerToken,
+      dexSource,               // 🆕 Which DEX was used
+      signature: tx.signature, // 🆕 For verification
     });
   } // End of transaction loop
 
@@ -790,10 +862,13 @@ function calculateFeeBreakdown(
   // Total trading volume
   const totalVolume = trades.reduce((sum, t) => sum + t.solAmount, 0);
 
-  // DEX fees estimation (typical 0.25% for Raydium, 0.3% for Orca)
-  // We estimate based on the DEX used (could be improved with actual log parsing)
-  const avgDexFeeRate = 0.0025; // 0.25% average
-  const dexFees = totalVolume * avgDexFeeRate;
+  // 🆕 DEX-specific fees - use actual DEX rates
+  let dexFees = 0;
+  for (const trade of trades) {
+    const dex = trade.dexSource?.toUpperCase() || 'UNKNOWN';
+    const feeRate = DEX_FEE_RATES[dex] ?? 0.0025; // Default 0.25%
+    dexFees += trade.solAmount * feeRate;
+  }
 
   // Priority fees - extract from compute units if available
   // For now, we estimate based on typical priority fees (0.00001-0.001 SOL per tx)
@@ -984,6 +1059,88 @@ function detectAirdrops(
 }
 
 // ============================================================================
+// 🆕 SOL PRICE IN USD
+// ============================================================================
+
+/**
+ * Get current SOL price in USD for P&L display
+ */
+async function getSolPriceUSD(): Promise<number> {
+  try {
+    const response = await fetch('https://price.jup.ag/v4/price?ids=So11111111111111111111111111111111111111112', {
+      signal: AbortSignal.timeout(3000),
+    });
+
+    if (!response.ok) {
+      return 200; // Fallback
+    }
+
+    const data = await response.json();
+    const price = data.data?.['So11111111111111111111111111111111111111112']?.price;
+
+    return price || 200;
+  } catch (error) {
+    logger.warn('Failed to fetch SOL price, using fallback', { error: String(error) });
+    return 200; // Reasonable fallback
+  }
+}
+
+// ============================================================================
+// 🆕 DEX BREAKDOWN STATISTICS
+// ============================================================================
+
+/**
+ * Calculate per-DEX statistics
+ */
+function calculateDexBreakdown(trades: Trade[]): Record<string, { trades: number; volume: number; fees: number }> {
+  const breakdown: Record<string, { trades: number; volume: number; fees: number }> = {};
+
+  for (const trade of trades) {
+    const dex = trade.dexSource || 'UNKNOWN';
+
+    if (!breakdown[dex]) {
+      breakdown[dex] = { trades: 0, volume: 0, fees: 0 };
+    }
+
+    const feeRate = DEX_FEE_RATES[dex.toUpperCase()] ?? 0.0025;
+
+    breakdown[dex].trades += 1;
+    breakdown[dex].volume += trade.solAmount;
+    breakdown[dex].fees += trade.solAmount * feeRate;
+  }
+
+  return breakdown;
+}
+
+// ============================================================================
+// 🆕 DATA QUALITY METRICS
+// ============================================================================
+
+/**
+ * Calculate how complete our data is
+ */
+function calculateDataCompleteness(
+  transactions: ParsedTransaction[],
+  trades: Trade[]
+): { completeness: number; failedTx: number } {
+  // Count failed transactions (fee=0 often indicates failed tx)
+  const failedTx = transactions.filter(tx => (tx as any).transactionError || tx.fee === 0).length;
+
+  // Calculate extraction rate as proxy for completeness
+  const swapTx = transactions.filter(tx =>
+    tx.type?.toUpperCase().includes('SWAP') ||
+    tx.source?.toUpperCase().includes('DEX') ||
+    tx.source?.toUpperCase().includes('JUPITER') ||
+    tx.source?.toUpperCase().includes('RAYDIUM')
+  ).length;
+
+  const extractionRate = swapTx > 0 ? (trades.length / swapTx) * 100 : 0;
+  const completeness = Math.min(100, Math.max(0, extractionRate));
+
+  return { completeness, failedTx };
+}
+
+// ============================================================================
 // METRICS CALCULATION
 // ============================================================================
 
@@ -1061,6 +1218,15 @@ async function calculateMetrics(
   // Note: We need walletAddress for this, so we extract it from a transaction
   const walletAddress = allTransactions[0]?.accountData?.[0]?.account || '';
   const airdropInfo = walletAddress ? detectAirdrops(allTransactions, walletAddress) : { count: 0, estimatedValue: 0, tokens: [] };
+
+  // 🆕 NEW: Get SOL price for USD calculations
+  const solPriceUSD = await getSolPriceUSD();
+
+  // 🆕 NEW: Calculate per-DEX statistics
+  const dexBreakdown = calculateDexBreakdown(trades);
+
+  // 🆕 NEW: Calculate data quality metrics
+  const { completeness: dataCompleteness, failedTx: failedTransactions } = calculateDataCompleteness(allTransactions, trades);
 
   const profitLoss = realizedPnL + unrealizedPnL;
 
@@ -1276,6 +1442,18 @@ async function calculateMetrics(
     airdropsReceived: airdropInfo.count,
     airdropValue: airdropInfo.estimatedValue,
     airdropTokens: airdropInfo.tokens,
+
+    // 🆕 USD P&L
+    solPriceUSD,
+    profitLossUSD: profitLoss * solPriceUSD,
+    totalVolumeUSD: totalVolume * solPriceUSD,
+
+    // 🆕 DEX Statistics
+    dexBreakdown,
+
+    // 🆕 Data Quality Metrics
+    failedTransactions,
+    dataCompleteness,
   };
 }
 
