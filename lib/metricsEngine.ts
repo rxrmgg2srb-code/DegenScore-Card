@@ -2826,6 +2826,52 @@ async function calculateMetrics(
 
     // 🔟 Trading style classification
     tradingStyle: classifyTradingStyle(tradingPatterns, riskMetrics, consistencyMetrics, winRate),
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // 🏆 ELITE LEVEL ANALYTICS (FINAL 15)
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    // 1️⃣1️⃣ Psychological patterns
+    psychologicalPatterns: analyzePsychologicalPatterns(trades, positions),
+
+    // 1️⃣3️⃣ Position sizing
+    positionSizing: analyzePositionSizing(trades, totalVolume, winRate),
+
+    // 1️⃣4️⃣ Whale behavior
+    whaleBehavior: analyzeWhaleBehavior(totalVolume, trades),
+
+    // 1️⃣5️⃣ Bot vs Human
+    botVsHuman: detectBotVsHuman(trades),
+
+    // 1️⃣6️⃣ Recovery patterns
+    recoveryPatterns: analyzeRecoveryPatterns(trades, positions),
+
+    // 1️⃣7️⃣ Trading approach
+    tradingApproach: analyzeTradingApproach(positions),
+
+    // 1️⃣8️⃣ Portfolio metrics
+    portfolioMetrics: analyzePortfolioMetrics(trades, totalVolume),
+
+    // 1️⃣9️⃣ Rotation metrics
+    rotationMetrics: analyzeRotationSpeed(positions, trades),
+
+    // 2️⃣2️⃣ Gas optimization
+    gasOptimization: analyzeGasOptimization(allTransactions),
+
+    // 2️⃣3️⃣ Trade quality
+    tradeQuality: analyzeTradeQuality(positions),
+
+    // 2️⃣4️⃣ Learning curve
+    learningCurve: analyzeLearningCurve(positions),
+
+    // 2️⃣5️⃣ Comprehensive analysis (FINAL)
+    comprehensiveAnalysis: generateComprehensiveAnalysis(
+      winRate,
+      advancedPerformance.profitFactor,
+      analyzePsychologicalPatterns(trades, positions).emotionalControlScore,
+      consistencyMetrics.consistencyScore,
+      analyzeRecoveryPatterns(trades, positions).recoveryScore
+    ),
   };
 }
 
