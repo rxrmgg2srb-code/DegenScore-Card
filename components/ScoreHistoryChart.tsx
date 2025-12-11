@@ -7,9 +7,6 @@ import {
   ResponsiveContainer,
   Area,
   AreaChart,
-  Line,
-  ComposedChart,
-  Bar,
 } from 'recharts';
 import { logger } from '../lib/logger';
 
@@ -252,8 +249,8 @@ export default function ScoreHistoryChart({
                 key={type.value}
                 onClick={() => setSelectedChart(type.value)}
                 className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${selectedChart === type.value
-                    ? 'bg-purple-600 text-white shadow-lg'
-                    : 'text-gray-400 hover:text-white hover:bg-gray-700/50'
+                  ? 'bg-purple-600 text-white shadow-lg'
+                  : 'text-gray-400 hover:text-white hover:bg-gray-700/50'
                   }`}
               >
                 {type.label}
@@ -268,8 +265,8 @@ export default function ScoreHistoryChart({
                 key={period.days}
                 onClick={() => setSelectedPeriod(period.days)}
                 className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${selectedPeriod === period.days
-                    ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg'
-                    : 'text-gray-400 hover:text-white hover:bg-gray-700/50'
+                  ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg'
+                  : 'text-gray-400 hover:text-white hover:bg-gray-700/50'
                   }`}
               >
                 {period.label}
