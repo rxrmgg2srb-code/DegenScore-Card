@@ -37,7 +37,7 @@ export const Header: React.FC<HeaderProps> = ({ connected = false, username = ''
           </Link>
 
           {/* Navigation */}
-          <nav className="hidden md:flex items-center gap-6">
+          <nav className="hidden md:flex items-center gap-4">
             <Link href="/" className="text-gray-300 hover:text-white transition-colors">
               {t('nav.home')}
             </Link>
@@ -49,6 +49,12 @@ export const Header: React.FC<HeaderProps> = ({ connected = false, username = ''
               className="text-blue-400 hover:text-blue-300 transition-colors flex items-center gap-1 font-semibold"
             >
               🐋 Whale Radar
+            </Link>
+            <Link
+              href="/challenges"
+              className="text-orange-400 hover:text-orange-300 transition-colors flex items-center gap-1 font-semibold"
+            >
+              ⚔️ Challenges
             </Link>
             <Link
               href="/super-token-scorer"
@@ -68,11 +74,11 @@ export const Header: React.FC<HeaderProps> = ({ connected = false, username = ''
               href="/documentation"
               className="text-gray-300 hover:text-white transition-colors"
             >
-              {t('nav.documentation')}
+              📚 Docs
             </Link>
           </nav>
 
-          {/* Right side: Language selector + Wallet */}
+          {/* Right side: Notifications + Language selector + Wallet */}
           <div className="flex items-center gap-3">
             <LanguageSelector />
             {connected ? (
