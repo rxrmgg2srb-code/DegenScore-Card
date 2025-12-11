@@ -15,9 +15,8 @@ export function NavigationButtons() {
     <div className="flex flex-wrap gap-3 justify-center">
       <Link href="/">
         <button
-          className={`px-4 py-2 rounded-lg font-medium transition ${
-            isActive('/') ? 'bg-purple-600 text-white' : 'bg-gray-700 hover:bg-gray-600 text-white'
-          }`}
+          className={`px-4 py-2 rounded-lg font-medium transition ${isActive('/') ? 'bg-purple-600 text-white' : 'bg-gray-700 hover:bg-gray-600 text-white'
+            }`}
         >
           🏠 Home
         </button>
@@ -51,11 +50,10 @@ export function NavigationButtons() {
 
       <Link href="/compare">
         <button
-          className={`px-4 py-2 rounded-lg font-medium transition ${
-            isActive('/compare')
+          className={`px-4 py-2 rounded-lg font-medium transition ${isActive('/compare')
               ? 'bg-blue-600 text-white'
               : 'bg-blue-700 hover:bg-blue-600 text-white'
-          }`}
+            }`}
         >
           ⚔️ Compare
         </button>
@@ -63,23 +61,32 @@ export function NavigationButtons() {
 
       <Link href="/documentation">
         <button
-          className={`px-4 py-2 rounded-lg font-medium transition ${
-            isActive('/documentation')
+          className={`px-4 py-2 rounded-lg font-medium transition ${isActive('/documentation')
               ? 'bg-gray-600 text-white'
               : 'bg-gray-700 hover:bg-gray-600 text-white'
-          }`}
+            }`}
         >
           📚 Docs
         </button>
       </Link>
 
+      <Link href="/whale-radar">
+        <button
+          className={`px-6 py-3 rounded-lg font-bold transition hover:scale-105 shadow-lg ${isActive('/whale-radar')
+              ? 'bg-gradient-to-r from-blue-400 to-cyan-400 text-white shadow-blue-500/50'
+              : 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white hover:shadow-blue-500/50'
+            }`}
+        >
+          🐋 Whale Radar
+        </button>
+      </Link>
+
       <Link href="/leaderboard">
         <button
-          className={`px-6 py-3 rounded-lg font-bold transition hover:scale-105 shadow-lg ${
-            isActive('/leaderboard')
+          className={`px-6 py-3 rounded-lg font-bold transition hover:scale-105 shadow-lg ${isActive('/leaderboard')
               ? 'bg-gradient-to-r from-purple-400 to-pink-400 text-white shadow-purple-500/50'
               : 'bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:shadow-purple-500/50'
-          }`}
+            }`}
         >
           🏆 Leaderboard
         </button>
@@ -89,3 +96,4 @@ export function NavigationButtons() {
 }
 
 export default NavigationButtons;
+
