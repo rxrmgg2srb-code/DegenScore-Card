@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
-import { generateSessionToken } from '@/lib/walletAuth';
 import toast from 'react-hot-toast';
 import { logger } from '@/lib/logger';
 
@@ -82,10 +81,12 @@ export function useWhaleRadar() {
   }, [sessionToken]);
 
   const generateToken = async () => {
-    if (!publicKey || !signMessage) return;
+    if (!publicKey) return;
     try {
-      const token = generateSessionToken(publicKey.toString());
-      setSessionToken(token);
+      // Simple client-side token for now - just use wallet address
+      // JWT validation will happen server-side when needed
+      const simpleToken = btoa(publicKey.toString() + ':' + Date.now());
+      setSessionToken(simpleToken);
     } catch (error: any) {
       logger.error('Failed to generate session token:', error);
     }
