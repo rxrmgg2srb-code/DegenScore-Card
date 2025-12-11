@@ -71,12 +71,15 @@ export default function WhaleNotifications() {
 
         // Simulate incoming alerts
         const interval = setInterval(() => {
+            const tokens = ['$BONK', '$WIF', '$POPCAT', '$FWOG', '$GIGA'];
+            const randomToken = tokens[Math.floor(Math.random() * tokens.length)] || '$BONK';
+
             const mockAlert: WhaleAlert = {
                 id: `alert-${Date.now()}`,
                 type: Math.random() > 0.5 ? 'buy' : 'sell',
                 walletAddress: `${Math.random().toString(36).substring(2, 8)}...${Math.random().toString(36).substring(2, 6)}`,
                 walletScore: Math.floor(Math.random() * 30) + 70,
-                tokenSymbol: ['$BONK', '$WIF', '$POPCAT', '$FWOG', '$GIGA'][Math.floor(Math.random() * 5)],
+                tokenSymbol: randomToken,
                 tokenMint: 'TokenMint123',
                 amount: Math.floor(Math.random() * 100) + 10,
                 timestamp: Date.now(),

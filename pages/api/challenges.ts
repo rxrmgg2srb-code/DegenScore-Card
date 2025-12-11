@@ -36,109 +36,109 @@ interface UserProgress {
 // Challenge templates
 const DAILY_CHALLENGES: Omit<Challenge, 'id' | 'startsAt' | 'expiresAt' | 'active'>[] = [
     {
-        type: 'daily',
+        type: 'daily' as const,
         title: 'First Trade',
         description: 'Execute at least 1 trade today',
         icon: '🎯',
-        reward: { type: 'xp', amount: 100, label: '+100 XP' },
+        reward: { type: 'xp' as const, amount: 100, label: '+100 XP' },
         requirement: { type: 'trades', target: 1 },
-        difficulty: 'easy',
+        difficulty: 'easy' as const,
     },
     {
-        type: 'daily',
+        type: 'daily' as const,
         title: 'Volume Hunter',
         description: 'Trade at least 5 SOL in volume',
         icon: '💰',
-        reward: { type: 'xp', amount: 250, label: '+250 XP' },
+        reward: { type: 'xp' as const, amount: 250, label: '+250 XP' },
         requirement: { type: 'volume', target: 5 },
-        difficulty: 'medium',
+        difficulty: 'medium' as const,
     },
     {
-        type: 'daily',
+        type: 'daily' as const,
         title: 'Win Streak',
         description: 'Get 3 profitable trades in a row',
         icon: '🔥',
-        reward: { type: 'xp', amount: 500, label: '+500 XP' },
+        reward: { type: 'xp' as const, amount: 500, label: '+500 XP' },
         requirement: { type: 'winStreak', target: 3 },
-        difficulty: 'hard',
+        difficulty: 'hard' as const,
     },
     {
-        type: 'daily',
+        type: 'daily' as const,
         title: 'Diversify',
         description: 'Trade 3 different tokens',
         icon: '🌈',
-        reward: { type: 'xp', amount: 200, label: '+200 XP' },
+        reward: { type: 'xp' as const, amount: 200, label: '+200 XP' },
         requirement: { type: 'uniqueTokens', target: 3 },
-        difficulty: 'medium',
+        difficulty: 'medium' as const,
     },
     {
-        type: 'daily',
+        type: 'daily' as const,
         title: 'Early Bird',
         description: 'Make a trade before 9 AM UTC',
         icon: '🌅',
-        reward: { type: 'xp', amount: 150, label: '+150 XP' },
+        reward: { type: 'xp' as const, amount: 150, label: '+150 XP' },
         requirement: { type: 'earlyTrade', target: 1 },
-        difficulty: 'easy',
+        difficulty: 'easy' as const,
     },
 ];
 
 const WEEKLY_CHALLENGES: Omit<Challenge, 'id' | 'startsAt' | 'expiresAt' | 'active'>[] = [
     {
-        type: 'weekly',
+        type: 'weekly' as const,
         title: 'Weekly Warrior',
         description: 'Complete 20 trades this week',
         icon: '⚔️',
-        reward: { type: 'badge', amount: 1, label: 'Weekly Warrior Badge' },
+        reward: { type: 'badge' as const, amount: 1, label: 'Weekly Warrior Badge' },
         requirement: { type: 'trades', target: 20 },
-        difficulty: 'medium',
+        difficulty: 'medium' as const,
     },
     {
-        type: 'weekly',
+        type: 'weekly' as const,
         title: 'Profit Machine',
         description: 'Achieve 10 SOL in realized profit',
         icon: '💎',
-        reward: { type: 'sol', amount: 0.1, label: '+0.1 SOL' },
+        reward: { type: 'sol' as const, amount: 0.1, label: '+0.1 SOL' },
         requirement: { type: 'profit', target: 10 },
-        difficulty: 'hard',
+        difficulty: 'hard' as const,
     },
     {
-        type: 'weekly',
+        type: 'weekly' as const,
         title: 'Consistent Trader',
         description: 'Trade every day for 7 days',
         icon: '📅',
-        reward: { type: 'xp', amount: 1000, label: '+1000 XP' },
+        reward: { type: 'xp' as const, amount: 1000, label: '+1000 XP' },
         requirement: { type: 'activeDays', target: 7 },
-        difficulty: 'hard',
+        difficulty: 'hard' as const,
     },
     {
-        type: 'weekly',
+        type: 'weekly' as const,
         title: 'Social Butterfly',
         description: 'Get 5 referral sign-ups',
         icon: '🦋',
-        reward: { type: 'pro', amount: 7, label: '+7 Days PRO' },
+        reward: { type: 'pro' as const, amount: 7, label: '+7 Days PRO' },
         requirement: { type: 'referrals', target: 5 },
-        difficulty: 'legendary',
+        difficulty: 'legendary' as const,
     },
 ];
 
 const SPECIAL_CHALLENGES: Omit<Challenge, 'id' | 'startsAt' | 'expiresAt' | 'active'>[] = [
     {
-        type: 'special',
+        type: 'special' as const,
         title: 'Whale Watcher',
         description: 'Copy a trade from a Top 10 wallet',
         icon: '🐋',
-        reward: { type: 'pro', amount: 7, label: '+7 Days PRO' },
+        reward: { type: 'pro' as const, amount: 7, label: '+7 Days PRO' },
         requirement: { type: 'copyTrade', target: 1 },
-        difficulty: 'legendary',
+        difficulty: 'legendary' as const,
     },
     {
-        type: 'special',
+        type: 'special' as const,
         title: 'Diamond Hands',
         description: 'Hold a position for 30+ days with profit',
         icon: '💎',
-        reward: { type: 'badge', amount: 1, label: 'Diamond Hands Badge' },
+        reward: { type: 'badge' as const, amount: 1, label: 'Diamond Hands Badge' },
         requirement: { type: 'holdDays', target: 30 },
-        difficulty: 'legendary',
+        difficulty: 'legendary' as const,
     },
 ];
 
@@ -160,36 +160,41 @@ function generateActiveChallenges(): Challenge[] {
     // Add 3 random daily challenges
     const shuffledDaily = [...DAILY_CHALLENGES].sort(() => Math.random() - 0.5);
     shuffledDaily.slice(0, 3).forEach((c, i) => {
-        challenges.push({
+        const challenge: Challenge = {
             ...c,
             id: `daily-${i + 1}-${new Date().toISOString().split('T')[0]}`,
             startsAt: now,
             expiresAt: endOfDay.getTime(),
             active: true,
-        });
+        } as Challenge;
+        challenges.push(challenge);
     });
 
     // Add 2 weekly challenges
     const shuffledWeekly = [...WEEKLY_CHALLENGES].sort(() => Math.random() - 0.5);
     shuffledWeekly.slice(0, 2).forEach((c, i) => {
-        challenges.push({
+        const challenge: Challenge = {
             ...c,
             id: `weekly-${i + 1}-week${Math.floor(Date.now() / 604800000)}`,
             startsAt: now,
             expiresAt: endOfWeek.getTime(),
             active: true,
-        });
+        } as Challenge;
+        challenges.push(challenge);
     });
 
     // Add 1 special challenge
     const randomSpecial = SPECIAL_CHALLENGES[Math.floor(Math.random() * SPECIAL_CHALLENGES.length)];
-    challenges.push({
-        ...randomSpecial,
-        id: `special-${Math.floor(Date.now() / 86400000)}`,
-        startsAt: now,
-        expiresAt: now + 7 * 24 * 3600000, // 7 days
-        active: true,
-    });
+    if (randomSpecial) {
+        const challenge: Challenge = {
+            ...randomSpecial,
+            id: `special-${Math.floor(Date.now() / 86400000)}`,
+            startsAt: now,
+            expiresAt: now + 7 * 24 * 3600000, // 7 days
+            active: true,
+        } as Challenge;
+        challenges.push(challenge);
+    }
 
     return challenges;
 }
@@ -297,7 +302,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                         return res.status(400).json({ error: 'No progress found for this challenge' });
                     }
 
-                    if (!existing[idx].completed) {
+                    if (!existing[idx] || !existing[idx].completed) {
                         return res.status(400).json({ error: 'Challenge not completed yet' });
                     }
 
@@ -305,9 +310,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                         return res.status(400).json({ error: 'Reward already claimed' });
                     }
 
-                    existing[idx].claimed = true;
-                    existing[idx].claimedAt = Date.now();
-                    userProgress.set(walletAddress, existing);
+                    if (existing[idx]) {
+                        existing[idx].claimed = true;
+                        existing[idx].claimedAt = Date.now();
+                        userProgress.set(walletAddress, existing);
+                    }
 
                     const challenges = generateActiveChallenges();
                     const challenge = challenges.find(c => c.id === challengeId);
