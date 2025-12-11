@@ -256,8 +256,8 @@ export default function ReferrerLeaderboard() {
                             key={time}
                             onClick={() => setTimeFilter(time)}
                             className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all capitalize ${timeFilter === time
-                                    ? 'bg-purple-600 text-white shadow-lg'
-                                    : 'text-gray-400 hover:text-white hover:bg-gray-700/50'
+                                ? 'bg-purple-600 text-white shadow-lg'
+                                : 'text-gray-400 hover:text-white hover:bg-gray-700/50'
                                 }`}
                         >
                             {time === 'all' ? '🌍 All Time' : time === 'month' ? '📅 This Month' : '📆 This Week'}
@@ -348,7 +348,7 @@ export default function ReferrerLeaderboard() {
                                     <td className="p-4">
                                         <div className="flex items-center gap-3">
                                             <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${tierConfig.color} flex items-center justify-center text-lg`}>
-                                                {referrer.username ? referrer.username[0].toUpperCase() : '?'}
+                                                {referrer.username ? referrer.username.charAt(0).toUpperCase() : '?'}
                                             </div>
                                             <div>
                                                 <div className="flex items-center gap-2">
