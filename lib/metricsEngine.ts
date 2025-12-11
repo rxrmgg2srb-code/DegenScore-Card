@@ -1867,7 +1867,7 @@ function analyzeStreaks(positions: Position[]) {
 }
 
 // 9️⃣ CONSISTENCY METRICS
-function analyzeConsistency(trades: Trade[], positions: Position[]) {
+function analyzeConsistency(positions: Position[]) {
   // Group by day/week/month
   const dailyPnL = new Map<string, number>();
   const weeklyPnL = new Map<string, number>();
@@ -2551,7 +2551,7 @@ async function calculateMetrics(
   const streakAnalysis = analyzeStreaks(positions);
 
   // 9️⃣ Consistency metrics
-  const consistencyMetrics = analyzeConsistency(trades, positions);
+  const consistencyMetrics = analyzeConsistency(positions);
 
   // Calculate win rate for style classification
 
