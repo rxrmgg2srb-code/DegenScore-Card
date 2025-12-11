@@ -51,12 +51,6 @@ export const Header: React.FC<HeaderProps> = ({ connected = false, username = ''
               🐋 Whale Radar
             </Link>
             <Link
-              href="/token-scanner"
-              className="text-gray-300 hover:text-white transition-colors flex items-center gap-1"
-            >
-              🔒 Token Scanner
-            </Link>
-            <Link
               href="/super-token-scorer"
               className="text-gray-300 hover:text-white transition-colors flex items-center gap-1"
             >

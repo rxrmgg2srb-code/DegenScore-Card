@@ -12,6 +12,7 @@ import { Badge, BadgeCategory, BadgeItem, RarityBadge } from './docs/BadgeCompon
 import { TierCard, ReferralTier, FeedDelayCard, TierRow } from './docs/TierComponents';
 import { FAQ } from './docs/FAQ';
 import { Step, ProcessStep, FeedExample, LeaderboardCategory } from './docs/Common';
+import { AdvancedMetricsSection, ProMetricsSection, EliteMetricsSection } from './docs/MetricsSections';
 
 export function Documentation() {
   const [activeSection, setActiveSection] = useState('intro');
@@ -256,8 +257,23 @@ export function Documentation() {
                   </div>
                 </DocSection>
 
+                {/* Advanced Metrics Section */}
+                <DocSection id="advanced-metrics" title="Advanced Metrics" icon="🔬">
+                  <AdvancedMetricsSection />
+                </DocSection>
+
+                {/* PRO Metrics Section */}
+                <DocSection id="pro-metrics" title="PRO Analytics" icon="📈">
+                  <ProMetricsSection />
+                </DocSection>
+
+                {/* ELITE Metrics Section */}
+                <DocSection id="elite-metrics" title="ELITE Analytics" icon="🏆">
+                  <EliteMetricsSection />
+                </DocSection>
+
                 {/* Badges & Achievement Points */}
-                <DocSection id="badges" title="Badges & Achievement Points" icon="🏆">
+                <DocSection id="badges" title="Badges & Achievement Points" icon="🎖️">
                   <p className="text-gray-300 mb-6">
                     Badges are achievements you unlock based on your activities. There are{' '}
                     <strong>60+ badges</strong> available across 6 categories.
