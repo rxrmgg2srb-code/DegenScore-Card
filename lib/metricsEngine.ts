@@ -45,24 +45,45 @@ export interface Position {
 export interface Trade {
   timestamp: number;
   tokenMint: string;
-  tokenSymbol?: string;   // 🆕 Token symbol if available
+  tokenSymbol?: string;       // Token symbol if available
   type: 'buy' | 'sell';
   solAmount: number;
   tokenAmount: number;
   pricePerToken: number;
-  dexSource?: string;     // 🆕 Which DEX (Raydium, Orca, Jupiter, etc.)
-  signature?: string;     // 🆕 Transaction signature for verification
+  dexSource?: string;         // Which DEX (Raydium, Orca, Jupiter, etc.)
+  signature?: string;         // Transaction signature for verification
+
+  // 🆕 ULTRA-PRECISE: Advanced trade data
+  slippagePercent?: number;   // Slippage from expected price
+  marketPriceAtTime?: number; // Market price at execution time
+  tradeCategory?: 'scalp' | 'swing' | 'position' | 'moon_attempt';
+  isPartialFill?: boolean;    // If trade was partially filled
+  executionQuality?: number;  // 0-100 score of execution quality
 }
 
-// 🆕 DEX Fee rates (accurate for each DEX)
+// DEX Fee rates (accurate for each DEX)
 const DEX_FEE_RATES: Record<string, number> = {
   'RAYDIUM': 0.0025,      // 0.25%
+  'RAYDIUM_CLMM': 0.001,  // 0.10% (concentrated liquidity)
   'ORCA': 0.003,          // 0.30%
+  'ORCA_WHIRLPOOL': 0.002,// 0.20% (concentrated)
   'JUPITER': 0.002,       // 0.20% (aggregator)
   'METEORA': 0.003,       // 0.30%
+  'METEORA_DLMM': 0.0015, // 0.15% (dynamic)
   'PUMP.FUN': 0.01,       // 1.00%
   'MOONSHOT': 0.02,       // 2.00%
+  'PHOENIX': 0.001,       // 0.10%
+  'OPENBOOK': 0.0004,     // 0.04%
+  'LIFINITY': 0.002,      // 0.20%
   'UNKNOWN': 0.0025,      // Default 0.25%
+};
+
+// 🆕 Trade Category thresholds
+const TRADE_CATEGORIES = {
+  SCALP_MAX_HOLD_SECONDS: 300,     // <5 min = scalp
+  SWING_MAX_HOLD_SECONDS: 86400,   // <24h = swing  
+  POSITION_MAX_HOLD_SECONDS: 604800, // <7 days = position
+  // >7 days = moon_attempt
 };
 
 export interface WalletMetrics {
@@ -160,6 +181,32 @@ export interface WalletMetrics {
   failedTransactions?: number;   // Transactions that failed
   dataCompleteness?: number;     // 0-100% of how complete the data is
   analysisTimeMs?: number;       // How long analysis took
+
+  // 🆕 ULTRA-PRECISE: Trading Pattern Analysis
+  tradingPatterns?: {
+    avgSlippage: number;           // Average slippage %
+    maxSlippage: number;           // Worst slippage
+    executionQuality: number;      // 0-100 overall execution quality
+    scalpsCount: number;           // <5 min trades
+    swingsCount: number;           // <24h trades
+    positionsCount: number;        // <7 day holds
+    moonAttemptsCount: number;     // >7 day holds
+    preferredDex: string;          // Most used DEX
+    preferredTradingHour: number;  // 0-23 hour
+    weekendTrader: boolean;        // Trades mostly weekends?
+    avgTradesPerDay: number;       // Average trades per active day
+  };
+
+  // 🆕 ULTRA-PRECISE: Time-weighted Returns
+  timeWeightedReturn?: number;     // TWR for accurate performance comparison
+  sharpeRatio?: number;           // Risk-adjusted return
+  maxDrawdown?: number;           // Maximum drawdown %
+  profitFactor?: number;          // Gross profit / Gross loss
+
+  // 🆕 ULTRA-PRECISE: Token Analysis
+  uniqueTokensTraded?: number;    // How many different tokens
+  avgTokenHoldTime?: number;      // Average seconds holding a token
+  tokenDiversification?: number;  // 0-100 how diversified
 
   // The ultimate score (0-100)
   degenScore: number;
@@ -1141,6 +1188,207 @@ function calculateDataCompleteness(
 }
 
 // ============================================================================
+// 🆕 ULTRA-PRECISE: TRADING PATTERN ANALYSIS
+// ============================================================================
+
+interface TradingPatterns {
+  avgSlippage: number;
+  maxSlippage: number;
+  executionQuality: number;
+  scalpsCount: number;
+  swingsCount: number;
+  positionsCount: number;
+  moonAttemptsCount: number;
+  preferredDex: string;
+  preferredTradingHour: number;
+  weekendTrader: boolean;
+  avgTradesPerDay: number;
+}
+
+function analyzeTradingPatterns(
+  trades: Trade[],
+  positions: Position[]
+): TradingPatterns {
+  // Calculate slippage stats
+  const slippages = trades
+    .map(t => t.slippagePercent)
+    .filter((s): s is number => s !== undefined);
+
+  const avgSlippage = slippages.length > 0
+    ? slippages.reduce((a, b) => a + b, 0) / slippages.length
+    : 0;
+  const maxSlippage = slippages.length > 0 ? Math.max(...slippages) : 0;
+
+  // Execution quality (100 = perfect, lower = worse)
+  const executionQuality = Math.max(0, 100 - (avgSlippage * 10));
+
+  // Categorize trades by hold time
+  let scalpsCount = 0;
+  let swingsCount = 0;
+  let positionsCount = 0;
+  let moonAttemptsCount = 0;
+
+  for (const pos of positions) {
+    const holdTime = pos.holdTime || 0;
+
+    if (holdTime < TRADE_CATEGORIES.SCALP_MAX_HOLD_SECONDS) {
+      scalpsCount++;
+    } else if (holdTime < TRADE_CATEGORIES.SWING_MAX_HOLD_SECONDS) {
+      swingsCount++;
+    } else if (holdTime < TRADE_CATEGORIES.POSITION_MAX_HOLD_SECONDS) {
+      positionsCount++;
+    } else {
+      moonAttemptsCount++;
+    }
+  }
+
+  // Preferred DEX
+  const dexCounts = new Map<string, number>();
+  for (const trade of trades) {
+    const dex = trade.dexSource || 'UNKNOWN';
+    dexCounts.set(dex, (dexCounts.get(dex) || 0) + 1);
+  }
+
+  const preferredDex = [...dexCounts.entries()]
+    .sort((a, b) => b[1] - a[1])[0]?.[0] || 'UNKNOWN';
+
+  // Trading hours analysis
+  const hourCounts = new Array(24).fill(0);
+  let weekendTrades = 0;
+
+  for (const trade of trades) {
+    const date = new Date(trade.timestamp * 1000);
+    hourCounts[date.getHours()]++;
+
+    const day = date.getDay();
+    if (day === 0 || day === 6) weekendTrades++;
+  }
+
+  const preferredTradingHour = hourCounts.indexOf(Math.max(...hourCounts));
+  const weekendTrader = weekendTrades > trades.length * 0.3; // >30% on weekends
+
+  // Average trades per day
+  const uniqueDays = new Set(
+    trades.map(t => new Date(t.timestamp * 1000).toDateString())
+  ).size;
+  const avgTradesPerDay = uniqueDays > 0 ? trades.length / uniqueDays : 0;
+
+  return {
+    avgSlippage,
+    maxSlippage,
+    executionQuality,
+    scalpsCount,
+    swingsCount,
+    positionsCount,
+    moonAttemptsCount,
+    preferredDex,
+    preferredTradingHour,
+    weekendTrader,
+    avgTradesPerDay,
+  };
+}
+
+// ============================================================================
+// 🆕 ULTRA-PRECISE: ADVANCED PERFORMANCE METRICS
+// ============================================================================
+
+interface AdvancedPerformanceMetrics {
+  timeWeightedReturn: number;
+  sharpeRatio: number;
+  maxDrawdown: number;
+  profitFactor: number;
+  uniqueTokensTraded: number;
+  avgTokenHoldTime: number;
+  tokenDiversification: number;
+}
+
+function calculateAdvancedPerformance(
+  trades: Trade[],
+  positions: Position[],
+  totalVolume: number
+): AdvancedPerformanceMetrics {
+  const closedPositions = positions.filter(p => !p.isOpen);
+
+  // Time-weighted return (simplified)
+  // TWR = (1 + R1) * (1 + R2) * ... - 1
+  let twr = 1;
+  for (const pos of closedPositions) {
+    const returnPercent = (pos.profitLossPercent || 0) / 100;
+    twr *= (1 + returnPercent);
+  }
+  const timeWeightedReturn = (twr - 1) * 100;
+
+  // Profit Factor = Gross Profit / Gross Loss
+  const grossProfit = closedPositions
+    .filter(p => (p.profitLoss || 0) > 0)
+    .reduce((sum, p) => sum + (p.profitLoss || 0), 0);
+  const grossLoss = Math.abs(closedPositions
+    .filter(p => (p.profitLoss || 0) < 0)
+    .reduce((sum, p) => sum + (p.profitLoss || 0), 0));
+  const profitFactor = grossLoss > 0 ? grossProfit / grossLoss : grossProfit > 0 ? 10 : 0;
+
+  // Max Drawdown
+  let peak = 0;
+  let maxDrawdown = 0;
+  let cumulativePnL = 0;
+
+  for (const pos of closedPositions.sort((a, b) => (a.exitTime || 0) - (b.exitTime || 0))) {
+    cumulativePnL += pos.profitLoss || 0;
+    if (cumulativePnL > peak) peak = cumulativePnL;
+    const drawdown = peak > 0 ? ((peak - cumulativePnL) / peak) * 100 : 0;
+    if (drawdown > maxDrawdown) maxDrawdown = drawdown;
+  }
+
+  // Sharpe Ratio (simplified)
+  const returns = closedPositions.map(p => p.profitLossPercent || 0);
+  const avgReturn = returns.length > 0 ? returns.reduce((a, b) => a + b, 0) / returns.length : 0;
+  const variance = returns.length > 0
+    ? returns.reduce((sum, r) => sum + Math.pow(r - avgReturn, 2), 0) / returns.length
+    : 0;
+  const stdDev = Math.sqrt(variance);
+  const sharpeRatio = stdDev > 0 ? (avgReturn / stdDev) : 0;
+
+  // Unique tokens
+  const uniqueTokens = new Set(trades.map(t => t.tokenMint));
+  const uniqueTokensTraded = uniqueTokens.size;
+
+  // Average hold time
+  const holdTimes = closedPositions.map(p => p.holdTime || 0);
+  const avgTokenHoldTime = holdTimes.length > 0
+    ? holdTimes.reduce((a, b) => a + b, 0) / holdTimes.length
+    : 0;
+
+  // Token diversification (0-100)
+  // Higher = more diversified
+  const tokenVolumes = new Map<string, number>();
+  for (const trade of trades) {
+    tokenVolumes.set(
+      trade.tokenMint,
+      (tokenVolumes.get(trade.tokenMint) || 0) + trade.solAmount
+    );
+  }
+
+  // Herfindahl index for concentration
+  let herfindahl = 0;
+  for (const volume of tokenVolumes.values()) {
+    const share = volume / totalVolume;
+    herfindahl += share * share;
+  }
+  // Diversification = 100 - (concentration * 100)
+  const tokenDiversification = Math.max(0, Math.min(100, (1 - herfindahl) * 100));
+
+  return {
+    timeWeightedReturn,
+    sharpeRatio,
+    maxDrawdown,
+    profitFactor,
+    uniqueTokensTraded,
+    avgTokenHoldTime,
+    tokenDiversification,
+  };
+}
+
+// ============================================================================
 // METRICS CALCULATION
 // ============================================================================
 
@@ -1227,6 +1475,12 @@ async function calculateMetrics(
 
   // 🆕 NEW: Calculate data quality metrics
   const { completeness: dataCompleteness, failedTx: failedTransactions } = calculateDataCompleteness(allTransactions, trades);
+
+  // 🆕 ULTRA-PRECISE: Trading pattern analysis
+  const tradingPatterns = analyzeTradingPatterns(trades, positions);
+
+  // 🆕 ULTRA-PRECISE: Advanced performance metrics
+  const advancedPerformance = calculateAdvancedPerformance(trades, positions, totalVolume);
 
   const profitLoss = realizedPnL + unrealizedPnL;
 
@@ -1454,6 +1708,18 @@ async function calculateMetrics(
     // 🆕 Data Quality Metrics
     failedTransactions,
     dataCompleteness,
+
+    // 🆕 ULTRA-PRECISE: Trading Patterns
+    tradingPatterns,
+
+    // 🆕 ULTRA-PRECISE: Advanced Performance
+    timeWeightedReturn: advancedPerformance.timeWeightedReturn,
+    sharpeRatio: advancedPerformance.sharpeRatio,
+    maxDrawdown: advancedPerformance.maxDrawdown,
+    profitFactor: advancedPerformance.profitFactor,
+    uniqueTokensTraded: advancedPerformance.uniqueTokensTraded,
+    avgTokenHoldTime: advancedPerformance.avgTokenHoldTime,
+    tokenDiversification: advancedPerformance.tokenDiversification,
   };
 }
 
