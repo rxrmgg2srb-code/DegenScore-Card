@@ -5,6 +5,7 @@ import {
   PNL_BADGES,
   WINRATE_BADGES,
   ACTIVITY_BADGES,
+  WHALE_TRACKER_BADGES,
   SOCIAL_BADGES,
   PREMIUM_BADGES,
   BADGE_POINTS,
@@ -154,6 +155,8 @@ export default function AchievementsDoc() {
           <BadgeCategory title="Win Rate Badges" icon="🎯" badges={WINRATE_BADGES} />
 
           <BadgeCategory title="Activity Badges" icon="⚡" badges={ACTIVITY_BADGES} />
+
+          <BadgeCategory title="🐋 Whale Tracker Badges" icon="🐋" badges={WHALE_TRACKER_BADGES} />
 
           <BadgeCategory title="Social & Referral Badges" icon="🤝" badges={SOCIAL_BADGES} />
 

@@ -2,7 +2,7 @@
 require('dotenv').config({ path: '.env.local' });
 
 // Now run the TypeScript script
-require('child_process').execSync('npx tsx scripts/debug-pnl-30d-v2.ts', {
+require('child_process').execSync('npx tsx scripts/diagnose-history.ts', {
     stdio: 'inherit',
     env: { ...process.env }
 });

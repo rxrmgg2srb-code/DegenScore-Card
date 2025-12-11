@@ -171,115 +171,139 @@ async function fetchAllTransactions(
   onProgress?: (progress: number, message: string) => void
 ): Promise<ParsedTransaction[]> {
   const allTransactions: ParsedTransaction[] = [];
-  let before: string | undefined;
-  let fetchCount = 0;
-  let consecutiveEmpty = 0;
-  let consecutiveErrors = 0;
+  const seenSignatures = new Set<string>();
 
   const BATCH_SIZE = 100;
-  const DELAY_MS = 10; // Velocidad máxima para llegar a 100 batches
-  const MAX_EMPTY = 3;
+  const DELAY_MS = 50;
   const MAX_CONSECUTIVE_ERRORS = 5;
-
-  // 🛡️ SAFETY LIMITS
-  // Volvemos a pedir TODO (sin filtro de tipo) para no perder nada
-  // Mantenemos límites altos para profundizar lo máximo posible
-  const MAX_TRANSACTIONS = 10000; // 100 batches
-  const TIME_LIMIT_MS = 55000; // 55s
+  const TIME_LIMIT_MS = 55000;
   const startTime = Date.now();
-
-  // Time limit: Only analyze last 12 months
   const TWELVE_MONTHS_AGO = Date.now() / 1000 - (365 * 24 * 60 * 60);
 
-  logger.info(`🔄 Fetching ALL wallet transactions (last 12 months, max ${MAX_TRANSACTIONS} txs)`);
+  // 🔥 ESTRATEGIA HÍBRIDA:
+  // 1. Primero fetch SWAP transactions (máximo 500) - estos son los trades
+  // 2. Luego fetch transacciones regulares (máximo 3000) para complementar
+  // Esto asegura que wallets con mucho spam no pierdan sus trades
 
-  while (true) {
-    // 🛡️ Safety check: Time limit
+  logger.info(`🔄 Fetching wallet transactions with HYBRID strategy`);
+
+  // ========== FASE 1: Fetch SWAPs ===========
+  if (onProgress) {
+    onProgress(5, '📡 Fetching SWAP transactions...');
+  }
+
+  let swapBefore: string | undefined;
+  let swapCount = 0;
+  let consecutiveErrors = 0;
+
+  for (let batch = 0; batch < 10; batch++) { // Max 1000 SWAPs
+    if (Date.now() - startTime > TIME_LIMIT_MS / 2) break;
+
+    try {
+      const swaps = await getWalletTransactions(walletAddress, BATCH_SIZE, swapBefore, 'SWAP');
+
+      if (swaps.length === 0) break;
+
+      for (const tx of swaps) {
+        if (!seenSignatures.has(tx.signature) && tx.timestamp >= TWELVE_MONTHS_AGO) {
+          seenSignatures.add(tx.signature);
+          allTransactions.push(tx);
+          swapCount++;
+        }
+      }
+
+      swapBefore = swaps[swaps.length - 1]?.signature;
+      consecutiveErrors = 0;
+
+      logger.info(`  ✓ SWAP batch ${batch + 1}: ${swaps.length} (Total SWAPs: ${swapCount})`);
+
+      if (swaps.length < BATCH_SIZE) break; // No more SWAPs
+
+      await new Promise(r => setTimeout(r, DELAY_MS));
+    } catch (error: any) {
+      consecutiveErrors++;
+      if (consecutiveErrors >= 3) break;
+      if (error?.status === 404) break; // No more pagination
+      await new Promise(r => setTimeout(r, 200));
+    }
+  }
+
+  logger.info(`📊 Phase 1 complete: ${swapCount} SWAP transactions found`);
+
+  // ========== FASE 2: Fetch transacciones regulares ===========
+  if (onProgress) {
+    onProgress(35, `📡 Fetching regular transactions... (${swapCount} SWAPs found)`);
+  }
+
+  let regularBefore: string | undefined;
+  let regularCount = 0;
+  consecutiveErrors = 0;
+  const MAX_REGULAR = 5000; // Aumentado para cubrir más historial
+
+  for (let batch = 0; batch < 50; batch++) { // Max 5000 regular
     if (Date.now() - startTime > TIME_LIMIT_MS) {
-      logger.warn(`⚠️ Time limit reached (${TIME_LIMIT_MS}ms). Stopping fetch.`);
+      logger.warn(`⚠️ Time limit reached. Stopping fetch.`);
       break;
     }
 
-    // 🛡️ Safety check: Transaction count limit
-    if (allTransactions.length >= MAX_TRANSACTIONS) {
-      logger.warn(`⚠️ Transaction limit reached (${MAX_TRANSACTIONS}). Stopping fetch.`);
+    if (regularCount >= MAX_REGULAR) {
+      logger.info(`  ✅ Regular transaction limit reached (${MAX_REGULAR})`);
       break;
     }
 
     try {
-      // Sin filtro de tipo: pedimos TODO
-      const batch = await getWalletTransactions(walletAddress, BATCH_SIZE, before);
+      const txs = await getWalletTransactions(walletAddress, BATCH_SIZE, regularBefore);
 
-      if (batch.length > 0) {
-        // Check if oldest transaction in this batch is beyond 12 months
-        const oldestTxTimestamp = batch[batch.length - 1]?.timestamp;
-        if (oldestTxTimestamp && oldestTxTimestamp < TWELVE_MONTHS_AGO) {
-          // Filter out transactions older than 12 months
-          const recentBatch = batch.filter(tx => tx.timestamp >= TWELVE_MONTHS_AGO);
-          if (recentBatch.length > 0) {
-            allTransactions.push(...recentBatch);
+      if (txs.length === 0) break;
+
+      // Check 12-month limit
+      const oldestTxTimestamp = txs[txs.length - 1]?.timestamp;
+      if (oldestTxTimestamp && oldestTxTimestamp < TWELVE_MONTHS_AGO) {
+        const recentTxs = txs.filter(tx => tx.timestamp >= TWELVE_MONTHS_AGO);
+        for (const tx of recentTxs) {
+          if (!seenSignatures.has(tx.signature)) {
+            seenSignatures.add(tx.signature);
+            allTransactions.push(tx);
+            regularCount++;
           }
-          logger.info(
-            `  ⏱️ Reached 12-month limit (filtered ${batch.length - recentBatch.length} old txs)`
-          );
-          logger.info(`  ✅ Analysis complete: ${allTransactions.length} transactions in last 12 months`);
-          break;
         }
-
-        // Add all transactions
-        allTransactions.push(...batch);
-        before = batch[batch.length - 1]?.signature;
-        consecutiveEmpty = 0;
-        consecutiveErrors = 0; // Reset error counter on success
-
-        if (fetchCount % 5 === 0) {
-          logger.info(
-            `  ✓ Batch ${fetchCount + 1}: ${batch.length} txs (Total: ${allTransactions.length})`
-          );
-        }
-      } else {
-        consecutiveEmpty++;
-        consecutiveErrors = 0; // Reset error counter on successful empty response
-        logger.info(`  ⚠️ Batch ${fetchCount + 1}: empty (${consecutiveEmpty}/${MAX_EMPTY})`);
-
-        if (consecutiveEmpty >= MAX_EMPTY) {
-          logger.info(`  ✅ No more transactions`);
-          break;
-        }
-      }
-
-      fetchCount++;
-
-      // Progress update
-      const fetchProgress = 5 + Math.min(65, Math.floor((allTransactions.length / 10000) * 65));
-      if (onProgress) {
-        onProgress(
-          fetchProgress,
-          `📡 Fetching history... (${allTransactions.length} txs)`
-        );
-      }
-
-      await new Promise((resolve) => setTimeout(resolve, DELAY_MS));
-    } catch (error: any) {
-      consecutiveErrors++;
-      logger.error(
-        `  ❌ Error batch ${fetchCount + 1}`,
-        error instanceof Error ? error : undefined,
-        {
-          error: String(error),
-          status: error?.status,
-          consecutiveErrors,
-        }
-      );
-
-      if (consecutiveErrors >= MAX_CONSECUTIVE_ERRORS) {
-        logger.error(`  ⛔ Too many consecutive errors (${consecutiveErrors}), stopping fetch`);
+        logger.info(`  ⏱️ Reached 12-month limit`);
         break;
       }
 
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      for (const tx of txs) {
+        if (!seenSignatures.has(tx.signature)) {
+          seenSignatures.add(tx.signature);
+          allTransactions.push(tx);
+          regularCount++;
+        }
+      }
+
+      regularBefore = txs[txs.length - 1]?.signature;
+      consecutiveErrors = 0;
+
+      if (batch % 10 === 0) {
+        logger.info(`  ✓ Regular batch ${batch + 1}: ${txs.length} (Total: ${allTransactions.length})`);
+      }
+
+      // Progress update
+      if (onProgress) {
+        const progress = 35 + Math.min(35, Math.floor((regularCount / MAX_REGULAR) * 35));
+        onProgress(progress, `📡 Fetching history... (${allTransactions.length} txs)`);
+      }
+
+      await new Promise(r => setTimeout(r, DELAY_MS / 5)); // Faster for regulars
+    } catch (error: any) {
+      consecutiveErrors++;
+      if (consecutiveErrors >= MAX_CONSECUTIVE_ERRORS) {
+        logger.error(`⛔ Too many errors, stopping fetch`);
+        break;
+      }
+      await new Promise(r => setTimeout(r, 300));
     }
   }
+
+  logger.info(`📊 Fetch complete: ${allTransactions.length} total (${swapCount} SWAPs + ${regularCount} regular)`);
 
   return allTransactions.sort((a, b) => a.timestamp - b.timestamp);
 }
@@ -349,13 +373,20 @@ function extractTrades(transactions: ParsedTransaction[], walletAddress: string)
     // La lógica posterior determinará si es un trade válido
     // Esto captura trades que no están marcados como "SWAP" o de un DEX conocido
 
-    // Primero verificar que tiene tokenTransfers y nativeTransfers
-    // La presencia de ambos generalmente indica un swap/trade
+    // Primero verificar que tiene tokenTransfers
     if (!tx.tokenTransfers || tx.tokenTransfers.length === 0) {
       skippedNoTokenTransfers++;
       continue;
     }
-    if (!tx.nativeTransfers || tx.nativeTransfers.length === 0) {
+
+    // 🔥 FIX: Muchos DEXs (Jupiter, Raydium) usan WSOL sin nativeTransfers directos
+    // Verificar si hay WSOL en tokenTransfers como indicador de swap
+    const WSOL_MINT = 'So11111111111111111111111111111111111111112';
+    const hasWsolInTransfers = tx.tokenTransfers.some(t => t.mint === WSOL_MINT);
+
+    // Permitir transacciones con nativeTransfers O con WSOL en tokenTransfers
+    const hasNativeTransfers = tx.nativeTransfers && tx.nativeTransfers.length > 0;
+    if (!hasNativeTransfers && !hasWsolInTransfers) {
       skippedNoNativeTransfers++;
       continue;
     }
@@ -375,7 +406,7 @@ function extractTrades(transactions: ParsedTransaction[], walletAddress: string)
     }
 
     // Fallback to nativeTransfers if accountData not available or didn't provide a change
-    if (solNet === 0) {
+    if (solNet === 0 && tx.nativeTransfers) {
       for (const nt of tx.nativeTransfers) {
         if (nt.fromUserAccount === walletAddress) {
           solNet -= nt.amount / 1e9;
@@ -416,7 +447,7 @@ function extractTrades(transactions: ParsedTransaction[], walletAddress: string)
     }
 
     // Combine Native SOL + WSOL for effective SOL flow
-    const WSOL_MINT = 'So11111111111111111111111111111111111111112';
+    // WSOL_MINT ya está definido arriba
 
     let wsolNet = 0;
     if (tokenNetBalances.has(WSOL_MINT)) {
@@ -465,38 +496,44 @@ function extractTrades(transactions: ParsedTransaction[], walletAddress: string)
     let isBuy = effectiveSolNet < -TOLERANCE && primaryTokenNet > 0;
     let isSell = effectiveSolNet > TOLERANCE && primaryTokenNet < 0;
 
-    // Caso especial: Si es tipo SWAP, ser más permisivo
-    const isSwapType = tx.type === 'SWAP';
+    // 🔥 FIX: Ser más permisivo con la detección de trades
     const hasSignificantTokenFlow = Math.abs(primaryTokenNet) > 1; // Al menos 1 token
+    const hasSignificantSolFlow = Math.abs(effectiveSolNet) > 0.001; // Al menos 0.001 SOL
 
-    // Si no podemos determinar claramente el tipo
-    if (!isBuy && !isSell) {
-      // Si es un SWAP con flujo significativo de tokens, intentar inferir
-      if (isSwapType && hasSignificantTokenFlow) {
-        // Inferir del flujo predominante
+    // Si no podemos determinar claramente el tipo por SOL flow
+    if (!isBuy && !isSell && hasSignificantTokenFlow) {
+      // Estrategia 1: Inferir del tipo de transacción
+      const isSwapType = tx.type === 'SWAP' || tx.type === 'SWAP_AGGREGATOR' ||
+        tx.source === 'JUPITER' || tx.source === 'RAYDIUM';
+
+      // Estrategia 2: Inferir del flujo de tokens cuando hay WSOL pero no solNet claro
+      const hasWsolFlow = Math.abs(wsolNet) > 0.001;
+
+      if (isSwapType || hasWsolFlow || hasSignificantSolFlow) {
+        // Inferir del flujo de tokens: tokens entrando = compra, saliendo = venta
         const inferredBuy = primaryTokenNet > 0;
         const inferredSell = primaryTokenNet < 0;
 
         if (inferredBuy || inferredSell) {
-          logger.debug('[Debug] Inferred trade from SWAP:', {
+          logger.debug('[Debug] Inferred trade from token flow:', {
             type: inferredBuy ? 'buy' : 'sell',
             solNet: effectiveSolNet.toFixed(6),
+            wsolNet: wsolNet.toFixed(6),
             tokenNet: primaryTokenNet.toFixed(6),
             mint: primaryMint.substring(0, 12),
+            source: tx.source || tx.type,
           });
 
-          // Continuar con la inferencia
           isBuy = inferredBuy;
           isSell = inferredSell;
-        } else {
-          skippedTransferOnly++;
-          continue;
         }
-      } else {
-        // No es SWAP y no podemos clasificar - skip
-        skippedTransferOnly++;
-        continue;
       }
+    }
+
+    // Si aún no podemos clasificar, skip
+    if (!isBuy && !isSell) {
+      skippedTransferOnly++;
+      continue;
     }
 
     const tokenAmount = Math.abs(primaryTokenNet);

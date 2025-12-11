@@ -554,6 +554,173 @@ export const ACTIVITY_BADGES: BadgeDefinition[] = [
 ];
 
 // ═══════════════════════════════════════════════════════════════
+// 🐋 WHALE TRACKER BADGES (NEW - Based on 500+ trades analysis)
+// These badges require extensive trade history to unlock
+// ═══════════════════════════════════════════════════════════════
+
+export const WHALE_TRACKER_BADGES: BadgeDefinition[] = [
+  // Rug Survival Badges
+  {
+    key: 'rug_survivor_bronze',
+    name: '🛡️ Rug Survivor',
+    description: 'Survived 3+ rugs',
+    icon: '🛡️',
+    rarity: 'RARE',
+    category: 'activity',
+    threshold: 3,
+    points: BADGE_POINTS.RARE,
+  },
+  {
+    key: 'rug_survivor_silver',
+    name: '⚔️ Rug Warrior',
+    description: 'Survived 5+ rugs still profitable',
+    icon: '⚔️',
+    rarity: 'EPIC',
+    category: 'activity',
+    threshold: 5,
+    points: BADGE_POINTS.EPIC,
+  },
+  {
+    key: 'rug_survivor_gold',
+    name: '🏰 Rug Fortress',
+    description: 'Survived 10+ rugs still profitable',
+    icon: '🏰',
+    rarity: 'LEGENDARY',
+    category: 'activity',
+    threshold: 10,
+    points: BADGE_POINTS.LEGENDARY,
+  },
+
+  // Consistency Badges (based on 500+ trades)
+  {
+    key: 'steady_hands',
+    name: '🧘 Steady Hands',
+    description: 'Consistent profit over 100+ trades',
+    icon: '🧘',
+    rarity: 'EPIC',
+    category: 'activity',
+    threshold: 100,
+    points: BADGE_POINTS.EPIC,
+  },
+  {
+    key: 'profit_streak',
+    name: '🔥 Profit Streak',
+    description: '10+ winning trades in a row',
+    icon: '🔥',
+    rarity: 'LEGENDARY',
+    category: 'activity',
+    threshold: 10,
+    points: BADGE_POINTS.LEGENDARY,
+  },
+  {
+    key: 'comeback_king',
+    name: '🦅 Comeback King',
+    description: 'Recovered from -50% drawdown to profit',
+    icon: '🦅',
+    rarity: 'LEGENDARY',
+    category: 'activity',
+    threshold: 50,
+    points: BADGE_POINTS.LEGENDARY,
+  },
+
+  // Early Mover Badges
+  {
+    key: 'early_bird',
+    name: '🐦 Early Bird',
+    description: 'Bought 5+ tokens in first 1 hour',
+    icon: '🐦',
+    rarity: 'RARE',
+    category: 'activity',
+    threshold: 5,
+    points: BADGE_POINTS.RARE,
+  },
+  {
+    key: 'alpha_hunter',
+    name: '🎯 Alpha Hunter',
+    description: 'Found 3+ 10x gems early',
+    icon: '🎯',
+    rarity: 'EPIC',
+    category: 'activity',
+    threshold: 3,
+    points: BADGE_POINTS.EPIC,
+  },
+  {
+    key: 'memecoin_master',
+    name: '🐸 Memecoin Master',
+    description: 'Profitable in 20+ different memecoins',
+    icon: '🐸',
+    rarity: 'LEGENDARY',
+    category: 'activity',
+    threshold: 20,
+    points: BADGE_POINTS.LEGENDARY,
+  },
+
+  // Whale Status Badges
+  {
+    key: 'shark_status',
+    name: '🦈 Shark Status',
+    description: '$1,000+ volume + 55%+ win rate',
+    icon: '🦈',
+    rarity: 'EPIC',
+    category: 'activity',
+    threshold: 1000,
+    points: BADGE_POINTS.EPIC,
+  },
+  {
+    key: 'whale_status',
+    name: '🐋 Whale Status',
+    description: '$10,000+ volume + 60%+ win rate',
+    icon: '🐋',
+    rarity: 'LEGENDARY',
+    category: 'activity',
+    threshold: 10000,
+    points: BADGE_POINTS.LEGENDARY,
+  },
+  {
+    key: 'megawhale_status',
+    name: '🌊 Megawhale',
+    description: '$100,000+ volume + 65%+ win rate',
+    icon: '🌊',
+    rarity: 'MYTHIC',
+    category: 'activity',
+    threshold: 100000,
+    points: BADGE_POINTS.MYTHIC,
+  },
+
+  // Trading Pattern Badges
+  {
+    key: 'quick_flipper',
+    name: '⚡ Quick Flipper',
+    description: '50+ profitable trades under 1 hour',
+    icon: '⚡',
+    rarity: 'RARE',
+    category: 'activity',
+    threshold: 50,
+    points: BADGE_POINTS.RARE,
+  },
+  {
+    key: 'swing_trader',
+    name: '📊 Swing Trader',
+    description: '20+ profitable trades held 1-7 days',
+    icon: '📊',
+    rarity: 'EPIC',
+    category: 'activity',
+    threshold: 20,
+    points: BADGE_POINTS.EPIC,
+  },
+  {
+    key: 'patient_investor',
+    name: '🧠 Patient Investor',
+    description: '10+ profitable trades held 30+ days',
+    icon: '🧠',
+    rarity: 'LEGENDARY',
+    category: 'activity',
+    threshold: 10,
+    points: BADGE_POINTS.LEGENDARY,
+  },
+];
+
+// ═══════════════════════════════════════════════════════════════
 // SOCIAL / REFERIDOS (5 badges)
 // ═══════════════════════════════════════════════════════════════
 
@@ -671,6 +838,7 @@ export const ALL_BADGES: BadgeDefinition[] = [
   ...PNL_BADGES,
   ...WINRATE_BADGES,
   ...ACTIVITY_BADGES,
+  ...WHALE_TRACKER_BADGES,
   ...SOCIAL_BADGES,
   ...PREMIUM_BADGES,
 ];
@@ -822,7 +990,94 @@ export function checkPremiumBadges(metrics: CardMetrics): BadgeDefinition[] {
   return badges;
 }
 
-export function checkAllBadges(metrics: CardMetrics): {
+/**
+ * 🐋 Check Whale Tracker Badges
+ * These badges require extensive trade history (500+ trades) to evaluate properly
+ */
+export function checkWhaleTrackerBadges(metrics: CardMetrics & {
+  rugsSurvived?: number;
+  longestWinStreak?: number;
+  quickFlips?: number;
+  uniqueTokensTraded?: number;
+}): BadgeDefinition[] {
+  const badges: BadgeDefinition[] = [];
+
+  // Rug Survival Badges
+  const rugsSurvived = metrics.rugsSurvived || 0;
+  if (rugsSurvived >= 3) {
+    const badge = WHALE_TRACKER_BADGES.find((b) => b.key === 'rug_survivor_bronze');
+    if (badge) badges.push(badge);
+  }
+  if (rugsSurvived >= 5 && metrics.profitLoss > 0) {
+    const badge = WHALE_TRACKER_BADGES.find((b) => b.key === 'rug_survivor_silver');
+    if (badge) badges.push(badge);
+  }
+  if (rugsSurvived >= 10 && metrics.profitLoss > 0) {
+    const badge = WHALE_TRACKER_BADGES.find((b) => b.key === 'rug_survivor_gold');
+    if (badge) badges.push(badge);
+  }
+
+  // Consistency Badges
+  if (metrics.totalTrades >= 100 && metrics.profitLoss > 0) {
+    const badge = WHALE_TRACKER_BADGES.find((b) => b.key === 'steady_hands');
+    if (badge) badges.push(badge);
+  }
+
+  const longestWinStreak = metrics.longestWinStreak || 0;
+  if (longestWinStreak >= 10) {
+    const badge = WHALE_TRACKER_BADGES.find((b) => b.key === 'profit_streak');
+    if (badge) badges.push(badge);
+  }
+
+  // Whale Status Badges (based on volume + win rate)
+  if (metrics.totalVolume >= 1000 && metrics.winRate >= 55) {
+    const badge = WHALE_TRACKER_BADGES.find((b) => b.key === 'shark_status');
+    if (badge) badges.push(badge);
+  }
+  if (metrics.totalVolume >= 10000 && metrics.winRate >= 60) {
+    const badge = WHALE_TRACKER_BADGES.find((b) => b.key === 'whale_status');
+    if (badge) badges.push(badge);
+  }
+  if (metrics.totalVolume >= 100000 && metrics.winRate >= 65) {
+    const badge = WHALE_TRACKER_BADGES.find((b) => b.key === 'megawhale_status');
+    if (badge) badges.push(badge);
+  }
+
+  // Trading Pattern Badges
+  const quickFlips = metrics.quickFlips || 0;
+  if (quickFlips >= 50) {
+    const badge = WHALE_TRACKER_BADGES.find((b) => b.key === 'quick_flipper');
+    if (badge) badges.push(badge);
+  }
+
+  // Diamond hands is already in activity badges - enhance with patient_investor
+  if (metrics.diamondHands >= 10) {
+    const badge = WHALE_TRACKER_BADGES.find((b) => b.key === 'patient_investor');
+    if (badge) badges.push(badge);
+  }
+
+  // Memecoin Master - profitable in many different tokens
+  const uniqueTokens = metrics.uniqueTokensTraded || 0;
+  if (uniqueTokens >= 20 && metrics.profitLoss > 0) {
+    const badge = WHALE_TRACKER_BADGES.find((b) => b.key === 'memecoin_master');
+    if (badge) badges.push(badge);
+  }
+
+  // Alpha Hunter - found multiple 10x gems (moonshots)
+  if (metrics.moonshots >= 3) {
+    const badge = WHALE_TRACKER_BADGES.find((b) => b.key === 'alpha_hunter');
+    if (badge) badges.push(badge);
+  }
+
+  return badges;
+}
+
+export function checkAllBadges(metrics: CardMetrics & {
+  rugsSurvived?: number;
+  longestWinStreak?: number;
+  quickFlips?: number;
+  uniqueTokensTraded?: number;
+}): {
   badges: BadgeDefinition[];
   totalPoints: number;
 } {
@@ -831,6 +1086,7 @@ export function checkAllBadges(metrics: CardMetrics): {
     ...checkPnlBadges(metrics),
     ...checkWinRateBadges(metrics),
     ...checkActivityBadges(metrics),
+    ...checkWhaleTrackerBadges(metrics),
     ...checkPremiumBadges(metrics),
   ];
 

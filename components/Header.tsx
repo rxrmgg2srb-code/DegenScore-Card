@@ -45,6 +45,12 @@ export const Header: React.FC<HeaderProps> = ({ connected = false, username = ''
               {t('nav.leaderboard')}
             </Link>
             <Link
+              href="/whale-radar"
+              className="text-blue-400 hover:text-blue-300 transition-colors flex items-center gap-1 font-semibold"
+            >
+              🐋 Whale Radar
+            </Link>
+            <Link
               href="/token-scanner"
               className="text-gray-300 hover:text-white transition-colors flex items-center gap-1"
             >
@@ -96,6 +102,12 @@ export const Header: React.FC<HeaderProps> = ({ connected = false, username = ''
             className="text-sm text-gray-300 hover:text-white transition-colors whitespace-nowrap"
           >
             {t('nav.leaderboard')}
+          </Link>
+          <Link
+            href="/whale-radar"
+            className="text-sm text-blue-400 hover:text-blue-300 transition-colors whitespace-nowrap font-semibold"
+          >
+            🐋 Whales
           </Link>
           <Link
             href="/token-scanner"
