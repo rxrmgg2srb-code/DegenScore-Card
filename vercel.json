@@ -2,12 +2,6 @@
   "buildCommand": "bash scripts/vercel-build.sh",
   "outputDirectory": ".next",
   "framework": "nextjs",
-  "rewrites": [
-    {
-      "source": "/(.*)",
-      "destination": "/"
-    }
-  ],
   "env": {
     "NODE_ENV": "production"
   },
