@@ -1,6 +1,7 @@
 import dynamic from 'next/dynamic';
 import Head from 'next/head';
 import Header from '@/components/Header';
+import { GetServerSideProps } from 'next';
 
 const WhaleRadar = dynamic(() => import('../components/WhaleRadar'), {
     ssr: false,
@@ -152,3 +153,8 @@ export default function WhaleRadarPage() {
         </>
     );
 }
+
+// Force SSR to avoid static generation timeout
+export const getServerSideProps: GetServerSideProps = async () => {
+    return { props: {} };
+};
