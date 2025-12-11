@@ -14,6 +14,7 @@
 
 import { ParsedTransaction, getWalletTransactions } from './services/helius';
 import { logger } from '@/lib/logger';
+import { calculateOpenPositionsValue } from './services/tokenPriceService';
 
 
 
@@ -88,6 +89,18 @@ export interface WalletMetrics {
   topGainers?: Array<{ mint: string; pnl: number; roi: number }>;
   topLosers?: Array<{ mint: string; pnl: number; roi: number }>;
 
+  // 🔥 NEW: Open positions for unrealized P&L
+  openPositionsCount?: number;
+  openPositionsValue?: number; // Current market value
+  openPositionsCostBasis?: number; // Original cost
+  openPositionsDetails?: Array<{
+    tokenMint: string;
+    currentValue: number;
+    costBasis: number;
+    unrealizedPnL: number;
+    pnlPercent: number;
+  }>;
+
   // The ultimate score (0-100)
   degenScore: number;
 }
@@ -146,8 +159,8 @@ export async function calculateAdvancedMetrics(
       onProgress(95, '🎯 Calculating metrics...');
     }
 
-    // Calculate all metrics
-    const metrics = calculateMetrics(trades, positions, allTransactions);
+    // Calculate all metrics (now async for unrealized P&L)
+    const metrics = await calculateMetrics(trades, positions, allTransactions);
 
     if (onProgress) {
       onProgress(100, '✅ Analysis complete!');
@@ -730,17 +743,20 @@ function buildPositions(trades: Trade[]): Position[] {
 // METRICS CALCULATION
 // ============================================================================
 
-function calculateMetrics(
+async function calculateMetrics(
   trades: Trade[],
   positions: Position[],
   allTransactions: ParsedTransaction[]
-): WalletMetrics {
+): Promise<WalletMetrics> {
   const totalTrades = trades.length;
   const totalVolume = trades.reduce((sum, t) => sum + t.solAmount, 0);
   const totalFees = allTransactions.reduce((sum, tx) => sum + tx.fee / 1e9, 0);
 
   // Closed positions only (for realized metrics)
   const closedPositions = positions.filter((p) => !p.isOpen);
+
+  // 🔥 NEW: Open positions for unrealized P&L
+  const openPositions = positions.filter((p) => p.isOpen);
 
   // P&L calculation (Cash Flow Method)
   // This is more accurate for total wallet P&L as it includes all inflows/outflows
@@ -749,7 +765,48 @@ function calculateMetrics(
 
   // Realized PnL based on Cash Flow
   const realizedPnL = totalSolReceived - totalSolSpent;
-  const unrealizedPnL = 0; // Would need current prices
+
+  // 🔥 NEW: Calculate REAL unrealized P&L using current market prices
+  let unrealizedPnL = 0;
+  let openPositionsValue = 0;
+  let openPositionsCostBasis = 0;
+  let openPositionsDetails: Array<{
+    tokenMint: string;
+    currentValue: number;
+    costBasis: number;
+    unrealizedPnL: number;
+    pnlPercent: number;
+  }> = [];
+
+  if (openPositions.length > 0) {
+    try {
+      logger.info(`💰 Calculating unrealized P&L for ${openPositions.length} open positions...`);
+
+      const openPositionData = openPositions.map(p => ({
+        tokenMint: p.tokenMint,
+        tokensBought: p.tokensBought - (p.tokensSold || 0), // Remaining tokens
+        buyAmount: p.buyAmount * ((p.tokensBought - (p.tokensSold || 0)) / p.tokensBought), // Proportional cost
+      }));
+
+      const openPosResult = await calculateOpenPositionsValue(openPositionData);
+
+      unrealizedPnL = openPosResult.unrealizedPnL;
+      openPositionsValue = openPosResult.totalCurrentValue;
+      openPositionsCostBasis = openPosResult.totalCostBasis;
+      openPositionsDetails = openPosResult.positions;
+
+      logger.info(`✅ Unrealized P&L calculated:`, {
+        openPositions: openPositions.length,
+        currentValue: openPositionsValue.toFixed(4),
+        costBasis: openPositionsCostBasis.toFixed(4),
+        unrealizedPnL: unrealizedPnL.toFixed(4),
+      });
+    } catch (error) {
+      logger.warn('⚠️ Failed to calculate unrealized P&L, using 0', { error: String(error) });
+      unrealizedPnL = 0;
+    }
+  }
+
   const profitLoss = realizedPnL + unrealizedPnL;
 
   // Win rate
@@ -946,7 +1003,13 @@ function calculateMetrics(
     netBalance: profitLoss,
     netBalanceAfterFees: profitLoss - totalFees,
     topGainers,
-    topLosers
+    topLosers,
+
+    // 🔥 NEW: Open positions for unrealized P&L
+    openPositionsCount: openPositions.length,
+    openPositionsValue,
+    openPositionsCostBasis,
+    openPositionsDetails,
   };
 }
 
