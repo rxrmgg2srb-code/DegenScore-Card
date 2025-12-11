@@ -101,6 +101,35 @@ export interface WalletMetrics {
     pnlPercent: number;
   }>;
 
+  // 🔥 NEW: Comprehensive Fee Tracking
+  feeBreakdown?: {
+    networkFees: number;      // SOL transaction fees
+    dexFees: number;          // DEX trading fees (estimated 0.25-0.3%)
+    priorityFees: number;     // Priority/compute fees
+    totalFeesSOL: number;     // Total fees in SOL
+    feePercentage: number;    // Fees as % of volume
+  };
+
+  // 🔥 NEW: Weighted Average Entry Prices (for DCA traders)
+  consolidatedPositions?: Array<{
+    tokenMint: string;
+    totalTokens: number;
+    weightedAvgPrice: number;   // Average price per token
+    totalCostBasis: number;     // Total SOL spent
+    tradesCount: number;        // Number of buy trades
+    firstBuyTime: number;
+    lastBuyTime: number;
+  }>;
+
+  // 🔥 NEW: Airdrop Detection
+  airdropsReceived?: number;     // Count of airdrops
+  airdropValue?: number;         // Estimated value of airdrops in SOL
+  airdropTokens?: Array<{
+    tokenMint: string;
+    amount: number;
+    timestamp: number;
+  }>;
+
   // The ultimate score (0-100)
   degenScore: number;
 }
@@ -740,6 +769,221 @@ function buildPositions(trades: Trade[]): Position[] {
 }
 
 // ============================================================================
+// 🔥 NEW: COMPREHENSIVE FEE CALCULATION
+// ============================================================================
+
+interface FeeBreakdown {
+  networkFees: number;
+  dexFees: number;
+  priorityFees: number;
+  totalFeesSOL: number;
+  feePercentage: number;
+}
+
+function calculateFeeBreakdown(
+  transactions: ParsedTransaction[],
+  trades: Trade[]
+): FeeBreakdown {
+  // Network fees (direct from transactions)
+  const networkFees = transactions.reduce((sum, tx) => sum + (tx.fee || 0) / 1e9, 0);
+
+  // Total trading volume
+  const totalVolume = trades.reduce((sum, t) => sum + t.solAmount, 0);
+
+  // DEX fees estimation (typical 0.25% for Raydium, 0.3% for Orca)
+  // We estimate based on the DEX used (could be improved with actual log parsing)
+  const avgDexFeeRate = 0.0025; // 0.25% average
+  const dexFees = totalVolume * avgDexFeeRate;
+
+  // Priority fees - extract from compute units if available
+  // For now, we estimate based on typical priority fees (0.00001-0.001 SOL per tx)
+  const swapTxCount = trades.length;
+  const avgPriorityFee = 0.0001; // Conservative estimate
+  const priorityFees = swapTxCount * avgPriorityFee;
+
+  const totalFeesSOL = networkFees + dexFees + priorityFees;
+  const feePercentage = totalVolume > 0 ? (totalFeesSOL / totalVolume) * 100 : 0;
+
+  logger.info('💰 Fee breakdown calculated:', {
+    networkFees: networkFees.toFixed(6),
+    dexFees: dexFees.toFixed(6),
+    priorityFees: priorityFees.toFixed(6),
+    totalFeesSOL: totalFeesSOL.toFixed(6),
+    feePercentage: feePercentage.toFixed(2) + '%',
+  });
+
+  return {
+    networkFees,
+    dexFees,
+    priorityFees,
+    totalFeesSOL,
+    feePercentage,
+  };
+}
+
+// ============================================================================
+// 🔥 NEW: WEIGHTED AVERAGE ENTRY PRICE (FOR DCA TRADERS)
+// ============================================================================
+
+interface ConsolidatedPosition {
+  tokenMint: string;
+  totalTokens: number;
+  weightedAvgPrice: number;
+  totalCostBasis: number;
+  tradesCount: number;
+  firstBuyTime: number;
+  lastBuyTime: number;
+}
+
+function calculateConsolidatedPositions(trades: Trade[]): ConsolidatedPosition[] {
+  const buysByToken = new Map<string, Trade[]>();
+
+  // Group all buys by token
+  for (const trade of trades) {
+    if (trade.type === 'buy') {
+      if (!buysByToken.has(trade.tokenMint)) {
+        buysByToken.set(trade.tokenMint, []);
+      }
+      buysByToken.get(trade.tokenMint)!.push(trade);
+    }
+  }
+
+  const consolidated: ConsolidatedPosition[] = [];
+
+  for (const [tokenMint, buys] of buysByToken.entries()) {
+    if (buys.length === 0) continue;
+
+    const totalTokens = buys.reduce((sum, t) => sum + t.tokenAmount, 0);
+    const totalCostBasis = buys.reduce((sum, t) => sum + t.solAmount, 0);
+
+    // Weighted average price = Total SOL spent / Total tokens bought
+    const weightedAvgPrice = totalTokens > 0 ? totalCostBasis / totalTokens : 0;
+
+    // Sort by timestamp to get first and last
+    const sortedBuys = [...buys].sort((a, b) => a.timestamp - b.timestamp);
+
+    consolidated.push({
+      tokenMint,
+      totalTokens,
+      weightedAvgPrice,
+      totalCostBasis,
+      tradesCount: buys.length,
+      firstBuyTime: sortedBuys[0]?.timestamp || 0,
+      lastBuyTime: sortedBuys[sortedBuys.length - 1]?.timestamp || 0,
+    });
+  }
+
+  // Sort by total cost basis (biggest positions first)
+  consolidated.sort((a, b) => b.totalCostBasis - a.totalCostBasis);
+
+  logger.info(`📊 Consolidated ${consolidated.length} positions with weighted avg prices`);
+
+  return consolidated;
+}
+
+// ============================================================================
+// 🔥 NEW: AIRDROP DETECTION
+// ============================================================================
+
+interface AirdropInfo {
+  count: number;
+  estimatedValue: number;
+  tokens: Array<{
+    tokenMint: string;
+    amount: number;
+    timestamp: number;
+  }>;
+}
+
+function detectAirdrops(
+  transactions: ParsedTransaction[],
+  walletAddress: string
+): AirdropInfo {
+  const airdrops: Array<{
+    tokenMint: string;
+    amount: number;
+    timestamp: number;
+  }> = [];
+
+  for (const tx of transactions) {
+    // Skip if no token transfers
+    if (!tx.tokenTransfers || tx.tokenTransfers.length === 0) continue;
+
+    // Check for airdrop pattern:
+    // 1. Tokens received (to wallet)
+    // 2. No SOL outflow (didn't pay for it)
+    // 3. Not a swap (no corresponding token outflow)
+
+    let solOutflow = 0;
+    let solInflow = 0;
+
+    // Calculate SOL flow
+    if (tx.nativeTransfers) {
+      for (const nt of tx.nativeTransfers) {
+        if (nt.fromUserAccount === walletAddress) {
+          solOutflow += nt.amount / 1e9;
+        }
+        if (nt.toUserAccount === walletAddress) {
+          solInflow += nt.amount / 1e9;
+        }
+      }
+    }
+
+    // Also check accountData for more accurate SOL changes
+    if (tx.accountData) {
+      const walletData = tx.accountData.find((acc: any) => acc.account === walletAddress);
+      if (walletData && walletData.nativeBalanceChange) {
+        const netChange = walletData.nativeBalanceChange / 1e9;
+        if (netChange < 0) solOutflow = Math.abs(netChange);
+        if (netChange > 0) solInflow = netChange;
+      }
+    }
+
+    // If no significant SOL spent (only fees), check for token inflows
+    const netSolSpent = solOutflow - solInflow;
+
+    if (netSolSpent < 0.001) { // Less than 0.001 SOL spent (just fees)
+      // Find tokens received
+      for (const tt of tx.tokenTransfers) {
+        if (tt.toUserAccount === walletAddress && tt.tokenAmount > 0) {
+          // Check if this is truly an airdrop (no token was sent out)
+          const tokenSent = tx.tokenTransfers.find(
+            t => t.fromUserAccount === walletAddress && t.mint === tt.mint
+          );
+
+          if (!tokenSent) {
+            // This is an airdrop - received tokens without sending any
+            airdrops.push({
+              tokenMint: tt.mint,
+              amount: tt.tokenAmount,
+              timestamp: tx.timestamp,
+            });
+          }
+        }
+      }
+    }
+  }
+
+  // Estimate value (assume average airdrop is worth 0.01 SOL per batch)
+  const estimatedValuePerAirdrop = 0.01;
+  const estimatedValue = airdrops.length * estimatedValuePerAirdrop;
+
+  logger.info(`🎁 Detected ${airdrops.length} potential airdrops`, {
+    estimatedValue: estimatedValue.toFixed(4),
+    topAirdrops: airdrops.slice(0, 5).map(a => ({
+      mint: a.tokenMint.substring(0, 8),
+      amount: a.amount,
+    })),
+  });
+
+  return {
+    count: airdrops.length,
+    estimatedValue,
+    tokens: airdrops,
+  };
+}
+
+// ============================================================================
 // METRICS CALCULATION
 // ============================================================================
 
@@ -806,6 +1050,17 @@ async function calculateMetrics(
       unrealizedPnL = 0;
     }
   }
+
+  // 🔥 NEW: Calculate comprehensive fee breakdown
+  const feeBreakdown = calculateFeeBreakdown(allTransactions, trades);
+
+  // 🔥 NEW: Calculate weighted average entry prices for DCA traders
+  const consolidatedPositions = calculateConsolidatedPositions(trades);
+
+  // 🔥 NEW: Detect airdrops (tokens received without paying)
+  // Note: We need walletAddress for this, so we extract it from a transaction
+  const walletAddress = allTransactions[0]?.accountData?.[0]?.account || '';
+  const airdropInfo = walletAddress ? detectAirdrops(allTransactions, walletAddress) : { count: 0, estimatedValue: 0, tokens: [] };
 
   const profitLoss = realizedPnL + unrealizedPnL;
 
@@ -1010,6 +1265,17 @@ async function calculateMetrics(
     openPositionsValue,
     openPositionsCostBasis,
     openPositionsDetails,
+
+    // 🔥 NEW: Comprehensive Fee Tracking
+    feeBreakdown,
+
+    // 🔥 NEW: Weighted Average Entry (for DCA traders)
+    consolidatedPositions,
+
+    // 🔥 NEW: Airdrop Detection
+    airdropsReceived: airdropInfo.count,
+    airdropValue: airdropInfo.estimatedValue,
+    airdropTokens: airdropInfo.tokens,
   };
 }
 
