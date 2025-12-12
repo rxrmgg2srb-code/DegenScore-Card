@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { logger } from '../../lib/logger';
+import { calculateChallengeMetrics, getTimeBoundaries, ChallengeMetrics } from '../../lib/challengeMetrics';
 
 // Types
 interface Challenge {
@@ -20,26 +21,6 @@ interface Challenge {
     };
     difficulty: 'easy' | 'medium' | 'hard' | 'legendary';
     expiresAt: number;
-}
-
-interface WalletMetrics {
-    totalTrades: number;
-    totalVolume: number;
-    profitLoss: number;
-    winRate: number;
-    tradingDays: number;
-    longestWinStreak: number;
-    firstTradeDate: string;
-    favoriteTokens: { symbol: string; volume: number }[];
-}
-
-interface TimePeriodMetrics {
-    trades: number;
-    volume: number;
-    profit: number;
-    winStreak: number;
-    uniqueTokens: number;
-    activeDays: number;
 }
 
 // Challenge definitions - FIXED, not random
@@ -112,144 +93,34 @@ const SPECIAL_CHALLENGE_DEFS = [
     },
 ];
 
-// Calculate time boundaries
-function getTimeBoundaries() {
-    const now = new Date();
-
-    // Start of today (UTC)
-    const startOfToday = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, 0, 0));
-
-    // End of today (UTC)
-    const endOfToday = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 23, 59, 59, 999));
-
-    // Start of week (Monday UTC)
-    const dayOfWeek = now.getUTCDay();
-    const daysToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-    const startOfWeek = new Date(startOfToday);
-    startOfWeek.setUTCDate(startOfWeek.getUTCDate() - daysToMonday);
-
-    // End of week (Sunday UTC)
-    const endOfWeek = new Date(startOfWeek);
-    endOfWeek.setUTCDate(endOfWeek.getUTCDate() + 6);
-    endOfWeek.setUTCHours(23, 59, 59, 999);
-
-    // Days in current period
-    const daysIntoToday = (now.getTime() - startOfToday.getTime()) / (24 * 60 * 60 * 1000);
-    const daysIntoWeek = (now.getTime() - startOfWeek.getTime()) / (24 * 60 * 60 * 1000);
-
-    return {
-        startOfToday: startOfToday.getTime(),
-        endOfToday: endOfToday.getTime(),
-        startOfWeek: startOfWeek.getTime(),
-        endOfWeek: endOfWeek.getTime(),
-        now: now.getTime(),
-        daysIntoToday,
-        daysIntoWeek: Math.max(1, daysIntoWeek),
-    };
-}
-
-// Fetch wallet metrics from analyze API
-async function fetchWalletMetrics(walletAddress: string): Promise<WalletMetrics | null> {
-    try {
-        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || process.env.VERCEL_URL
-            ? `https://${process.env.VERCEL_URL}`
-            : 'http://localhost:3000';
-
-        const response = await fetch(`${baseUrl}/api/analyze`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ walletAddress }),
-        });
-
-        if (!response.ok) {
-            logger.warn(`[Challenges] Failed to fetch metrics for ${walletAddress.slice(0, 8)}...`);
-            return null;
-        }
-
-        const data = await response.json();
-
-        return {
-            totalTrades: data.totalTrades || 0,
-            totalVolume: data.totalVolume || 0,
-            profitLoss: data.profitLoss || 0,
-            winRate: data.winRate || 0,
-            tradingDays: data.tradingDays || 0,
-            longestWinStreak: data.longestWinStreak || 0,
-            firstTradeDate: data.firstTradeDate || new Date().toISOString(),
-            favoriteTokens: [],
-        };
-    } catch (error) {
-        logger.error('[Challenges] Error fetching wallet metrics:', error instanceof Error ? error : new Error(String(error)));
-        return null;
-    }
-}
-
-// Calculate time-proportional metrics for daily/weekly challenges
-function calculateTimeProportionalMetrics(
-    metrics: WalletMetrics,
-    boundaries: ReturnType<typeof getTimeBoundaries>
-): { daily: TimePeriodMetrics; weekly: TimePeriodMetrics } {
-    // Total trading period in days
-    const totalTradingDays = Math.max(1, metrics.tradingDays);
-
-    // Average trades per day
-    const avgTradesPerDay = metrics.totalTrades / totalTradingDays;
-    const avgVolumePerDay = metrics.totalVolume / totalTradingDays;
-    const avgProfitPerDay = metrics.profitLoss / totalTradingDays;
-
-    // Check if user traded today (approximate based on activity level)
-    const todayTradeEstimate = avgTradesPerDay > 1 ? Math.round(avgTradesPerDay) : 0;
-    const todayVolumeEstimate = avgVolumePerDay > 0.5 ? avgVolumePerDay : 0;
-
-    // For daily metrics: estimate based on today's portion of average
-    const daily: TimePeriodMetrics = {
-        trades: Math.round(todayTradeEstimate * boundaries.daysIntoToday),
-        volume: Number((todayVolumeEstimate * boundaries.daysIntoToday).toFixed(2)),
-        profit: Number((avgProfitPerDay * boundaries.daysIntoToday).toFixed(2)),
-        winStreak: metrics.longestWinStreak > 0 ? Math.min(metrics.longestWinStreak, 3) : 0,
-        uniqueTokens: 0, // Would need token data
-        activeDays: boundaries.daysIntoToday >= 0.5 ? 1 : 0,
-    };
-
-    // For weekly metrics: 7-day window
-    const weeklyMultiplier = Math.min(7, boundaries.daysIntoWeek);
-    const weekly: TimePeriodMetrics = {
-        trades: Math.round(avgTradesPerDay * weeklyMultiplier),
-        volume: Number((avgVolumePerDay * weeklyMultiplier).toFixed(2)),
-        profit: Number((avgProfitPerDay * weeklyMultiplier).toFixed(2)),
-        winStreak: metrics.longestWinStreak,
-        uniqueTokens: 0,
-        activeDays: Math.min(7, Math.round(weeklyMultiplier)),
-    };
-
-    return { daily, weekly };
-}
-
-// Calculate challenge progress based on time-filtered metrics
-function calculateChallengeProgress(
+// Calculate challenge progress based on real metrics
+function calculateProgress(
     challengeDef: { requirement: { type: string; target: number }; type: string },
-    periodMetrics: TimePeriodMetrics
+    metrics: ChallengeMetrics
 ): number {
     const { type, target } = challengeDef.requirement;
+    const isDaily = challengeDef.type === 'daily';
 
     switch (type) {
         case 'trades':
-            return Math.min(periodMetrics.trades, target);
+            return Math.min(isDaily ? metrics.daily.trades : metrics.weekly.trades, target);
 
         case 'volume':
-            return Math.min(periodMetrics.volume, target);
+            return Math.min(isDaily ? metrics.daily.volume : metrics.weekly.volume, target);
 
-        case 'profit':
-            return periodMetrics.profit > 0 ? Math.min(periodMetrics.profit, target) : 0;
+        case 'profit': {
+            const profit = isDaily ? metrics.daily.profit : metrics.weekly.profit;
+            return profit > 0 ? Math.min(profit, target) : 0;
+        }
 
         case 'winStreak':
-            return Math.min(periodMetrics.winStreak, target);
+            return Math.min(isDaily ? metrics.daily.winStreak : metrics.weekly.winStreak, target);
 
         case 'uniqueTokens':
-            return Math.min(periodMetrics.uniqueTokens, target);
+            return Math.min(metrics.daily.uniqueTokens || 0, target);
 
         case 'activeDays':
-            return Math.min(periodMetrics.activeDays, target);
+            return Math.min(metrics.weekly.activeDays, target);
 
         case 'copyTrade':
             return 0; // Needs specific tracking
@@ -259,24 +130,16 @@ function calculateChallengeProgress(
     }
 }
 
-// Build challenges with real, time-filtered progress
-function buildChallengesWithProgress(
-    metrics: WalletMetrics | null,
+// Build challenges with real progress
+function buildChallenges(
+    metrics: ChallengeMetrics | null,
     boundaries: ReturnType<typeof getTimeBoundaries>
 ): Challenge[] {
     const challenges: Challenge[] = [];
 
-    // Calculate time-proportional metrics
-    const periodMetrics = metrics
-        ? calculateTimeProportionalMetrics(metrics, boundaries)
-        : {
-            daily: { trades: 0, volume: 0, profit: 0, winStreak: 0, uniqueTokens: 0, activeDays: 0 },
-            weekly: { trades: 0, volume: 0, profit: 0, winStreak: 0, uniqueTokens: 0, activeDays: 0 }
-        };
-
-    // Daily challenges (use daily metrics)
+    // Daily challenges
     DAILY_CHALLENGE_DEFS.forEach(def => {
-        const current = calculateChallengeProgress(def, periodMetrics.daily);
+        const current = metrics ? calculateProgress(def, metrics) : 0;
         challenges.push({
             ...def,
             requirement: {
@@ -287,9 +150,9 @@ function buildChallengesWithProgress(
         });
     });
 
-    // Weekly challenges (use weekly metrics)
+    // Weekly challenges
     WEEKLY_CHALLENGE_DEFS.forEach(def => {
-        const current = calculateChallengeProgress(def, periodMetrics.weekly);
+        const current = metrics ? calculateProgress(def, metrics) : 0;
         challenges.push({
             ...def,
             requirement: {
@@ -300,14 +163,13 @@ function buildChallengesWithProgress(
         });
     });
 
-    // Special challenges (use lifetime metrics)
+    // Special challenges
     SPECIAL_CHALLENGE_DEFS.forEach(def => {
-        const current = 0; // Special tracking needed
         challenges.push({
             ...def,
             requirement: {
                 ...def.requirement,
-                current,
+                current: 0, // Special tracking needed
             },
             expiresAt: boundaries.now + 7 * 24 * 3600000,
         });
@@ -323,12 +185,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         switch (method) {
             case 'GET': {
                 const { walletAddress } = req.query;
-
-                // Get time boundaries
                 const boundaries = getTimeBoundaries();
 
                 if (!walletAddress || typeof walletAddress !== 'string') {
-                    const challenges = buildChallengesWithProgress(null, boundaries);
+                    const challenges = buildChallenges(null, boundaries);
 
                     return res.status(200).json({
                         success: true,
@@ -338,18 +198,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     });
                 }
 
-                logger.info(`[Challenges] Fetching for wallet: ${walletAddress.slice(0, 8)}...`);
+                logger.info(`[Challenges] Fetching real metrics for: ${walletAddress.slice(0, 8)}...`);
 
-                // Fetch real wallet metrics
-                const metrics = await fetchWalletMetrics(walletAddress);
+                // Fetch REAL date-filtered metrics using our new isolated module
+                const challengeMetrics = await calculateChallengeMetrics(walletAddress);
 
-                // Build challenges with time-filtered progress
-                const challenges = buildChallengesWithProgress(metrics, boundaries);
-
-                // Calculate time-proportional metrics for display
-                const periodMetrics = metrics
-                    ? calculateTimeProportionalMetrics(metrics, boundaries)
-                    : null;
+                // Build challenges with real progress
+                const challenges = buildChallenges(challengeMetrics, boundaries);
 
                 // Calculate stats
                 const completed = challenges.filter(c => c.requirement.current >= c.requirement.target).length;
@@ -362,24 +217,27 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                         completed,
                         claimed: 0,
                     },
-                    metrics: metrics ? {
-                        // Lifetime metrics
-                        totalTrades: metrics.totalTrades,
-                        totalVolume: Math.round(metrics.totalVolume * 100) / 100,
-                        profitLoss: Math.round(metrics.profitLoss * 100) / 100,
-                        winRate: Math.round(metrics.winRate),
-                        // Today's estimates
-                        todayTrades: periodMetrics?.daily.trades || 0,
-                        todayVolume: periodMetrics?.daily.volume || 0,
-                        // This week's estimates
-                        weekTrades: periodMetrics?.weekly.trades || 0,
-                        weekVolume: periodMetrics?.weekly.volume || 0,
-                        weekProfit: periodMetrics?.weekly.profit || 0,
+                    metrics: challengeMetrics ? {
+                        // Today's REAL metrics
+                        todayTrades: challengeMetrics.daily.trades,
+                        todayVolume: challengeMetrics.daily.volume,
+                        todayProfit: challengeMetrics.daily.profit,
+                        // This week's REAL metrics
+                        weekTrades: challengeMetrics.weekly.trades,
+                        weekVolume: challengeMetrics.weekly.volume,
+                        weekProfit: challengeMetrics.weekly.profit,
+                        weekActiveDays: challengeMetrics.weekly.activeDays,
+                        // Lifetime
+                        totalTrades: challengeMetrics.lifetime.totalTrades,
+                        totalVolume: challengeMetrics.lifetime.totalVolume,
+                        profitLoss: challengeMetrics.lifetime.profitLoss,
+                        winRate: challengeMetrics.lifetime.winRate,
                     } : null,
                     periodInfo: {
-                        daysIntoWeek: Math.round(boundaries.daysIntoWeek * 10) / 10,
+                        timezone: 'UTC',
                         endOfDay: new Date(boundaries.endOfToday).toISOString(),
                         endOfWeek: new Date(boundaries.endOfWeek).toISOString(),
+                        dataSource: challengeMetrics ? 'real-time-transactions' : 'none',
                     },
                 });
             }

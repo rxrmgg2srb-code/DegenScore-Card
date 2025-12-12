@@ -33,12 +33,15 @@ interface WalletMetrics {
     totalVolume: number;
     profitLoss: number;
     winRate: number;
-    // Period-specific metrics
+    // Today's metrics (real)
     todayTrades?: number;
     todayVolume?: number;
+    todayProfit?: number;
+    // This week's metrics (real)
     weekTrades?: number;
     weekVolume?: number;
     weekProfit?: number;
+    weekActiveDays?: number;
 }
 
 const DIFFICULTY_COLORS = {
