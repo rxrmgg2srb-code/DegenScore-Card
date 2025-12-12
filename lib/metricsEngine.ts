@@ -2883,7 +2883,7 @@ async function calculateMetrics(
       advancedPerformance.profitFactor,
       analyzePsychologicalPatterns(trades, positions).emotionalControlScore,
       consistencyMetrics.consistencyScore,
-      analyzeRecoveryPatterns(trades, positions).recoveryScore
+      analyzeRecoveryPatterns(positions).recoveryScore
     ),
   };
 }
