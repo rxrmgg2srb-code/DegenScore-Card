@@ -1986,7 +1986,7 @@ function analyzePsychologicalPatterns(trades: Trade[], positions: Position[]) {
   for (let i = 1; i < closedPositions.length; i++) {
     const prev = closedPositions[i - 1];
     const curr = closedPositions[i];
-    if ((prev.profitLoss || 0) < 0 && curr.holdTime && curr.holdTime < 60) {
+    if (prev && curr && (prev.profitLoss || 0) < 0 && curr.holdTime && curr.holdTime < 60) {
       panicSells++;
     }
   }
