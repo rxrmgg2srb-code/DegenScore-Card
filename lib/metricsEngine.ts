@@ -1996,10 +1996,11 @@ function analyzePsychologicalPatterns(trades: Trade[], positions: Position[]) {
   let revengeTrades = 0;
   for (let i = 1; i < trades.length; i++) {
     const prevTrade = trades[i - 1];
-    if (!prevTrade) continue;
+    const currentTrade = trades[i];
+    if (!prevTrade || !currentTrade) continue;
 
     const prevPos = closedPositions.find(p => p.tokenMint === prevTrade.tokenMint);
-    if (prevPos && (prevPos.profitLoss || 0) < 0 && trades[i].solAmount > prevTrade.solAmount * 1.5) {
+    if (prevPos && (prevPos.profitLoss || 0) < 0 && currentTrade.solAmount > prevTrade.solAmount * 1.5) {
       revengeTrades++;
     }
   }
@@ -2009,10 +2010,11 @@ function analyzePsychologicalPatterns(trades: Trade[], positions: Position[]) {
   let overconfidentTrades = 0;
   for (let i = 1; i < trades.length; i++) {
     const prevTrade = trades[i - 1];
-    if (!prevTrade) continue;
+    const currentTrade = trades[i];
+    if (!prevTrade || !currentTrade) continue;
 
     const prevPos = closedPositions.find(p => p.tokenMint === prevTrade.tokenMint);
-    if (prevPos && (prevPos.profitLoss || 0) > 0 && trades[i].solAmount > prevTrade.solAmount * 2) {
+    if (prevPos && (prevPos.profitLoss || 0) > 0 && currentTrade.solAmount > prevTrade.solAmount * 2) {
       overconfidentTrades++;
     }
   }
@@ -2139,7 +2141,7 @@ function detectBotVsHuman(trades: Trade[]) {
 }
 
 // 1️⃣6️⃣ RECOVERY PATTERNS
-function analyzeRecoveryPatterns(trades: Trade[], positions: Position[]) {
+function analyzeRecoveryPatterns(positions: Position[]) {
   const closedPositions = positions.filter(p => !p.isOpen);
   const sorted = closedPositions.sort((a, b) => (a.exitTime || 0) - (b.exitTime || 0));
 
@@ -2855,7 +2857,7 @@ async function calculateMetrics(
     botVsHuman: detectBotVsHuman(trades),
 
     // 1️⃣6️⃣ Recovery patterns
-    recoveryPatterns: analyzeRecoveryPatterns(trades, positions),
+    recoveryPatterns: analyzeRecoveryPatterns(positions),
 
     // 1️⃣7️⃣ Trading approach
     tradingApproach: analyzeTradingApproach(positions),
