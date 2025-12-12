@@ -414,7 +414,10 @@ export function SpyModeContent() {
                       <div>
                         <p className="text-gray-400">Volume</p>
                         <p className="text-2xl font-bold text-purple-400">
-                          ${(cardData.stats.totalVolume / 1000).toFixed(1)}K
+                          {cardData.stats.totalVolume >= 1000
+                            ? `${(cardData.stats.totalVolume / 1000).toFixed(1)}K SOL`
+                            : `${cardData.stats.totalVolume.toFixed(2)} SOL`
+                          }
                         </p>
                       </div>
                       <div>
@@ -422,7 +425,7 @@ export function SpyModeContent() {
                         <p
                           className={`text-2xl font-bold ${cardData.stats.profitLoss >= 0 ? 'text-green-400' : 'text-red-400'}`}
                         >
-                          ${(cardData.stats.profitLoss / 1000).toFixed(1)}K
+                          {cardData.stats.profitLoss >= 0 ? '+' : ''}{cardData.stats.profitLoss.toFixed(2)} SOL
                         </p>
                       </div>
                       <div>

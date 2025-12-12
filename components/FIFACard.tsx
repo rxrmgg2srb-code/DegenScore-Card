@@ -64,24 +64,24 @@ export default function FIFACard({
 
   const cardColors = isGold
     ? {
-        bg: 'bg-gradient-to-b from-[#fbf4b6] via-[#e2c373] to-[#bf953f]',
-        border: 'border-[#bf953f]',
-        text: 'text-[#4a3b18]',
-        accent: 'bg-[#bf953f]',
-      }
+      bg: 'bg-gradient-to-b from-[#fbf4b6] via-[#e2c373] to-[#bf953f]',
+      border: 'border-[#bf953f]',
+      text: 'text-[#4a3b18]',
+      accent: 'bg-[#bf953f]',
+    }
     : isSilver
       ? {
-          bg: 'bg-gradient-to-b from-[#e3e3e3] via-[#c4c4c4] to-[#969696]',
-          border: 'border-[#969696]',
-          text: 'text-[#2d2d2d]',
-          accent: 'bg-[#969696]',
-        }
+        bg: 'bg-gradient-to-b from-[#e3e3e3] via-[#c4c4c4] to-[#969696]',
+        border: 'border-[#969696]',
+        text: 'text-[#2d2d2d]',
+        accent: 'bg-[#969696]',
+      }
       : {
-          bg: 'bg-gradient-to-b from-[#eecda3] via-[#d6ae7b] to-[#a67c52]',
-          border: 'border-[#a67c52]',
-          text: 'text-[#3e2714]',
-          accent: 'bg-[#a67c52]',
-        };
+        bg: 'bg-gradient-to-b from-[#eecda3] via-[#d6ae7b] to-[#a67c52]',
+        border: 'border-[#a67c52]',
+        text: 'text-[#3e2714]',
+        accent: 'bg-[#a67c52]',
+      };
 
   return (
     <>
@@ -201,11 +201,10 @@ export default function FIFACard({
                         onLike(id);
                       }
                     }}
-                    className={`flex flex-col items-center justify-center py-1 rounded-lg transition-all ${
-                      userHasLiked
+                    className={`flex flex-col items-center justify-center py-1 rounded-lg transition-all ${userHasLiked
                         ? 'bg-red-500/20 text-red-400'
                         : 'bg-black/30 text-gray-400 hover:bg-black/50'
-                    }`}
+                      }`}
                   >
                     <span className="text-sm">{userHasLiked ? '❤️' : '🤍'}</span>
                     <span className="text-[10px] font-bold">{likes}</span>
@@ -271,9 +270,9 @@ export default function FIFACard({
                 Trader Stats
               </h3>
               <div className="grid grid-cols-2 gap-4">
-                <DetailRow label="Win Rate" value={`${stats.winRate}%`} />
-                <DetailRow label="Volume" value={`${stats.totalVolume} SOL`} />
-                <DetailRow label="P&L" value={`${stats.profitLoss} SOL`} />
+                <DetailRow label="Win Rate" value={`${stats.winRate.toFixed(2)}%`} />
+                <DetailRow label="Volume" value={`${stats.totalVolume.toFixed(2)} SOL`} />
+                <DetailRow label="P&L" value={`${stats.profitLoss.toFixed(2)} SOL`} />
                 <DetailRow label="Trades" value={stats.totalTrades} />
               </div>
               <div className="mt-6 flex justify-center gap-4">
