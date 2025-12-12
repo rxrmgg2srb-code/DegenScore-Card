@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 
 interface Challenge {
@@ -19,101 +19,71 @@ interface Challenge {
     };
     difficulty: 'easy' | 'medium' | 'hard' | 'legendary';
     expiresAt: number;
-    completedAt?: number;
     claimedAt?: number;
 }
 
+interface ChallengeStats {
+    total: number;
+    completed: number;
+    claimed: number;
+}
+
+interface WalletMetrics {
+    totalTrades: number;
+    totalVolume: number;
+    profitLoss: number;
+    winRate: number;
+}
+
 const DIFFICULTY_COLORS = {
-    easy: { bg: 'from-green-900/30 to-green-950/50', border: 'border-green-500/30', text: 'text-green-400' },
-    medium: { bg: 'from-blue-900/30 to-blue-950/50', border: 'border-blue-500/30', text: 'text-blue-400' },
-    hard: { bg: 'from-purple-900/30 to-purple-950/50', border: 'border-purple-500/30', text: 'text-purple-400' },
-    legendary: { bg: 'from-yellow-900/30 to-orange-950/50', border: 'border-yellow-500/30', text: 'text-yellow-400' },
+    easy: { bg: 'from-green-900/30 to-green-950/50', border: 'border-green-500/30', text: 'text-green-400', bar: 'from-green-500 to-green-400' },
+    medium: { bg: 'from-blue-900/30 to-blue-950/50', border: 'border-blue-500/30', text: 'text-blue-400', bar: 'from-blue-500 to-blue-400' },
+    hard: { bg: 'from-purple-900/30 to-purple-950/50', border: 'border-purple-500/30', text: 'text-purple-400', bar: 'from-purple-500 to-purple-400' },
+    legendary: { bg: 'from-yellow-900/30 to-orange-950/50', border: 'border-yellow-500/30', text: 'text-yellow-400', bar: 'from-yellow-500 to-orange-400' },
 };
 
-const MOCK_CHALLENGES: Challenge[] = [
-    {
-        id: 'daily-1',
-        type: 'daily',
-        title: 'First Trade of the Day',
-        description: 'Execute at least one trade today',
-        icon: '🎯',
-        reward: { type: 'xp', amount: 100, label: '+100 XP' },
-        requirement: { type: 'trades', target: 1, current: 0 },
-        difficulty: 'easy',
-        expiresAt: Date.now() + 8 * 3600000,
-    },
-    {
-        id: 'daily-2',
-        type: 'daily',
-        title: 'Volume Hunter',
-        description: 'Trade at least 5 SOL in volume today',
-        icon: '💰',
-        reward: { type: 'xp', amount: 250, label: '+250 XP' },
-        requirement: { type: 'volume', target: 5, current: 2.5 },
-        difficulty: 'medium',
-        expiresAt: Date.now() + 8 * 3600000,
-    },
-    {
-        id: 'daily-3',
-        type: 'daily',
-        title: 'Win Streak',
-        description: 'Get 3 profitable trades in a row',
-        icon: '🔥',
-        reward: { type: 'xp', amount: 500, label: '+500 XP' },
-        requirement: { type: 'winStreak', target: 3, current: 1 },
-        difficulty: 'hard',
-        expiresAt: Date.now() + 8 * 3600000,
-    },
-    {
-        id: 'weekly-1',
-        type: 'weekly',
-        title: 'Weekly Warrior',
-        description: 'Complete 20 trades this week',
-        icon: '⚔️',
-        reward: { type: 'badge', amount: 1, label: 'Weekly Warrior Badge' },
-        requirement: { type: 'trades', target: 20, current: 12 },
-        difficulty: 'medium',
-        expiresAt: Date.now() + 3 * 24 * 3600000,
-    },
-    {
-        id: 'weekly-2',
-        type: 'weekly',
-        title: 'Profit Machine',
-        description: 'Achieve 10 SOL in realized profit this week',
-        icon: '💎',
-        reward: { type: 'sol', amount: 0.1, label: '+0.1 SOL' },
-        requirement: { type: 'profit', target: 10, current: 7.5 },
-        difficulty: 'hard',
-        expiresAt: Date.now() + 3 * 24 * 3600000,
-    },
-    {
-        id: 'special-1',
-        type: 'special',
-        title: 'Whale Watcher',
-        description: 'Copy a trade from a Top 10 leaderboard wallet',
-        icon: '🐋',
-        reward: { type: 'pro', amount: 7, label: '+7 Days PRO' },
-        requirement: { type: 'copyTrade', target: 1, current: 0 },
-        difficulty: 'legendary',
-        expiresAt: Date.now() + 7 * 24 * 3600000,
-    },
-];
-
 export default function DailyChallengesActive() {
-    const { publicKey } = useWallet();
+    const { publicKey, connected } = useWallet();
     const [challenges, setChallenges] = useState<Challenge[]>([]);
+    const [stats, setStats] = useState<ChallengeStats>({ total: 0, completed: 0, claimed: 0 });
+    const [metrics, setMetrics] = useState<WalletMetrics | null>(null);
     const [filter, setFilter] = useState<'all' | 'daily' | 'weekly' | 'special'>('all');
     const [loading, setLoading] = useState(true);
     const [claiming, setClaiming] = useState<string | null>(null);
+    const [error, setError] = useState<string | null>(null);
+
+    const fetchChallenges = useCallback(async () => {
+        setLoading(true);
+        setError(null);
+
+        try {
+            const walletParam = publicKey ? `?walletAddress=${publicKey.toBase58()}` : '';
+            const response = await fetch(`/api/challenges${walletParam}`);
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch challenges');
+            }
+
+            const data = await response.json();
+
+            if (data.success) {
+                setChallenges(data.challenges || []);
+                setStats(data.stats || { total: 0, completed: 0, claimed: 0 });
+                setMetrics(data.metrics || null);
+            } else {
+                throw new Error(data.error || 'Unknown error');
+            }
+        } catch (err: any) {
+            console.error('Error fetching challenges:', err);
+            setError(err.message || 'Failed to load challenges');
+        } finally {
+            setLoading(false);
+        }
+    }, [publicKey]);
 
     useEffect(() => {
-        // Load challenges
-        setLoading(true);
-        setTimeout(() => {
-            setChallenges(MOCK_CHALLENGES);
-            setLoading(false);
-        }, 500);
-    }, [publicKey]);
+        fetchChallenges();
+    }, [fetchChallenges]);
 
     const formatTimeLeft = (expiresAt: number) => {
         const diff = expiresAt - Date.now();
@@ -138,28 +108,44 @@ export default function DailyChallengesActive() {
     };
 
     const handleClaim = async (challengeId: string) => {
+        if (!publicKey) return;
+
         setClaiming(challengeId);
 
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 1500));
+        try {
+            const response = await fetch('/api/challenges', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    walletAddress: publicKey.toBase58(),
+                    challengeId,
+                }),
+            });
 
-        setChallenges(prev =>
-            prev.map(c =>
-                c.id === challengeId ? { ...c, claimedAt: Date.now() } : c
-            )
-        );
-        setClaiming(null);
+            const data = await response.json();
+
+            if (data.success) {
+                setChallenges(prev =>
+                    prev.map(c =>
+                        c.id === challengeId ? { ...c, claimedAt: Date.now() } : c
+                    )
+                );
+                setStats(prev => ({ ...prev, claimed: prev.claimed + 1 }));
+            }
+        } catch (err) {
+            console.error('Error claiming reward:', err);
+        } finally {
+            setClaiming(null);
+        }
+    };
+
+    const handleRefresh = () => {
+        fetchChallenges();
     };
 
     const filteredChallenges = challenges.filter(c =>
         filter === 'all' || c.type === filter
     );
-
-    const stats = {
-        completed: challenges.filter(c => isCompleted(c)).length,
-        total: challenges.length,
-        claimed: challenges.filter(c => c.claimedAt).length,
-    };
 
     if (loading) {
         return (
@@ -168,7 +154,7 @@ export default function DailyChallengesActive() {
                     <div className="h-8 bg-gray-700 rounded-lg w-1/3 mb-6"></div>
                     <div className="space-y-4">
                         {[1, 2, 3].map(i => (
-                            <div key={i} className="h-24 bg-gray-700/50 rounded-xl"></div>
+                            <div key={i} className="h-32 bg-gray-700/50 rounded-xl"></div>
                         ))}
                     </div>
                 </div>
@@ -187,25 +173,78 @@ export default function DailyChallengesActive() {
                             {stats.completed}/{stats.total} Complete
                         </span>
                     </h2>
-                    <p className="text-gray-400 text-sm mt-1">Complete challenges to earn rewards</p>
+                    <p className="text-gray-400 text-sm mt-1">
+                        {connected
+                            ? 'Complete challenges to earn rewards • Progress tracked from your trades'
+                            : '⚠️ Connect wallet to track your progress'
+                        }
+                    </p>
                 </div>
 
-                {/* Filter buttons */}
-                <div className="flex gap-1 bg-gray-900/50 rounded-lg p-1">
-                    {(['all', 'daily', 'weekly', 'special'] as const).map((type) => (
-                        <button
-                            key={type}
-                            onClick={() => setFilter(type)}
-                            className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all capitalize ${filter === type
+                <div className="flex items-center gap-2">
+                    {/* Refresh button */}
+                    <button
+                        onClick={handleRefresh}
+                        className="px-3 py-1.5 rounded-lg bg-gray-700/50 text-gray-300 hover:bg-gray-600/50 transition-all text-sm"
+                        title="Refresh challenges"
+                    >
+                        🔄
+                    </button>
+
+                    {/* Filter buttons */}
+                    <div className="flex gap-1 bg-gray-900/50 rounded-lg p-1">
+                        {(['all', 'daily', 'weekly', 'special'] as const).map((type) => (
+                            <button
+                                key={type}
+                                onClick={() => setFilter(type)}
+                                className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all capitalize ${filter === type
                                     ? 'bg-purple-600 text-white shadow-lg'
                                     : 'text-gray-400 hover:text-white hover:bg-gray-700/50'
-                                }`}
-                        >
-                            {type === 'all' ? '🎮 All' : type === 'daily' ? '📅 Daily' : type === 'weekly' ? '📆 Weekly' : '⭐ Special'}
-                        </button>
-                    ))}
+                                    }`}
+                            >
+                                {type === 'all' ? '🎮 All' : type === 'daily' ? '📅 Daily' : type === 'weekly' ? '📆 Weekly' : '⭐ Special'}
+                            </button>
+                        ))}
+                    </div>
                 </div>
             </div>
+
+            {/* Wallet Metrics Summary */}
+            {metrics && (
+                <div className="grid grid-cols-4 gap-3 mb-6">
+                    <div className="bg-gradient-to-br from-blue-900/30 to-blue-950/50 rounded-xl p-3 border border-blue-500/20 text-center">
+                        <div className="text-2xl font-black text-blue-400">{metrics.totalTrades}</div>
+                        <div className="text-xs text-gray-400">Trades</div>
+                    </div>
+                    <div className="bg-gradient-to-br from-cyan-900/30 to-cyan-950/50 rounded-xl p-3 border border-cyan-500/20 text-center">
+                        <div className="text-2xl font-black text-cyan-400">{metrics.totalVolume.toFixed(1)}</div>
+                        <div className="text-xs text-gray-400">Volume (SOL)</div>
+                    </div>
+                    <div className={`bg-gradient-to-br ${metrics.profitLoss >= 0 ? 'from-green-900/30 to-green-950/50 border-green-500/20' : 'from-red-900/30 to-red-950/50 border-red-500/20'} rounded-xl p-3 border text-center`}>
+                        <div className={`text-2xl font-black ${metrics.profitLoss >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                            {metrics.profitLoss >= 0 ? '+' : ''}{metrics.profitLoss.toFixed(2)}
+                        </div>
+                        <div className="text-xs text-gray-400">P&L (SOL)</div>
+                    </div>
+                    <div className="bg-gradient-to-br from-purple-900/30 to-purple-950/50 rounded-xl p-3 border border-purple-500/20 text-center">
+                        <div className="text-2xl font-black text-purple-400">{metrics.winRate}%</div>
+                        <div className="text-xs text-gray-400">Win Rate</div>
+                    </div>
+                </div>
+            )}
+
+            {/* Error State */}
+            {error && (
+                <div className="mb-6 p-4 bg-red-900/20 border border-red-500/30 rounded-xl">
+                    <p className="text-red-400 text-sm">⚠️ {error}</p>
+                    <button
+                        onClick={handleRefresh}
+                        className="mt-2 text-sm text-red-300 underline hover:text-red-200"
+                    >
+                        Try again
+                    </button>
+                </div>
+            )}
 
             {/* Progress Overview */}
             <div className="grid grid-cols-3 gap-4 mb-6">
@@ -219,9 +258,9 @@ export default function DailyChallengesActive() {
                 </div>
                 <div className="bg-gradient-to-br from-yellow-900/30 to-yellow-950/50 rounded-xl p-4 border border-yellow-500/20 text-center">
                     <div className="text-3xl font-black text-yellow-400">
-                        {challenges.reduce((sum, c) => sum + (isCompleted(c) ? c.reward.amount : 0), 0)}
+                        {challenges.reduce((sum, c) => sum + (isCompleted(c) && !c.claimedAt ? c.reward.amount : 0), 0)}
                     </div>
-                    <div className="text-xs text-gray-400">XP Earned</div>
+                    <div className="text-xs text-gray-400">Pending Rewards</div>
                 </div>
             </div>
 
@@ -265,16 +304,15 @@ export default function DailyChallengesActive() {
                                         <div className="mb-3">
                                             <div className="flex justify-between text-xs mb-1">
                                                 <span className="text-gray-400">
-                                                    {challenge.requirement.current} / {challenge.requirement.target}
+                                                    {typeof challenge.requirement.current === 'number'
+                                                        ? challenge.requirement.current.toFixed(challenge.requirement.current % 1 !== 0 ? 1 : 0)
+                                                        : 0} / {challenge.requirement.target}
                                                 </span>
                                                 <span className={colors.text}>{Math.round(progress)}%</span>
                                             </div>
                                             <div className="h-2 bg-gray-800 rounded-full overflow-hidden">
                                                 <div
-                                                    className={`h-full transition-all duration-500 ${completed
-                                                            ? 'bg-gradient-to-r from-green-500 to-green-400'
-                                                            : `bg-gradient-to-r ${colors.bg.replace('from-', 'from-').replace('/30', '').replace('/50', '')}`
-                                                        }`}
+                                                    className={`h-full transition-all duration-500 bg-gradient-to-r ${completed ? 'from-green-500 to-green-400' : colors.bar}`}
                                                     style={{ width: `${progress}%` }}
                                                 ></div>
                                             </div>
@@ -292,7 +330,7 @@ export default function DailyChallengesActive() {
                                             </div>
 
                                             {/* Claim button */}
-                                            {completed && !claimed && (
+                                            {completed && !claimed && connected && (
                                                 <button
                                                     onClick={() => handleClaim(challenge.id)}
                                                     disabled={claiming === challenge.id}
@@ -345,6 +383,8 @@ export default function DailyChallengesActive() {
             <div className="mt-6 pt-4 border-t border-gray-700/50 text-center">
                 <p className="text-xs text-gray-500">
                     Daily challenges reset at 00:00 UTC • Weekly challenges reset on Mondays
+                    <br />
+                    <span className="text-purple-400">Progress is calculated from your real trading history</span>
                 </p>
             </div>
         </div>

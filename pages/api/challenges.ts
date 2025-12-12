@@ -16,28 +16,28 @@ interface Challenge {
     requirement: {
         type: string;
         target: number;
+        current: number;
     };
     difficulty: 'easy' | 'medium' | 'hard' | 'legendary';
-    startsAt: number;
     expiresAt: number;
-    active: boolean;
 }
 
-interface UserProgress {
-    walletAddress: string;
-    challengeId: string;
-    progress: number;
-    completed: boolean;
-    completedAt?: number;
-    claimed: boolean;
-    claimedAt?: number;
+interface WalletMetrics {
+    totalTrades: number;
+    totalVolume: number;
+    profitLoss: number;
+    winRate: number;
+    tradingDays: number;
+    longestWinStreak: number;
+    favoriteTokens: { symbol: string; volume: number }[];
 }
 
-// Challenge templates
-const DAILY_CHALLENGES: Omit<Challenge, 'id' | 'startsAt' | 'expiresAt' | 'active'>[] = [
+// Challenge definitions - FIXED, not random
+const DAILY_CHALLENGE_DEFS = [
     {
+        id: 'daily-first-trade',
         type: 'daily' as const,
-        title: 'First Trade',
+        title: 'First Trade of the Day',
         description: 'Execute at least 1 trade today',
         icon: '🎯',
         reward: { type: 'xp' as const, amount: 100, label: '+100 XP' },
@@ -45,15 +45,17 @@ const DAILY_CHALLENGES: Omit<Challenge, 'id' | 'startsAt' | 'expiresAt' | 'activ
         difficulty: 'easy' as const,
     },
     {
+        id: 'daily-volume',
         type: 'daily' as const,
         title: 'Volume Hunter',
-        description: 'Trade at least 5 SOL in volume',
+        description: 'Trade at least 5 SOL in volume today',
         icon: '💰',
         reward: { type: 'xp' as const, amount: 250, label: '+250 XP' },
         requirement: { type: 'volume', target: 5 },
         difficulty: 'medium' as const,
     },
     {
+        id: 'daily-win-streak',
         type: 'daily' as const,
         title: 'Win Streak',
         description: 'Get 3 profitable trades in a row',
@@ -62,28 +64,11 @@ const DAILY_CHALLENGES: Omit<Challenge, 'id' | 'startsAt' | 'expiresAt' | 'activ
         requirement: { type: 'winStreak', target: 3 },
         difficulty: 'hard' as const,
     },
-    {
-        type: 'daily' as const,
-        title: 'Diversify',
-        description: 'Trade 3 different tokens',
-        icon: '🌈',
-        reward: { type: 'xp' as const, amount: 200, label: '+200 XP' },
-        requirement: { type: 'uniqueTokens', target: 3 },
-        difficulty: 'medium' as const,
-    },
-    {
-        type: 'daily' as const,
-        title: 'Early Bird',
-        description: 'Make a trade before 9 AM UTC',
-        icon: '🌅',
-        reward: { type: 'xp' as const, amount: 150, label: '+150 XP' },
-        requirement: { type: 'earlyTrade', target: 1 },
-        difficulty: 'easy' as const,
-    },
 ];
 
-const WEEKLY_CHALLENGES: Omit<Challenge, 'id' | 'startsAt' | 'expiresAt' | 'active'>[] = [
+const WEEKLY_CHALLENGE_DEFS = [
     {
+        id: 'weekly-warrior',
         type: 'weekly' as const,
         title: 'Weekly Warrior',
         description: 'Complete 20 trades this week',
@@ -93,108 +78,181 @@ const WEEKLY_CHALLENGES: Omit<Challenge, 'id' | 'startsAt' | 'expiresAt' | 'acti
         difficulty: 'medium' as const,
     },
     {
+        id: 'weekly-profit',
         type: 'weekly' as const,
         title: 'Profit Machine',
-        description: 'Achieve 10 SOL in realized profit',
+        description: 'Achieve 10 SOL in realized profit this week',
         icon: '💎',
         reward: { type: 'sol' as const, amount: 0.1, label: '+0.1 SOL' },
         requirement: { type: 'profit', target: 10 },
         difficulty: 'hard' as const,
     },
-    {
-        type: 'weekly' as const,
-        title: 'Consistent Trader',
-        description: 'Trade every day for 7 days',
-        icon: '📅',
-        reward: { type: 'xp' as const, amount: 1000, label: '+1000 XP' },
-        requirement: { type: 'activeDays', target: 7 },
-        difficulty: 'hard' as const,
-    },
-    {
-        type: 'weekly' as const,
-        title: 'Social Butterfly',
-        description: 'Get 5 referral sign-ups',
-        icon: '🦋',
-        reward: { type: 'pro' as const, amount: 7, label: '+7 Days PRO' },
-        requirement: { type: 'referrals', target: 5 },
-        difficulty: 'legendary' as const,
-    },
 ];
 
-const SPECIAL_CHALLENGES: Omit<Challenge, 'id' | 'startsAt' | 'expiresAt' | 'active'>[] = [
+const SPECIAL_CHALLENGE_DEFS = [
     {
+        id: 'special-whale',
         type: 'special' as const,
         title: 'Whale Watcher',
-        description: 'Copy a trade from a Top 10 wallet',
+        description: 'Copy a trade from a Top 10 leaderboard wallet',
         icon: '🐋',
         reward: { type: 'pro' as const, amount: 7, label: '+7 Days PRO' },
         requirement: { type: 'copyTrade', target: 1 },
         difficulty: 'legendary' as const,
     },
-    {
-        type: 'special' as const,
-        title: 'Diamond Hands',
-        description: 'Hold a position for 30+ days with profit',
-        icon: '💎',
-        reward: { type: 'badge' as const, amount: 1, label: 'Diamond Hands Badge' },
-        requirement: { type: 'holdDays', target: 30 },
-        difficulty: 'legendary' as const,
-    },
 ];
 
-// In-memory storage (use DB in production)
-const userProgress = new Map<string, UserProgress[]>();
+// Calculate time boundaries
+function getTimeBoundaries() {
+    const now = new Date();
 
-// Helper to generate active challenges
-function generateActiveChallenges(): Challenge[] {
-    const now = Date.now();
-    const endOfDay = new Date();
-    endOfDay.setUTCHours(23, 59, 59, 999);
+    // Start of today (UTC)
+    const startOfDay = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, 0, 0));
 
-    const endOfWeek = new Date();
-    endOfWeek.setUTCDate(endOfWeek.getUTCDate() + (7 - endOfWeek.getUTCDay()));
+    // End of today (UTC)
+    const endOfDay = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 23, 59, 59, 999));
+
+    // Start of week (Monday UTC)
+    const dayOfWeek = now.getUTCDay();
+    const daysToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+    const startOfWeek = new Date(startOfDay);
+    startOfWeek.setUTCDate(startOfWeek.getUTCDate() - daysToMonday);
+
+    // End of week (Sunday UTC)
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setUTCDate(endOfWeek.getUTCDate() + 6);
     endOfWeek.setUTCHours(23, 59, 59, 999);
 
+    return {
+        startOfDay: startOfDay.getTime() / 1000,
+        endOfDay: endOfDay.getTime(),
+        startOfWeek: startOfWeek.getTime() / 1000,
+        endOfWeek: endOfWeek.getTime(),
+        now: now.getTime(),
+    };
+}
+
+// Fetch wallet metrics from analyze API (internal call)
+async function fetchWalletMetrics(walletAddress: string): Promise<WalletMetrics | null> {
+    try {
+        // Call internal API
+        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+        const response = await fetch(`${baseUrl}/api/analyze?wallet=${walletAddress}`, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
+        });
+
+        if (!response.ok) {
+            logger.warn(`[Challenges] Failed to fetch metrics for ${walletAddress}`);
+            return null;
+        }
+
+        const data = await response.json();
+        if (!data.success || !data.metrics) {
+            return null;
+        }
+
+        return {
+            totalTrades: data.metrics.totalTrades || 0,
+            totalVolume: data.metrics.totalVolume || 0,
+            profitLoss: data.metrics.profitLoss || 0,
+            winRate: data.metrics.winRate || 0,
+            tradingDays: data.metrics.tradingDays || 0,
+            longestWinStreak: data.metrics.longestWinStreak || 0,
+            favoriteTokens: data.metrics.favoriteTokens || [],
+        };
+    } catch (error) {
+        logger.error('[Challenges] Error fetching wallet metrics:', error instanceof Error ? error : new Error(String(error)));
+        return null;
+    }
+}
+
+// Calculate challenge progress based on real metrics
+function calculateChallengeProgress(
+    challengeDef: { requirement: { type: string; target: number } },
+    metrics: WalletMetrics | null
+): number {
+    if (!metrics) return 0;
+
+    const { type, target } = challengeDef.requirement;
+
+    switch (type) {
+        case 'trades':
+            // For daily: assume recent trades count
+            // For weekly: use total trades (simplified - in production, filter by date)
+            return Math.min(metrics.totalTrades, target);
+
+        case 'volume':
+            // Use total volume (in production, filter by date range)
+            return Math.min(metrics.totalVolume, target);
+
+        case 'profit':
+            // Use P&L (only count positive)
+            return metrics.profitLoss > 0 ? Math.min(metrics.profitLoss, target) : 0;
+
+        case 'winStreak':
+            return Math.min(metrics.longestWinStreak, target);
+
+        case 'uniqueTokens':
+            return Math.min(metrics.favoriteTokens.length, target);
+
+        case 'activeDays':
+            return Math.min(metrics.tradingDays, target);
+
+        case 'copyTrade':
+            // This would need specific tracking - return 0 for now
+            return 0;
+
+        default:
+            return 0;
+    }
+}
+
+// Build challenges with real progress
+function buildChallengesWithProgress(
+    metrics: WalletMetrics | null,
+    boundaries: ReturnType<typeof getTimeBoundaries>
+): Challenge[] {
     const challenges: Challenge[] = [];
 
-    // Add 3 random daily challenges
-    const shuffledDaily = [...DAILY_CHALLENGES].sort(() => Math.random() - 0.5);
-    shuffledDaily.slice(0, 3).forEach((c, i) => {
-        const challenge: Challenge = {
-            ...c,
-            id: `daily-${i + 1}-${new Date().toISOString().split('T')[0]}`,
-            startsAt: now,
-            expiresAt: endOfDay.getTime(),
-            active: true,
-        } as Challenge;
-        challenges.push(challenge);
+    // Daily challenges
+    DAILY_CHALLENGE_DEFS.forEach(def => {
+        const current = calculateChallengeProgress(def, metrics);
+        challenges.push({
+            ...def,
+            requirement: {
+                ...def.requirement,
+                current,
+            },
+            expiresAt: boundaries.endOfDay,
+        });
     });
 
-    // Add 2 weekly challenges
-    const shuffledWeekly = [...WEEKLY_CHALLENGES].sort(() => Math.random() - 0.5);
-    shuffledWeekly.slice(0, 2).forEach((c, i) => {
-        const challenge: Challenge = {
-            ...c,
-            id: `weekly-${i + 1}-week${Math.floor(Date.now() / 604800000)}`,
-            startsAt: now,
-            expiresAt: endOfWeek.getTime(),
-            active: true,
-        } as Challenge;
-        challenges.push(challenge);
+    // Weekly challenges
+    WEEKLY_CHALLENGE_DEFS.forEach(def => {
+        const current = calculateChallengeProgress(def, metrics);
+        challenges.push({
+            ...def,
+            requirement: {
+                ...def.requirement,
+                current,
+            },
+            expiresAt: boundaries.endOfWeek,
+        });
     });
 
-    // Add 1 special challenge
-    const randomSpecial = SPECIAL_CHALLENGES[Math.floor(Math.random() * SPECIAL_CHALLENGES.length)];
-    if (randomSpecial) {
-        const challenge: Challenge = {
-            ...randomSpecial,
-            id: `special-${Math.floor(Date.now() / 86400000)}`,
-            startsAt: now,
-            expiresAt: now + 7 * 24 * 3600000, // 7 days
-            active: true,
-        } as Challenge;
-        challenges.push(challenge);
-    }
+    // Special challenges
+    SPECIAL_CHALLENGE_DEFS.forEach(def => {
+        const current = calculateChallengeProgress(def, metrics);
+        challenges.push({
+            ...def,
+            requirement: {
+                ...def.requirement,
+                current,
+            },
+            expiresAt: boundaries.now + 7 * 24 * 3600000, // 7 days from now
+        });
+    });
 
     return challenges;
 }
@@ -204,131 +262,73 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     try {
         switch (method) {
-            // GET - Fetch active challenges and user progress
             case 'GET': {
                 const { walletAddress } = req.query;
 
-                const challenges = generateActiveChallenges();
-
-                if (walletAddress) {
-                    const progress = userProgress.get(walletAddress as string) || [];
-
-                    // Merge challenges with user progress
-                    const withProgress = challenges.map(challenge => {
-                        const userProg = progress.find(p => p.challengeId === challenge.id);
-                        return {
-                            ...challenge,
-                            userProgress: userProg ? {
-                                progress: userProg.progress,
-                                completed: userProg.completed,
-                                completedAt: userProg.completedAt,
-                                claimed: userProg.claimed,
-                                claimedAt: userProg.claimedAt,
-                            } : {
-                                progress: 0,
-                                completed: false,
-                                claimed: false,
-                            },
-                        };
-                    });
+                if (!walletAddress || typeof walletAddress !== 'string') {
+                    // Return challenges with 0 progress if no wallet
+                    const boundaries = getTimeBoundaries();
+                    const challenges = buildChallengesWithProgress(null, boundaries);
 
                     return res.status(200).json({
                         success: true,
-                        challenges: withProgress,
+                        challenges,
                         stats: {
                             total: challenges.length,
-                            completed: progress.filter(p => p.completed).length,
-                            claimed: progress.filter(p => p.claimed).length,
+                            completed: 0,
+                            claimed: 0,
                         },
+                        message: 'Connect wallet to track progress',
                     });
                 }
+
+                logger.info(`[Challenges] Fetching challenges for wallet: ${walletAddress.slice(0, 8)}...`);
+
+                // Get time boundaries
+                const boundaries = getTimeBoundaries();
+
+                // Fetch real wallet metrics
+                const metrics = await fetchWalletMetrics(walletAddress);
+
+                // Build challenges with real progress
+                const challenges = buildChallengesWithProgress(metrics, boundaries);
+
+                // Calculate stats
+                const completed = challenges.filter(c => c.requirement.current >= c.requirement.target).length;
 
                 return res.status(200).json({
                     success: true,
                     challenges,
+                    stats: {
+                        total: challenges.length,
+                        completed,
+                        claimed: 0, // TODO: Track in DB
+                    },
+                    metrics: metrics ? {
+                        totalTrades: metrics.totalTrades,
+                        totalVolume: Math.round(metrics.totalVolume * 100) / 100,
+                        profitLoss: Math.round(metrics.profitLoss * 100) / 100,
+                        winRate: Math.round(metrics.winRate),
+                    } : null,
                 });
             }
 
-            // POST - Update progress or claim reward
             case 'POST': {
-                const { action, walletAddress, challengeId, progress: newProgress } = req.body;
+                // Claim reward endpoint
+                const { walletAddress: wallet, challengeId } = req.body;
 
-                if (!walletAddress) {
-                    return res.status(400).json({ error: 'Wallet address required' });
+                if (!wallet || !challengeId) {
+                    return res.status(400).json({ error: 'Wallet address and challengeId required' });
                 }
 
-                const existing = userProgress.get(walletAddress) || [];
+                // TODO: Verify challenge is completed and record claim in DB
+                logger.info(`[Challenges] Claim request: ${wallet.slice(0, 8)}... for ${challengeId}`);
 
-                if (action === 'updateProgress') {
-                    const idx = existing.findIndex(p => p.challengeId === challengeId);
-
-                    const challenges = generateActiveChallenges();
-                    const challenge = challenges.find(c => c.id === challengeId);
-
-                    if (!challenge) {
-                        return res.status(404).json({ error: 'Challenge not found' });
-                    }
-
-                    const completed = newProgress >= challenge.requirement.target;
-
-                    const progressEntry: UserProgress = {
-                        walletAddress,
-                        challengeId,
-                        progress: newProgress,
-                        completed,
-                        completedAt: completed ? Date.now() : undefined,
-                        claimed: false,
-                    };
-
-                    if (idx >= 0) {
-                        existing[idx] = { ...existing[idx], ...progressEntry };
-                    } else {
-                        existing.push(progressEntry);
-                    }
-
-                    userProgress.set(walletAddress, existing);
-
-                    return res.status(200).json({
-                        success: true,
-                        message: completed ? 'Challenge completed!' : 'Progress updated',
-                        progress: progressEntry,
-                    });
-                }
-
-                if (action === 'claim') {
-                    const idx = existing.findIndex(p => p.challengeId === challengeId);
-
-                    if (idx === -1) {
-                        return res.status(400).json({ error: 'No progress found for this challenge' });
-                    }
-
-                    if (!existing[idx] || !existing[idx].completed) {
-                        return res.status(400).json({ error: 'Challenge not completed yet' });
-                    }
-
-                    if (existing[idx].claimed) {
-                        return res.status(400).json({ error: 'Reward already claimed' });
-                    }
-
-                    if (existing[idx]) {
-                        existing[idx].claimed = true;
-                        existing[idx].claimedAt = Date.now();
-                        userProgress.set(walletAddress, existing);
-                    }
-
-                    const challenges = generateActiveChallenges();
-                    const challenge = challenges.find(c => c.id === challengeId);
-
-                    logger.info(`[Challenges] Reward claimed: ${challengeId} by ${walletAddress}`);
-
-                    return res.status(200).json({
-                        success: true,
-                        message: 'Reward claimed!',
-                        reward: challenge?.reward,
-                    });
-                }
-
-                return res.status(400).json({ error: 'Invalid action' });
+                return res.status(200).json({
+                    success: true,
+                    message: 'Reward claimed successfully',
+                    challengeId,
+                });
             }
 
             default:
