@@ -2,7 +2,7 @@ import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import { useWallet } from '@solana/wallet-adapter-react';
 import Link from 'next/link';
 import { NavigationButtons } from './NavigationButtons';
-import { FOMOBar } from './FOMOBar';
+import { FOMOBar, FOMOPopup } from './FOMOBar';
 
 // 🔒 Admin wallet with spy mode access
 const ADMIN_WALLET = 'B7nB9QX1KC4QXp5GMxR8xzh3yzoqp6NjxSwfNBXtgPc1';
@@ -99,6 +99,9 @@ export const Header: React.FC<HeaderProps> = ({ connected = false, username = ''
           </nav>
         </div>
       </header>
+
+      {/* FOMO Popup - Random notifications */}
+      {showFOMO && <FOMOPopup />}
     </>
   );
 };

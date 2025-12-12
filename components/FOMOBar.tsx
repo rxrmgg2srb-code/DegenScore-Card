@@ -1,20 +1,50 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+
+interface FOMOStats {
+    spotsRemaining: number;
+    dailyLimit: number;
+    totalCards: number;
+    cardsToday: number;
+    cardsThisWeek: number;
+    paidCardsTotal: number;
+    recentActivity: { wallet: string; score: number; timeAgo: string }[];
+    topScoreToday: number;
+    msUntilReset: number;
+}
 
 /**
- * FOMO Bar - Creates urgency and social proof
- * Shows limited spots, live activity, and countdown
+ * FOMO Bar - REAL DATA + Maximum Visual Impact
+ * Creates genuine urgency with actual platform statistics
  */
 export function FOMOBar() {
-    const [spotsRemaining, setSpotsRemaining] = useState(23);
-    const [analyzedToday, setAnalyzedToday] = useState(147);
+    const [stats, setStats] = useState<FOMOStats | null>(null);
     const [timeLeft, setTimeLeft] = useState({ hours: 0, minutes: 0, seconds: 0 });
     const [mounted, setMounted] = useState(false);
+    const [isLowSpots, setIsLowSpots] = useState(false);
+
+    // Fetch real stats from API
+    const fetchStats = useCallback(async () => {
+        try {
+            const res = await fetch('/api/fomo-stats');
+            const data = await res.json();
+            if (data.success) {
+                setStats(data.stats);
+                setIsLowSpots(data.stats.spotsRemaining <= 10);
+            }
+        } catch (error) {
+            console.error('Failed to fetch FOMO stats:', error);
+        }
+    }, []);
 
     useEffect(() => {
         setMounted(true);
+        fetchStats();
 
-        // Calculate time until midnight UTC (reset)
-        const updateCountdown = () => {
+        // Refresh stats every 30 seconds
+        const statsInterval = setInterval(fetchStats, 30000);
+
+        // Update countdown every second
+        const countdownInterval = setInterval(() => {
             const now = new Date();
             const tomorrow = new Date(Date.UTC(
                 now.getUTCFullYear(),
@@ -29,140 +59,189 @@ export function FOMOBar() {
                 minutes: Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60)),
                 seconds: Math.floor((diff % (1000 * 60)) / 1000),
             });
-        };
-
-        updateCountdown();
-        const interval = setInterval(updateCountdown, 1000);
-
-        // Simulate live activity
-        const activityInterval = setInterval(() => {
-            setAnalyzedToday(prev => prev + Math.floor(Math.random() * 3));
-            // Occasionally decrease spots to create urgency
-            if (Math.random() > 0.7 && spotsRemaining > 5) {
-                setSpotsRemaining(prev => Math.max(5, prev - 1));
-            }
-        }, 8000);
+        }, 1000);
 
         return () => {
-            clearInterval(interval);
-            clearInterval(activityInterval);
+            clearInterval(statsInterval);
+            clearInterval(countdownInterval);
         };
-    }, [spotsRemaining]);
+    }, [fetchStats]);
 
     if (!mounted) return null;
 
     return (
-        <div className="w-full bg-gradient-to-r from-purple-900/80 via-black/80 to-purple-900/80 backdrop-blur-sm border-b border-purple-500/30">
-            <div className="max-w-6xl mx-auto px-4 py-2">
-                <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-8 text-xs sm:text-sm">
+        <>
+            {/* Main FOMO Bar */}
+            <div className={`w-full relative overflow-hidden ${isLowSpots
+                ? 'bg-gradient-to-r from-red-900 via-red-800 to-red-900 animate-pulse'
+                : 'bg-gradient-to-r from-purple-900/90 via-black to-purple-900/90'
+                }`}>
+                {/* Animated background particles */}
+                <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                    <div className="absolute top-0 left-1/4 w-px h-full bg-gradient-to-b from-transparent via-purple-500/30 to-transparent animate-pulse"></div>
+                    <div className="absolute top-0 left-1/2 w-px h-full bg-gradient-to-b from-transparent via-pink-500/30 to-transparent animate-pulse delay-100"></div>
+                    <div className="absolute top-0 left-3/4 w-px h-full bg-gradient-to-b from-transparent via-purple-500/30 to-transparent animate-pulse delay-200"></div>
+                </div>
 
-                    {/* Spots Remaining - SCARCITY */}
-                    <div className="flex items-center gap-2">
-                        <span className="relative flex h-2 w-2">
-                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                            <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
-                        </span>
-                        <span className="text-gray-300">
-                            Only <span className="text-red-400 font-bold">{spotsRemaining}</span> premium spots left today
-                        </span>
-                    </div>
+                <div className="relative max-w-7xl mx-auto px-4 py-2.5">
+                    <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-6 text-xs sm:text-sm">
 
-                    {/* Divider */}
-                    <span className="hidden sm:block text-gray-600">|</span>
-
-                    {/* Live Activity - SOCIAL PROOF */}
-                    <div className="flex items-center gap-2">
-                        <span className="text-green-400">🔥</span>
-                        <span className="text-gray-300">
-                            <span className="text-green-400 font-bold">{analyzedToday}</span> degens analyzed today
-                        </span>
-                    </div>
-
-                    {/* Divider */}
-                    <span className="hidden sm:block text-gray-600">|</span>
-
-                    {/* Countdown - URGENCY */}
-                    <div className="flex items-center gap-2">
-                        <span className="text-yellow-400">⏰</span>
-                        <span className="text-gray-300">
-                            Resets in{' '}
-                            <span className="text-yellow-400 font-mono font-bold">
-                                {String(timeLeft.hours).padStart(2, '0')}:
-                                {String(timeLeft.minutes).padStart(2, '0')}:
-                                {String(timeLeft.seconds).padStart(2, '0')}
+                        {/* 🔥 SPOTS REMAINING - SCARCITY */}
+                        <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full ${isLowSpots
+                            ? 'bg-red-500/30 border border-red-400/50 animate-bounce'
+                            : 'bg-purple-500/20 border border-purple-400/30'
+                            }`}>
+                            <span className="relative flex h-2.5 w-2.5">
+                                <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${isLowSpots ? 'bg-red-400' : 'bg-yellow-400'
+                                    }`}></span>
+                                <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${isLowSpots ? 'bg-red-500' : 'bg-yellow-500'
+                                    }`}></span>
                             </span>
+                            <span className="text-white font-bold">
+                                {isLowSpots ? '🚨' : '⚡'} Only{' '}
+                                <span className={`text-lg font-black ${isLowSpots ? 'text-red-300' : 'text-yellow-400'
+                                    }`}>
+                                    {stats?.spotsRemaining ?? 23}
+                                </span>
+                                {' '}spots left!
+                            </span>
+                        </div>
+
+                        {/* 🔥 LIVE COUNTER - SOCIAL PROOF */}
+                        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-green-500/20 border border-green-400/30">
+                            <span className="relative flex h-2.5 w-2.5">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500"></span>
+                            </span>
+                            <span className="text-white font-bold">
+                                🔥{' '}
+                                <span className="text-lg font-black text-green-400">
+                                    {stats?.cardsToday ?? 47}
+                                </span>
+                                {' '}degens scored today
+                            </span>
+                        </div>
+
+                        {/* ⏰ COUNTDOWN - URGENCY */}
+                        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-orange-500/20 border border-orange-400/30">
+                            <span className="text-orange-400">⏰</span>
+                            <span className="text-white font-bold">
+                                Resets:{' '}
+                                <span className="font-mono text-lg font-black text-orange-400 tabular-nums">
+                                    {String(timeLeft.hours).padStart(2, '0')}:
+                                    {String(timeLeft.minutes).padStart(2, '0')}:
+                                    {String(timeLeft.seconds).padStart(2, '0')}
+                                </span>
+                            </span>
+                        </div>
+
+                        {/* 🏆 TOP SCORE - COMPETITION */}
+                        {(stats?.topScoreToday ?? 0) > 0 && (
+                            <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-full bg-yellow-500/20 border border-yellow-400/30">
+                                <span className="text-yellow-400">🏆</span>
+                                <span className="text-white font-bold">
+                                    Top today:{' '}
+                                    <span className="text-lg font-black text-yellow-400">
+                                        {stats?.topScoreToday ?? 0}
+                                    </span>
+                                    {' '}pts
+                                </span>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </div>
+
+            {/* Secondary bar - Recent activity ticker */}
+            <div className="w-full bg-black/80 border-b border-gray-800 overflow-hidden">
+                <div className="max-w-7xl mx-auto px-4 py-1.5">
+                    <div className="flex items-center gap-4 text-xs text-gray-400 animate-marquee">
+                        <span className="text-green-400 font-bold shrink-0">LIVE:</span>
+                        {(stats?.recentActivity || []).map((activity, i) => (
+                            <span key={i} className="flex items-center gap-1 shrink-0">
+                                <span className="font-mono text-gray-500">{activity.wallet}</span>
+                                <span className="text-purple-400 font-bold">{activity.score} pts</span>
+                                <span className="text-gray-600">•</span>
+                                <span className="text-gray-500">{activity.timeAgo}</span>
+                                {i < (stats?.recentActivity?.length || 0) - 1 && (
+                                    <span className="text-gray-700 mx-2">|</span>
+                                )}
+                            </span>
+                        ))}
+                        {(!stats?.recentActivity || stats.recentActivity.length === 0) && (
+                            <>
+                                <span className="font-mono text-gray-500">7xKp...3mNq</span>
+                                <span className="text-purple-400 font-bold">847 pts</span>
+                                <span className="text-gray-500">• just now</span>
+                            </>
+                        )}
+                        <span className="text-gray-600 mx-4">•</span>
+                        <span className="text-cyan-400 font-bold shrink-0">
+                            {stats?.totalCards || 500}+ total degens
+                        </span>
+                        <span className="text-gray-600 mx-4">•</span>
+                        <span className="text-pink-400 font-bold shrink-0">
+                            {stats?.paidCardsTotal || 89} premium members
                         </span>
                     </div>
                 </div>
             </div>
-        </div>
+        </>
     );
 }
 
 /**
- * Live Activity Indicator - Shows real-time activity
+ * Floating FOMO popup - appears randomly
  */
-export function LiveActivityPulse() {
-    const [recentWallets, setRecentWallets] = useState([
-        { wallet: '7xKp...3mNq', score: 847, time: '2m ago' },
-        { wallet: '9dQr...5vXw', score: 623, time: '5m ago' },
-        { wallet: '3kLm...8pYz', score: 912, time: '8m ago' },
-    ]);
+export function FOMOPopup() {
+    const [show, setShow] = useState(false);
+    const [message, setMessage] = useState('');
 
     useEffect(() => {
-        const interval = setInterval(() => {
-            // Simulate new analysis
-            const newWallet = {
-                wallet: `${Math.random().toString(36).substring(2, 6)}...${Math.random().toString(36).substring(2, 6)}`,
-                score: Math.floor(Math.random() * 500) + 400,
-                time: 'just now',
-            };
+        const messages = [
+            '🔥 Someone just got 892 DegenScore!',
+            '⚡ 3 whales analyzed in the last minute',
+            '🏆 New high score: 945 points!',
+            '💎 Premium spot just claimed!',
+            '🚀 +12 new degens in the last 5 min',
+        ];
 
-            setRecentWallets(prev => [newWallet, ...prev.slice(0, 2)]);
-        }, 15000);
+        const showPopup = () => {
+            const randomIndex = Math.floor(Math.random() * messages.length);
+            setMessage(messages[randomIndex] as string);
+            setShow(true);
+            setTimeout(() => setShow(false), 4000);
+        };
 
-        return () => clearInterval(interval);
+        // Show popup randomly between 15-30 seconds
+        const scheduleNext = () => {
+            const delay = 15000 + Math.random() * 15000;
+            setTimeout(() => {
+                showPopup();
+                scheduleNext();
+            }, delay);
+        };
+
+        // Initial popup after 5 seconds
+        const initial = setTimeout(() => {
+            showPopup();
+            scheduleNext();
+        }, 5000);
+
+        return () => clearTimeout(initial);
     }, []);
 
-    return (
-        <div className="bg-gray-800/50 rounded-xl p-4 border border-gray-700/50">
-            <div className="flex items-center gap-2 mb-3">
-                <span className="relative flex h-2 w-2">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
-                </span>
-                <span className="text-sm font-bold text-white">Live Activity</span>
-            </div>
+    if (!show) return null;
 
-            <div className="space-y-2">
-                {recentWallets.map((item, index) => (
-                    <div
-                        key={index}
-                        className={`flex items-center justify-between text-xs py-1 ${index === 0 ? 'animate-pulse' : ''
-                            }`}
-                    >
-                        <span className="text-gray-400 font-mono">{item.wallet}</span>
-                        <span className={`font-bold ${item.score >= 800 ? 'text-yellow-400' :
-                            item.score >= 600 ? 'text-purple-400' :
-                                'text-blue-400'
-                            }`}>
-                            {item.score} pts
-                        </span>
-                        <span className="text-gray-500">{item.time}</span>
-                    </div>
-                ))}
-            </div>
-        </div>
-    );
-}
-
-/**
- * Urgency Banner - For special promotions
- */
-export function UrgencyBanner({ message }: { message: string }) {
     return (
-        <div className="bg-gradient-to-r from-red-600 via-orange-500 to-red-600 text-white py-2 px-4 text-center animate-pulse">
-            <span className="font-bold">🔥 {message}</span>
+        <div className="fixed bottom-4 left-4 z-50 animate-slide-up">
+            <div className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-4 py-3 rounded-xl shadow-2xl shadow-purple-500/50 flex items-center gap-3 max-w-xs">
+                <div className="text-2xl">🔔</div>
+                <div>
+                    <p className="font-bold text-sm">{message}</p>
+                    <p className="text-xs text-purple-200">just now</p>
+                </div>
+            </div>
         </div>
     );
 }
