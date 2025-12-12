@@ -33,6 +33,12 @@ interface WalletMetrics {
     totalVolume: number;
     profitLoss: number;
     winRate: number;
+    // Period-specific metrics
+    todayTrades?: number;
+    todayVolume?: number;
+    weekTrades?: number;
+    weekVolume?: number;
+    weekProfit?: number;
 }
 
 const DIFFICULTY_COLORS = {
@@ -209,26 +215,51 @@ export default function DailyChallengesActive() {
                 </div>
             </div>
 
-            {/* Wallet Metrics Summary */}
+            {/* Wallet Metrics Summary - Period Specific */}
             {metrics && (
-                <div className="grid grid-cols-4 gap-3 mb-6">
-                    <div className="bg-gradient-to-br from-blue-900/30 to-blue-950/50 rounded-xl p-3 border border-blue-500/20 text-center">
-                        <div className="text-2xl font-black text-blue-400">{metrics.totalTrades}</div>
-                        <div className="text-xs text-gray-400">Trades</div>
-                    </div>
-                    <div className="bg-gradient-to-br from-cyan-900/30 to-cyan-950/50 rounded-xl p-3 border border-cyan-500/20 text-center">
-                        <div className="text-2xl font-black text-cyan-400">{metrics.totalVolume.toFixed(1)}</div>
-                        <div className="text-xs text-gray-400">Volume (SOL)</div>
-                    </div>
-                    <div className={`bg-gradient-to-br ${metrics.profitLoss >= 0 ? 'from-green-900/30 to-green-950/50 border-green-500/20' : 'from-red-900/30 to-red-950/50 border-red-500/20'} rounded-xl p-3 border text-center`}>
-                        <div className={`text-2xl font-black ${metrics.profitLoss >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                            {metrics.profitLoss >= 0 ? '+' : ''}{metrics.profitLoss.toFixed(2)}
+                <div className="mb-6">
+                    {/* Today's Stats */}
+                    <div className="mb-4">
+                        <h3 className="text-sm font-semibold text-gray-400 mb-2 flex items-center gap-2">
+                            📅 Today&apos;s Activity
+                        </h3>
+                        <div className="grid grid-cols-3 gap-3">
+                            <div className="bg-gradient-to-br from-blue-900/30 to-blue-950/50 rounded-xl p-3 border border-blue-500/20 text-center">
+                                <div className="text-2xl font-black text-blue-400">{metrics.todayTrades || 0}</div>
+                                <div className="text-xs text-gray-400">Trades Today</div>
+                            </div>
+                            <div className="bg-gradient-to-br from-cyan-900/30 to-cyan-950/50 rounded-xl p-3 border border-cyan-500/20 text-center">
+                                <div className="text-2xl font-black text-cyan-400">{(metrics.todayVolume || 0).toFixed(1)}</div>
+                                <div className="text-xs text-gray-400">Volume (SOL)</div>
+                            </div>
+                            <div className="bg-gradient-to-br from-purple-900/30 to-purple-950/50 rounded-xl p-3 border border-purple-500/20 text-center">
+                                <div className="text-2xl font-black text-purple-400">{metrics.winRate}%</div>
+                                <div className="text-xs text-gray-400">Win Rate</div>
+                            </div>
                         </div>
-                        <div className="text-xs text-gray-400">P&L (SOL)</div>
                     </div>
-                    <div className="bg-gradient-to-br from-purple-900/30 to-purple-950/50 rounded-xl p-3 border border-purple-500/20 text-center">
-                        <div className="text-2xl font-black text-purple-400">{metrics.winRate}%</div>
-                        <div className="text-xs text-gray-400">Win Rate</div>
+
+                    {/* This Week's Stats */}
+                    <div>
+                        <h3 className="text-sm font-semibold text-gray-400 mb-2 flex items-center gap-2">
+                            📆 This Week
+                        </h3>
+                        <div className="grid grid-cols-3 gap-3">
+                            <div className="bg-gradient-to-br from-orange-900/30 to-orange-950/50 rounded-xl p-3 border border-orange-500/20 text-center">
+                                <div className="text-2xl font-black text-orange-400">{metrics.weekTrades || 0}</div>
+                                <div className="text-xs text-gray-400">Trades</div>
+                            </div>
+                            <div className="bg-gradient-to-br from-yellow-900/30 to-yellow-950/50 rounded-xl p-3 border border-yellow-500/20 text-center">
+                                <div className="text-2xl font-black text-yellow-400">{(metrics.weekVolume || 0).toFixed(1)}</div>
+                                <div className="text-xs text-gray-400">Volume (SOL)</div>
+                            </div>
+                            <div className={`bg-gradient-to-br ${(metrics.weekProfit || 0) >= 0 ? 'from-green-900/30 to-green-950/50 border-green-500/20' : 'from-red-900/30 to-red-950/50 border-red-500/20'} rounded-xl p-3 border text-center`}>
+                                <div className={`text-2xl font-black ${(metrics.weekProfit || 0) >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                                    {(metrics.weekProfit || 0) >= 0 ? '+' : ''}{(metrics.weekProfit || 0).toFixed(2)}
+                                </div>
+                                <div className="text-xs text-gray-400">Profit (SOL)</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             )}
