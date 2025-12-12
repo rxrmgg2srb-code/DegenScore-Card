@@ -1974,10 +1974,11 @@ function analyzePsychologicalPatterns(trades: Trade[], positions: Position[]) {
 
   // FOMO detection: Buys right after someone else made big gains
   // Simplified: rapid succession of buys after seeing green
-  const buyAfterBuy = trades.filter((t, i) =>
-    i > 0 && t.type === 'buy' && trades[i - 1].type === 'buy' &&
-    (t.timestamp - trades[i - 1].timestamp) < 300 // Within 5 min
-  ).length;
+  const buyAfterBuy = trades.filter((t, i) => {
+    const prevTrade = trades[i - 1];
+    return i > 0 && prevTrade && t.type === 'buy' && prevTrade.type === 'buy' &&
+      (t.timestamp - prevTrade.timestamp) < 300; // Within 5 min
+  }).length;
   const fomoScore = Math.min(100, (buyAfterBuy / (trades.length || 1)) * 200);
 
   // Panic sell: Sells immediately after small loss
@@ -1994,8 +1995,11 @@ function analyzePsychologicalPatterns(trades: Trade[], positions: Position[]) {
   // Revenge trading: Bigger position after a loss
   let revengeTrades = 0;
   for (let i = 1; i < trades.length; i++) {
-    const prevPos = closedPositions.find(p => p.tokenMint === trades[i - 1].tokenMint);
-    if (prevPos && (prevPos.profitLoss || 0) < 0 && trades[i].solAmount > trades[i - 1].solAmount * 1.5) {
+    const prevTrade = trades[i - 1];
+    if (!prevTrade) continue;
+
+    const prevPos = closedPositions.find(p => p.tokenMint === prevTrade.tokenMint);
+    if (prevPos && (prevPos.profitLoss || 0) < 0 && trades[i].solAmount > prevTrade.solAmount * 1.5) {
       revengeTrades++;
     }
   }
@@ -2004,8 +2008,11 @@ function analyzePsychologicalPatterns(trades: Trade[], positions: Position[]) {
   // Overconfidence: Bigger position after wins
   let overconfidentTrades = 0;
   for (let i = 1; i < trades.length; i++) {
-    const prevPos = closedPositions.find(p => p.tokenMint === trades[i - 1].tokenMint);
-    if (prevPos && (prevPos.profitLoss || 0) > 0 && trades[i].solAmount > trades[i - 1].solAmount * 2) {
+    const prevTrade = trades[i - 1];
+    if (!prevTrade) continue;
+
+    const prevPos = closedPositions.find(p => p.tokenMint === prevTrade.tokenMint);
+    if (prevPos && (prevPos.profitLoss || 0) > 0 && trades[i].solAmount > prevTrade.solAmount * 2) {
       overconfidentTrades++;
     }
   }
@@ -2101,7 +2108,10 @@ function detectBotVsHuman(trades: Trade[]) {
   const indicators: string[] = [];
 
   // Check timing patterns
-  const intervals = trades.slice(1).map((t, i) => t.timestamp - trades[i].timestamp);
+  const intervals = trades.slice(1).map((t, i) => {
+    const prevTimestamp = trades[i]?.timestamp || 0;
+    return t.timestamp - prevTimestamp;
+  });
   const avgInterval = intervals.reduce((a, b) => a + b, 0) / intervals.length;
 
   // Very regular intervals = likely bot
@@ -2140,6 +2150,8 @@ function analyzeRecoveryPatterns(trades: Trade[], positions: Position[]) {
   for (let i = 1; i < sorted.length; i++) {
     const prev = sorted[i - 1];
     const curr = sorted[i];
+
+    if (!prev || !curr) continue;
 
     if ((prev.profitLoss || 0) < 0 && (curr.profitLoss || 0) > 0) {
       recoveryTimes.push((curr.exitTime || 0) - (prev.exitTime || 0));
