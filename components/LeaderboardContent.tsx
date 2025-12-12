@@ -1,15 +1,14 @@
 import { useState, useEffect } from 'react';
 import Head from 'next/head';
-import Link from 'next/link';
 import dynamic from 'next/dynamic';
-import { LanguageSelector } from '../components/LanguageSelector';
+import Header from './Header';
 import { LeaderboardEntry, Stats, ViewMode, SortBy } from './leaderboard/types';
 import { FIFALeaderboardCard } from './leaderboard/FIFALeaderboardCard';
 import { LeaderboardTable } from './leaderboard/LeaderboardTable';
 import { LeaderboardStats } from './leaderboard/LeaderboardStats';
 import { LeaderboardFilters } from './leaderboard/LeaderboardFilters';
 
-// Dynamic imports - NO ejecutar en servidor, solo en cliente
+// Dynamic imports - Only run on client, not server
 const RankingsWidget = dynamic(() => import('../components/RankingsWidget'), {
   ssr: false,
   loading: () => <div className="animate-pulse bg-gray-800/50 rounded-2xl h-96"></div>,
@@ -103,11 +102,11 @@ export function Leaderboard() {
 
   const filteredLeaderboard = searchWallet
     ? leaderboard.filter(
-        (entry) =>
-          entry.walletAddress.toLowerCase().includes(searchWallet.toLowerCase()) ||
-          (entry.displayName &&
-            entry.displayName.toLowerCase().includes(searchWallet.toLowerCase()))
-      )
+      (entry) =>
+        entry.walletAddress.toLowerCase().includes(searchWallet.toLowerCase()) ||
+        (entry.displayName &&
+          entry.displayName.toLowerCase().includes(searchWallet.toLowerCase()))
+    )
     : leaderboard;
 
   return (
@@ -138,114 +137,110 @@ export function Leaderboard() {
         }
       `}</style>
 
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 py-8 px-4">
-        <div className="max-w-7xl mx-auto">
-          {/* Header con selector de idiomas */}
-          <div className="flex justify-end mb-4">
-            <LanguageSelector />
-          </div>
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900">
+        {/* Consistent Header with all navigation buttons */}
+        <Header />
 
-          <div className="flex justify-between items-center mb-8">
-            <Link href="/">
-              <button className="px-6 py-3 bg-gray-800 hover:bg-gray-700 text-white rounded-lg font-bold transition">
-                ← Back Home
-              </button>
-            </Link>
-            <h1 className="text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500">
-              🏆 Leaderboard
-            </h1>
-            <div className="w-32"></div>
-          </div>
-
-          <LeaderboardStats stats={stats} />
-
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-2">
-              <LeaderboardFilters
-                sortBy={sortBy}
-                setSortBy={setSortBy}
-                viewMode={viewMode}
-                setViewMode={setViewMode}
-                searchWallet={searchWallet}
-                setSearchWallet={setSearchWallet}
-              />
-              {/* Sorting Buttons */}
-              <div className="flex gap-2 mt-4 justify-center">
-                <button
-                  className={`px-4 py-2 rounded ${sortBy === 'likes' ? 'bg-yellow-500 text-black' : 'bg-gray-800 text-gray-200'}`}
-                  onClick={() => setSortBy('likes')}
-                >
-                  Likes
-                </button>
-                <button
-                  className={`px-4 py-2 rounded ${sortBy === 'newest' ? 'bg-yellow-500 text-black' : 'bg-gray-800 text-gray-200'}`}
-                  onClick={() => setSortBy('newest')}
-                >
-                  Newest
-                </button>
-                <button
-                  className={`px-4 py-2 rounded ${sortBy === 'oldest' ? 'bg-yellow-500 text-black' : 'bg-gray-800 text-gray-200'}`}
-                  onClick={() => setSortBy('oldest')}
-                >
-                  Oldest
-                </button>
-              </div>
-
-              {loading ? (
-                <div className="text-center py-20">
-                  <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-cyan-500"></div>
-                  <p className="text-gray-400 mt-4">Loading leaderboard...</p>
-                </div>
-              ) : (
-                <>
-                  {filteredLeaderboard.length > 0 ? (
-                    <>
-                      {viewMode === 'cards' && (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 justify-items-center">
-                          {filteredLeaderboard.map((entry, index) => (
-                            <FIFALeaderboardCard
-                              key={entry.id}
-                              entry={entry}
-                              index={index}
-                              handleLike={handleLike}
-                              userLikes={userLikes}
-                            />
-                          ))}
-                        </div>
-                      )}
-
-                      {viewMode === 'table' && (
-                        <LeaderboardTable
-                          filteredLeaderboard={filteredLeaderboard}
-                          handleLike={handleLike}
-                          userLikes={userLikes}
-                        />
-                      )}
-                    </>
-                  ) : (
-                    <div className="text-center py-12 text-gray-400">No results found</div>
-                  )}
-                </>
-              )}
-
-              <div className="mt-8 text-center text-gray-500 text-sm">
-                Showing top {filteredLeaderboard.length} degens • Updated in real-time
-              </div>
+        <div className="py-8 px-4">
+          <div className="max-w-7xl mx-auto">
+            {/* Page Title */}
+            <div className="text-center mb-8">
+              <h1 className="text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500">
+                🏆 Leaderboard
+              </h1>
+              <p className="text-gray-400 mt-2">Top Solana Traders Ranked by DegenScore</p>
             </div>
 
-            <div className="lg:col-span-1">
-              <div className="space-y-6">
-                {/* Awards Classification Sidebar */}
-                <div className="bg-gray-800 p-4 rounded-xl">
-                  <h3 className="text-lg font-bold text-yellow-400 mb-2">Awards</h3>
-                  <ul className="list-disc list-inside text-gray-200 space-y-1">
-                    <li>Gold: Top 1</li>
-                    <li>Silver: Top 2‑5</li>
-                    <li>Bronze: Top 6‑10</li>
-                  </ul>
+            <LeaderboardStats stats={stats} />
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              <div className="lg:col-span-2">
+                <LeaderboardFilters
+                  sortBy={sortBy}
+                  setSortBy={setSortBy}
+                  viewMode={viewMode}
+                  setViewMode={setViewMode}
+                  searchWallet={searchWallet}
+                  setSearchWallet={setSearchWallet}
+                />
+                {/* Sorting Buttons */}
+                <div className="flex gap-2 mt-4 justify-center">
+                  <button
+                    className={`px-4 py-2 rounded ${sortBy === 'likes' ? 'bg-yellow-500 text-black' : 'bg-gray-800 text-gray-200'}`}
+                    onClick={() => setSortBy('likes')}
+                  >
+                    Likes
+                  </button>
+                  <button
+                    className={`px-4 py-2 rounded ${sortBy === 'newest' ? 'bg-yellow-500 text-black' : 'bg-gray-800 text-gray-200'}`}
+                    onClick={() => setSortBy('newest')}
+                  >
+                    Newest
+                  </button>
+                  <button
+                    className={`px-4 py-2 rounded ${sortBy === 'oldest' ? 'bg-yellow-500 text-black' : 'bg-gray-800 text-gray-200'}`}
+                    onClick={() => setSortBy('oldest')}
+                  >
+                    Oldest
+                  </button>
                 </div>
-                <RankingsWidget />
-                <ChallengeWinnersWidget />
+
+                {loading ? (
+                  <div className="text-center py-20">
+                    <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-cyan-500"></div>
+                    <p className="text-gray-400 mt-4">Loading leaderboard...</p>
+                  </div>
+                ) : (
+                  <>
+                    {filteredLeaderboard.length > 0 ? (
+                      <>
+                        {viewMode === 'cards' && (
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 justify-items-center">
+                            {filteredLeaderboard.map((entry, index) => (
+                              <FIFALeaderboardCard
+                                key={entry.id}
+                                entry={entry}
+                                index={index}
+                                handleLike={handleLike}
+                                userLikes={userLikes}
+                              />
+                            ))}
+                          </div>
+                        )}
+
+                        {viewMode === 'table' && (
+                          <LeaderboardTable
+                            filteredLeaderboard={filteredLeaderboard}
+                            handleLike={handleLike}
+                            userLikes={userLikes}
+                          />
+                        )}
+                      </>
+                    ) : (
+                      <div className="text-center py-12 text-gray-400">No results found</div>
+                    )}
+                  </>
+                )}
+
+                <div className="mt-8 text-center text-gray-500 text-sm">
+                  Showing top {filteredLeaderboard.length} degens • Updated in real-time
+                </div>
+              </div>
+
+              <div className="lg:col-span-1">
+                <div className="space-y-6">
+                  {/* Awards Classification Sidebar */}
+                  <div className="bg-gray-800 p-4 rounded-xl">
+                    <h3 className="text-lg font-bold text-yellow-400 mb-2">Awards</h3>
+                    <ul className="list-disc list-inside text-gray-200 space-y-1">
+                      <li>Gold: Top 1</li>
+                      <li>Silver: Top 2‑5</li>
+                      <li>Bronze: Top 6‑10</li>
+                    </ul>
+                  </div>
+                  <RankingsWidget />
+                  <ChallengeWinnersWidget />
+                </div>
               </div>
             </div>
           </div>

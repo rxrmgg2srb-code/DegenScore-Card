@@ -1,10 +1,9 @@
-import { useTranslation } from 'react-i18next';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import { useWallet } from '@solana/wallet-adapter-react';
-import { LanguageSelector } from './LanguageSelector';
 import Link from 'next/link';
+import { NavigationButtons } from './NavigationButtons';
 
-// 🔒 Admin wallet con acceso al modo espía
+// 🔒 Admin wallet with spy mode access
 const ADMIN_WALLET = 'B7nB9QX1KC4QXp5GMxR8xzh3yzoqp6NjxSwfNBXtgPc1';
 
 interface HeaderProps {
@@ -13,55 +12,32 @@ interface HeaderProps {
 }
 
 export const Header: React.FC<HeaderProps> = ({ connected = false, username = '' }) => {
-  const { t } = useTranslation();
   const { publicKey } = useWallet();
 
-  // Verificar si la wallet conectada es la del admin
+  // Check if connected wallet is admin
   const isAdmin = publicKey?.toBase58() === ADMIN_WALLET;
-
-  // Debug: mostrar en consola para verificar
-  if (typeof window !== 'undefined' && publicKey) {
-    console.log('🔍 Header - Wallet conectada:', publicKey.toBase58());
-    console.log('🔒 Header - Es admin?', isAdmin);
-  }
 
   return (
     <header className="bg-black/50 backdrop-blur-lg sticky top-0 z-40 border-b border-purple-500/30">
       <div className="container mx-auto px-4 py-4">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col lg:flex-row items-center justify-between gap-4">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-3">
-            <div className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
-              DegenScore
-            </div>
-          </Link>
+          <div className="flex items-center gap-4">
+            <Link href="/" className="flex items-center gap-3">
+              <div className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+                DegenScore
+              </div>
+            </Link>
+            <span className="text-gray-400 text-sm hidden sm:block">Track your trading mastery</span>
+          </div>
 
-          {/* Navigation */}
-          <nav className="hidden md:flex items-center gap-4">
-            <Link href="/" className="text-gray-300 hover:text-white transition-colors">
-              {t('nav.home')}
-            </Link>
-            <Link href="/leaderboard" className="text-gray-300 hover:text-white transition-colors">
-              {t('nav.leaderboard')}
-            </Link>
-            <Link
-              href="/whale-radar"
-              className="text-blue-400 hover:text-blue-300 transition-colors flex items-center gap-1 font-semibold"
-            >
-              🐋 Whale Radar
-            </Link>
-            <Link
-              href="/challenges"
-              className="text-orange-400 hover:text-orange-300 transition-colors flex items-center gap-1 font-semibold"
-            >
-              ⚔️ Challenges
-            </Link>
-            <Link
-              href="/super-token-scorer"
-              className="text-gray-300 hover:text-white transition-colors flex items-center gap-1"
-            >
-              🚀 Super Scorer
-            </Link>
+          {/* Navigation - ALL BUTTONS */}
+          <div className="hidden md:block">
+            <NavigationButtons />
+          </div>
+
+          {/* Right side: Admin link + Wallet */}
+          <div className="flex items-center gap-3">
             {isAdmin && (
               <Link
                 href="/spy-mode"
@@ -70,17 +46,6 @@ export const Header: React.FC<HeaderProps> = ({ connected = false, username = ''
                 🕵️ Spy Mode
               </Link>
             )}
-            <Link
-              href="/documentation"
-              className="text-gray-300 hover:text-white transition-colors"
-            >
-              📚 Docs
-            </Link>
-          </nav>
-
-          {/* Right side: Notifications + Language selector + Wallet */}
-          <div className="flex items-center gap-3">
-            <LanguageSelector />
             {connected ? (
               <div className="text-white font-medium">{username}</div>
             ) : (
@@ -90,51 +55,51 @@ export const Header: React.FC<HeaderProps> = ({ connected = false, username = ''
         </div>
 
         {/* Mobile navigation */}
-        <nav className="md:hidden flex items-center gap-4 mt-4 overflow-x-auto">
+        <nav className="md:hidden flex flex-wrap items-center gap-2 mt-4 justify-center">
           <Link
             href="/"
-            className="text-sm text-gray-300 hover:text-white transition-colors whitespace-nowrap"
+            className="text-sm px-3 py-1 rounded-lg bg-gray-700 text-white hover:bg-gray-600 transition"
           >
-            {t('nav.home')}
+            🏠 Home
           </Link>
           <Link
-            href="/leaderboard"
-            className="text-sm text-gray-300 hover:text-white transition-colors whitespace-nowrap"
+            href="/compare"
+            className="text-sm px-3 py-1 rounded-lg bg-blue-700 text-white hover:bg-blue-600 transition"
           >
-            {t('nav.leaderboard')}
+            ⚔️ Compare
+          </Link>
+          <Link
+            href="/challenges"
+            className="text-sm px-3 py-1 rounded-lg bg-orange-700 text-white hover:bg-orange-600 transition"
+          >
+            🎯 Challenges
           </Link>
           <Link
             href="/whale-radar"
-            className="text-sm text-blue-400 hover:text-blue-300 transition-colors whitespace-nowrap font-semibold"
+            className="text-sm px-3 py-1 rounded-lg bg-cyan-700 text-white hover:bg-cyan-600 transition font-semibold"
           >
             🐋 Whales
           </Link>
           <Link
-            href="/token-scanner"
-            className="text-sm text-gray-300 hover:text-white transition-colors whitespace-nowrap"
+            href="/leaderboard"
+            className="text-sm px-3 py-1 rounded-lg bg-purple-700 text-white hover:bg-purple-600 transition font-semibold"
           >
-            🔒 Scanner
+            🏆 Leaderboard
           </Link>
           <Link
-            href="/super-token-scorer"
-            className="text-sm text-gray-300 hover:text-white transition-colors whitespace-nowrap"
+            href="/documentation"
+            className="text-sm px-3 py-1 rounded-lg bg-gray-700 text-white hover:bg-gray-600 transition"
           >
-            🚀 Super
+            📚 Docs
           </Link>
           {isAdmin && (
             <Link
               href="/spy-mode"
-              className="text-sm text-purple-400 hover:text-purple-300 transition-colors whitespace-nowrap font-semibold"
+              className="text-sm px-3 py-1 rounded-lg bg-purple-600 text-white hover:bg-purple-500 transition font-semibold"
             >
               🕵️ Spy
             </Link>
           )}
-          <Link
-            href="/documentation"
-            className="text-sm text-gray-300 hover:text-white transition-colors whitespace-nowrap"
-          >
-            {t('nav.documentation')}
-          </Link>
         </nav>
       </div>
     </header>

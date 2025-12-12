@@ -1,5 +1,6 @@
 import dynamic from 'next/dynamic';
 import Head from 'next/head';
+import Header from '../components/Header';
 
 const DailyChallengesActive = dynamic(
     () => import('../components/DailyChallengesActive'),
@@ -20,13 +21,17 @@ export default function ChallengesPage() {
     return (
         <>
             <Head>
-                <title>⚔️ Daily Challenges - DegenScore</title>
+                <title>🎯 Daily Challenges - DegenScore</title>
                 <meta name="description" content="Complete daily and weekly challenges to earn XP, badges, and SOL rewards" />
             </Head>
 
-            <div className="min-h-screen bg-gradient-to-b from-gray-900 via-purple-900 to-black py-8 px-4">
-                <div className="container mx-auto max-w-4xl">
-                    <DailyChallengesActive />
+            <div className="min-h-screen bg-gradient-to-b from-gray-900 via-purple-900 to-black">
+                <Header />
+
+                <div className="py-8 px-4">
+                    <div className="container mx-auto max-w-4xl">
+                        <DailyChallengesActive />
+                    </div>
                 </div>
             </div>
         </>
