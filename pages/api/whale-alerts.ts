@@ -50,8 +50,8 @@ function generateMockAlert(): WhaleAlert {
         { address: 'Np7L...xM3s', score: 76 },
     ];
 
-    const token = tokens[Math.floor(Math.random() * tokens.length)];
-    const wallet = wallets[Math.floor(Math.random() * wallets.length)];
+    const token = tokens[Math.floor(Math.random() * tokens.length)] || tokens[0];
+    const wallet = wallets[Math.floor(Math.random() * wallets.length)] || wallets[0];
 
     return {
         id: `alert-${Date.now()}-${Math.random().toString(36).substring(7)}`,
