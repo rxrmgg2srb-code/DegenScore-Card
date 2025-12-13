@@ -1,14 +1,12 @@
 /**
  * Debug Script: Analyze wallet trades and P&L
- * Run with: npx ts-node scripts/debug-pnl.ts
+ * Run with: node scripts/debug-pnl.js
  */
 
-import * as dotenv from 'dotenv';
-dotenv.config({ path: '.env.local' });
+require('dotenv').config({ path: '.env.local' });
 
 const WALLET = 'B7nB9QX1KC4QXp5GMxR8xzh3yzoqp6NjxSwfNBXtgPc1';
 const HELIUS_API_KEY = process.env.HELIUS_API_KEY || '';
-const WSOL_MINT = 'So11111111111111111111111111111111111111112';
 
 // Excluded tokens (stablecoins, wrapped tokens)
 const EXCLUDED_TOKENS = new Set([
@@ -17,16 +15,7 @@ const EXCLUDED_TOKENS = new Set([
     'So11111111111111111111111111111111111111112',   // WSOL
 ]);
 
-interface Trade {
-    signature: string;
-    timestamp: number;
-    type: 'buy' | 'sell';
-    solAmount: number;
-    tokenMint: string;
-    description: string;
-}
-
-async function fetchSwaps(wallet: string, limit: number = 100, before?: string): Promise<any[]> {
+async function fetchSwaps(wallet, limit = 100, before) {
     const url = `https://api.helius.xyz/v0/addresses/${wallet}/transactions?api-key=${HELIUS_API_KEY}&type=SWAP&limit=${limit}${before ? `&before=${before}` : ''}`;
 
     try {
@@ -35,19 +24,19 @@ async function fetchSwaps(wallet: string, limit: number = 100, before?: string):
             console.error(`HTTP Error: ${response.status}`);
             return [];
         }
-        return await response.json() as any[];
+        return await response.json();
     } catch (error) {
         console.error('Fetch error:', error);
         return [];
     }
 }
 
-function analyzeTransaction(tx: any, wallet: string): Trade | null {
+function analyzeTransaction(tx, wallet) {
     // Get SOL change from accountData
     let solNet = 0;
 
     if (tx.accountData && tx.accountData.length > 0) {
-        const walletData = tx.accountData.find((acc: any) => acc.account === wallet);
+        const walletData = tx.accountData.find(acc => acc.account === wallet);
         if (walletData && walletData.nativeBalanceChange !== undefined) {
             solNet = walletData.nativeBalanceChange / 1e9;
         }
@@ -56,11 +45,11 @@ function analyzeTransaction(tx: any, wallet: string): Trade | null {
     // Get token transfers
     const tokenTransfers = tx.tokenTransfers || [];
     const relevantTransfers = tokenTransfers.filter(
-        (t: any) => t.fromUserAccount === wallet || t.toUserAccount === wallet
+        t => t.fromUserAccount === wallet || t.toUserAccount === wallet
     );
 
     // Calculate net token balances per mint
-    const tokenBalances = new Map<string, { net: number, mint: string }>();
+    const tokenBalances = new Map();
 
     for (const transfer of relevantTransfers) {
         if (EXCLUDED_TOKENS.has(transfer.mint)) continue;
@@ -117,8 +106,8 @@ async function main() {
         return;
     }
 
-    const allTrades: Trade[] = [];
-    let lastSignature: string | undefined;
+    const allTrades = [];
+    let lastSignature;
     let page = 0;
 
     // Fetch up to 500 swaps (5 pages of 100)
@@ -137,6 +126,8 @@ async function main() {
 
         lastSignature = swaps[swaps.length - 1]?.signature;
         page++;
+
+        console.log(`   Found ${swaps.length} swaps, ${allTrades.length} valid trades so far`);
 
         // Rate limiting
         await new Promise(r => setTimeout(r, 200));
@@ -160,7 +151,7 @@ async function main() {
     console.log(`   - Total Spent (buys): ${totalSpent.toFixed(4)} SOL`);
     console.log(`   - Total Received (sells): ${totalReceived.toFixed(4)} SOL`);
     console.log(`\n📈 P&L: ${pnl >= 0 ? '+' : ''}${pnl.toFixed(4)} SOL`);
-    console.log(`   (~$${(pnl * 135).toFixed(2)} at $135/SOL)`);
+    console.log(`   (~$${(pnl * 135).toFixed(2)} USD at $135/SOL)`);
 
     // Show first 10 trades
     console.log('\n\n📜 Sample Trades (first 10):');

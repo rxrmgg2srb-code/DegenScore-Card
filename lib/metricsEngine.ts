@@ -524,7 +524,7 @@ async function fetchAllTransactions(
   const BATCH_SIZE = 100;
   const DELAY_MS = 50;
   const MAX_CONSECUTIVE_ERRORS = 5;
-  const TIME_LIMIT_MS = 55000;
+  const TIME_LIMIT_MS = 120000; // 2 minutes to download more complete history
   const startTime = Date.now();
   const TWELVE_MONTHS_AGO = Date.now() / 1000 - (365 * 24 * 60 * 60);
 
@@ -586,9 +586,9 @@ async function fetchAllTransactions(
   let regularBefore: string | undefined;
   let regularCount = 0;
   consecutiveErrors = 0;
-  const MAX_REGULAR = 5000; // Aumentado para cubrir más historial
+  const MAX_REGULAR = 10000; // Increased to cover full history
 
-  for (let batch = 0; batch < 50; batch++) { // Max 5000 regular
+  for (let batch = 0; batch < 100; batch++) { // Max 10000 regular
     if (Date.now() - startTime > TIME_LIMIT_MS) {
       logger.warn(`⚠️ Time limit reached. Stopping fetch.`);
       break;
@@ -749,6 +749,14 @@ function extractTrades(transactions: ParsedTransaction[], walletAddress: string)
 
     // ⭐ FILTRO: Excluir BURN - no son ventas reales
     if (tx.type === 'BURN') {
+      skippedNotDex++;
+      continue;
+    }
+
+    // 🔥 FIX: Ignorar transacciones fallidas
+    // Una tx fallida puede haber pagado gas pero no recibir tokens
+    // Si la contamos como compra, suma gastos sin ingresos
+    if ((tx as any).transactionError) {
       skippedNotDex++;
       continue;
     }
@@ -919,6 +927,36 @@ function extractTrades(transactions: ParsedTransaction[], walletAddress: string)
 
           isBuy = inferredBuy;
           isSell = inferredSell;
+        }
+      }
+    }
+
+    // 🔥 FIX CRÍTICO: Detección FORZADA de SWAPs explícitos
+    // Si Helius etiquetó esto como SWAP pero aún no pudimos clasificarlo,
+    // FORZAMOS la detección basándonos solo en el flujo de tokens
+    // (a veces el fee o rent se comen el profit pequeño y el SOL flow parece 0)
+    if (!isBuy && !isSell) {
+      const isExplicitSwap =
+        tx.type === 'SWAP' ||
+        tx.type === 'SWAP_AGGREGATOR' ||
+        (tx.description && tx.description.toLowerCase().includes('swap'));
+
+      if (isExplicitSwap && primaryTokenNet !== 0) {
+        // Confiamos en el flujo de tokens para decidir
+        if (primaryTokenNet > 0) {
+          isBuy = true;
+          logger.debug('🔧 Forced BUY detection for explicit SWAP:', {
+            signature: tx.signature?.substring(0, 12),
+            tokenNet: primaryTokenNet,
+            solNet: effectiveSolNet.toFixed(6),
+          });
+        } else if (primaryTokenNet < 0) {
+          isSell = true;
+          logger.debug('🔧 Forced SELL detection for explicit SWAP:', {
+            signature: tx.signature?.substring(0, 12),
+            tokenNet: primaryTokenNet,
+            solNet: effectiveSolNet.toFixed(6),
+          });
         }
       }
     }
@@ -2470,11 +2508,25 @@ async function calculateMetrics(
 
   // P&L calculation (Cash Flow Method)
   // This is more accurate for total wallet P&L as it includes all inflows/outflows
-  const totalSolSpent = trades.filter(t => t.type === 'buy').reduce((sum, t) => sum + t.solAmount, 0);
-  const totalSolReceived = trades.filter(t => t.type === 'sell').reduce((sum, t) => sum + t.solAmount, 0);
+  const buys = trades.filter(t => t.type === 'buy');
+  const sells = trades.filter(t => t.type === 'sell');
+  const totalSolSpent = buys.reduce((sum, t) => sum + t.solAmount, 0);
+  const totalSolReceived = sells.reduce((sum, t) => sum + t.solAmount, 0);
 
   // Realized PnL based on Cash Flow
   const realizedPnL = totalSolReceived - totalSolSpent;
+
+  // 🔥 DEBUG: Log detailed P&L breakdown
+  logger.info('📊 P&L CALCULATION DEBUG:', {
+    totalTrades: trades.length,
+    buyCount: buys.length,
+    sellCount: sells.length,
+    totalSolSpent: totalSolSpent.toFixed(4),
+    totalSolReceived: totalSolReceived.toFixed(4),
+    realizedPnL: realizedPnL.toFixed(4),
+    avgBuySize: buys.length > 0 ? (totalSolSpent / buys.length).toFixed(4) : 'N/A',
+    avgSellSize: sells.length > 0 ? (totalSolReceived / sells.length).toFixed(4) : 'N/A',
+  });
 
   // 🔥 NEW: Calculate REAL unrealized P&L using current market prices
   let unrealizedPnL = 0;
