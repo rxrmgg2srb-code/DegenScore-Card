@@ -834,12 +834,17 @@ function extractTrades(transactions: ParsedTransaction[], walletAddress: string)
     // WSOL_MINT ya está definido arriba
 
     let wsolNet = 0;
+    // Track if we used accountData (which already includes WSOL effects)
+    const usedAccountData = tx.accountData && tx.accountData.length > 0 &&
+      tx.accountData.find((acc: any) => acc.account === walletAddress)?.nativeBalanceChange !== undefined;
+
     if (tokenNetBalances.has(WSOL_MINT)) {
       wsolNet = tokenNetBalances.get(WSOL_MINT) || 0;
       if (wsolNet !== 0) {
         logger.info('🔥 WSOL DETECTED!', {
           wsolNet: wsolNet.toFixed(6),
           solNet: solNet.toFixed(6),
+          usedAccountData,
           signature: tx.signature?.substring(0, 12)
         });
       }
@@ -847,9 +852,13 @@ function extractTrades(transactions: ParsedTransaction[], walletAddress: string)
       tokenNetBalances.delete(WSOL_MINT);
     }
 
-    // Effective SOL = Native SOL + Wrapped SOL + Stablecoins (converted)
-    // TODO: Add stablecoin support if needed, but user confirmed only SOL trades
-    const effectiveSolNet = solNet + wsolNet;
+    // 🔥 CRITICAL FIX: Only add wsolNet if we used nativeTransfers fallback
+    // When using accountData.nativeBalanceChange, it ALREADY includes WSOL wrap/unwrap effects
+    // Adding wsolNet again would double-count it!
+    // 
+    // If accountData was used: solNet already has the full SOL effect (including WSOL)
+    // If nativeTransfers was used: solNet only has direct SOL transfers, so we need to add wsolNet
+    const effectiveSolNet = usedAccountData ? solNet : (solNet + wsolNet);
 
     // Get primary mint (excluding WSOL which is now part of SOL flow)
     let primaryMint = '';
