@@ -38,6 +38,20 @@ export default function MetaHead({
             <meta property="twitter:description" content={description} />
             <meta property="twitter:image" content={image} />
 
+            {/* PWA & Mobile */}
+            <link rel="manifest" href="/site.webmanifest" />
+            <meta name="theme-color" content="#7C3AED" />
+            <meta name="apple-mobile-web-app-capable" content="yes" />
+            <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+            <meta name="apple-mobile-web-app-title" content="DegenScore" />
+            <link rel="apple-touch-icon" href="/og-image.png" />
+
+            {/* Additional SEO */}
+            <meta name="robots" content="index, follow" />
+            <meta name="googlebot" content="index, follow" />
+            <link rel="canonical" href={url} />
+            <meta name="keywords" content="solana, trading, degen, crypto, blockchain, wallet, analysis, score, pnl, profit loss" />
+
             {/* Favicon */}
             <link rel="icon" href="/favicon.ico" />
         </Head>

@@ -6,8 +6,52 @@
     "NODE_ENV": "production"
   },
   "functions": {
-    "pages/api/**/*.js": {
+    "pages/api/generate-card.ts": {
+      "maxDuration": 60,
+      "memory": 1024
+    },
+    "pages/api/analyze.ts": {
+      "maxDuration": 45,
+      "memory": 512
+    },
+    "pages/api/save-card.ts": {
+      "maxDuration": 45,
+      "memory": 512
+    },
+    "pages/api/pnl-report.ts": {
+      "maxDuration": 45,
+      "memory": 512
+    },
+    "pages/api/**/*.ts": {
       "maxDuration": 30
     }
-  }
+  },
+  "headers": [
+    {
+      "source": "/api/:path*",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-store, must-revalidate"
+        },
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        }
+      ]
+    },
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Frame-Options",
+          "value": "SAMEORIGIN"
+        },
+        {
+          "key": "X-XSS-Protection",
+          "value": "1; mode=block"
+        }
+      ]
+    }
+  ]
 }
