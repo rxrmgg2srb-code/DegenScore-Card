@@ -1,7 +1,7 @@
 import '../styles/globals.css';
 import '@solana/wallet-adapter-react-ui/styles.css';
 import type { AppProps } from 'next/app';
-import { useMemo, useEffect, useCallback, useState } from 'react';
+import { useMemo, useCallback } from 'react';
 import { ConnectionProvider, WalletProvider } from '@solana/wallet-adapter-react';
 import { WalletModalProvider } from '@solana/wallet-adapter-react-ui';
 // Phantom y Solflare se auto-detectan como Standard Wallets (no necesitan adapters)
@@ -15,8 +15,6 @@ import WalletTracker from '../components/WalletTracker';
 import MetaHead from '../components/MetaHead';
 
 export default function App({ Component, pageProps }: AppProps) {
-  const [autoConnectEnabled, setAutoConnectEnabled] = useState(false);
-
   // Configure RPC endpoint
   const endpoint = useMemo(
     () => process.env.NEXT_PUBLIC_HELIUS_RPC_URL || 'https://api.mainnet-beta.solana.com',
@@ -26,37 +24,8 @@ export default function App({ Component, pageProps }: AppProps) {
   // Configure supported wallets - dejamos vacío para usar Standard Wallet auto-detection
   const wallets = useMemo(() => [], []);
 
-  // Safe auto-connect: only enable after checking if wallet is available
-  useEffect(() => {
-    // Check if there was a previously connected wallet
-    const wasConnected = typeof window !== 'undefined' &&
-      localStorage.getItem('walletName');
-
-    if (wasConnected) {
-      // Give wallet extension time to load, then enable auto-connect
-      const timer = setTimeout(() => {
-        setAutoConnectEnabled(true);
-      }, 500);
-
-      // Timeout: if still "connecting" after 3 seconds, disable auto-connect
-      const fallbackTimer = setTimeout(() => {
-        setAutoConnectEnabled(false);
-      }, 3000);
-
-      return () => {
-        clearTimeout(timer);
-        clearTimeout(fallbackTimer);
-      };
-    }
-    // No cleanup needed if not connected
-    return undefined;
-  }, []);
-
   // Handle wallet connection errors
   const onError = useCallback((error: any) => {
-    // Log detallado para debugging
-    console.error('Wallet error:', error);
-
     // Silently handle common wallet connection errors that are safe to ignore
     const ignorableErrors = [
       'disconnected port',
@@ -79,8 +48,6 @@ export default function App({ Component, pageProps }: AppProps) {
 
     if (shouldIgnore) {
       console.warn('Wallet connection issue (safe to ignore):', error?.message || error);
-      // Disable auto-connect on error to prevent infinite loops
-      setAutoConnectEnabled(false);
       return;
     }
 
@@ -96,7 +63,7 @@ export default function App({ Component, pageProps }: AppProps) {
         <ConnectionProvider endpoint={endpoint}>
           <WalletProvider
             wallets={wallets}
-            autoConnect={autoConnectEnabled}
+            autoConnect={true}
             onError={onError}
           >
             <WalletModalProvider>

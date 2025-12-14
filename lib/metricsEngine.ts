@@ -700,13 +700,9 @@ function extractTrades(transactions: ParsedTransaction[], walletAddress: string)
   const trades: Trade[] = [];
   let skippedNotDex = 0;
   let skippedNoTokenTransfers = 0;
-  let skippedNoNativeTransfers = 0;
   let skippedDust = 0;
   let skippedNoToken = 0;
-  let skippedZeroAmount = 0;
-  let skippedSanity = 0;
   let skippedTransferOnly = 0;
-  let extractedFromAccountData = 0;
 
   // Track transaction types for debugging
   const txTypes = new Map<string, number>();
@@ -715,7 +711,6 @@ function extractTrades(transactions: ParsedTransaction[], walletAddress: string)
   let dustCount = 0;
 
   // 🚫 Tokens excluidos: Solo stablecoins y wrapped tokens
-  // Queremos contar TODOS los tokens especulativos (memecoins, shitcoins, etc.)
   const EXCLUDED_TOKENS = new Set([
     // Stablecoins
     'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v', // USDC
@@ -738,144 +733,93 @@ function extractTrades(transactions: ParsedTransaction[], walletAddress: string)
     'DdFPRnccQqLD4zCHrBqdY95D6hvw6PLWp9DEXj1fLCL9', // daoSOL (staked SOL)
   ]);
 
-  let skippedStablecoin = 0;
+  const WSOL_MINT = 'So11111111111111111111111111111111111111112';
+
 
   for (const tx of transactions) {
-    // Track stats
     txTypes.set(tx.type, (txTypes.get(tx.type) || 0) + 1);
     if (tx.source) {
       txSources.set(tx.source, (txSources.get(tx.source) || 0) + 1);
     }
 
-    // ⭐ FILTRO: Excluir BURN - no son ventas reales
-    if (tx.type === 'BURN') {
+    if (tx.type === 'BURN' || (tx as any).transactionError) {
       skippedNotDex++;
       continue;
     }
 
-    // 🔥 FIX: Ignorar transacciones fallidas
-    // Una tx fallida puede haber pagado gas pero no recibir tokens
-    // Si la contamos como compra, suma gastos sin ingresos
-    if ((tx as any).transactionError) {
-      skippedNotDex++;
-      continue;
-    }
-
-    // ⭐ NUEVO FILTRO: Aceptar cualquier transacción con tokenTransfers + nativeTransfers
-    // La lógica posterior determinará si es un trade válido
-    // Esto captura trades que no están marcados como "SWAP" o de un DEX conocido
-
-    // Primero verificar que tiene tokenTransfers
-    if (!tx.tokenTransfers || tx.tokenTransfers.length === 0) {
+    // Ensure we have some activity
+    if ((!tx.tokenTransfers || tx.tokenTransfers.length === 0) && (!tx.nativeTransfers || tx.nativeTransfers.length === 0)) {
       skippedNoTokenTransfers++;
-      continue;
-    }
-
-    // 🔥 FIX: Muchos DEXs (Jupiter, Raydium) usan WSOL sin nativeTransfers directos
-    // Verificar si hay WSOL en tokenTransfers como indicador de swap
-    const WSOL_MINT = 'So11111111111111111111111111111111111111112';
-    const hasWsolInTransfers = tx.tokenTransfers.some(t => t.mint === WSOL_MINT);
-
-    // Permitir transacciones con nativeTransfers O con WSOL en tokenTransfers
-    const hasNativeTransfers = tx.nativeTransfers && tx.nativeTransfers.length > 0;
-    if (!hasNativeTransfers && !hasWsolInTransfers) {
-      skippedNoNativeTransfers++;
       continue;
     }
 
     txWithTokenAndNative++;
 
-    // Calculate net SOL change for the wallet
-    // MEJORADO: Intentar usar accountData primero para mayor precisión
-    let solNet = 0;
+    // =========================================================================
+    // 🚀 SURGICAL SOL FLOW ANALYSIS (Gross Value Method)
+    // =========================================================================
 
-    // Try using accountData for more accurate values (includes actual swap amounts)
-    if (tx.accountData && tx.accountData.length > 0) {
-      const walletAccountData = tx.accountData.find((acc: any) => acc.account === walletAddress);
-      if (walletAccountData && walletAccountData.nativeBalanceChange) {
-        solNet = walletAccountData.nativeBalanceChange / 1e9;
-      }
-    }
-
-    // Fallback to nativeTransfers if accountData not available or didn't provide a change
-    if (solNet === 0 && tx.nativeTransfers) {
-      for (const nt of tx.nativeTransfers) {
-        if (nt.fromUserAccount === walletAddress) {
-          solNet -= nt.amount / 1e9;
-        }
-        if (nt.toUserAccount === walletAddress) {
-          solNet += nt.amount / 1e9;
+    // 1. Calculate SOL Flows (WSOL + Native)
+    let wsolIn = 0;
+    let wsolOut = 0;
+    if (tx.tokenTransfers) {
+      for (const t of tx.tokenTransfers) {
+        if (t.mint === WSOL_MINT) {
+          if (t.toUserAccount === walletAddress) wsolIn += t.tokenAmount;
+          if (t.fromUserAccount === walletAddress) wsolOut += t.tokenAmount;
         }
       }
     }
 
-    // Get token transfers involving this wallet
-    // NOTE: We now INCLUDE WSOL here because we handle it separately later
-    const relevantTokenTransfers = tx.tokenTransfers.filter(
-      (t) => (t.fromUserAccount === walletAddress || t.toUserAccount === walletAddress)
-    );
+    let nativeIn = 0;
+    let nativeOut = 0;
+    if (tx.nativeTransfers) {
+      for (const t of tx.nativeTransfers) {
+        if (t.toUserAccount === walletAddress) nativeIn += t.amount / 1e9;
+        if (t.fromUserAccount === walletAddress) nativeOut += t.amount / 1e9;
+      }
+    }
 
-    if (relevantTokenTransfers.length === 0) {
+    // Gross Flows (Max of In/Out to capture Value)
+    const grossIn = Math.max(wsolIn, nativeIn);
+    const grossOut = Math.max(wsolOut, nativeOut);
+
+    // 2. Wrap/Unwrap Detection
+    // Logic: If I put SOL In and get WSOL Out (or vice-versa) with minimal difference.
+    // These are balance neutral and should be skipped for P&L.
+    const isWrap = Math.abs(grossIn - grossOut) < 0.05 && Math.abs(grossIn) > 0.1;
+
+    // 3. Token Flow Analysis
+    const tokenNetBalances = new Map<string, number>();
+    let hasTokenActivity = false;
+
+    if (tx.tokenTransfers) {
+      for (const t of tx.tokenTransfers) {
+        if (t.mint === WSOL_MINT) continue;
+        if (t.toUserAccount === walletAddress || t.fromUserAccount === walletAddress) {
+          const current = tokenNetBalances.get(t.mint) || 0;
+          const change = t.toUserAccount === walletAddress ? t.tokenAmount : -t.tokenAmount;
+          tokenNetBalances.set(t.mint, current + change);
+          hasTokenActivity = true;
+        }
+      }
+    }
+
+    if (!hasTokenActivity) {
+      if (isWrap) {
+        skippedTransferOnly++;
+        continue; // Pure Wrap, skip
+      }
       skippedNoToken++;
       continue;
     }
 
-    // 🔥 NUEVA LÓGICA: Calcular balance neto de tokens por mint
-    // Esto maneja correctamente casos donde hay múltiples transfers del mismo token
-    const tokenNetBalances = new Map<string, number>();
-
-    for (const transfer of relevantTokenTransfers) {
-      const currentBalance = tokenNetBalances.get(transfer.mint) || 0;
-
-      if (transfer.toUserAccount === walletAddress) {
-        // Tokens entrando
-        tokenNetBalances.set(transfer.mint, currentBalance + transfer.tokenAmount);
-      }
-
-      if (transfer.fromUserAccount === walletAddress) {
-        // Tokens saliendo
-        tokenNetBalances.set(transfer.mint, currentBalance - transfer.tokenAmount);
-      }
-    }
-
-    // Combine Native SOL + WSOL for effective SOL flow
-    // WSOL_MINT ya está definido arriba
-
-    let wsolNet = 0;
-    // Track if we used accountData (which already includes WSOL effects)
-    const usedAccountData = tx.accountData && tx.accountData.length > 0 &&
-      tx.accountData.find((acc: any) => acc.account === walletAddress)?.nativeBalanceChange !== undefined;
-
-    if (tokenNetBalances.has(WSOL_MINT)) {
-      wsolNet = tokenNetBalances.get(WSOL_MINT) || 0;
-      if (wsolNet !== 0) {
-        logger.info('🔥 WSOL DETECTED!', {
-          wsolNet: wsolNet.toFixed(6),
-          solNet: solNet.toFixed(6),
-          usedAccountData,
-          signature: tx.signature?.substring(0, 12)
-        });
-      }
-      // Remove WSOL from token balances so it's not treated as the traded token
-      tokenNetBalances.delete(WSOL_MINT);
-    }
-
-    // 🔥 CRITICAL FIX: Only add wsolNet if we used nativeTransfers fallback
-    // When using accountData.nativeBalanceChange, it ALREADY includes WSOL wrap/unwrap effects
-    // Adding wsolNet again would double-count it!
-    // 
-    // If accountData was used: solNet already has the full SOL effect (including WSOL)
-    // If nativeTransfers was used: solNet only has direct SOL transfers, so we need to add wsolNet
-    const effectiveSolNet = usedAccountData ? solNet : (solNet + wsolNet);
-
-    // Get primary mint (excluding WSOL which is now part of SOL flow)
+    // Determine Primary Token
     let primaryMint = '';
     let primaryTokenNet = 0;
 
     for (const [mint, netBalance] of tokenNetBalances.entries()) {
-      // Skip excluded tokens (stablecoins, etc) from being the primary traded token
       if (EXCLUDED_TOKENS.has(mint)) continue;
-
       if (Math.abs(netBalance) > Math.abs(primaryTokenNet)) {
         primaryMint = mint;
         primaryTokenNet = netBalance;
@@ -887,182 +831,75 @@ function extractTrades(transactions: ParsedTransaction[], walletAddress: string)
       continue;
     }
 
-    // Determine if this is a buy or sell based on NET token flow and EFFECTIVE SOL flow
-    // Buy = SOL out (negative) and tokens in (positive)
-    // Sell = SOL in (positive) and tokens out (negative)
+    // 4. Trade Classification (Token-Centric)
+    // Logic:
+    // - Token In (Positive Net) -> BUY. We PAID SOL (Cost).
+    // - Token Out (Negative Net) -> SELL. We GOT SOL (Revenue).
 
-    // Tolerancia para casos edge
-    const TOLERANCE = 0.0001;
+    let isBuy = false;
+    let solAmount = 0;
 
-    let isBuy = effectiveSolNet < -TOLERANCE && primaryTokenNet > 0;
-    let isSell = effectiveSolNet > TOLERANCE && primaryTokenNet < 0;
+    if (primaryTokenNet > 0) {
+      isBuy = true;
+      // Cost is what we spent. Ideally 'wsolOut' or 'nativeOut'.
+      // If we swapped Token A -> Token B, and Token A value was X, Cost is X.
+      // Cost estimation: Solscan uses the Value of the transaction.
+      // We use MAX(GrossOut, GrossIn) as a proxy for the 'deal value'.
 
-    // 🔥 FIX: Ser más permisivo con la detección de trades
-    const hasSignificantTokenFlow = Math.abs(primaryTokenNet) > 1; // Al menos 1 token
-    const hasSignificantSolFlow = Math.abs(effectiveSolNet) > 0.001; // Al menos 0.001 SOL
+      // Standard Buy: Spent SOL (Out) -> Got Token (In). Cost = GrossOut.
+      solAmount = grossOut;
 
-    // Si no podemos determinar claramente el tipo por SOL flow
-    if (!isBuy && !isSell && hasSignificantTokenFlow) {
-      // Estrategia 1: Inferir del tipo de transacción
-      const isSwapType = tx.type === 'SWAP' || tx.type === 'SWAP_AGGREGATOR' ||
-        tx.source === 'JUPITER' || tx.source === 'RAYDIUM';
+      // Edge Case: Swap Token A (Out) -> Token B (In).
+      // My script analyzer says: "Cost of B is Value of A".
+      // If GrossOut is 0 (direct token swap with no WSOL?), maybe GrossIn helps?
+      if (solAmount < 0.001) solAmount = grossIn;
 
-      // Estrategia 2: Inferir del flujo de tokens cuando hay WSOL pero no solNet claro
-      const hasWsolFlow = Math.abs(wsolNet) > 0.001;
+    } else {
+      // isBuy remains false = SELL
+      // Revenue is what we got. Standard Sell: Gave Token (Out) -> Got SOL (In). Rev = GrossIn.
+      solAmount = grossIn;
 
-      if (isSwapType || hasWsolFlow || hasSignificantSolFlow) {
-        // Inferir del flujo de tokens: tokens entrando = compra, saliendo = venta
-        const inferredBuy = primaryTokenNet > 0;
-        const inferredSell = primaryTokenNet < 0;
-
-        if (inferredBuy || inferredSell) {
-          logger.debug('[Debug] Inferred trade from token flow:', {
-            type: inferredBuy ? 'buy' : 'sell',
-            solNet: effectiveSolNet.toFixed(6),
-            wsolNet: wsolNet.toFixed(6),
-            tokenNet: primaryTokenNet.toFixed(6),
-            mint: primaryMint.substring(0, 12),
-            source: tx.source || tx.type,
-          });
-
-          isBuy = inferredBuy;
-          isSell = inferredSell;
-        }
-      }
+      // Edge Case
+      if (solAmount < 0.001) solAmount = grossOut;
     }
 
-    // 🔥 FIX CRÍTICO: Detección FORZADA de SWAPs explícitos
-    // Si Helius etiquetó esto como SWAP pero aún no pudimos clasificarlo,
-    // FORZAMOS la detección basándonos solo en el flujo de tokens
-    // (a veces el fee o rent se comen el profit pequeño y el SOL flow parece 0)
-    if (!isBuy && !isSell) {
-      const isExplicitSwap =
-        tx.type === 'SWAP' ||
-        tx.type === 'SWAP_AGGREGATOR' ||
-        (tx.description && tx.description.toLowerCase().includes('swap'));
+    // Fee Subtraction (Impacts P&L)
+    // Usually we sum fees separately, but here we integrate it into the decision if needed.
 
-      if (isExplicitSwap && primaryTokenNet !== 0) {
-        // Confiamos en el flujo de tokens para decidir
-        if (primaryTokenNet > 0) {
-          isBuy = true;
-          logger.debug('🔧 Forced BUY detection for explicit SWAP:', {
-            signature: tx.signature?.substring(0, 12),
-            tokenNet: primaryTokenNet,
-            solNet: effectiveSolNet.toFixed(6),
-          });
-        } else if (primaryTokenNet < 0) {
-          isSell = true;
-          logger.debug('🔧 Forced SELL detection for explicit SWAP:', {
-            signature: tx.signature?.substring(0, 12),
-            tokenNet: primaryTokenNet,
-            solNet: effectiveSolNet.toFixed(6),
-          });
-        }
-      }
-    }
-
-    // Si aún no podemos clasificar, skip
-    if (!isBuy && !isSell) {
-      skippedTransferOnly++;
-      continue;
-    }
-
-    const tokenAmount = Math.abs(primaryTokenNet);
-
-
-
-    // Calculate SOL amount (absolute value of EFFECTIVE SOL)
-    const solAmount = Math.abs(effectiveSolNet);
-
-    // Dust check - filtrar trades muy pequeños que distorsionan P&L
-    // 0.001 SOL = ~$0.13 USD es el mínimo razonable para un trade real
+    // 5. Dust Filter
+    // Trades below $0.15 (0.001 SOL) are likely spam or rent adjustments
     if (solAmount < 0.001) {
       dustCount++;
       skippedDust++;
-      logger.debug('[Debug] Skipping dust trade:', {
-        solAmount: solAmount.toFixed(9),
-        tokenMint: primaryMint.substring(0, 12),
-        type: isBuy ? 'buy' : 'sell',
-        source: tx.source || 'UNKNOWN',
-      });
       continue;
     }
 
-    const pricePerToken = solAmount / tokenAmount;
-
-    // Sanity checks mejorados y relajados
-    // Permitir un rango muy amplio de precios para memecoins con muchos ceros
-    if (pricePerToken < 0.000000000000001 || pricePerToken > 10000000) {
-      skippedSanity++;
-      continue;
-    }
-
-    // Permitir trades grandes (hasta 10,000 SOL para ballenas)
-    if (solAmount > 10000) {
-      skippedSanity++;
-      continue;
-    }
-
-    // ✅ TRADE VÁLIDO - Agregar a la lista
-    // 🆕 Detect DEX source for accurate fee calculation
+    // 6. Push Trade
     const dexSource = detectDexSource(tx);
-
     trades.push({
       timestamp: tx.timestamp,
       tokenMint: primaryMint,
       type: isBuy ? 'buy' : 'sell',
       solAmount,
-      tokenAmount,
-      pricePerToken,
-      dexSource,               // 🆕 Which DEX was used
-      signature: tx.signature, // 🆕 For verification
+      tokenAmount: Math.abs(primaryTokenNet),
+      pricePerToken: solAmount / Math.abs(primaryTokenNet),
+      dexSource,
+      signature: tx.signature
     });
-  } // End of transaction loop
+  }
 
-  // Convert maps to objects for logging
-  const topTransactionTypes = Object.fromEntries(
-    Array.from(txTypes.entries())
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 10)
-  );
-
-  const topSources = Object.fromEntries(
-    Array.from(txSources.entries())
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 10)
-  );
-
-  // Calculate extraction rate
-  const extractionRate = transactions.length > 0
-    ? ((trades.length / transactions.length) * 100).toFixed(1)
-    : '0.0';
-
-  // Calculate dust percentage of valid transactions
-  const dustPercentage = txWithTokenAndNative > 0
-    ? ((dustCount / txWithTokenAndNative) * 100).toFixed(1)
-    : '0.0';
-
-  // Log statistics
-  logger.info('🔍 Trade extraction stats:', {
+  // Stats Logging
+  logger.info('🔍 Trade extraction stats (Refined):', {
     totalTransactions: transactions.length,
     tradesExtracted: trades.length,
-    extractionRate: `${extractionRate}%`,
-    extractedFromAccountData,
     txWithTokenAndNative,
-    dustPercentageOfValid: `${dustPercentage}%`,
-    topTransactionTypes,
-    topSources,
+    dustPercentageOfValid: `${txWithTokenAndNative > 0 ? ((dustCount / txWithTokenAndNative) * 100).toFixed(1) : 0}%`,
     skipped: {
       notDexOrSwap: skippedNotDex,
-      noTokenTransfers: skippedNoTokenTransfers,
-      noNativeTransfers: skippedNoNativeTransfers,
+      noTokens: skippedNoToken,
       dust: skippedDust,
-      noTokenForWallet: skippedNoToken,
-      stablecoinsOrWrapped: skippedStablecoin,
-      zeroAmount: skippedZeroAmount,
-      transferOnly: skippedTransferOnly,
-      failedSanityChecks: skippedSanity,
-    },
+      transfers: skippedTransferOnly
+    }
   });
 
   return trades;
