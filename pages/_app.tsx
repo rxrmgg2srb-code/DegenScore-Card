@@ -79,7 +79,7 @@ export default function App({ Component, pageProps }: AppProps) {
         <ConnectionProvider endpoint={endpoint}>
           <WalletProvider
             wallets={wallets}
-            autoConnect={true}
+            autoConnect={false}
             onError={onError}
           >
             <WalletModalProvider>
