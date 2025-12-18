@@ -742,9 +742,25 @@ function extractTrades(transactions: ParsedTransaction[], walletAddress: string)
       txSources.set(tx.source, (txSources.get(tx.source) || 0) + 1);
     }
 
-    if (tx.type === 'BURN' || (tx as any).transactionError) {
+    // 0. 🛡️ Critical Filter: Failed Transactions & Non-Trades
+    // Helius sometimes returns failed txs. We must skip them to avoid bad data.
+    if ((tx as any).failed || (tx as any).err || (tx as any).error) {
       skippedNotDex++;
       continue;
+    }
+
+    // 0.5 Filter Spam/Non-Trading Types aggressively
+    // GMGN only counts real DEX trades. We should skip generic transfers unless they look like swaps.
+    const NON_TRADE_TYPES = ['TRANSFER', 'BURN', 'UNKNOWN', 'NFT_MINT', 'AIRDROP', 'COMPRESSED_NFT_MINT'];
+    if (NON_TRADE_TYPES.includes(tx.type) && !tx.source?.includes('DEX') && !tx.source?.includes('JUPITER')) {
+      // Allow if it LOOKS like a swap (tokens in AND out)
+      const hasIn = tx.tokenTransfers?.some(t => t.toUserAccount === walletAddress);
+      const hasOut = tx.tokenTransfers?.some(t => t.fromUserAccount === walletAddress);
+
+      if (!hasIn || !hasOut) {
+        skippedTransferOnly++;
+        continue;
+      }
     }
 
     // Ensure we have some activity
@@ -841,26 +857,28 @@ function extractTrades(transactions: ParsedTransaction[], walletAddress: string)
 
     if (primaryTokenNet > 0) {
       isBuy = true;
-      // Cost is what we spent. Ideally 'wsolOut' or 'nativeOut'.
-      // If we swapped Token A -> Token B, and Token A value was X, Cost is X.
-      // Cost estimation: Solscan uses the Value of the transaction.
-      // We use MAX(GrossOut, GrossIn) as a proxy for the 'deal value'.
-
-      // Standard Buy: Spent SOL (Out) -> Got Token (In). Cost = GrossOut.
+      // BUY: Cost is what we paid (Gross Out)
+      // Check: Did we actually pay anything?
+      if (grossOut < 0.000001) {
+        // Received token but paid nothing (<0.000001 SOL)? 
+        // Could be Airdrop, Spam, or Transfer In. SKIP IT.
+        skippedTransferOnly++;
+        continue;
+      }
       solAmount = grossOut;
 
-      // Edge Case: Swap Token A (Out) -> Token B (In).
-      // My script analyzer says: "Cost of B is Value of A".
-      // If GrossOut is 0 (direct token swap with no WSOL?), maybe GrossIn helps?
-      if (solAmount < 0.001) solAmount = grossIn;
-
+      // Ensure we don't fall back to GrossIn for buys easily, as that inflates volume
     } else {
       // isBuy remains false = SELL
-      // Revenue is what we got. Standard Sell: Gave Token (Out) -> Got SOL (In). Rev = GrossIn.
+      // Revenue is what we got (Gross In)
+      // Check: Did we actually get paid?
+      if (grossIn < 0.000001) {
+        // Sent token but got nothing?
+        // Burn, Transfer Out, or Scam. SKIP IT.
+        skippedTransferOnly++;
+        continue;
+      }
       solAmount = grossIn;
-
-      // Edge Case
-      if (solAmount < 0.001) solAmount = grossOut;
     }
 
     // Fee Subtraction (Impacts P&L)

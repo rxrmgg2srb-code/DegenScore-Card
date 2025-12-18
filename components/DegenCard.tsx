@@ -133,6 +133,7 @@ export default function DegenCard() {
               hasPaid={hasPaid}
               downloadPremiumCard={downloadPremiumCard}
               analysisData={analysisData}
+              walletAddress={walletAddress || (isSpyMode && typeof spyWallet === 'string' ? spyWallet : undefined)}
             />
           )}
         </div>

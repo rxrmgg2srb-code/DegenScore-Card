@@ -25,20 +25,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         // Verificar si la suscripción PRO expiró
         if (
           subscription.tier === 'PRO' &&
-          subscription.expiresAt &&
-          subscription.expiresAt <= new Date()
+          subscription.seasonExpiresAt &&
+          subscription.seasonExpiresAt <= new Date()
         ) {
           // Downgrade automático a PREMIUM (pagas una vez, tienes acceso permanente con delay)
           await prisma.subscription.update({
             where: { walletAddress: walletAddress as string },
             data: {
               tier: 'PREMIUM',
-              expiresAt: null, // Acceso permanente a PREMIUM
+              seasonExpiresAt: null, // Acceso permanente a PREMIUM
             },
           });
           tier = 'PREMIUM';
           logger.info(`⬇️ Downgraded ${walletAddress} from PRO to PREMIUM (trial expired)`);
-        } else if (!subscription.expiresAt || subscription.expiresAt > new Date()) {
+        } else if (!subscription.seasonExpiresAt || subscription.seasonExpiresAt > new Date()) {
           tier = subscription.tier;
         } else {
           // Si hay isPaid en la card, debería tener al menos PREMIUM

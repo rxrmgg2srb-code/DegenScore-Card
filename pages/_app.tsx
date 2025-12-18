@@ -4,29 +4,46 @@ import type { AppProps } from 'next/app';
 import { useMemo, useCallback } from 'react';
 import { ConnectionProvider, WalletProvider } from '@solana/wallet-adapter-react';
 import { WalletModalProvider } from '@solana/wallet-adapter-react-ui';
-// Phantom y Solflare se auto-detectan como Standard Wallets (no necesitan adapters)
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import { I18nextProvider } from 'react-i18next';
 import i18n from '../lib/i18n';
+import type { NextComponentType, NextPageContext } from 'next';
 
 import Analytics from '../components/Analytics';
-
 import WalletTracker from '../components/WalletTracker';
 import MetaHead from '../components/MetaHead';
+import LiveActivityBanner from '../components/LiveActivityBanner';
+import OnboardingModal, { useOnboarding } from '../components/OnboardingModal';
+
+interface AppContentProps {
+  Component: NextComponentType<NextPageContext, unknown, unknown>;
+  pageProps: Record<string, unknown>;
+}
+
+function AppContent({ Component, pageProps }: AppContentProps) {
+  const { showOnboarding, completeOnboarding } = useOnboarding();
+
+  return (
+    <>
+      <Component {...pageProps} />
+      <LiveActivityBanner />
+      <OnboardingModal
+        isOpen={showOnboarding}
+        onClose={completeOnboarding}
+      />
+    </>
+  );
+}
 
 export default function App({ Component, pageProps }: AppProps) {
-  // Configure RPC endpoint
   const endpoint = useMemo(
     () => process.env.NEXT_PUBLIC_HELIUS_RPC_URL || 'https://api.mainnet-beta.solana.com',
     []
   );
 
-  // Configure supported wallets - dejamos vacío para usar Standard Wallet auto-detection
   const wallets = useMemo(() => [], []);
 
-  // Handle wallet connection errors
-  const onError = useCallback((error: any) => {
-    // Silently handle common wallet connection errors that are safe to ignore
+  const onError = useCallback((error: Error) => {
     const ignorableErrors = [
       'disconnected port',
       'WalletConnectionError',
@@ -51,7 +68,6 @@ export default function App({ Component, pageProps }: AppProps) {
       return;
     }
 
-    // Only show critical errors to user
     console.error('Critical wallet error:', error);
   }, []);
 
@@ -68,7 +84,7 @@ export default function App({ Component, pageProps }: AppProps) {
           >
             <WalletModalProvider>
               <WalletTracker />
-              <Component {...pageProps} />
+              <AppContent Component={Component} pageProps={pageProps} />
             </WalletModalProvider>
           </WalletProvider>
         </ConnectionProvider>

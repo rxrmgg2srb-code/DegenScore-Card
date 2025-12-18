@@ -1,5 +1,6 @@
 import React from 'react';
 import PremiumCard from './PremiumCard';
+import ReferralBanner from '../ReferralBanner';
 
 interface Badge {
   name: string;
@@ -24,12 +25,14 @@ interface CardDisplayProps {
   hasPaid: boolean;
   downloadPremiumCard: () => void;
   analysisData?: AnalysisData;
+  walletAddress?: string; // Added optional walletAddress
 }
 
 export default function CardDisplay({
   hasPaid,
   downloadPremiumCard,
   analysisData,
+  walletAddress, // Destructure walletAddress
 }: CardDisplayProps) {
   return (
     <div className="mt-10 space-y-8">
@@ -77,6 +80,9 @@ export default function CardDisplay({
             <span className="text-2xl relative z-10">🏆</span>
             <span className="relative z-10">View Leaderboard</span>
           </button>
+
+          {/* NEW: Referral Banner for Paid Users */}
+          {walletAddress && <ReferralBanner walletAddress={walletAddress} />}
         </div>
       )}
     </div>

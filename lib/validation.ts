@@ -107,3 +107,19 @@ export function validateEmail(email: string): boolean {
   }
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
+
+/**
+ * Sanitizes user input to prevent XSS attacks
+ */
+export function sanitizeInput(input: string): string {
+  if (!input || typeof input !== 'string') {
+    return '';
+  }
+
+  return input
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;')
+    .replace(/\//g, '&#x2F;');
+}

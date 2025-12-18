@@ -228,9 +228,18 @@ export async function calculateOpenPositionsValue(
         const currentPrice = priceData?.priceInSol || null;
 
         const costBasis = pos.buyAmount;
-        const currentValue = currentPrice ? pos.tokensBought * currentPrice : 0;
-        const unrealizedPnL = currentPrice ? currentValue - costBasis : 0;
-        const pnlPercent = costBasis > 0 ? ((currentValue - costBasis) / costBasis) * 100 : 0;
+
+        // CRITICAL FIX: If price fetch fails, assume break-even (currentValue = costBasis)
+        // instead of 0 (which assumes 100% loss). This prevents API errors from destroying P&L.
+        // Unless it looks like a rugged token (implies logic elsewhere, but here be safe).
+        const currentValue = currentPrice !== null ? pos.tokensBought * currentPrice : costBasis;
+
+        // Calculate P&L ONLY if we have a valid price. If not, unrealized P&L is 0 (neutral).
+        // PnL = Current Value - Cost Basis
+        // If price failed: CostBasis - CostBasis = 0.
+        const unrealizedPnL = currentValue - costBasis;
+
+        const pnlPercent = costBasis > 0 ? (unrealizedPnL / costBasis) * 100 : 0;
 
         results.totalCostBasis += costBasis;
         results.totalCurrentValue += currentValue;

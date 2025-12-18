@@ -5,9 +5,13 @@ import { paymentRateLimit } from '../../lib/rateLimitRedis';
 import { retry } from '../../lib/retryLogic';
 import { logger } from '@/lib/logger';
 import { redactWallet, redactSignature, sanitizeAmount } from '@/lib/sanitize';
+import { getPaymentTypeFromAmount } from '@/lib/pricing';
+
+import { PRICING } from '@/lib/pricing';
 
 const TREASURY_WALLET = process.env.TREASURY_WALLET!;
-const MINT_PRICE_SOL = parseFloat(process.env.MINT_PRICE_SOL || '0.0001'); // Testing: 0.0001 SOL
+// Minimum payment threshold (Renewal price with some tolerance)
+const MIN_PAYMENT_SOL = PRICING.RENEWAL * 0.95;
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -134,34 +138,48 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     // CRITICAL VALIDATION: Treasury must have received money (positive balance change)
-    if (treasuryBalanceChange < MINT_PRICE_SOL) {
+    if (treasuryBalanceChange < MIN_PAYMENT_SOL) {
       // ✅ SECURITY: Generic error, detailed log
       logger.warn('Invalid payment - treasury received insufficient amount', {
         received: treasuryBalanceChange,
-        expected: MINT_PRICE_SOL,
+        expected: MIN_PAYMENT_SOL,
       });
       return res.status(400).json({
         error: 'Payment verification failed',
       });
     }
 
-    // CRITICAL VALIDATION: Sender must have sent at least MINT_PRICE_SOL
+    // CRITICAL VALIDATION: Sender must have sent at least minimum tier price
     // (accounting for transaction fees, they might have sent slightly more)
-    if (senderPaidAmount < MINT_PRICE_SOL) {
+    if (senderPaidAmount < MIN_PAYMENT_SOL) {
       // ✅ SECURITY: Generic error, detailed log
       logger.warn('Invalid payment - amount too low', {
         wallet: redactWallet(walletAddress),
         paid: senderPaidAmount,
-        expected: MINT_PRICE_SOL,
+        expected: MIN_PAYMENT_SOL,
       });
       return res.status(400).json({
         error: 'Payment verification failed',
+      });
+    }
+
+    // 💎 Determine payment type
+    const paidLamports = treasuryReceivedAmount * LAMPORTS_PER_SOL;
+    const paymentType = getPaymentTypeFromAmount(paidLamports);
+
+    if (!paymentType) {
+      logger.warn('Invalid payment - amount does not match any pricing option', {
+        wallet: redactWallet(walletAddress),
+        paidLamports,
+      });
+      return res.status(400).json({
+        error: 'Invalid payment amount.',
       });
     }
 
     const paidAmount = treasuryReceivedAmount;
 
-    logger.info(`✅ Valid payment received: ${sanitizeAmount(paidAmount)}`);
+    logger.info(`✅ Valid ${paymentType} payment received: ${sanitizeAmount(paidAmount)}`);
 
     // Use transaction to ensure atomicity and prevent race conditions
     const result = await prisma.$transaction(
@@ -182,6 +200,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             walletAddress,
             amount: paidAmount,
             status: 'confirmed',
+            paymentType: paymentType,
           },
         });
 
@@ -197,29 +216,64 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           },
         });
 
-        logger.info(`✅ Card marked as paid for wallet: ${redactWallet(walletAddress)}`);
+        // Determine subscription expiration
+        const seasonDurationDays = 30; // Standard season length
+        const seasonExpiresAt = new Date();
+        seasonExpiresAt.setDate(seasonExpiresAt.getDate() + seasonDurationDays);
 
-        // Create or update subscription with 30-day PRO trial
-        const trialEndDate = new Date();
-        trialEndDate.setDate(trialEndDate.getDate() + 30); // 30 days trial
+        // Update subscription based on payment type
+        if (paymentType === 'ENTRY') {
+          // ENTRY: Lifetime Access + 1 Season Free
+          await tx.subscription.upsert({
+            where: { walletAddress },
+            create: {
+              walletAddress,
+              isLifetime: true,
+              seasonExpiresAt: seasonExpiresAt,
+              paymentSignature: paymentSignature,
+              tier: 'PRO', // Legacy field compatibility
+            },
+            update: {
+              isLifetime: true,
+              seasonExpiresAt: seasonExpiresAt,
+              paymentSignature: paymentSignature,
+            },
+          });
+        } else {
+          // RENEWAL: Extend Season Access
+          // If user already has expiration in future, add days to it? Or just reset from now?
+          // For simplicity, let's just reset from now for this MVP or extend if active.
 
-        await tx.subscription.upsert({
-          where: { walletAddress },
-          create: {
-            walletAddress,
-            tier: 'PRO', // Start with PRO tier (30-day trial)
-            expiresAt: trialEndDate,
-            paymentSignature: paymentSignature,
-          },
-          update: {
-            tier: 'PRO',
-            expiresAt: trialEndDate,
-            paymentSignature: paymentSignature,
-          },
-        });
+          const currentSub = await tx.subscription.findUnique({ where: { walletAddress } });
+          let newExpiry = new Date();
+
+          if (currentSub?.seasonExpiresAt && currentSub.seasonExpiresAt > new Date()) {
+            // If active, extend
+            newExpiry = new Date(currentSub.seasonExpiresAt);
+            newExpiry.setDate(newExpiry.getDate() + seasonDurationDays);
+          } else {
+            // If expired or new, set from now
+            newExpiry = seasonExpiresAt;
+          }
+
+          await tx.subscription.upsert({
+            where: { walletAddress },
+            create: {
+              walletAddress,
+              seasonExpiresAt: newExpiry,
+              paymentSignature: paymentSignature,
+              tier: 'PRO', // Legacy field
+              isLifetime: false, // Should have paid entry first, but if not, this gives season only
+            },
+            update: {
+              seasonExpiresAt: newExpiry,
+              paymentSignature: paymentSignature,
+            },
+          });
+        }
 
         logger.info(
-          `✅ PRO subscription created with 30-day trial (expires: ${trialEndDate.toISOString()})`
+          `✅ Subscription updated (${paymentType})`
         );
 
         return updatedCard;
@@ -234,8 +288,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     res.status(200).json({
       success: true,
-      message: 'Payment verified and card minted',
+      message: 'Payment verified and subscription activated',
       card: result,
+      paymentType,
     });
   } catch (error) {
     logger.error('❌ Error verifying payment:', error instanceof Error ? error : undefined, {

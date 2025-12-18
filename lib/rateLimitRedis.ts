@@ -269,7 +269,7 @@ async function checkPremiumStatus(req: NextApiRequest): Promise<boolean> {
       where: { walletAddress },
       select: {
         tier: true,
-        expiresAt: true,
+        seasonExpiresAt: true,
       },
     });
 
@@ -277,8 +277,8 @@ async function checkPremiumStatus(req: NextApiRequest): Promise<boolean> {
     const isPremium =
       subscription &&
       (subscription.tier === 'BASIC' || subscription.tier === 'PRO') &&
-      subscription.expiresAt &&
-      subscription.expiresAt > new Date();
+      subscription.seasonExpiresAt &&
+      subscription.seasonExpiresAt > new Date();
 
     // Cache result in Redis (TTL: 5 minutes)
     if (isRedisEnabled && redis) {

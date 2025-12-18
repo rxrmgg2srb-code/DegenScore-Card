@@ -110,11 +110,10 @@ export const REWARD_PERCENTAGES = {
 /**
  * Generate a unique referral code for a wallet
  */
-export function generateReferralCode(walletAddress: string): string {
-  // Use first 6 chars of wallet + random suffix
-  const prefix = walletAddress.slice(0, 6).toUpperCase();
-  const suffix = Math.random().toString(36).substring(2, 6).toUpperCase();
-  return `${prefix}-${suffix}`;
+export function generateReferralCode(_walletAddress: string): string {
+  // Format: DEGEN-XXXXXX (6 random chars)
+  const random = Math.random().toString(36).substring(2, 8).toUpperCase();
+  return `DEGEN-${random}`;
 }
 
 /**

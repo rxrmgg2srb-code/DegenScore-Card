@@ -103,6 +103,7 @@ model Payment {
   walletAddress String
   amount        Float
   signature     String   @unique
+  paymentType   String   @default("ENTRY") // "ENTRY" | "RENEWAL" | "LEGACY"
   status        String
   createdAt     DateTime @default(now())
   
@@ -142,15 +143,17 @@ model HotTrade {
 model Subscription {
   id              String   @id @default(cuid())
   walletAddress   String   @unique
-  tier            String   @default("FREE") // "FREE" | "BASIC" | "PRO"
-  expiresAt       DateTime?
+  tier            String   @default("FREE") // "FREE" | "BASIC" | "PRO" -> Now used for legacy or specific feature sets
+  isLifetime      Boolean  @default(false)  // Entry fee paid (Lifetime Card & Leaderboard)
+  seasonExpiresAt DateTime?                 // Expiration of current season pass
   paymentSignature String?
 
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
   @@index([walletAddress])
-  @@index([tier])
+  @@index([isLifetime])
+  @@index([seasonExpiresAt])
 }
 
 model PromoCode {
