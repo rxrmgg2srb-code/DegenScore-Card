@@ -1,7 +1,10 @@
+import dynamic from 'next/dynamic';
 import DegenCard from '../components/DegenCard';
 import Header from '../components/Header';
-import PrizePoolTicker from '../components/PrizePoolTicker';
-import LiveSalesFeed from '../components/LiveSalesFeed';
+
+// Dynamic imports with SSR disabled to prevent hydration errors
+const PrizePoolTicker = dynamic(() => import('../components/PrizePoolTicker'), { ssr: false });
+const LiveSalesFeed = dynamic(() => import('../components/LiveSalesFeed'), { ssr: false });
 
 /**
  * ULTRA MINIMAL VERSION - Only essentials
