@@ -62,7 +62,7 @@ export const Header: React.FC<HeaderProps> = ({ connected = false, username = ''
             </div>
           </div>
 
-          {/* Mobile navigation - SIMPLIFIED */}
+          {/* Mobile navigation - FULL NAVIGATION */}
           <nav className="md:hidden flex flex-wrap items-center gap-2 mt-3 justify-center">
             <Link
               href="/"
@@ -87,6 +87,36 @@ export const Header: React.FC<HeaderProps> = ({ connected = false, username = ''
               className="text-xs px-3 py-2 rounded-lg bg-gradient-to-r from-red-500 to-orange-500 text-white font-bold"
             >
               ⚔️ Battle
+            </Link>
+            <Link
+              href="/token-scanner"
+              className="text-xs px-3 py-2 rounded-lg bg-gradient-to-r from-green-500 to-emerald-500 text-white font-bold"
+            >
+              🔍 Scanner
+            </Link>
+            <Link
+              href="/super-token-scorer"
+              className="text-xs px-3 py-2 rounded-lg bg-gradient-to-r from-violet-500 to-purple-500 text-white font-bold"
+            >
+              🧠 Super
+            </Link>
+            <Link
+              href="/achievements"
+              className="text-xs px-3 py-2 rounded-lg bg-gradient-to-r from-amber-500 to-yellow-500 text-white font-bold"
+            >
+              🏅
+            </Link>
+            <Link
+              href="/challenges"
+              className="text-xs px-3 py-2 rounded-lg bg-gradient-to-r from-pink-500 to-rose-500 text-white font-bold"
+            >
+              🎮
+            </Link>
+            <Link
+              href="/documentation"
+              className="text-xs px-3 py-2 rounded-lg bg-gradient-to-r from-teal-500 to-cyan-500 text-white font-bold"
+            >
+              📚
             </Link>
             {isAdmin && (
               <Link
