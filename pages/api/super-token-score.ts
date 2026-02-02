@@ -124,9 +124,32 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // Perform fresh Super Token Score analysis
     logger.info('🔍 Starting fresh Super Token Score analysis', { tokenAddress });
 
-    const result = await analyzeSuperTokenScore(tokenAddress, (progress, message) => {
+    // IMPORTANT: Internal timeout (50s) to fail gracefully before Vercel's 60s hard limit
+    const analysisPromise = analyzeSuperTokenScore(tokenAddress, (progress, message) => {
       logger.info(`Super Token Score progress: ${progress}% - ${message}`);
     });
+
+    const timeoutPromise = new Promise<never>((_, reject) =>
+      setTimeout(
+        () => reject(new Error('TIMEOUT: Token analysis exceeded 50 seconds')),
+        50000 // 50 seconds - fail before Vercel's 60s hard limit
+      )
+    );
+
+    let result: SuperTokenScore;
+    try {
+      result = await Promise.race([analysisPromise, timeoutPromise]);
+    } catch (error) {
+      if (error instanceof Error && error.message.includes('TIMEOUT')) {
+        logger.warn('⏱️ Super Token Score analysis timed out', { tokenAddress });
+        return res.status(504).json({
+          success: false,
+          error: 'El análisis está tomando demasiado tiempo. El token puede tener demasiados holders o la API externa está lenta. Intenta de nuevo en unos minutos.',
+          details: 'Analysis timeout - external APIs are slow',
+        });
+      }
+      throw error; // Re-throw non-timeout errors
+    }
 
     // Save to database
     await saveSuperScoreToDatabase(tokenAddress, result);

@@ -11,8 +11,12 @@
       "memory": 1024
     },
     "pages/api/analyze.ts": {
-      "maxDuration": 45,
-      "memory": 512
+      "maxDuration": 60,
+      "memory": 1024
+    },
+    "pages/api/super-token-score.ts": {
+      "maxDuration": 60,
+      "memory": 1024
     },
     "pages/api/save-card.ts": {
       "maxDuration": 45,

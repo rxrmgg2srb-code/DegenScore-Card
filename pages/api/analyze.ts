@@ -29,12 +29,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     logger.info('Analyzing wallet:', { walletAddress });
 
-    // PERFORMANCE: Timeout de 30 seconds optimizado para análisis rápido
+    // PERFORMANCE: Timeout de 50 seconds para fallar antes del límite de Vercel (60s)
     const metricsPromise = calculateAdvancedMetrics(walletAddress);
     const timeoutPromise = new Promise<never>((_, reject) =>
       setTimeout(
         () => reject(new Error('Analysis timeout - wallet took too long to analyze')),
-        180000
+        50000 // 50 seconds - fail before Vercel's 60s hard limit
       )
     );
 

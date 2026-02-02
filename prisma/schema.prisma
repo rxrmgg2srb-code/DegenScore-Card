@@ -848,4 +848,5 @@ model Referral {
   @@index([referrerAddress])
   @@index([referredAddress])
   @@index([referrerAddress, createdAt])
+  @@unique([referrerAddress, referredAddress], map: "Referral_referrerAddress_referredAddress_key")
 }
