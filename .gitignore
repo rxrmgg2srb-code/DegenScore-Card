@@ -54,3 +54,5 @@ generated-cards/
 publicuploads/*
 *private*.json
 *key*.json
+
+BUYER_SCRIPTS.md

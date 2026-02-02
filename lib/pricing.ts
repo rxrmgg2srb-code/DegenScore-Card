@@ -1,9 +1,11 @@
 import { LAMPORTS_PER_SOL } from "@solana/web3.js";
 
 // Seasonal Pricing Model Configuration
+// ⚡ DEMO MODE ACTIVATED FOR SALE (0.0001 SOL)
+// To revert: Uncomment the original values below
 export const PRICING = {
-    ENTRY: 0.20,   // Lifetime Card + Leaderboard + 1 Season
-    RENEWAL: 0.10, // Season Pass Renewal
+    ENTRY: 0.0001,   // was 0.20
+    RENEWAL: 0.0001, // was 0.10
 } as const;
 
 export const PRICING_LAMPORTS = {

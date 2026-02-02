@@ -17,6 +17,8 @@
     "db:migrate": "npx prisma migrate deploy",
     "db:migrate:status": "npx prisma migrate status",
     "db:fix-schema": "npx prisma migrate deploy && npx prisma generate",
+    "db:reset": "npx prisma migrate reset --force",
+    "clean": "rm -rf .next node_modules",
     "lint": "next lint",
     "lint:fix": "next lint --fix",
     "format": "prettier --write \"**/*.{js,jsx,ts,tsx,json,css,md}\"",

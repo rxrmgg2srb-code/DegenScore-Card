@@ -86,6 +86,7 @@ Think **LinkedIn + FICO Score + Pokémon Cards** for crypto traders.
 ---
 
 ## 🚀 Quick Start
+> 📘 **For a complete production setup, see the [Deployment Guide](./DEPLOYMENT_GUIDE.md).**
 
 ### Prerequisites
 
