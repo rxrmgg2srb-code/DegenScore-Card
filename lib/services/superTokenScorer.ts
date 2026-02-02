@@ -1289,47 +1289,75 @@ async function analyzeVolume(
 
 async function analyzeSocials(_tokenAddress: string, metadata: any): Promise<SocialAnalysis> {
   try {
-    // Use REAL metadata from on-chain data
-    const hasWebsite = !!metadata.hasWebsite;
-    const hasSocials = !!metadata.hasSocials;
+    // 🎯 FIX: Fetch socials DIRECTLY from DexScreener for accurate detection
+    let hasTwitter = false;
+    let hasTelegram = false;
+    let hasWebsite = !!metadata.hasWebsite;
+    let hasSocials = !!metadata.hasSocials;
+    let hasDiscord = false;
 
-    // For now, we use conservative values for detailed metrics we don't have APIs for
-    // In the future, these could be fetched from Twitter API, Telegram API, etc.
-    // But we NEVER use random values - only real data or 0/false for unknown
-    const hasTwitter = hasSocials; // Assume if they have socials, they likely have Twitter
+    // Try to get social data from DexScreener
+    try {
+      const response = await fetch(
+        `https://api.dexscreener.com/latest/dex/tokens/${_tokenAddress}`,
+        { signal: AbortSignal.timeout(5000), headers: { Accept: 'application/json' } }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        const pair = data?.pairs?.find((p: any) => p.info?.socials?.length > 0) || data?.pairs?.[0];
+        const info = pair?.info;
+
+        if (info) {
+          const socials = info.socials || [];
+          const websites = info.websites || [];
+
+          // Explicitly check for each social type
+          hasTwitter = socials.some((s: any) =>
+            s.type === 'twitter' || s.type === 'x' ||
+            s.url?.includes('twitter.com') || s.url?.includes('x.com')
+          );
+
+          hasTelegram = socials.some((s: any) =>
+            s.type === 'telegram' || s.url?.includes('t.me')
+          );
+
+          hasDiscord = socials.some((s: any) =>
+            s.type === 'discord' || s.url?.includes('discord')
+          );
+
+          hasWebsite = websites.length > 0 || hasWebsite;
+          hasSocials = socials.length > 0 || hasSocials;
+        }
+      }
+    } catch (e) {
+      // Fallback to metadata if DexScreener fails
+    }
+
+    // If we still don't have data, use metadata as fallback
+    if (!hasTwitter && !hasTelegram && metadata.hasSocials) {
+      hasTwitter = true; // Conservative assumption
+      hasTelegram = true;
+    }
+
     const twitterFollowers = 0; // Unknown - would need Twitter API
-    const twitterVerified = false; // Unknown
-    const twitterAge = 0; // Unknown
-
-    const hasTelegram = hasSocials;
-    const telegramMembers = 0; // Unknown - would need Telegram API
-
-    const hasDiscord = false; // Unknown - would need to parse metadata for Discord link
+    const twitterVerified = false;
+    const twitterAge = 0;
+    const telegramMembers = 0;
     const discordMembers = 0;
-
-    const websiteSSL = hasWebsite; // Assume if they have website, it has SSL (most do nowadays)
-    const websiteAge = 0; // Unknown - would need domain age API
+    const websiteSSL = hasWebsite;
+    const websiteAge = 0;
 
     let socialScore = 0;
 
     // Score based on what we actually know
-    if (hasWebsite) {
-      socialScore += 8;
-    } // Having a website is a good sign
-    if (hasSocials) {
-      socialScore += 12;
-    } // Having social links is important
-    if (metadata.verified) {
-      socialScore += 10;
-    } // Verified metadata is valuable
+    if (hasWebsite) socialScore += 8;
+    if (hasTwitter) socialScore += 10;
+    if (hasTelegram) socialScore += 7;
+    if (hasDiscord) socialScore += 5;
+    if (metadata.verified) socialScore += 10;
+    if (metadata.description && metadata.description.length > 50) socialScore += 5;
 
-    // Bonus if they have description (shows effort)
-    if (metadata.description && metadata.description.length > 50) {
-      socialScore += 5;
-    }
-
-    // Since we don't have age data, we can't detect suspicious socials reliably
-    // So we set this to false unless we have evidence otherwise
     const suspiciousSocials = false;
 
     return {
