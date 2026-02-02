@@ -586,7 +586,7 @@ async function fetchAllTransactions(
   let regularBefore: string | undefined;
   let regularCount = 0;
   consecutiveErrors = 0;
-  const MAX_REGULAR = 10000; // Increased to cover full history
+  const MAX_REGULAR = 2000; // Capped to ensure analysis completes within timeout
 
   for (let batch = 0; batch < 100; batch++) { // Max 10000 regular
     if (Date.now() - startTime > TIME_LIMIT_MS) {
