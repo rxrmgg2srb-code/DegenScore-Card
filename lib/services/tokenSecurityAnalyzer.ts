@@ -38,6 +38,66 @@ const BURN_ADDRESSES = new Set([
 ]);
 
 // ============================================================================
+// RUGCHECK API INTEGRATION - Most accurate LP lock detection
+// ============================================================================
+
+interface RugCheckLPStatus {
+  lpBurned: boolean;
+  lpLocked: boolean;
+  lpLockedPct: number;
+  rugCheckScore: number;
+  hasRisks: boolean;
+  riskCount: number;
+}
+
+async function checkLPStatusFromRugCheck(tokenAddress: string): Promise<RugCheckLPStatus> {
+  try {
+    const response = await fetch(
+      `https://api.rugcheck.xyz/v1/tokens/${tokenAddress}/report`,
+      {
+        signal: AbortSignal.timeout(8000),
+        headers: { Accept: 'application/json' }
+      }
+    );
+
+    if (response.ok) {
+      const data = await response.json();
+
+      // Find market with LP data (pump.fun or other)
+      const market = data.markets?.find((m: any) => m.lp?.lpLockedPct > 0)
+        || data.markets?.[0];
+
+      if (market?.lp) {
+        const lpLockedPct = market.lp.lpLockedPct || 0;
+        const result = {
+          lpBurned: lpLockedPct >= 99, // 99%+ = effectively burned
+          lpLocked: lpLockedPct >= 50, // 50%+ = considered locked
+          lpLockedPct,
+          rugCheckScore: data.score || 0,
+          hasRisks: (data.risks?.length || 0) > 0,
+          riskCount: data.risks?.length || 0,
+        };
+
+        logger.info('[RugCheck] LP status retrieved', {
+          tokenAddress: tokenAddress.substring(0, 10) + '...',
+          lpLockedPct: result.lpLockedPct,
+          lpLocked: result.lpLocked,
+          rugCheckScore: result.rugCheckScore,
+        });
+
+        return result;
+      }
+    }
+  } catch (e) {
+    logger.warn('[RugCheck] Failed to fetch LP status', {
+      error: e instanceof Error ? e.message : String(e),
+      tokenAddress: tokenAddress.substring(0, 10) + '...',
+    });
+  }
+  return { lpBurned: false, lpLocked: false, lpLockedPct: 0, rugCheckScore: 0, hasRisks: false, riskCount: 0 };
+}
+
+// ============================================================================
 // TYPE DEFINITIONS
 // ============================================================================
 
@@ -1177,6 +1237,11 @@ async function fetchLiquidityPools(tokenAddress: string): Promise<any[]> {
     });
   }
 
+  // 🎯 PRIORITY 1: Get LP status from RugCheck (MOST ACCURATE SOURCE)
+  // RugCheck directly reads on-chain LP data and provides lpLockedPct
+  const rugCheckStatus = await checkLPStatusFromRugCheck(tokenAddress);
+  const rugCheckLpLocked = rugCheckStatus.lpLocked || rugCheckStatus.lpBurned;
+
   // Try DexScreener first (aggregates Raydium, Orca, Meteora, etc.)
   try {
     const response = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${tokenAddress}`, {
@@ -1243,9 +1308,9 @@ async function fetchLiquidityPools(tokenAddress: string): Promise<any[]> {
               pairAddress: pair.pairAddress,
               liquiditySOL,
               liquidityUSD,
-              lpBurned: lpBurned,
-              lpLocked: lpLocked || isPumpFunToken, // pump.fun bonding curve = locked by design
-              burnPercentage,
+              lpBurned: lpBurned || rugCheckStatus.lpBurned,
+              lpLocked: lpLocked || isPumpFunToken || rugCheckLpLocked, // Use RugCheck as primary source
+              burnPercentage: rugCheckStatus.lpLockedPct || burnPercentage, // RugCheck has most accurate data
               lpLockEnd: undefined,
               // Additional useful data
               priceUsd: pair.priceUsd,
@@ -1254,12 +1319,15 @@ async function fetchLiquidityPools(tokenAddress: string): Promise<any[]> {
             });
 
             // Log LP status for debugging
-            if (lpBurned || lpLocked) {
-              logger.info('[LP Status] Detected LP protection from DexScreener', {
+            const finalLpLocked = lpLocked || isPumpFunToken || rugCheckLpLocked;
+            if (lpBurned || finalLpLocked || rugCheckLpLocked) {
+              logger.info('[LP Status] ✅ LP Protection Detected', {
                 pairAddress: pair.pairAddress?.substring(0, 10) + '...',
-                lpBurned,
-                lpLocked,
-                burnPercentage: burnPercentage.toFixed(2) + '%',
+                lpBurned: lpBurned || rugCheckStatus.lpBurned,
+                lpLocked: finalLpLocked,
+                rugCheckLpLockedPct: rugCheckStatus.lpLockedPct,
+                isPumpFunToken,
+                dex: pair.dexId,
               });
             }
           }
