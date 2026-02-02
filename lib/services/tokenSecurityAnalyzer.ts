@@ -598,54 +598,130 @@ async function analyzeTradingPatterns(tokenAddress: string): Promise<TradingPatt
 // TOKEN METADATA ANALYSIS
 // ============================================================================
 
+// Helper to get socials from DexScreener
+async function getDexScreenerSocials(tokenAddress: string): Promise<{
+  hasWebsite: boolean;
+  hasSocials: boolean;
+  twitter?: string;
+  telegram?: string;
+  website?: string;
+  imageUrl?: string;
+}> {
+  try {
+    const response = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${tokenAddress}`, {
+      signal: AbortSignal.timeout(5000), // Fast timeout
+      headers: { Accept: 'application/json' },
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      if (data?.pairs && data.pairs.length > 0) {
+        // Find pair with info
+        const pairWithInfo = data.pairs.find((p: any) => p.info?.socials || p.info?.websites);
+        const info = pairWithInfo?.info;
+
+        if (info) {
+          const websites = info.websites || [];
+          const socials = info.socials || [];
+
+          const hasWebsite = websites.length > 0;
+          const twitterLog = socials.find((s: any) => s.type === 'twitter' || s.type === 'x');
+          const telegramLog = socials.find((s: any) => s.type === 'telegram');
+
+          const hasSocials = socials.length > 0;
+
+          return {
+            hasWebsite,
+            hasSocials,
+            website: websites[0]?.url,
+            twitter: twitterLog?.url,
+            telegram: telegramLog?.url,
+            imageUrl: info.imageUrl || pairWithInfo.baseToken?.logoURI
+          };
+        }
+      }
+    }
+  } catch (e) {
+    // Ignore errors, just fallback
+  }
+  return { hasWebsite: false, hasSocials: false };
+}
+
 async function getTokenMetadata(tokenAddress: string): Promise<TokenMetadata> {
   return securityCircuitBreaker.execute(() =>
     retry(async () => {
-      const url = HELIUS_RPC_URL;
+      let symbol = 'UNKNOWN';
+      let name = 'Unknown Token';
+      let decimals = 9;
+      let supply = 0;
+      let verified = false;
+      let hasWebsite = false;
+      let hasSocials = false;
+      let imageUrl: string | undefined;
+      let description: string | undefined;
 
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          jsonrpc: '2.0',
-          id: 'metadata',
-          method: 'getAsset',
-          params: { id: tokenAddress },
-        }),
-      });
+      // 1. Try Helius First
+      try {
+        const url = HELIUS_RPC_URL;
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            jsonrpc: '2.0',
+            id: 'metadata',
+            method: 'getAsset',
+            params: { id: tokenAddress },
+          }),
+        });
 
-      if (!response.ok) {
-        throw new Error('Failed to fetch metadata');
+        if (response.ok) {
+          const data = await response.json();
+          const asset = data.result;
+
+          if (asset) {
+            symbol = asset.content?.metadata?.symbol || symbol;
+            name = asset.content?.metadata?.name || name;
+
+            // Check socials from Helius
+            hasWebsite = !!asset.content?.links?.external_url;
+            hasSocials = !!(asset.content?.links?.twitter || asset.content?.links?.telegram);
+            imageUrl = asset.content?.links?.image;
+            description = asset.content?.metadata?.description;
+
+            verified = asset.grouping?.some((g: any) => g.group_key === 'verified') || false;
+          }
+        }
+      } catch (e) {
+        logger.warn('Helius metadata fetch failed', { error: String(e) });
       }
 
-      const data = await response.json();
-      const asset = data.result;
+      // 2. Get Supply / Decimals from Chain (Reliable)
+      try {
+        const connection = new Connection(HELIUS_RPC_URL, 'confirmed');
+        const mintPubkey = new PublicKey(tokenAddress);
+        const mintInfo = await connection.getParsedAccountInfo(mintPubkey);
+        const mintData = (mintInfo.value?.data as any)?.parsed?.info;
 
-      // Get token account info for supply
-      const connection = new Connection(HELIUS_RPC_URL, 'confirmed');
-      const mintPubkey = new PublicKey(tokenAddress);
-      const mintInfo = await connection.getParsedAccountInfo(mintPubkey);
-      const mintData = (mintInfo.value?.data as any)?.parsed?.info;
+        if (mintData) {
+          decimals = mintData.decimals;
+          supply = parseInt(mintData.supply || '0') / Math.pow(10, decimals);
+        }
+      } catch (e) {
+        logger.warn('Chain supply fetch failed', { error: String(e) });
+      }
 
-      const symbol = asset?.content?.metadata?.symbol || 'UNKNOWN';
-      const name = asset?.content?.metadata?.name || 'Unknown Token';
-      const decimals = mintData?.decimals || 9;
-      const supply = parseInt(mintData?.supply || '0') / Math.pow(10, decimals);
-
-      const hasWebsite = !!asset?.content?.links?.external_url;
-      const hasSocials = !!(asset?.content?.links?.twitter || asset?.content?.links?.telegram);
-      const verified = asset?.grouping?.some((g: any) => g.group_key === 'verified') || false;
+      // 3. Fallback/Enhance with DexScreener (Best for socials)
+      if (!hasSocials || !hasWebsite) {
+        const dexData = await getDexScreenerSocials(tokenAddress);
+        if (dexData.hasSocials) hasSocials = true;
+        if (dexData.hasWebsite) hasWebsite = true;
+        if (!imageUrl && dexData.imageUrl) imageUrl = dexData.imageUrl;
+      }
 
       let score = 0;
-      if (verified) {
-        score += 5;
-      }
-      if (hasWebsite) {
-        score += 3;
-      }
-      if (hasSocials) {
-        score += 2;
-      }
+      if (verified) score += 5;
+      if (hasWebsite) score += 3;
+      if (hasSocials) score += 2;
 
       return {
         symbol,
@@ -655,8 +731,8 @@ async function getTokenMetadata(tokenAddress: string): Promise<TokenMetadata> {
         verified,
         hasWebsite,
         hasSocials,
-        imageUrl: asset?.content?.links?.image,
-        description: asset?.content?.metadata?.description,
+        imageUrl,
+        description,
         score,
       };
     },
@@ -1072,7 +1148,7 @@ async function checkLPStatus(
         });
       }
 
-      return { lpBurned, lpLocked: false, burnPercentage: lpBurned ? 100 : 0 };
+      return { lpBurned: false, lpLocked: false, burnPercentage: 0 };
     } catch (parseError) {
       logger.warn(
         '[LP Status] Failed to parse pool data',
@@ -1158,8 +1234,8 @@ async function fetchLiquidityPools(tokenAddress: string): Promise<any[]> {
               pairAddress: pair.pairAddress,
               liquiditySOL,
               liquidityUSD,
-              lpBurned,
-              lpLocked,
+              lpBurned: lpBurned,
+              lpLocked: lpLocked,
               burnPercentage,
               lpLockEnd: undefined,
               // Additional useful data
