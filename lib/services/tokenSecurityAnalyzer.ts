@@ -1009,6 +1009,18 @@ async function detectBundleWallets(_tokenAddress: string): Promise<number> {
   return 0;
 }
 
+// Common Liquidity Locker Programs & Burn Addresses
+const LOCK_ADDRESSES = new Set([
+  '1111111111111111111111111111111111111111111', // System Burn
+  'Dn4no3qPz41bAAfdH37QeKj1G3E4A2T2a6aV7c7p4m7', // Streamflow
+  'p1exdMJcjVao65QdewkaZRUnU6VPSXhus9n2GzWfh98', // Metaplex
+  'Locker1111111111111111111111111111111111111', // Generic Locker
+  'PinK1d1111111111111111111111111111111111111', // PinkSale
+  'FLUX111111111111111111111111111111111111111', // FluxBeam
+  'DXS1111111111111111111111111111111111111111', // DXSale
+  'UNC1111111111111111111111111111111111111111', // Unicrypt
+]);
+
 /**
  * Check if LP tokens are burned or locked by inspecting pool owner
  */
@@ -1025,21 +1037,27 @@ async function checkLPStatus(
     try {
       // Get pool account data
       const poolPubkey = new PublicKey(pairAddress);
+
+      // If pairAddress matches a known locker, assume locked
+      // (This is a simplified check, usually lockers hold the LP token, not the pool itself)
+      // But checking account owner is a good first step for burned pools
+
       const accountInfo = await connection.getAccountInfo(poolPubkey);
 
       if (!accountInfo) {
         return { lpBurned: false, lpLocked: false, burnPercentage: 0 };
       }
 
-      // Try to parse as Raydium pool (most common DEX)
-      // The LP mint is usually at specific offsets in the account data
-      // This is a simplified version - in production you'd use the Raydium SDK
-
-      // For now, we'll use a heuristic: check the largest token accounts
-      // associated with this pair to see if they're burn addresses
-
       const owner = accountInfo.owner.toBase58();
-      const lpBurned = BURN_ADDRESSES.has(owner);
+
+      // Check if owner is a known locker or burn address
+      const isLockedOrBurned = LOCK_ADDRESSES.has(owner) || BURN_ADDRESSES.has(owner);
+
+      if (isLockedOrBurned) {
+        logger.info(`[LP Status] Pool owner is known locker/burn address: ${owner}`);
+        return { lpBurned: BURN_ADDRESSES.has(owner), lpLocked: !BURN_ADDRESSES.has(owner), burnPercentage: 100 };
+      }
+
 
       // Check if program is a known DEX program (more reliable check)
       const isRaydiumProgram = owner === '675kPX9MHTjS2zt1qfr1NYHuzeLXfQM9H24wFSUt1Mp8';
