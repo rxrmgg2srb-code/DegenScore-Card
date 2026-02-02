@@ -1335,10 +1335,14 @@ async function fetchLiquidityPools(tokenAddress: string): Promise<any[]> {
 
         if (pools.length > 0) {
           const totalLiquiditySOL = pools.reduce((sum, p) => sum + p.liquiditySOL, 0);
-          logger.info('[Liquidity] Successfully retrieved pool data from DexScreener', {
+          const hasAnyLockedLP = pools.some(p => p.lpLocked || p.lpBurned);
+          logger.info('[Liquidity] ✅ DexScreener pools with RugCheck data', {
             poolCount: pools.length,
             totalLiquiditySOL: totalLiquiditySOL.toFixed(2),
-            totalLiquidityUSD: (totalLiquiditySOL * solPrice).toFixed(2),
+            hasAnyLockedLP,
+            rugCheckLpLocked,
+            rugCheckLpLockedPct: rugCheckStatus.lpLockedPct,
+            firstPoolLpLocked: pools[0]?.lpLocked,
           });
           return pools;
         }
@@ -1380,13 +1384,13 @@ async function fetchLiquidityPools(tokenAddress: string): Promise<any[]> {
               dex: 'birdeye-aggregated',
               liquiditySOL,
               liquidityUSD,
-              lpBurned: false,
-              lpLocked: false,
+              lpBurned: rugCheckStatus.lpBurned,
+              lpLocked: rugCheckLpLocked || isPumpFunToken, // Use RugCheck data
             });
 
-            logger.info('[Liquidity] Retrieved from Birdeye', {
+            logger.info('[Liquidity] Retrieved from Birdeye with RugCheck LP data', {
               liquiditySOL: liquiditySOL.toFixed(2),
-              liquidityUSD: liquidityUSD.toFixed(2),
+              lpLocked: rugCheckLpLocked || isPumpFunToken,
             });
             return pools;
           }
@@ -1422,12 +1426,13 @@ async function fetchLiquidityPools(tokenAddress: string): Promise<any[]> {
           dex: 'jupiter-aggregated',
           liquiditySOL: estimatedLiquiditySOL,
           liquidityUSD: estimatedLiquiditySOL * solPrice,
-          lpBurned: false,
-          lpLocked: false,
+          lpBurned: rugCheckStatus.lpBurned,
+          lpLocked: rugCheckLpLocked || isPumpFunToken, // Use RugCheck data
         });
 
-        logger.info('[Liquidity] Estimated from Jupiter', {
+        logger.info('[Liquidity] Estimated from Jupiter with RugCheck LP data', {
           liquiditySOL: estimatedLiquiditySOL.toFixed(2),
+          lpLocked: rugCheckLpLocked || isPumpFunToken,
         });
         return pools;
       }
