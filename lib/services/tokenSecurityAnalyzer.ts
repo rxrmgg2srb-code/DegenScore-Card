@@ -1168,6 +1168,15 @@ async function checkLPStatus(
 async function fetchLiquidityPools(tokenAddress: string): Promise<any[]> {
   const pools: any[] = [];
 
+  // 🎯 PUMP.FUN DETECTION: Tokens ending in "pump" use bonding curve mechanism
+  // The liquidity is locked by design in pump.fun's smart contract
+  const isPumpFunToken = tokenAddress.toLowerCase().endsWith('pump');
+  if (isPumpFunToken) {
+    logger.info('[Liquidity] Detected pump.fun token - bonding curve has locked liquidity by design', {
+      tokenAddress: tokenAddress.substring(0, 10) + '...',
+    });
+  }
+
   // Try DexScreener first (aggregates Raydium, Orca, Meteora, etc.)
   try {
     const response = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${tokenAddress}`, {
@@ -1235,7 +1244,7 @@ async function fetchLiquidityPools(tokenAddress: string): Promise<any[]> {
               liquiditySOL,
               liquidityUSD,
               lpBurned: lpBurned,
-              lpLocked: lpLocked,
+              lpLocked: lpLocked || isPumpFunToken, // pump.fun bonding curve = locked by design
               burnPercentage,
               lpLockEnd: undefined,
               // Additional useful data
